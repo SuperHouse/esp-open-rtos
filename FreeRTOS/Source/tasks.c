@@ -101,7 +101,7 @@ privileged Vs unprivileged linkage and placement. */
 /*
  * Defines the size, in words, of the stack allocated to the idle task.
  */
-#define tskIDLE_STACK_SIZE	configMINIMAL_STACK_SIZE
+#define tskIDLE_STACK_SIZE	176	//configMINIMAL_STACK_SIZE
 
 /*
  * Task control block.  A task control block (TCB) is allocated for each task,
@@ -475,7 +475,8 @@ static tskTCB *prvAllocateTCBAndStack( unsigned short usStackDepth, portSTACK_TY
 
 #endif
 
-signed portBASE_TYPE xTaskGenericCreate( pdTASK_CODE pxTaskCode, const signed char * const pcName, unsigned short usStackDepth, void *pvParameters, unsigned portBASE_TYPE uxPriority, xTaskHandle *pxCreatedTask, portSTACK_TYPE *puxStackBuffer, const xMemoryRegion * const xRegions )
+signed portBASE_TYPE ICACHE_FLASH_ATTR
+xTaskGenericCreate( pdTASK_CODE pxTaskCode, const signed char * const pcName, unsigned short usStackDepth, void *pvParameters, unsigned portBASE_TYPE uxPriority, xTaskHandle *pxCreatedTask, portSTACK_TYPE *puxStackBuffer, const xMemoryRegion * const xRegions )
 {
 signed portBASE_TYPE xReturn;
 tskTCB * pxNewTCB;
@@ -631,7 +632,8 @@ tskTCB * pxNewTCB;
 
 #if ( INCLUDE_vTaskDelete == 1 )
 
-	void vTaskDelete( xTaskHandle xTaskToDelete )
+	void ICACHE_FLASH_ATTR
+	vTaskDelete( xTaskHandle xTaskToDelete )
 	{
 	tskTCB *pxTCB;
 
@@ -685,7 +687,8 @@ tskTCB * pxNewTCB;
 
 #if ( INCLUDE_vTaskDelayUntil == 1 )
 
-	void vTaskDelayUntil( portTickType * const pxPreviousWakeTime, portTickType xTimeIncrement )
+	void ICACHE_FLASH_ATTR
+	vTaskDelayUntil( portTickType * const pxPreviousWakeTime, portTickType xTimeIncrement )
 	{
 	portTickType xTimeToWake;
 	portBASE_TYPE xAlreadyYielded, xShouldDelay = pdFALSE;
@@ -761,7 +764,8 @@ tskTCB * pxNewTCB;
 
 #if ( INCLUDE_vTaskDelay == 1 )
 
-	void vTaskDelay( portTickType xTicksToDelay )
+	void ICACHE_FLASH_ATTR
+	vTaskDelay( portTickType xTicksToDelay )
 	{
 	portTickType xTimeToWake;
 	signed portBASE_TYPE xAlreadyYielded = pdFALSE;
@@ -813,7 +817,8 @@ tskTCB * pxNewTCB;
 
 #if ( INCLUDE_eTaskGetState == 1 )
 
-	eTaskState eTaskGetState( xTaskHandle xTask )
+	eTaskState ICACHE_FLASH_ATTR
+	eTaskGetState( xTaskHandle xTask )
 	{
 	eTaskState eReturn;
 	xList *pxStateList;
@@ -873,7 +878,8 @@ tskTCB * pxNewTCB;
 
 #if ( INCLUDE_uxTaskPriorityGet == 1 )
 
-	unsigned portBASE_TYPE uxTaskPriorityGet( xTaskHandle xTask )
+	unsigned portBASE_TYPE ICACHE_FLASH_ATTR
+	uxTaskPriorityGet( xTaskHandle xTask )
 	{
 	tskTCB *pxTCB;
 	unsigned portBASE_TYPE uxReturn;
@@ -895,7 +901,8 @@ tskTCB * pxNewTCB;
 
 #if ( INCLUDE_vTaskPrioritySet == 1 )
 
-	void vTaskPrioritySet( xTaskHandle xTask, unsigned portBASE_TYPE uxNewPriority )
+	void ICACHE_FLASH_ATTR
+	vTaskPrioritySet( xTaskHandle xTask, unsigned portBASE_TYPE uxNewPriority )
 	{
 	tskTCB *pxTCB;
 	unsigned portBASE_TYPE uxCurrentBasePriority, uxPriorityUsedOnEntry;
@@ -1026,7 +1033,8 @@ tskTCB * pxNewTCB;
 
 #if ( INCLUDE_vTaskSuspend == 1 )
 
-	void vTaskSuspend( xTaskHandle xTaskToSuspend )
+	void ICACHE_FLASH_ATTR
+	vTaskSuspend( xTaskHandle xTaskToSuspend )
 	{
 	tskTCB *pxTCB;
 
@@ -1087,7 +1095,8 @@ tskTCB * pxNewTCB;
 
 #if ( INCLUDE_vTaskSuspend == 1 )
 
-	signed portBASE_TYPE xTaskIsTaskSuspended( xTaskHandle xTask )
+	signed portBASE_TYPE ICACHE_FLASH_ATTR
+	xTaskIsTaskSuspended( xTaskHandle xTask )
 	{
 	portBASE_TYPE xReturn = pdFALSE;
 	const tskTCB * const pxTCB = ( tskTCB * ) xTask;
@@ -1121,7 +1130,8 @@ tskTCB * pxNewTCB;
 
 #if ( INCLUDE_vTaskSuspend == 1 )
 
-	void vTaskResume( xTaskHandle xTaskToResume )
+	void ICACHE_FLASH_ATTR
+	vTaskResume( xTaskHandle xTaskToResume )
 	{
 	tskTCB * const pxTCB = ( tskTCB * ) xTaskToResume;
 
@@ -1162,7 +1172,8 @@ tskTCB * pxNewTCB;
 
 #if ( ( INCLUDE_xTaskResumeFromISR == 1 ) && ( INCLUDE_vTaskSuspend == 1 ) )
 
-	portBASE_TYPE xTaskResumeFromISR( xTaskHandle xTaskToResume )
+	portBASE_TYPE 
+	xTaskResumeFromISR( xTaskHandle xTaskToResume )
 	{
 	portBASE_TYPE xYieldRequired = pdFALSE;
 	tskTCB * const pxTCB = ( tskTCB * ) xTaskToResume;
@@ -1188,7 +1199,9 @@ tskTCB * pxNewTCB;
 		http://www.freertos.org/RTOS-Cortex-M3-M4.html */
 		portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
-		uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
+//		uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
+        portSET_INTERRUPT_MASK_FROM_ISR();
+
 		{
 			if( xTaskIsTaskSuspended( pxTCB ) == pdTRUE )
 			{
@@ -1217,7 +1230,8 @@ tskTCB * pxNewTCB;
 #endif /* ( ( INCLUDE_xTaskResumeFromISR == 1 ) && ( INCLUDE_vTaskSuspend == 1 ) ) */
 /*-----------------------------------------------------------*/
 
-void vTaskStartScheduler( void )
+void ICACHE_FLASH_ATTR
+vTaskStartScheduler( void )
 {
 portBASE_TYPE xReturn;
 
@@ -1227,6 +1241,7 @@ portBASE_TYPE xReturn;
 		/* Create the idle task, storing its handle in xIdleTaskHandle so it can
 		be returned by the xTaskGetIdleTaskHandle() function. */
 		xReturn = xTaskCreate( prvIdleTask, ( signed char * ) "IDLE", tskIDLE_STACK_SIZE, ( void * ) NULL, ( tskIDLE_PRIORITY | portPRIVILEGE_BIT ), &xIdleTaskHandle ); /*lint !e961 MISRA exception, justified as it is not a redundant explicit cast to all supported compilers. */
+printf("idle_task_hdl : %x\n", xIdleTaskHandle);
 	}
 	#else
 	{
@@ -1254,7 +1269,8 @@ portBASE_TYPE xReturn;
 
 		STEPPING THROUGH HERE USING A DEBUGGER CAN CAUSE BIG PROBLEMS IF THE
 		DEBUGGER ALLOWS INTERRUPTS TO BE PROCESSED. */
-		portDISABLE_INTERRUPTS();
+		//portDISABLE_INTERRUPTS();
+PortDisableInt_NoNest();
 
 		xSchedulerRunning = pdTRUE;
 		xTickCount = ( portTickType ) 0U;
@@ -1286,18 +1302,22 @@ portBASE_TYPE xReturn;
 }
 /*-----------------------------------------------------------*/
 
-void vTaskEndScheduler( void )
+void ICACHE_FLASH_ATTR
+vTaskEndScheduler( void )
 {
 	/* Stop the scheduler interrupts and call the portable scheduler end
 	routine so the original ISRs can be restored if necessary.  The port
 	layer must ensure interrupts enable	bit is left in the correct state. */
-	portDISABLE_INTERRUPTS();
+
+	//portDISABLE_INTERRUPTS();
+PortDisableInt_NoNest();
 	xSchedulerRunning = pdFALSE;
 	vPortEndScheduler();
 }
 /*----------------------------------------------------------*/
 
-void vTaskSuspendAll( void )
+void ICACHE_FLASH_ATTR
+vTaskSuspendAll( void )
 {
 	/* A critical section is not required as the variable is of type
 	portBASE_TYPE. */
@@ -1307,7 +1327,8 @@ void vTaskSuspendAll( void )
 
 #if ( configUSE_TICKLESS_IDLE != 0 )
 
-	static portTickType prvGetExpectedIdleTime( void )
+	static portTickType ICACHE_FLASH_ATTR
+	prvGetExpectedIdleTime( void )
 	{
 	portTickType xReturn;
 
@@ -1333,7 +1354,8 @@ void vTaskSuspendAll( void )
 #endif /* configUSE_TICKLESS_IDLE */
 /*----------------------------------------------------------*/
 
-signed portBASE_TYPE xTaskResumeAll( void )
+signed portBASE_TYPE ICACHE_FLASH_ATTR
+xTaskResumeAll( void )
 {
 tskTCB *pxTCB;
 portBASE_TYPE xAlreadyYielded = pdFALSE;
@@ -1403,7 +1425,8 @@ portBASE_TYPE xYieldRequired = pdFALSE;
 }
 /*-----------------------------------------------------------*/
 
-portTickType xTaskGetTickCount( void )
+portTickType ICACHE_FLASH_ATTR
+xTaskGetTickCount( void )
 {
 portTickType xTicks;
 
@@ -1418,7 +1441,8 @@ portTickType xTicks;
 }
 /*-----------------------------------------------------------*/
 
-portTickType xTaskGetTickCountFromISR( void )
+portTickType 
+xTaskGetTickCountFromISR( void )
 {
 portTickType xReturn;
 unsigned portBASE_TYPE uxSavedInterruptStatus;
@@ -1439,7 +1463,9 @@ unsigned portBASE_TYPE uxSavedInterruptStatus;
 	link: http://www.freertos.org/RTOS-Cortex-M3-M4.html */
 	portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
-	uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
+//	uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
+    portSET_INTERRUPT_MASK_FROM_ISR();
+
 	xReturn = xTickCount;
 	portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedInterruptStatus );
 
@@ -1447,7 +1473,8 @@ unsigned portBASE_TYPE uxSavedInterruptStatus;
 }
 /*-----------------------------------------------------------*/
 
-unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
+unsigned portBASE_TYPE ICACHE_FLASH_ATTR
+uxTaskGetNumberOfTasks( void )
 {
 	/* A critical section is not required because the variables are of type
 	portBASE_TYPE. */
@@ -1457,7 +1484,8 @@ unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
 
 #if ( INCLUDE_pcTaskGetTaskName == 1 )
 
-	signed char *pcTaskGetTaskName( xTaskHandle xTaskToQuery )
+	signed char * ICACHE_FLASH_ATTR
+	pcTaskGetTaskName( xTaskHandle xTaskToQuery )
 	{
 	tskTCB *pxTCB;
 
@@ -1472,7 +1500,8 @@ unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-	unsigned portBASE_TYPE uxTaskGetSystemState( xTaskStatusType *pxTaskStatusArray, unsigned portBASE_TYPE uxArraySize, unsigned long *pulTotalRunTime )
+	unsigned portBASE_TYPE ICACHE_FLASH_ATTR
+	uxTaskGetSystemState( xTaskStatusType *pxTaskStatusArray, unsigned portBASE_TYPE uxArraySize, unsigned long *pulTotalRunTime )
 	{
 	unsigned portBASE_TYPE uxTask = 0, uxQueue = configMAX_PRIORITIES;
 
@@ -1538,7 +1567,8 @@ unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
 
 #if ( INCLUDE_xTaskGetIdleTaskHandle == 1 )
 
-	xTaskHandle xTaskGetIdleTaskHandle( void )
+	xTaskHandle ICACHE_FLASH_ATTR
+	xTaskGetIdleTaskHandle( void )
 	{
 		/* If xTaskGetIdleTaskHandle() is called before the scheduler has been
 		started, then xIdleTaskHandle will be NULL. */
@@ -1555,7 +1585,8 @@ implementations require configUSE_TICKLESS_IDLE to be set to a value other than
 1. */
 #if ( configUSE_TICKLESS_IDLE != 0 )
 
-	void vTaskStepTick( portTickType xTicksToJump )
+	void ICACHE_FLASH_ATTR
+	vTaskStepTick( portTickType xTicksToJump )
 	{
 		/* Correct the tick count value after a period during which the tick
 		was suppressed.  Note this does *not* call the tick hook function for
@@ -1568,7 +1599,8 @@ implementations require configUSE_TICKLESS_IDLE to be set to a value other than
 #endif /* configUSE_TICKLESS_IDLE */
 /*----------------------------------------------------------*/
 
-portBASE_TYPE xTaskIncrementTick( void )
+portBASE_TYPE
+xTaskIncrementTick( void )
 {
 tskTCB * pxTCB;
 portTickType xItemValue;
@@ -1705,7 +1737,8 @@ portBASE_TYPE xSwitchRequired = pdFALSE;
 
 #if ( configUSE_APPLICATION_TASK_TAG == 1 )
 
-	void vTaskSetApplicationTaskTag( xTaskHandle xTask, pdTASK_HOOK_CODE pxHookFunction )
+	void ICACHE_FLASH_ATTR
+	vTaskSetApplicationTaskTag( xTaskHandle xTask, pdTASK_HOOK_CODE pxHookFunction )
 	{
 	tskTCB *xTCB;
 
@@ -1731,7 +1764,8 @@ portBASE_TYPE xSwitchRequired = pdFALSE;
 
 #if ( configUSE_APPLICATION_TASK_TAG == 1 )
 
-	pdTASK_HOOK_CODE xTaskGetApplicationTaskTag( xTaskHandle xTask )
+	pdTASK_HOOK_CODE ICACHE_FLASH_ATTR
+	xTaskGetApplicationTaskTag( xTaskHandle xTask )
 	{
 	tskTCB *xTCB;
 	pdTASK_HOOK_CODE xReturn;
@@ -1760,7 +1794,8 @@ portBASE_TYPE xSwitchRequired = pdFALSE;
 
 #if ( configUSE_APPLICATION_TASK_TAG == 1 )
 
-	portBASE_TYPE xTaskCallApplicationTaskHook( xTaskHandle xTask, void *pvParameter )
+	portBASE_TYPE ICACHE_FLASH_ATTR
+	xTaskCallApplicationTaskHook( xTaskHandle xTask, void *pvParameter )
 	{
 	tskTCB *xTCB;
 	portBASE_TYPE xReturn;
@@ -1790,7 +1825,8 @@ portBASE_TYPE xSwitchRequired = pdFALSE;
 #endif /* configUSE_APPLICATION_TASK_TAG */
 /*-----------------------------------------------------------*/
 
-void vTaskSwitchContext( void )
+void
+vTaskSwitchContext( void )
 {
 	if( uxSchedulerSuspended != ( unsigned portBASE_TYPE ) pdFALSE )
 	{
@@ -1843,7 +1879,8 @@ void vTaskSwitchContext( void )
 }
 /*-----------------------------------------------------------*/
 
-void vTaskPlaceOnEventList( xList * const pxEventList, portTickType xTicksToWait )
+void ICACHE_FLASH_ATTR
+vTaskPlaceOnEventList( xList * const pxEventList, portTickType xTicksToWait )
 {
 portTickType xTimeToWake;
 
@@ -1897,7 +1934,8 @@ portTickType xTimeToWake;
 
 #if configUSE_TIMERS == 1
 
-	void vTaskPlaceOnEventListRestricted( xList * const pxEventList, portTickType xTicksToWait )
+	void ICACHE_FLASH_ATTR
+	vTaskPlaceOnEventListRestricted( xList * const pxEventList, portTickType xTicksToWait )
 	{
 	portTickType xTimeToWake;
 
@@ -1936,7 +1974,8 @@ portTickType xTimeToWake;
 #endif /* configUSE_TIMERS */
 /*-----------------------------------------------------------*/
 
-signed portBASE_TYPE xTaskRemoveFromEventList( const xList * const pxEventList )
+signed portBASE_TYPE
+xTaskRemoveFromEventList( const xList * const pxEventList )
 {
 tskTCB *pxUnblockedTCB;
 portBASE_TYPE xReturn;
@@ -1987,7 +2026,8 @@ portBASE_TYPE xReturn;
 }
 /*-----------------------------------------------------------*/
 
-void vTaskSetTimeOutState( xTimeOutType * const pxTimeOut )
+void ICACHE_FLASH_ATTR
+vTaskSetTimeOutState( xTimeOutType * const pxTimeOut )
 {
 	configASSERT( pxTimeOut );
 	pxTimeOut->xOverflowCount = xNumOfOverflows;
@@ -1995,7 +2035,8 @@ void vTaskSetTimeOutState( xTimeOutType * const pxTimeOut )
 }
 /*-----------------------------------------------------------*/
 
-portBASE_TYPE xTaskCheckForTimeOut( xTimeOutType * const pxTimeOut, portTickType * const pxTicksToWait )
+portBASE_TYPE ICACHE_FLASH_ATTR
+xTaskCheckForTimeOut( xTimeOutType * const pxTimeOut, portTickType * const pxTicksToWait )
 {
 portBASE_TYPE xReturn;
 
@@ -2044,7 +2085,8 @@ portBASE_TYPE xReturn;
 }
 /*-----------------------------------------------------------*/
 
-void vTaskMissedYield( void )
+void ICACHE_FLASH_ATTR
+vTaskMissedYield( void )
 {
 	xYieldPending = pdTRUE;
 }
@@ -2052,7 +2094,8 @@ void vTaskMissedYield( void )
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-	unsigned portBASE_TYPE uxTaskGetTaskNumber( xTaskHandle xTask )
+	unsigned portBASE_TYPE ICACHE_FLASH_ATTR
+	uxTaskGetTaskNumber( xTaskHandle xTask )
 	{
 	unsigned portBASE_TYPE uxReturn;
 	tskTCB *pxTCB;
@@ -2075,7 +2118,8 @@ void vTaskMissedYield( void )
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-	void vTaskSetTaskNumber( xTaskHandle xTask, unsigned portBASE_TYPE uxHandle )
+	void ICACHE_FLASH_ATTR
+	vTaskSetTaskNumber( xTaskHandle xTask, unsigned portBASE_TYPE uxHandle )
 	{
 	tskTCB *pxTCB;
 
@@ -2099,7 +2143,8 @@ void vTaskMissedYield( void )
  * void prvIdleTask( void *pvParameters );
  *
  */
-static portTASK_FUNCTION( prvIdleTask, pvParameters )
+static ICACHE_FLASH_ATTR
+portTASK_FUNCTION( prvIdleTask, pvParameters )
 {
 	/* Stop warnings. */
 	( void ) pvParameters;
@@ -2192,7 +2237,8 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
 
 #if configUSE_TICKLESS_IDLE != 0
 
-	eSleepModeStatus eTaskConfirmSleepModeStatus( void )
+	eSleepModeStatus ICACHE_FLASH_ATTR
+	eTaskConfirmSleepModeStatus( void )
 	{
 	eSleepModeStatus eReturn = eStandardSleep;
 
@@ -2230,7 +2276,8 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
 #endif /* configUSE_TICKLESS_IDLE */
 /*-----------------------------------------------------------*/
 
-static void prvInitialiseTCBVariables( tskTCB *pxTCB, const signed char * const pcName, unsigned portBASE_TYPE uxPriority, const xMemoryRegion * const xRegions, unsigned short usStackDepth )
+static void ICACHE_FLASH_ATTR
+prvInitialiseTCBVariables( tskTCB *pxTCB, const signed char * const pcName, unsigned portBASE_TYPE uxPriority, const xMemoryRegion * const xRegions, unsigned short usStackDepth )
 {
 unsigned portBASE_TYPE x;
 
@@ -2317,7 +2364,8 @@ unsigned portBASE_TYPE x;
 
 #if ( portUSING_MPU_WRAPPERS == 1 )
 
-	void vTaskAllocateMPURegions( xTaskHandle xTaskToModify, const xMemoryRegion * const xRegions )
+	void ICACHE_FLASH_ATTR
+	vTaskAllocateMPURegions( xTaskHandle xTaskToModify, const xMemoryRegion * const xRegions )
 	{
 	tskTCB *pxTCB;
 
@@ -2330,7 +2378,8 @@ unsigned portBASE_TYPE x;
 #endif /* portUSING_MPU_WRAPPERS */
 /*-----------------------------------------------------------*/
 
-static void prvInitialiseTaskLists( void )
+static void ICACHE_FLASH_ATTR
+prvInitialiseTaskLists( void )
 {
 unsigned portBASE_TYPE uxPriority;
 
@@ -2362,7 +2411,8 @@ unsigned portBASE_TYPE uxPriority;
 }
 /*-----------------------------------------------------------*/
 
-static void prvCheckTasksWaitingTermination( void )
+static void ICACHE_FLASH_ATTR
+prvCheckTasksWaitingTermination( void )
 {
 	#if ( INCLUDE_vTaskDelete == 1 )
 	{
@@ -2397,7 +2447,8 @@ static void prvCheckTasksWaitingTermination( void )
 }
 /*-----------------------------------------------------------*/
 
-static void prvAddCurrentTaskToDelayedList( portTickType xTimeToWake )
+static void ICACHE_FLASH_ATTR
+prvAddCurrentTaskToDelayedList( portTickType xTimeToWake )
 {
 	/* The list item will be inserted in wake time order. */
 	listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), xTimeToWake );
@@ -2423,7 +2474,8 @@ static void prvAddCurrentTaskToDelayedList( portTickType xTimeToWake )
 }
 /*-----------------------------------------------------------*/
 
-static tskTCB *prvAllocateTCBAndStack( unsigned short usStackDepth, portSTACK_TYPE *puxStackBuffer )
+static tskTCB * ICACHE_FLASH_ATTR
+prvAllocateTCBAndStack( unsigned short usStackDepth, portSTACK_TYPE *puxStackBuffer )
 {
 tskTCB *pxNewTCB;
 
@@ -2437,7 +2489,6 @@ tskTCB *pxNewTCB;
 		The base of the stack memory stored in the TCB so the task can
 		be deleted later if required. */
 		pxNewTCB->pxStack = ( portSTACK_TYPE * ) pvPortMallocAligned( ( ( ( size_t ) usStackDepth ) * sizeof( portSTACK_TYPE ) ), puxStackBuffer ); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
-
 		if( pxNewTCB->pxStack == NULL )
 		{
 			/* Could not allocate the stack.  Delete the allocated TCB. */
@@ -2457,7 +2508,8 @@ tskTCB *pxNewTCB;
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-	static unsigned portBASE_TYPE prvListTaskWithinSingleList( xTaskStatusType *pxTaskStatusArray, xList *pxList, eTaskState eState )
+	static unsigned portBASE_TYPE ICACHE_FLASH_ATTR
+	prvListTaskWithinSingleList( xTaskStatusType *pxTaskStatusArray, xList *pxList, eTaskState eState )
 	{
 	volatile tskTCB *pxNextTCB, *pxFirstTCB;
 	unsigned portBASE_TYPE uxTask = 0;
@@ -2523,7 +2575,8 @@ tskTCB *pxNewTCB;
 
 #if ( ( configUSE_TRACE_FACILITY == 1 ) || ( INCLUDE_uxTaskGetStackHighWaterMark == 1 ) )
 
-	static unsigned short prvTaskCheckFreeStackSpace( const unsigned char * pucStackByte )
+	static unsigned short ICACHE_FLASH_ATTR
+	prvTaskCheckFreeStackSpace( const unsigned char * pucStackByte )
 	{
 	register unsigned short usCount = 0U;
 
@@ -2543,7 +2596,8 @@ tskTCB *pxNewTCB;
 
 #if ( INCLUDE_uxTaskGetStackHighWaterMark == 1 )
 
-	unsigned portBASE_TYPE uxTaskGetStackHighWaterMark( xTaskHandle xTask )
+	unsigned portBASE_TYPE ICACHE_FLASH_ATTR
+	uxTaskGetStackHighWaterMark( xTaskHandle xTask )
 	{
 	tskTCB *pxTCB;
 	unsigned char *pcEndOfStack;
@@ -2571,7 +2625,8 @@ tskTCB *pxNewTCB;
 
 #if ( INCLUDE_vTaskDelete == 1 )
 
-	static void prvDeleteTCB( tskTCB *pxTCB )
+	static void ICACHE_FLASH_ATTR
+	prvDeleteTCB( tskTCB *pxTCB )
 	{
 		/* This call is required specifically for the TriCore port.  It must be
 		above the vPortFree() calls.  The call is also used by ports/demos that
@@ -2589,7 +2644,8 @@ tskTCB *pxNewTCB;
 
 #if ( ( INCLUDE_xTaskGetCurrentTaskHandle == 1 ) || ( configUSE_MUTEXES == 1 ) )
 
-	xTaskHandle xTaskGetCurrentTaskHandle( void )
+	xTaskHandle ICACHE_FLASH_ATTR
+	xTaskGetCurrentTaskHandle( void )
 	{
 	xTaskHandle xReturn;
 
@@ -2606,7 +2662,8 @@ tskTCB *pxNewTCB;
 
 #if ( ( INCLUDE_xTaskGetSchedulerState == 1 ) || ( configUSE_TIMERS == 1 ) )
 
-	portBASE_TYPE xTaskGetSchedulerState( void )
+	portBASE_TYPE ICACHE_FLASH_ATTR
+	xTaskGetSchedulerState( void )
 	{
 	portBASE_TYPE xReturn;
 
@@ -2634,7 +2691,8 @@ tskTCB *pxNewTCB;
 
 #if ( configUSE_MUTEXES == 1 )
 
-	void vTaskPriorityInherit( xTaskHandle const pxMutexHolder )
+	void ICACHE_FLASH_ATTR
+	vTaskPriorityInherit( xTaskHandle const pxMutexHolder )
 	{
 	tskTCB * const pxTCB = ( tskTCB * ) pxMutexHolder;
 
@@ -2676,7 +2734,8 @@ tskTCB *pxNewTCB;
 
 #if ( configUSE_MUTEXES == 1 )
 
-	void vTaskPriorityDisinherit( xTaskHandle const pxMutexHolder )
+	void
+	vTaskPriorityDisinherit( xTaskHandle const pxMutexHolder )
 	{
 	tskTCB * const pxTCB = ( tskTCB * ) pxMutexHolder;
 
@@ -2706,10 +2765,11 @@ tskTCB *pxNewTCB;
 
 #if ( portCRITICAL_NESTING_IN_TCB == 1 )
 
-	void vTaskEnterCritical( void )
+	void ICACHE_FLASH_ATTR
+	vTaskEnterCritical( void )
 	{
-		portDISABLE_INTERRUPTS();
-
+		//portDISABLE_INTERRUPTS();
+PortDisableInt_NoNest();
 		if( xSchedulerRunning != pdFALSE )
 		{
 			( pxCurrentTCB->uxCriticalNesting )++;
@@ -2721,7 +2781,8 @@ tskTCB *pxNewTCB;
 
 #if ( portCRITICAL_NESTING_IN_TCB == 1 )
 
-	void vTaskExitCritical( void )
+	void ICACHE_FLASH_ATTR
+	vTaskExitCritical( void )
 	{
 		if( xSchedulerRunning != pdFALSE )
 		{
@@ -2731,7 +2792,8 @@ tskTCB *pxNewTCB;
 
 				if( pxCurrentTCB->uxCriticalNesting == 0U )
 				{
-					portENABLE_INTERRUPTS();
+					//portENABLE_INTERRUPTS();
+					PortEnableInt_NoNest();
 				}
 			}
 		}
@@ -2742,7 +2804,8 @@ tskTCB *pxNewTCB;
 
 #if ( ( configUSE_TRACE_FACILITY == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS == 1 ) )
 
-	void vTaskList( signed char *pcWriteBuffer )
+	void ICACHE_FLASH_ATTR
+	vTaskList( signed char *pcWriteBuffer )
 	{
 	xTaskStatusType *pxTaskStatusArray;
 	volatile unsigned portBASE_TYPE uxArraySize, x;
@@ -2825,7 +2888,8 @@ tskTCB *pxNewTCB;
 
 #if ( ( configGENERATE_RUN_TIME_STATS == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS == 1 ) )
 
-	void vTaskGetRunTimeStats( signed char *pcWriteBuffer )
+	void ICACHE_FLASH_ATTR
+	vTaskGetRunTimeStats( signed char *pcWriteBuffer )
 	{
 	xTaskStatusType *pxTaskStatusArray;
 	volatile unsigned portBASE_TYPE uxArraySize, x;
