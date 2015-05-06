@@ -99,7 +99,7 @@ $1/%.o: %.c
 	$(vecho) "CC $$<"
 	$(CC_ARGS) -c $$< -o $$@
 	$(CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
-#	$(Q) $(OBJCOPY) --rename-section .text=.irom0.text --rename-section .literal=.irom0.literal $$@
+	$(Q) $(OBJCOPY) --rename-section .text=.irom0.text --rename-section .literal=.irom0.literal $$@
 endef
 
 .PHONY: all checkdirs clean
