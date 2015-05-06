@@ -71,7 +71,6 @@
  * memory management pages of http://www.FreeRTOS.org for more information.
  */
 #include <stdlib.h>
-#include <string.h>
 
 /* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
 all the API functions to use the MPU wrappers.  That should only be done when
@@ -83,9 +82,6 @@ task.h is included from an application file. */
 
 #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
-extern char _heap_start;
-#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 0x40000000 - (uint32_t)&_heap_start ) )
-
 /* Block sizes must not get too small. */
 #define heapMINIMUM_BLOCK_SIZE	( ( size_t ) ( heapSTRUCT_SIZE * 2 ) )
 
@@ -96,8 +92,7 @@ extern char _heap_start;
 #define heapADJUSTED_HEAP_SIZE	( configTOTAL_HEAP_SIZE - portBYTE_ALIGNMENT )
 
 /* Allocate the memory for the heap. */
-//static unsigned char ucHeap[ configTOTAL_HEAP_SIZE ];
-static unsigned char *ucHeap;
+static unsigned char ucHeap[ configTOTAL_HEAP_SIZE ];
 
 /* Define the linked list structure.  This is used to link free blocks in order
 of their memory address. */
@@ -130,16 +125,14 @@ block must by correctly byte aligned. */
 static const unsigned short heapSTRUCT_SIZE	= ( ( sizeof ( xBlockLink ) + ( portBYTE_ALIGNMENT - 1 ) ) & ~portBYTE_ALIGNMENT_MASK );
 
 /* Ensure the pxEnd pointer will end up on the correct byte alignment. */
-//static const size_t xTotalHeapSize = ( ( size_t ) heapADJUSTED_HEAP_SIZE ) & ( ( size_t ) ~portBYTE_ALIGNMENT_MASK );
-static size_t xTotalHeapSize;
+static const size_t xTotalHeapSize = ( ( size_t ) heapADJUSTED_HEAP_SIZE ) & ( ( size_t ) ~portBYTE_ALIGNMENT_MASK );
 
 /* Create a couple of list links to mark the start and end of the list. */
 static xBlockLink xStart, *pxEnd = NULL;
 
 /* Keeps track of the number of free bytes remaining, but says nothing about
 fragmentation. */
-//static size_t xFreeBytesRemaining = ( ( size_t ) heapADJUSTED_HEAP_SIZE ) & ( ( size_t ) ~portBYTE_ALIGNMENT_MASK );
-static size_t xFreeBytesRemaining;
+static size_t xFreeBytesRemaining = ( ( size_t ) heapADJUSTED_HEAP_SIZE ) & ( ( size_t ) ~portBYTE_ALIGNMENT_MASK );
 
 /* Gets set to the top bit of an size_t type.  When this bit in the xBlockSize 
 member of an xBlockLink structure is set then the block belongs to the 
@@ -249,12 +242,8 @@ void *pvReturn = NULL;
 	}
 	#endif
 
-//    printf("%s %x %x\n", __func__, pvReturn, pxBlock);
 	return pvReturn;
 }
-
-void *malloc(size_t nbytes) __attribute__((alias("pvPortMalloc")));
-
 /*-----------------------------------------------------------*/
 
 void vPortFree( void *pv )
@@ -262,8 +251,6 @@ void vPortFree( void *pv )
 unsigned char *puc = ( unsigned char * ) pv;
 xBlockLink *pxLink;
 
-//    printf("%s\n", __func__);
-    
 	if( pv != NULL )
 	{
 		/* The memory being freed will have an xBlockLink structure immediately
@@ -285,66 +272,17 @@ xBlockLink *pxLink;
 				allocated. */
 				pxLink->xBlockSize &= ~xBlockAllocatedBit;
 
-//				vTaskSuspendAll();
-				ETS_INTR_LOCK();
+				vTaskSuspendAll();
 				{
 					/* Add this block to the list of free blocks. */
 					xFreeBytesRemaining += pxLink->xBlockSize;
 					prvInsertBlockIntoFreeList( ( ( xBlockLink * ) pxLink ) );
 				}
-//				xTaskResumeAll();
-				ETS_INTR_UNLOCK();
+				xTaskResumeAll();
 			}
 		}
 	}
-
-//	printf("%s %x %d\n", __func__, pv, xFreeBytesRemaining);
 }
-
-void free(void *ptr) __attribute__((alias("vPortFree")));
-
-/*-----------------------------------------------------------*/
-
-void *pvPortCalloc(size_t count, size_t size)
-{
-  void *p;
-
-  /* allocate 'count' objects of size 'size' */
-  p = pvPortMalloc(count * size);
-  if (p) {
-    /* zero the memory */
-    memset(p, 0, count * size);
-  }
-  return p;
-}
-
-void *calloc(size_t count, size_t nbytes) __attribute__((alias("pvPortCalloc")));
-
-/*-----------------------------------------------------------*/
-
-void *pvPortZalloc(size_t size)
-{
-     return pvPortCalloc(1, size);	
-}
-
-void *zalloc(size_t nbytes) __attribute__((alias("pvPortZalloc")));
-
-/*-----------------------------------------------------------*/
-
-void *pvPortRealloc(void *mem, size_t newsize)
-{
-     void *p;  	
-     p = pvPortMalloc(newsize);
-     if (p) {
-       /* zero the memory */
-       memcpy(p, mem, newsize);
-       vPortFree(mem);
-     }
-     return p;     
-}
-
-void *realloc(void *ptr, size_t nbytes) __attribute__((alias("pvPortRealloc")));
-
 /*-----------------------------------------------------------*/
 
 size_t xPortGetFreeHeapSize( void )
@@ -363,10 +301,6 @@ static void prvHeapInit( void )
 {
 xBlockLink *pxFirstFreeBlock;
 unsigned char *pucHeapEnd, *pucAlignedHeap;
-
-    xFreeBytesRemaining = ( ( size_t ) heapADJUSTED_HEAP_SIZE ) & ( ( size_t ) ~portBYTE_ALIGNMENT_MASK );
-    xTotalHeapSize = xFreeBytesRemaining ;
-	ucHeap = &_heap_start;
 
 	/* Ensure the heap starts on a correctly aligned boundary. */
 	pucAlignedHeap = ( unsigned char * ) ( ( ( portPOINTER_SIZE_TYPE ) &ucHeap[ portBYTE_ALIGNMENT ] ) & ( ( portPOINTER_SIZE_TYPE ) ~portBYTE_ALIGNMENT_MASK ) );
@@ -404,7 +338,8 @@ static void prvInsertBlockIntoFreeList( xBlockLink *pxBlockToInsert )
 xBlockLink *pxIterator;
 unsigned char *puc;
 
-	/* Iterate through the list until a block is found that has a higher address than the block being inserted. */
+	/* Iterate through the list until a block is found that has a higher address
+	than the block being inserted. */
 	for( pxIterator = &xStart; pxIterator->pxNextFreeBlock < pxBlockToInsert; pxIterator = pxIterator->pxNextFreeBlock )
 	{
 		/* Nothing to do here, just iterate to the right position. */
