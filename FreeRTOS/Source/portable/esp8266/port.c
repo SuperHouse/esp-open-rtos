@@ -81,6 +81,7 @@ static char SWReq = 0;
 static char PendSvIsPosted = 0;
 
 unsigned cpu_sr;
+char level1_int_disabled;
 
 /* Each task maintains its own interrupt status in the critical nesting
 variable. */
@@ -263,71 +264,31 @@ vPortEndScheduler( void )
 /*-----------------------------------------------------------*/
 
 static unsigned int tick_lock=0;
-static char ClosedLv1Isr = 0;
 
 void vPortEnterCritical( void )
 {
-	if(NMIIrqIsOn == 0)
-	{	
-		//if( uxCriticalNesting == 0 )
-		{
-			if( ClosedLv1Isr !=1 )
-			{
-				portDISABLE_INTERRUPTS();
-				ClosedLv1Isr = 1;
-			}
-			//tick_lock = WDEV_NOW();
-		}
-		uxCriticalNesting++;
-	}
+    portDISABLE_INTERRUPTS();
+    uxCriticalNesting++;
 }
 /*-----------------------------------------------------------*/
 
 void vPortExitCritical( void )
 {
-	if(NMIIrqIsOn == 0)
-	{
-		uxCriticalNesting--;
-		if( uxCriticalNesting == 0 )
-		{
-			//if( (WDEV_NOW() - tick_lock) > 2000000 )
-				//printf("INTR LOCK TOO LONG:%d\n",(WDEV_NOW() - tick_lock));
-			if( ClosedLv1Isr ==1 )
-			{
-				ClosedLv1Isr = 0;
-				portENABLE_INTERRUPTS();
-			}
-		}
-	}
+    uxCriticalNesting--;
+    if( uxCriticalNesting == 0 )
+	portENABLE_INTERRUPTS();
 }
 
-
-void 
+void
 PortDisableInt_NoNest( void )
 {
-//os_printf("ERRRRRRR\n");
-	if(NMIIrqIsOn == 0)	
-	{
-		if( ClosedLv1Isr !=1 )
-		{
-			portDISABLE_INTERRUPTS();
-			ClosedLv1Isr = 1;
-		}
-	}
+    portDISABLE_INTERRUPTS();
 }
 
-void 
+void
 PortEnableInt_NoNest( void )
 {
-//os_printf("ERRRRR\n");
-	if(NMIIrqIsOn == 0)
-	{		
-		if( ClosedLv1Isr ==1 )
-		{
-			ClosedLv1Isr = 0;
-			portENABLE_INTERRUPTS();
-		}
-	}
+    portENABLE_INTERRUPTS();
 }
 
 /*-----------------------------------------------------------*/

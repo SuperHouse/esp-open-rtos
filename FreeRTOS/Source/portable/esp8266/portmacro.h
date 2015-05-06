@@ -131,7 +131,6 @@ extern void vTaskSwitchContext( void );				\
 
 
 /*-----------------------------------------------------------*/
-extern unsigned cpu_sr;
 
 /* Critical section management. */
 extern void vPortEnterCritical( void );
@@ -141,12 +140,31 @@ extern void vPortExitCritical( void );
 void PortDisableInt_NoNest( void );
 void PortEnableInt_NoNest( void );
 
+extern char NMIIrqIsOn;
+extern char level1_int_disabled;
+extern unsigned cpu_sr;
+
+inline static __attribute__((always_inline)) void _esp_disable_interrupts(void)
+{
+    if(!NMIIrqIsOn && !level1_int_disabled) {
+	__asm__ volatile ("rsil %0, " XTSTR(XCHAL_EXCM_LEVEL) : "=a" (cpu_sr) :: "memory");
+	level1_int_disabled = 1;
+    }
+}
+
+inline static __attribute__((always_inline)) void _esp_enable_interrupts(void)
+{
+    if(!NMIIrqIsOn && level1_int_disabled) {
+	level1_int_disabled = 0;
+	__asm__ volatile ("wsr %0, ps" :: "a" (cpu_sr) : "memory");
+    }
+}
+
 /* Disable interrupts, saving previous state in cpu_sr */
-#define  portDISABLE_INTERRUPTS() \
-            __asm__ volatile ("rsil %0, " XTSTR(XCHAL_EXCM_LEVEL) : "=a" (cpu_sr) :: "memory")
+#define  portDISABLE_INTERRUPTS() _esp_disable_interrupts()
 
 /* Restore interrupts to previous level saved in cpu_sr */
-#define  portENABLE_INTERRUPTS() __asm__ volatile ("wsr %0, ps" :: "a" (cpu_sr) : "memory")
+#define  portENABLE_INTERRUPTS() _esp_enable_interrupts()
 
 #define portENTER_CRITICAL()                vPortEnterCritical()
 #define portEXIT_CRITICAL()                 vPortExitCritical()
