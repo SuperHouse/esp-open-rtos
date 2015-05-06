@@ -154,10 +154,7 @@ void *pvPortMalloc( size_t xWantedSize )
 xBlockLink *pxBlock, *pxPreviousBlock, *pxNewBlockLink;
 void *pvReturn = NULL;
 
-//    printf("%s %d %d\n", __func__, xWantedSize, xFreeBytesRemaining);
-
-//	vTaskSuspendAll();
-	ETS_INTR_LOCK();
+	vTaskSuspendAll();
 	{
 		/* If this is the first call to malloc then the heap will require
 		initialisation to setup the list of free blocks. */
@@ -240,8 +237,7 @@ void *pvReturn = NULL;
 			}
 		}
 	}
-//	xTaskResumeAll();
-	ETS_INTR_UNLOCK();
+	xTaskResumeAll();
 
 	#if( configUSE_MALLOC_FAILED_HOOK == 1 )
 	{
