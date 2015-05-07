@@ -107,11 +107,6 @@ pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE pxCode, void *p
     return sp;
 }
 
-enum SVC_ReqType {
-  SVC_Software = 1,
-  SVC_MACLayer = 2,
-};
-
 static int pending_soft_sv;
 static int pending_maclayer_sv;
 
@@ -126,7 +121,7 @@ static int pending_maclayer_sv;
    In the original esp_iot_rtos_sdk implementation, arg was a char. Using an
    enum is ABI-compatible, though.
 */
-void PendSV( char req )
+void PendSV(enum SVC_ReqType req)
 {
 	vPortEnterCritical();
 

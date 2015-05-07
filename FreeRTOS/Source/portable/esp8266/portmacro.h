@@ -107,16 +107,15 @@ typedef unsigned int INT32U;
 
 #define ICACHE_FLASH_ATTR __attribute__((section(".irom0.text")))
 
+enum SVC_ReqType {
+  SVC_Software = 1,
+  SVC_MACLayer = 2,
+};
+
 /* Scheduler utilities. */
-extern void PendSV(char);
+extern void PendSV(enum SVC_ReqType);
 //#define portYIELD()	vPortYield()
-#define portYIELD()	PendSV(1)
-
-
-//#define portEND_SWITCHING_ISR( xSwitchRequired ) \
-//	if(xSwitchRequired) PendSV(1)
-
-#define HDL_MAC_SIG_IN_LV1_ISR() PendSV(2)
+#define portYIELD()	PendSV(SVC_Software)
 
 /* Task utilities. */
 #define portEND_SWITCHING_ISR( xSwitchRequired ) 	\
