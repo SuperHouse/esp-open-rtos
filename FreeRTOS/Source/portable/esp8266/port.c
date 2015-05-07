@@ -221,6 +221,7 @@ void vPortExitCritical( void )
    handled in libmain.a (xtensa_vectors.o) which then can call into here
    passing an interrupt mask.
 */
+
 _xt_isr isr[16];
 
 void _xt_isr_attach(uint8_t i, _xt_isr func)

@@ -190,20 +190,18 @@ not necessary for to use this port.  They are defined so the common demo files
 #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
 /*-----------------------------------------------------------*/
 
-void        _xt_user_exit           (void);
-void        _xt_tick_timer_init   (void);
-void        _xt_isr_unmask       (uint32_t unmask);
-void        _xt_isr_mask       (uint32_t mask);
-uint32_t		_xt_read_ints (void);
-void		_xt_clear_ints(uint32_t mask);
-
-
-/* interrupt related */
+/* XTensa interrupt management functions, used in port.c.
+   Implementations in blob libs */
+void        _xt_int_exit (void);
+void        _xt_user_exit (void);
+void        _xt_tick_timer_init (void);
+void        _xt_isr_unmask (uint32_t unmask);
+void        _xt_isr_mask (uint32_t mask);
+uint32_t    _xt_read_ints (void);
+void        _xt_clear_ints(uint32_t mask);
 typedef void (* _xt_isr)(void);
-
-void        _xt_isr_attach          (uint8_t i, _xt_isr func);
-
-
+void        _xt_isr_attach (uint8_t i, _xt_isr func);
+void	    _xt_timer_int1(void);
 
 #ifdef __cplusplus
 }
