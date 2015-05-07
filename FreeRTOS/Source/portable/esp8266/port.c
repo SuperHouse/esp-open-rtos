@@ -82,10 +82,9 @@ char level1_int_disabled;
 /*
  * Stack initialization
  */
-portSTACK_TYPE *
-pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE pxCode, void *pvParameters )
+portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE pxCode, void *pvParameters )
 {
-	#define SET_STKREG(r,v) sp[(r) >> 2] = (portSTACK_TYPE)(v)
+    #define SET_STKREG(r,v) sp[(r) >> 2] = (portSTACK_TYPE)(v)
     portSTACK_TYPE *sp, *tp;
 
     /* Create interrupt stack frame aligned to 16 byte boundary */
@@ -173,36 +172,26 @@ void xPortSysTickHandle (void)
 /*
  * See header file for description.
  */
-portBASE_TYPE ICACHE_FLASH_ATTR
-xPortStartScheduler( void )
+portBASE_TYPE xPortStartScheduler( void )
 {
-    //set SV and systemtick as lowest priority ISR.
     _xt_isr_attach(ETS_SOFT_INUM, SV_ISR);
     _xt_isr_unmask(1<<ETS_SOFT_INUM);
 
     /* Initialize system tick timer interrupt and schedule the first tick. */
     _xt_tick_timer_init();
 
-    printf("xPortStartScheduler\n");
     vTaskSwitchContext();
 
-//    REG_SET_BIT(0x3ff2006c, BIT(4));
-	/* Restore the context of the first task that is going to run. */
+    _xt_int_exit();
 
-	XT_RTOS_INT_EXIT();
-
-	/* Should not get here as the tasks are now running! */
-	return pdTRUE;
+    /* Should not get here as the tasks are now running! */
+    return pdTRUE;
 }
 
-void ICACHE_FLASH_ATTR
-vPortEndScheduler( void )
+void vPortEndScheduler( void )
 {
-	/* It is unlikely that the CM3 port will require this function as there
-	is nothing to return to.  */
+    /* No-op, nothing to return to */
 }
-/*-----------------------------------------------------------*/
-
 
 /*-----------------------------------------------------------*/
 
@@ -226,6 +215,12 @@ void vPortExitCritical( void )
 
 /*-----------------------------------------------------------*/
 
+/* Main ISR handler for FreeRTOS side of the ESP libs?
+
+   As far as I can tell, the "real" Xtensa ISRs ("Exceptions") are
+   handled in libmain.a (xtensa_vectors.o) which then can call into here
+   passing an interrupt mask.
+*/
 _xt_isr isr[16];
 
 void _xt_isr_attach(uint8_t i, _xt_isr func)
@@ -235,22 +230,21 @@ void _xt_isr_attach(uint8_t i, _xt_isr func)
 
 uint16_t _xt_isr_handler(uint16_t i)
 {
-	uint8_t index;
+    uint8_t index;
 
-	if (i & (1 << ETS_WDT_INUM)) {
-//		printf("i %x %u\n", i, REG_READ(0x3ff20c00));
-		index = ETS_WDT_INUM;
-	} 
-	else if (i & (1 << ETS_GPIO_INUM)) {
-		index = ETS_GPIO_INUM;
-	}else {
-		index = __builtin_ffs(i) - 1;
+    if (i & (1 << ETS_WDT_INUM)) {
+	index = ETS_WDT_INUM;
+    }
+    else if (i & (1 << ETS_GPIO_INUM)) {
+	index = ETS_GPIO_INUM;
+    }else {
+	index = __builtin_ffs(i) - 1;
 
-		if (index == ETS_MAX_INUM) {
-			i &= ~(1 << ETS_MAX_INUM);
-			index = __builtin_ffs(i) - 1;
-		}
+	if (index == ETS_MAX_INUM) {
+	    i &= ~(1 << ETS_MAX_INUM);
+	    index = __builtin_ffs(i) - 1;
 	}
+    }
 
     _xt_clear_ints(1<<index);
 
