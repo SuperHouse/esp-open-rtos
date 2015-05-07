@@ -108,7 +108,7 @@ typedef unsigned int INT32U;
 #define ICACHE_FLASH_ATTR __attribute__((section(".irom0.text")))
 
 /* Scheduler utilities. */
-extern void PendSV(char req);
+extern void PendSV(char);
 //#define portYIELD()	vPortYield()
 #define portYIELD()	PendSV(1)
 

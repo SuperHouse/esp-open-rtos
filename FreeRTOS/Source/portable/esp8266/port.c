@@ -76,10 +76,6 @@
 #include "task.h"
 #include "xtensa_rtos.h"
 
-static char HdlMacSig = 0;
-static char SWReq = 0;
-static char PendSvIsPosted = 0;
-
 unsigned cpu_sr;
 char level1_int_disabled;
 
@@ -111,86 +107,66 @@ pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE pxCode, void *p
     return sp;
 }
 
+enum SVC_ReqType {
+  SVC_Software = 1,
+  SVC_MACLayer = 2,
+};
 
+static int pending_soft_sv;
+static int pending_maclayer_sv;
+static int pending_sv_posted;
+
+/* PendSV is called in place of vPortYield() to request a supervisor
+   call.
+
+   The portYIELD macro calls pendSV if it's a software request.
+
+   The libpp and libudhcp libraries also call this function, assuming
+   always with arg==2 (but maybe sometimes with arg==1?)
+
+   In the original esp_iot_rtos_sdk implementation, arg was a char. Using an
+   enum is ABI-compatible, though.
+*/
 void PendSV( char req )
 {
 	vPortEnterCritical();
 
-	if(req ==1)
+	if(req == SVC_Software)
 	{
-		SWReq = 1;
+		pending_soft_sv = 1;
 	}
-	else if(req ==2)
-		HdlMacSig= 1;
+	else if(req == SVC_MACLayer)
+		pending_maclayer_sv= 1;
 
-	if(PendSvIsPosted == 0)
+	if(pending_sv_posted == 0)
 	{
-		PendSvIsPosted = 1;
+		pending_sv_posted = 1;
 		xthal_set_intset(1<<ETS_SOFT_INUM);
 	}
 	vPortExitCritical();
 }
 
-/* This ISR is defined in libpp.a, and is called after a Blob SV
- * requests a soft interrupt. Something to do with the MAC layer?
-
-   External blobs can trigger a MAC layer interrupt by calling PendSV
-   with req==2 (see below), which then calls back into this function
-   from the interrupt context.
-
-   I _think_ this may be the function which sets NMIIrqIsOn, but I'm
-   not sure about that (see also portmacro.h).
-*/
+/* This MAC layer ISR handler is defined in libpp.a, and is called
+ * after a Blob SV requests a soft interrupt by calling
+ * PendSV(SVC_MACLayer).
+ */
 extern portBASE_TYPE MacIsrSigPostDefHdl(void);
-#if 0
-void IRAM_FUNC_ATTR
-GPIOIntrHdl(void)
-{
-//if( (GPIO_REG_READ(GPIO_STATUS_ADDRESS) & (1<<6)) == 0 )
-	//printf("i");
-	//printf("g,%08x\n",GPIO_REG_READ(GPIO_STATUS_ADDRESS));
-//SDIO_CLK GPIO interrupt
 
-	if( (GPIO_REG_READ(GPIO_STATUS_ADDRESS) & (1<<6)) != 0 )
-	{
-		//CloseNMI();
-
-		portBASE_TYPE xHigherPriorityTaskWoken=pdFALSE ;
-		if(HdlMacSig == 1)
-		{
-			HdlMacSig = 0;
-			xHigherPriorityTaskWoken = MacIsrSigPostDefHdl();
-		}
-		if( xHigherPriorityTaskWoken || (SWReq==1)) 
-		{
-			SWReq = 0;
-			_xt_timer_int1();
-		}
-		//OpenNMI();
-		GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 0x40);
-	}
-}
-#else
-void SoftIsrHdl(void)
+void SV_ISR(void)
 {
-//if(DbgVal5==1)
-	//printf("GP_%d,",SWReq);
-	PendSvIsPosted = 0;
+	pending_sv_posted = 0;
 	portBASE_TYPE xHigherPriorityTaskWoken=pdFALSE ;
-	if(HdlMacSig == 1)
+	if(pending_maclayer_sv)
 	{
 		xHigherPriorityTaskWoken = MacIsrSigPostDefHdl();
-		HdlMacSig = 0;
+		pending_maclayer_sv = 0;
 	}
-	if( xHigherPriorityTaskWoken || (SWReq==1)) 
+	if( xHigherPriorityTaskWoken || pending_soft_sv)
 	{
-//if( DbgVal5==1 || DbgVal10==1 )
-	//printf("_x_s,");
-		_xt_timer_int1();
-		SWReq = 0;
+	    _xt_timer_int1();
+	    pending_soft_sv = 0;
 	}
 }
-#endif
 
 void xPortSysTickHandle (void)
 {
@@ -211,17 +187,9 @@ void xPortSysTickHandle (void)
 portBASE_TYPE ICACHE_FLASH_ATTR
 xPortStartScheduler( void )
 {
-	//set pendsv and systemtick as lowest priority ISR.
-	//pendsv setting
-			/*******GPIO sdio_clk isr*********/
-#if 0
-    _xt_isr_attach(ETS_GPIO_INUM, GPIOIntrHdl);
-    _xt_isr_unmask(1<<ETS_GPIO_INUM);
-#else
-			/*******software isr*********/
-   	_xt_isr_attach(ETS_SOFT_INUM, SoftIsrHdl);
+    //set SV and systemtick as lowest priority ISR.
+    _xt_isr_attach(ETS_SOFT_INUM, SV_ISR);
     _xt_isr_unmask(1<<ETS_SOFT_INUM);
-#endif
 
     /* Initialize system tick timer interrupt and schedule the first tick. */
     _xt_tick_timer_init();
