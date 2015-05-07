@@ -57,9 +57,9 @@ MODULE_INCDIR    += include/lwip include/lwip/ipv4 include/lwip/ipv6
 SDK_INCDIR=include/espressif
 
 # libraries to link, mainly blobs provided by the esp-iot-rtos SDK
-LIBS		?= c gcc json lwip main net80211 phy pp ssl udhcp wpa hal
+LIBS		?= gcc json lwip main net80211 phy pp ssl udhcp wpa hal
 
-CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals
+CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(ROOT)lib -u call_user_start -Wl,-static -Wl,-Map=build/${TARGET}.map
 
 ifeq ($(FLAVOR),debug)
