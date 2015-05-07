@@ -93,10 +93,8 @@ extern "C" {
 #define portSTACK_TYPE          unsigned portLONG
 #define portBASE_TYPE           long
 
-typedef unsigned portLONG portTickType;
-
-#define portMAX_DELAY (( portTickType ) UINT32_MAX)
-/*-----------------------------------------------------------*/
+typedef uint32_t portTickType;
+#define portMAX_DELAY ( portTickType ) 0xffffffff
 
 /* Architecture specifics. */
 #define portSTACK_GROWTH			( -1 )
@@ -126,13 +124,27 @@ void PendSV(enum SVC_ReqType);
 
 /*-----------------------------------------------------------*/
 
+/* NMIIrqIsOn flag is defined in libpp.a, and appears to be set when an NMI
+   (int level 3) is currently runnning (during which time libpp.a might
+   call back into parts of the OS?)
+
+   The esp_iot_rtos_sdk disables all interrupt manipulations while this
+   flag is set.
+
+   It's also referenced from some other blob libraries (not known if
+   read or written there).
+
+   ESPTODO: It may be possible to just read the 'ps' register instead
+   of accessing thisvariable.
+*/
 extern char NMIIrqIsOn;
 extern char level1_int_disabled;
 extern unsigned cpu_sr;
 
-/* ESPTODO: Currently we store the old interrupt level (ps) in a global variable
-   cpu_sr. It may not be necessary to do this, but it depends on how the blob libraries
-   call into these functions.
+/* ESPTODO: Currently we store the old interrupt level (ps) in a
+   global variable cpu_sr. It may not be necessary to do this,
+   especially as lx106 has only one real interrupt level + NMI, but it
+   all depends on how the blob libraries call into these functions.
 */
 inline static __attribute__((always_inline)) void _esp_disable_interrupts(void)
 {
