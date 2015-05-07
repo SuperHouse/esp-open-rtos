@@ -95,7 +95,7 @@ endif
 vpath %.c $(SRC_DIR)
 
 define compile-objects
-$1/%.o: %.c
+$1/%.o: %.c $1
 	$(vecho) "CC $$<"
 	$(CC_ARGS) -c $$< -o $$@
 	$(CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
@@ -106,11 +106,11 @@ endef
 
 all: checkdirs $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
 
-$(FW_FILE_1): $(TARGET_OUT)
+$(FW_FILE_1): $(TARGET_OUT) firmware
 	$(vecho) "FW $@"
 	$(ESPTOOL) elf2image $< -o $(FW_BASE)/
 
-$(FW_FILE_2): $(TARGET_OUT)
+$(FW_FILE_2): $(TARGET_OUT) firmware
 	$(vecho) "FW $@"
 	$(ESPTOOL) elf2image $< -o $(FW_BASE)/
 
