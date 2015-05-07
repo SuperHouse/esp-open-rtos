@@ -63,19 +63,19 @@
 */
 
 /*-----------------------------------------------------------
- * Implementation of functions defined in portable.h for the ARM CM3 port.
+ * Implementation of functions defined in portable.h for ESP8266
+ *
+ * This is based on the version supplied in esp_iot_rtos_sdk,
+ * which is in turn based on the ARM CM3 port.
  *----------------------------------------------------------*/
 
 /* Scheduler includes. */
 #include <xtensa/config/core.h>
-//#include <xtensa/tie/xt_interrupt.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include "xtensa_rtos.h"
 
-
-extern char NMIIrqIsOn;
 static char HdlMacSig = 0;
 static char SWReq = 0;
 static char PendSvIsPosted = 0;
@@ -83,23 +83,17 @@ static char PendSvIsPosted = 0;
 unsigned cpu_sr;
 char level1_int_disabled;
 
-/* Each task maintains its own interrupt status in the critical nesting
-variable. */
-static unsigned portBASE_TYPE uxCriticalNesting = 0;
-
-void vPortEnterCritical( void );
-void vPortExitCritical( void );
 /*
- * See header file for description.
+ * Stack initialization
  */
-portSTACK_TYPE * ICACHE_FLASH_ATTR
+portSTACK_TYPE *
 pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE pxCode, void *pvParameters )
 {
 	#define SET_STKREG(r,v) sp[(r) >> 2] = (portSTACK_TYPE)(v)
     portSTACK_TYPE *sp, *tp;
 
     /* Create interrupt stack frame aligned to 16 byte boundary */
-    sp = (portSTACK_TYPE*) (((INT32U)(pxTopOfStack+1) - XT_CP_SIZE - XT_STK_FRMSZ) & ~0xf);
+    sp = (portSTACK_TYPE*) (((uint32_t)(pxTopOfStack+1) - XT_CP_SIZE - XT_STK_FRMSZ) & ~0xf);
 
     /* Clear the entire frame (do not use memset() because we don't depend on C library) */
     for (tp = sp; tp <= pxTopOfStack; ++tp)
@@ -108,33 +102,19 @@ pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE pxCode, void *p
     /* Explicitly initialize certain saved registers */
     SET_STKREG( XT_STK_PC,      pxCode                        );  /* task entrypoint                  */
     SET_STKREG( XT_STK_A0,      0                           );  /* to terminate GDB backtrace       */
-    SET_STKREG( XT_STK_A1,      (INT32U)sp + XT_STK_FRMSZ   );  /* physical top of stack frame      */
+    SET_STKREG( XT_STK_A1,      (uint32_t)sp + XT_STK_FRMSZ   );  /* physical top of stack frame      */
     SET_STKREG( XT_STK_A2,      pvParameters   );           /* parameters      */
     SET_STKREG( XT_STK_EXIT,    _xt_user_exit               );  /* user exception exit dispatcher   */
 
     /* Set initial PS to int level 0, EXCM disabled ('rfe' will enable), user mode. */
-    #ifdef __XTENSA_CALL0_ABI__
     SET_STKREG( XT_STK_PS,      PS_UM | PS_EXCM     );
-    #else
-    /* + for windowed ABI also set WOE and CALLINC (pretend task was 'call4'd). */
-    SET_STKREG( XT_STK_PS,      PS_UM | PS_EXCM | PS_WOE | PS_CALLINC(1) );
-    #endif
-
-	return sp;
+    return sp;
 }
 
 
 void PendSV( char req )
 {
-	char tmp=0;
-//ETS_INTR_LOCK();
-
-	if( NMIIrqIsOn == 0 )
-	{
-		vPortEnterCritical();
-		//PortDisableInt_NoNest();
-		tmp = 1;
-	}
+	vPortEnterCritical();
 
 	if(req ==1)
 	{
@@ -142,19 +122,25 @@ void PendSV( char req )
 	}
 	else if(req ==2)
 		HdlMacSig= 1;
-#if 0
-	GPIO_REG_WRITE(GPIO_STATUS_W1TS_ADDRESS, 0x40);	
-#else
+
 	if(PendSvIsPosted == 0)
 	{
 		PendSvIsPosted = 1;
 		xthal_set_intset(1<<ETS_SOFT_INUM);
 	}
-#endif
-	if(tmp == 1)
-		vPortExitCritical();
+	vPortExitCritical();
 }
 
+/* This ISR is defined in libpp.a, and is called after a Blob SV
+ * requests a soft interrupt. Something to do with the MAC layer?
+
+   External blobs can trigger a MAC layer interrupt by calling PendSV
+   with req==2 (see below), which then calls back into this function
+   from the interrupt context.
+
+   I _think_ this may be the function which sets NMIIrqIsOn, but I'm
+   not sure about that (see also portmacro.h).
+*/
 extern portBASE_TYPE MacIsrSigPostDefHdl(void);
 #if 0
 void IRAM_FUNC_ATTR
@@ -263,7 +249,9 @@ vPortEndScheduler( void )
 
 /*-----------------------------------------------------------*/
 
-static unsigned int tick_lock=0;
+/* Each task maintains its own interrupt status in the critical nesting
+variable. */
+static unsigned portBASE_TYPE uxCriticalNesting = 0;
 
 void vPortEnterCritical( void )
 {
@@ -277,18 +265,6 @@ void vPortExitCritical( void )
     uxCriticalNesting--;
     if( uxCriticalNesting == 0 )
 	portENABLE_INTERRUPTS();
-}
-
-void
-PortDisableInt_NoNest( void )
-{
-    portDISABLE_INTERRUPTS();
-}
-
-void
-PortEnableInt_NoNest( void )
-{
-    portENABLE_INTERRUPTS();
 }
 
 /*-----------------------------------------------------------*/
