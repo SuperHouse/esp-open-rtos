@@ -46,7 +46,7 @@ EXTRA_INCDIR += include/lwip include/lwip/ipv4 include/lwip/ipv6
 # libraries used in this project, mainly provided by the SDK
 LIBS		= c gcc json lwip main net80211 phy pp ssl udhcp wpa hal
 
-CFLAGS		= -Os -Wall -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals
+CFLAGS		= -Os -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals
 
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-Llib -u call_user_start -Wl,-static -Wl,-Map=build/${TARGET}.map
 
