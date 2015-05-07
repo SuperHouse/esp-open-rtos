@@ -238,14 +238,12 @@ static void prvCheckPendingReadyList( void )
 		corCRCB *pxUnblockedCRCB;
 
 		/* The pending ready list can be accessed by an ISR. */
-		//portDISABLE_INTERRUPTS();
-PortDisableInt_NoNest();
+		portDISABLE_INTERRUPTS();
 		{
 			pxUnblockedCRCB = ( corCRCB * ) listGET_OWNER_OF_HEAD_ENTRY( (&xPendingReadyCoRoutineList) );
 			( void ) uxListRemove( &( pxUnblockedCRCB->xEventListItem ) );
 		}
-//		portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+		portENABLE_INTERRUPTS();
 
 		( void ) uxListRemove( &( pxUnblockedCRCB->xGenericListItem ) );
 		prvAddCoRoutineToReadyQueue( pxUnblockedCRCB );
@@ -286,8 +284,7 @@ corCRCB *pxCRCB;
 				break;
 			}
 
-			//portDISABLE_INTERRUPTS();
-PortDisableInt_NoNest();
+			portDISABLE_INTERRUPTS();
 			{
 				/* The event could have occurred just before this critical
 				section.  If this is the case then the generic list item will
@@ -302,8 +299,7 @@ PortDisableInt_NoNest();
 					( void ) uxListRemove( &( pxCRCB->xEventListItem ) );
 				}
 			}
-//			portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+			portENABLE_INTERRUPTS();
 
 			prvAddCoRoutineToReadyQueue( pxCRCB );
 		}

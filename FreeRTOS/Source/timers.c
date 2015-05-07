@@ -194,8 +194,7 @@ static void prvProcessTimerOrBlockTask( portTickType xNextExpireTime, portBASE_T
 
 /*-----------------------------------------------------------*/
 
-portBASE_TYPE ICACHE_FLASH_ATTR
-xTimerCreateTimerTask( void )
+portBASE_TYPE xTimerCreateTimerTask( void )
 {
 portBASE_TYPE xReturn = pdFAIL;
 
@@ -212,7 +211,6 @@ portBASE_TYPE xReturn = pdFAIL;
 			/* Create the timer task, storing its handle in xTimerTaskHandle so
 			it can be returned by the xTimerGetTimerDaemonTaskHandle() function. */
 			xReturn = xTaskCreate( prvTimerTask, ( const signed char * ) "Tmr Svc", ( unsigned short ) configTIMER_TASK_STACK_DEPTH, NULL, ( ( unsigned portBASE_TYPE ) configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT, &xTimerTaskHandle );
-printf("tim_task_hdl : %x\n", xTimerTaskHandle);
 		}
 		#else
 		{
@@ -227,8 +225,7 @@ printf("tim_task_hdl : %x\n", xTimerTaskHandle);
 }
 /*-----------------------------------------------------------*/
 
-xTimerHandle ICACHE_FLASH_ATTR
-xTimerCreate( const signed char * const pcTimerName, portTickType xTimerPeriodInTicks, unsigned portBASE_TYPE uxAutoReload, void *pvTimerID, tmrTIMER_CALLBACK pxCallbackFunction )
+xTimerHandle xTimerCreate( const signed char * const pcTimerName, portTickType xTimerPeriodInTicks, unsigned portBASE_TYPE uxAutoReload, void *pvTimerID, tmrTIMER_CALLBACK pxCallbackFunction )
 {
 xTIMER *pxNewTimer;
 
@@ -267,8 +264,7 @@ xTIMER *pxNewTimer;
 }
 /*-----------------------------------------------------------*/
 
-portBASE_TYPE ICACHE_FLASH_ATTR
-xTimerGenericCommand( xTimerHandle xTimer, portBASE_TYPE xCommandID, portTickType xOptionalValue, signed portBASE_TYPE *pxHigherPriorityTaskWoken, portTickType xBlockTime )
+portBASE_TYPE xTimerGenericCommand( xTimerHandle xTimer, portBASE_TYPE xCommandID, portTickType xOptionalValue, signed portBASE_TYPE *pxHigherPriorityTaskWoken, portTickType xBlockTime )
 {
 portBASE_TYPE xReturn = pdFAIL;
 xTIMER_MESSAGE xMessage;
@@ -307,8 +303,7 @@ xTIMER_MESSAGE xMessage;
 
 #if ( INCLUDE_xTimerGetTimerDaemonTaskHandle == 1 )
 
-	xTaskHandle ICACHE_FLASH_ATTR
-	xTimerGetTimerDaemonTaskHandle( void )
+	xTaskHandle xTimerGetTimerDaemonTaskHandle( void )
 	{
 		/* If xTimerGetTimerDaemonTaskHandle() is called before the scheduler has been
 		started, then xTimerTaskHandle will be NULL. */
@@ -319,8 +314,7 @@ xTIMER_MESSAGE xMessage;
 #endif
 /*-----------------------------------------------------------*/
 
-static void ICACHE_FLASH_ATTR
-prvProcessExpiredTimer( portTickType xNextExpireTime, portTickType xTimeNow )
+static void prvProcessExpiredTimer( portTickType xNextExpireTime, portTickType xTimeNow )
 {
 xTIMER *pxTimer;
 portBASE_TYPE xResult;
@@ -352,14 +346,11 @@ portBASE_TYPE xResult;
 	}
 
 	/* Call the timer callback. */
-	//pxTimer->pxCallbackFunction( ( xTimerHandle ) pxTimer );
-	pxTimer->pxCallbackFunction( ( void * ) (pxTimer->pvTimerID) );
-
+	pxTimer->pxCallbackFunction( ( xTimerHandle ) pxTimer );
 }
 /*-----------------------------------------------------------*/
 
-static void ICACHE_FLASH_ATTR
-prvTimerTask( void *pvParameters )
+static void prvTimerTask( void *pvParameters )
 {
 portTickType xNextExpireTime;
 portBASE_TYPE xListWasEmpty;
@@ -383,8 +374,7 @@ portBASE_TYPE xListWasEmpty;
 }
 /*-----------------------------------------------------------*/
 
-static void ICACHE_FLASH_ATTR
-prvProcessTimerOrBlockTask( portTickType xNextExpireTime, portBASE_TYPE xListWasEmpty )
+static void prvProcessTimerOrBlockTask( portTickType xNextExpireTime, portBASE_TYPE xListWasEmpty )
 {
 portTickType xTimeNow;
 portBASE_TYPE xTimerListsWereSwitched;
@@ -433,8 +423,7 @@ portBASE_TYPE xTimerListsWereSwitched;
 }
 /*-----------------------------------------------------------*/
 
-static portTickType ICACHE_FLASH_ATTR
-prvGetNextExpireTime( portBASE_TYPE *pxListWasEmpty )
+static portTickType prvGetNextExpireTime( portBASE_TYPE *pxListWasEmpty )
 {
 portTickType xNextExpireTime;
 
@@ -460,8 +449,7 @@ portTickType xNextExpireTime;
 }
 /*-----------------------------------------------------------*/
 
-static portTickType ICACHE_FLASH_ATTR
-prvSampleTimeNow( portBASE_TYPE *pxTimerListsWereSwitched )
+static portTickType prvSampleTimeNow( portBASE_TYPE *pxTimerListsWereSwitched )
 {
 portTickType xTimeNow;
 PRIVILEGED_DATA static portTickType xLastTime = ( portTickType ) 0U; /*lint !e956 Variable is only accessible to one task. */
@@ -484,8 +472,7 @@ PRIVILEGED_DATA static portTickType xLastTime = ( portTickType ) 0U; /*lint !e95
 }
 /*-----------------------------------------------------------*/
 
-static portBASE_TYPE ICACHE_FLASH_ATTR
-prvInsertTimerInActiveList( xTIMER *pxTimer, portTickType xNextExpiryTime, portTickType xTimeNow, portTickType xCommandTime )
+static portBASE_TYPE prvInsertTimerInActiveList( xTIMER *pxTimer, portTickType xNextExpiryTime, portTickType xTimeNow, portTickType xCommandTime )
 {
 portBASE_TYPE xProcessTimerNow = pdFALSE;
 
@@ -526,8 +513,7 @@ portBASE_TYPE xProcessTimerNow = pdFALSE;
 }
 /*-----------------------------------------------------------*/
 
-static void ICACHE_FLASH_ATTR
-prvProcessReceivedCommands( void )
+static void	prvProcessReceivedCommands( void )
 {
 xTIMER_MESSAGE xMessage;
 xTIMER *pxTimer;
@@ -562,8 +548,7 @@ portTickType xTimeNow;
 				{
 					/* The timer expired before it was added to the active timer
 					list.  Process it now. */
-					//pxTimer->pxCallbackFunction( ( xTimerHandle ) pxTimer );
-					pxTimer->pxCallbackFunction( ( void * ) (pxTimer->pvTimerID) );
+					pxTimer->pxCallbackFunction( ( xTimerHandle ) pxTimer );
 
 					if( pxTimer->uxAutoReload == ( unsigned portBASE_TYPE ) pdTRUE )
 					{
@@ -599,8 +584,7 @@ portTickType xTimeNow;
 }
 /*-----------------------------------------------------------*/
 
-static void ICACHE_FLASH_ATTR
-prvSwitchTimerLists( portTickType xLastTime )
+static void prvSwitchTimerLists( portTickType xLastTime )
 {
 portTickType xNextExpireTime, xReloadTime;
 xList *pxTemp;
@@ -625,8 +609,7 @@ portBASE_TYPE xResult;
 		/* Execute its callback, then send a command to restart the timer if
 		it is an auto-reload timer.  It cannot be restarted here as the lists
 		have not yet been switched. */
-		//pxTimer->pxCallbackFunction( ( xTimerHandle ) pxTimer );
-		pxTimer->pxCallbackFunction( ( void * ) (pxTimer->pvTimerID) );
+		pxTimer->pxCallbackFunction( ( xTimerHandle ) pxTimer );
 
 		if( pxTimer->uxAutoReload == ( unsigned portBASE_TYPE ) pdTRUE )
 		{
@@ -658,8 +641,7 @@ portBASE_TYPE xResult;
 }
 /*-----------------------------------------------------------*/
 
-static void ICACHE_FLASH_ATTR
-prvCheckForValidListAndQueue( void )
+static void prvCheckForValidListAndQueue( void )
 {
 	/* Check that the list from which active timers are referenced, and the
 	queue used to communicate with the timer service, have been
@@ -679,8 +661,7 @@ prvCheckForValidListAndQueue( void )
 }
 /*-----------------------------------------------------------*/
 
-portBASE_TYPE ICACHE_FLASH_ATTR
-xTimerIsTimerActive( xTimerHandle xTimer )
+portBASE_TYPE xTimerIsTimerActive( xTimerHandle xTimer )
 {
 portBASE_TYPE xTimerIsInActiveList;
 xTIMER *pxTimer = ( xTIMER * ) xTimer;
@@ -699,8 +680,7 @@ xTIMER *pxTimer = ( xTIMER * ) xTimer;
 }
 /*-----------------------------------------------------------*/
 
-void * ICACHE_FLASH_ATTR
-pvTimerGetTimerID( xTimerHandle xTimer )
+void *pvTimerGetTimerID( xTimerHandle xTimer )
 {
 xTIMER *pxTimer = ( xTIMER * ) xTimer;
 
@@ -711,5 +691,7 @@ xTIMER *pxTimer = ( xTIMER * ) xTimer;
 /* This entire source file will be skipped if the application is not configured
 to include software timer functionality.  If you want to include software timer
 functionality then ensure configUSE_TIMERS is set to 1 in FreeRTOSConfig.h. */
-
 #endif /* configUSE_TIMERS == 1 */
+
+
+

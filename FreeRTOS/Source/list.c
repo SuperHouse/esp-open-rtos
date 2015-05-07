@@ -71,8 +71,7 @@
  * PUBLIC LIST API documented in list.h
  *----------------------------------------------------------*/
 
-void ICACHE_FLASH_ATTR
-vListInitialise( xList * const pxList )
+void vListInitialise( xList * const pxList )
 {
 	/* The list structure contains a list item which is used to mark the
 	end of the list.  To initialise the list the list end is inserted
@@ -92,16 +91,14 @@ vListInitialise( xList * const pxList )
 }
 /*-----------------------------------------------------------*/
 
-void ICACHE_FLASH_ATTR
-vListInitialiseItem( xListItem * const pxItem )
+void vListInitialiseItem( xListItem * const pxItem )
 {
 	/* Make sure the list item is not recorded as being on a list. */
 	pxItem->pvContainer = NULL;
 }
 /*-----------------------------------------------------------*/
 
-void
-vListInsertEnd( xList * const pxList, xListItem * const pxNewListItem )
+void vListInsertEnd( xList * const pxList, xListItem * const pxNewListItem )
 {
 xListItem * pxIndex;
 
@@ -122,8 +119,7 @@ xListItem * pxIndex;
 }
 /*-----------------------------------------------------------*/
 
-void ICACHE_FLASH_ATTR
-vListInsert( xList * const pxList, xListItem * const pxNewListItem )
+void vListInsert( xList * const pxList, xListItem * const pxNewListItem )
 {
 xListItem *pxIterator;
 portTickType xValueOfInsertion;
@@ -181,8 +177,7 @@ portTickType xValueOfInsertion;
 }
 /*-----------------------------------------------------------*/
 
-unsigned portBASE_TYPE
-uxListRemove( xListItem * const pxItemToRemove )
+unsigned portBASE_TYPE uxListRemove( xListItem * const pxItemToRemove )
 {
 xList * pxList;
 

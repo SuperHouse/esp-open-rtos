@@ -75,7 +75,7 @@ task.h is included from an application file. */
 #include "queue.h"
 
 #if ( configUSE_CO_ROUTINES == 1 )
-	#include "freertos/croutine.h"
+	#include "croutine.h"
 #endif
 
 /* Lint e961 and e750 are suppressed as a MISRA exception justified because the
@@ -234,9 +234,7 @@ static void prvCopyDataFromQueue( xQUEUE * const pxQueue, const void * const pvB
 	}														\
 	taskEXIT_CRITICAL()
 /*-----------------------------------------------------------*/
-
-portBASE_TYPE ICACHE_FLASH_ATTR
-xQueueGenericReset( xQueueHandle xQueue, portBASE_TYPE xNewQueue )
+portBASE_TYPE xQueueGenericReset( xQueueHandle xQueue, portBASE_TYPE xNewQueue )
 {
 xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 
@@ -281,8 +279,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 }
 /*-----------------------------------------------------------*/
 
-xQueueHandle ICACHE_FLASH_ATTR
-xQueueGenericCreate( unsigned portBASE_TYPE uxQueueLength, unsigned portBASE_TYPE uxItemSize, unsigned char ucQueueType )
+xQueueHandle xQueueGenericCreate( unsigned portBASE_TYPE uxQueueLength, unsigned portBASE_TYPE uxItemSize, unsigned char ucQueueType )
 {
 xQUEUE *pxNewQueue;
 size_t xQueueSizeInBytes;
@@ -341,9 +338,7 @@ xQueueHandle xReturn = NULL;
 /*-----------------------------------------------------------*/
 
 #if ( configUSE_MUTEXES == 1 )
-
-	xQueueHandle ICACHE_FLASH_ATTR
-	xQueueCreateMutex( unsigned char ucQueueType )
+	xQueueHandle xQueueCreateMutex( unsigned char ucQueueType )
 	{
 	xQUEUE *pxNewQueue;
 
@@ -407,9 +402,7 @@ xQueueHandle xReturn = NULL;
 /*-----------------------------------------------------------*/
 
 #if ( ( configUSE_MUTEXES == 1 ) && ( INCLUDE_xSemaphoreGetMutexHolder == 1 ) )
-
-	void* ICACHE_FLASH_ATTR
-	xQueueGetMutexHolder( xQueueHandle xSemaphore )
+	void* xQueueGetMutexHolder( xQueueHandle xSemaphore )
 	{
 	void *pxReturn;
 
@@ -438,9 +431,7 @@ xQueueHandle xReturn = NULL;
 /*-----------------------------------------------------------*/
 
 #if ( configUSE_RECURSIVE_MUTEXES == 1 )
-
-	portBASE_TYPE ICACHE_FLASH_ATTR
-	xQueueGiveMutexRecursive( xQueueHandle xMutex )
+	portBASE_TYPE xQueueGiveMutexRecursive( xQueueHandle xMutex )
 	{
 	portBASE_TYPE xReturn;
 	xQUEUE * const pxMutex = ( xQUEUE * ) xMutex;
@@ -489,9 +480,7 @@ xQueueHandle xReturn = NULL;
 /*-----------------------------------------------------------*/
 
 #if ( configUSE_RECURSIVE_MUTEXES == 1 )
-
-	portBASE_TYPE ICACHE_FLASH_ATTR
-	xQueueTakeMutexRecursive( xQueueHandle xMutex, portTickType xBlockTime )
+	portBASE_TYPE xQueueTakeMutexRecursive( xQueueHandle xMutex, portTickType xBlockTime )
 	{
 	portBASE_TYPE xReturn;
 	xQUEUE * const pxMutex = ( xQUEUE * ) xMutex;
@@ -531,9 +520,7 @@ xQueueHandle xReturn = NULL;
 /*-----------------------------------------------------------*/
 
 #if ( configUSE_COUNTING_SEMAPHORES == 1 )
-
-	xQueueHandle ICACHE_FLASH_ATTR
-	xQueueCreateCountingSemaphore( unsigned portBASE_TYPE uxCountValue, unsigned portBASE_TYPE uxInitialCount )
+	xQueueHandle xQueueCreateCountingSemaphore( unsigned portBASE_TYPE uxCountValue, unsigned portBASE_TYPE uxInitialCount )
 	{
 	xQueueHandle xHandle;
 
@@ -556,9 +543,7 @@ xQueueHandle xReturn = NULL;
 
 #endif /* configUSE_COUNTING_SEMAPHORES */
 /*-----------------------------------------------------------*/
-
-signed portBASE_TYPE ICACHE_FLASH_ATTR
-xQueueGenericSend( xQueueHandle xQueue, const void * const pvItemToQueue, portTickType xTicksToWait, portBASE_TYPE xCopyPosition )
+signed portBASE_TYPE xQueueGenericSend( xQueueHandle xQueue, const void * const pvItemToQueue, portTickType xTicksToWait, portBASE_TYPE xCopyPosition )
 {
 signed portBASE_TYPE xEntryTimeSet = pdFALSE;
 xTimeOutType xTimeOut;
@@ -719,9 +704,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 /*-----------------------------------------------------------*/
 
 #if ( configUSE_ALTERNATIVE_API == 1 )
-
-	signed portBASE_TYPE ICACHE_FLASH_ATTR
-	xQueueAltGenericSend( xQueueHandle xQueue, const void * const pvItemToQueue, portTickType xTicksToWait, portBASE_TYPE xCopyPosition )
+	signed portBASE_TYPE xQueueAltGenericSend( xQueueHandle xQueue, const void * const pvItemToQueue, portTickType xTicksToWait, portBASE_TYPE xCopyPosition )
 	{
 	signed portBASE_TYPE xEntryTimeSet = pdFALSE;
 	xTimeOutType xTimeOut;
@@ -798,9 +781,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 /*-----------------------------------------------------------*/
 
 #if ( configUSE_ALTERNATIVE_API == 1 )
-
-	signed portBASE_TYPE ICACHE_FLASH_ATTR
-	xQueueAltGenericReceive( xQueueHandle xQueue, void * const pvBuffer, portTickType xTicksToWait, portBASE_TYPE xJustPeeking )
+	signed portBASE_TYPE xQueueAltGenericReceive( xQueueHandle xQueue, void * const pvBuffer, portTickType xTicksToWait, portBASE_TYPE xJustPeeking )
 	{
 	signed portBASE_TYPE xEntryTimeSet = pdFALSE;
 	xTimeOutType xTimeOut;
@@ -929,9 +910,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 
 #endif /* configUSE_ALTERNATIVE_API */
 /*-----------------------------------------------------------*/
-
-signed portBASE_TYPE
-xQueueGenericSendFromISR( xQueueHandle xQueue, const void * const pvItemToQueue, signed portBASE_TYPE *pxHigherPriorityTaskWoken, portBASE_TYPE xCopyPosition )
+signed portBASE_TYPE xQueueGenericSendFromISR( xQueueHandle xQueue, const void * const pvItemToQueue, signed portBASE_TYPE *pxHigherPriorityTaskWoken, portBASE_TYPE xCopyPosition )
 {
 signed portBASE_TYPE xReturn;
 unsigned portBASE_TYPE uxSavedInterruptStatus;
@@ -962,9 +941,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 	queue read, instead we return a flag to say whether a context switch is
 	required or not (i.e. has a task with a higher priority than us been woken
 	by this	post). */
-//	uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
-	portSET_INTERRUPT_MASK_FROM_ISR();
-
+	uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
 	{
 		if( ( pxQueue->uxMessagesWaiting < pxQueue->uxLength ) || ( xCopyPosition == queueOVERWRITE ) )
 		{
@@ -1044,9 +1021,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 	return xReturn;
 }
 /*-----------------------------------------------------------*/
-
-signed portBASE_TYPE ICACHE_FLASH_ATTR
-xQueueGenericReceive( xQueueHandle xQueue, const void * const pvBuffer, portTickType xTicksToWait, portBASE_TYPE xJustPeeking )
+signed portBASE_TYPE xQueueGenericReceive( xQueueHandle xQueue, const void * const pvBuffer, portTickType xTicksToWait, portBASE_TYPE xJustPeeking )
 {
 signed portBASE_TYPE xEntryTimeSet = pdFALSE;
 xTimeOutType xTimeOut;
@@ -1200,9 +1175,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 	}
 }
 /*-----------------------------------------------------------*/
-
-signed portBASE_TYPE 
-xQueueReceiveFromISR( xQueueHandle xQueue, const void * const pvBuffer, signed portBASE_TYPE *pxHigherPriorityTaskWoken )
+signed portBASE_TYPE xQueueReceiveFromISR( xQueueHandle xQueue, const void * const pvBuffer, signed portBASE_TYPE *pxHigherPriorityTaskWoken )
 {
 signed portBASE_TYPE xReturn;
 unsigned portBASE_TYPE uxSavedInterruptStatus;
@@ -1227,9 +1200,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 	link: http://www.freertos.org/RTOS-Cortex-M3-M4.html */
 	portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
-//	uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
-    portSET_INTERRUPT_MASK_FROM_ISR();
-
+	uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
 	{
 		/* Cannot block in an ISR, so check there is data available. */
 		if( pxQueue->uxMessagesWaiting > ( unsigned portBASE_TYPE ) 0 )
@@ -1278,9 +1249,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 	return xReturn;
 }
 /*-----------------------------------------------------------*/
-
-signed portBASE_TYPE 
-xQueuePeekFromISR( xQueueHandle xQueue, const void * const pvBuffer )
+signed portBASE_TYPE xQueuePeekFromISR( xQueueHandle xQueue, const void * const pvBuffer )
 {
 signed portBASE_TYPE xReturn;
 unsigned portBASE_TYPE uxSavedInterruptStatus;
@@ -1306,9 +1275,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 	link: http://www.freertos.org/RTOS-Cortex-M3-M4.html */
 	portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
-//	uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
-    portSET_INTERRUPT_MASK_FROM_ISR();
-
+	uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
 	{
 		/* Cannot block in an ISR, so check there is data available. */
 		if( pxQueue->uxMessagesWaiting > ( unsigned portBASE_TYPE ) 0 )
@@ -1335,8 +1302,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 }
 /*-----------------------------------------------------------*/
 
-unsigned portBASE_TYPE ICACHE_FLASH_ATTR
-uxQueueMessagesWaiting( const xQueueHandle xQueue )
+unsigned portBASE_TYPE uxQueueMessagesWaiting( const xQueueHandle xQueue )
 {
 unsigned portBASE_TYPE uxReturn;
 
@@ -1350,8 +1316,7 @@ unsigned portBASE_TYPE uxReturn;
 } /*lint !e818 Pointer cannot be declared const as xQueue is a typedef not pointer. */
 /*-----------------------------------------------------------*/
 
-unsigned portBASE_TYPE 
-uxQueueMessagesWaitingFromISR( const xQueueHandle xQueue )
+unsigned portBASE_TYPE uxQueueMessagesWaitingFromISR( const xQueueHandle xQueue )
 {
 unsigned portBASE_TYPE uxReturn;
 
@@ -1363,8 +1328,7 @@ unsigned portBASE_TYPE uxReturn;
 } /*lint !e818 Pointer cannot be declared const as xQueue is a typedef not pointer. */
 /*-----------------------------------------------------------*/
 
-void ICACHE_FLASH_ATTR
-vQueueDelete( xQueueHandle xQueue )
+void vQueueDelete( xQueueHandle xQueue )
 {
 xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 
@@ -1383,8 +1347,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-	unsigned char ICACHE_FLASH_ATTR
-	ucQueueGetQueueNumber( xQueueHandle xQueue )
+	unsigned char ucQueueGetQueueNumber( xQueueHandle xQueue )
 	{
 		return ( ( xQUEUE * ) xQueue )->ucQueueNumber;
 	}
@@ -1394,8 +1357,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-	void ICACHE_FLASH_ATTR
-	vQueueSetQueueNumber( xQueueHandle xQueue, unsigned char ucQueueNumber )
+	void vQueueSetQueueNumber( xQueueHandle xQueue, unsigned char ucQueueNumber )
 	{
 		( ( xQUEUE * ) xQueue )->ucQueueNumber = ucQueueNumber;
 	}
@@ -1405,17 +1367,14 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 
 #if ( configUSE_TRACE_FACILITY == 1 )
 
-	unsigned char ICACHE_FLASH_ATTR
-	ucQueueGetQueueType( xQueueHandle xQueue )
+	unsigned char ucQueueGetQueueType( xQueueHandle xQueue )
 	{
 		return ( ( xQUEUE * ) xQueue )->ucQueueType;
 	}
 
 #endif /* configUSE_TRACE_FACILITY */
 /*-----------------------------------------------------------*/
-
-static void
-prvCopyDataToQueue( xQUEUE *pxQueue, const void *pvItemToQueue, portBASE_TYPE xPosition )
+static void prvCopyDataToQueue( xQUEUE *pxQueue, const void *pvItemToQueue, portBASE_TYPE xPosition )
 {
 	if( pxQueue->uxItemSize == ( unsigned portBASE_TYPE ) 0 )
 	{
@@ -1464,9 +1423,7 @@ prvCopyDataToQueue( xQUEUE *pxQueue, const void *pvItemToQueue, portBASE_TYPE xP
 	++( pxQueue->uxMessagesWaiting );
 }
 /*-----------------------------------------------------------*/
-
-static void
-prvCopyDataFromQueue( xQUEUE * const pxQueue, const void * const pvBuffer )
+static void prvCopyDataFromQueue( xQUEUE * const pxQueue, const void * const pvBuffer )
 {
 	if( pxQueue->uxQueueType != queueQUEUE_IS_MUTEX )
 	{
@@ -1479,9 +1436,7 @@ prvCopyDataFromQueue( xQUEUE * const pxQueue, const void * const pvBuffer )
 	}
 }
 /*-----------------------------------------------------------*/
-
-static void ICACHE_FLASH_ATTR
-prvUnlockQueue( xQUEUE *pxQueue )
+static void prvUnlockQueue( xQUEUE *pxQueue )
 {
 	/* THIS FUNCTION MUST BE CALLED WITH THE SCHEDULER SUSPENDED. */
 
@@ -1579,9 +1534,7 @@ prvUnlockQueue( xQUEUE *pxQueue )
 	taskEXIT_CRITICAL();
 }
 /*-----------------------------------------------------------*/
-
-static signed portBASE_TYPE ICACHE_FLASH_ATTR
-prvIsQueueEmpty( const xQUEUE *pxQueue )
+static signed portBASE_TYPE prvIsQueueEmpty( const xQUEUE *pxQueue )
 {
 signed portBASE_TYPE xReturn;
 
@@ -1601,9 +1554,7 @@ signed portBASE_TYPE xReturn;
 	return xReturn;
 }
 /*-----------------------------------------------------------*/
-
-signed portBASE_TYPE 
-xQueueIsQueueEmptyFromISR( const xQueueHandle xQueue )
+signed portBASE_TYPE xQueueIsQueueEmptyFromISR( const xQueueHandle xQueue )
 {
 signed portBASE_TYPE xReturn;
 
@@ -1620,9 +1571,7 @@ signed portBASE_TYPE xReturn;
 	return xReturn;
 } /*lint !e818 xQueue could not be pointer to const because it is a typedef. */
 /*-----------------------------------------------------------*/
-
-static signed portBASE_TYPE ICACHE_FLASH_ATTR
-prvIsQueueFull( const xQUEUE *pxQueue )
+static signed portBASE_TYPE prvIsQueueFull( const xQUEUE *pxQueue )
 {
 signed portBASE_TYPE xReturn;
 
@@ -1642,9 +1591,7 @@ signed portBASE_TYPE xReturn;
 	return xReturn;
 }
 /*-----------------------------------------------------------*/
-
-signed portBASE_TYPE 
-xQueueIsQueueFullFromISR( const xQueueHandle xQueue )
+signed portBASE_TYPE xQueueIsQueueFullFromISR( const xQueueHandle xQueue )
 {
 signed portBASE_TYPE xReturn;
 
@@ -1663,9 +1610,7 @@ signed portBASE_TYPE xReturn;
 /*-----------------------------------------------------------*/
 
 #if ( configUSE_CO_ROUTINES == 1 )
-
-	signed portBASE_TYPE ICACHE_FLASH_ATTR
-	xQueueCRSend( xQueueHandle xQueue, const void *pvItemToQueue, portTickType xTicksToWait )
+	signed portBASE_TYPE xQueueCRSend( xQueueHandle xQueue, const void *pvItemToQueue, portTickType xTicksToWait )
 	{
 	signed portBASE_TYPE xReturn;
 	xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
@@ -1673,9 +1618,7 @@ signed portBASE_TYPE xReturn;
 		/* If the queue is already full we may have to block.  A critical section
 		is required to prevent an interrupt removing something from the queue
 		between the check to see if the queue is full and blocking on the queue. */
-
-		//portDISABLE_INTERRUPTS();
-PortDisableInt_NoNest();
+		portDISABLE_INTERRUPTS();
 		{
 			if( prvIsQueueFull( pxQueue ) != pdFALSE )
 			{
@@ -1686,23 +1629,19 @@ PortDisableInt_NoNest();
 					/* As this is called from a coroutine we cannot block directly, but
 					return indicating that we need to block. */
 					vCoRoutineAddToDelayedList( xTicksToWait, &( pxQueue->xTasksWaitingToSend ) );
-					//portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+					portENABLE_INTERRUPTS();
 					return errQUEUE_BLOCKED;
 				}
 				else
 				{
-					//portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+					portENABLE_INTERRUPTS();
 					return errQUEUE_FULL;
 				}
 			}
 		}
-		//portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+		portENABLE_INTERRUPTS();
 
-		//portDISABLE_INTERRUPTS();
-PortDisableInt_NoNest();
+		portDISABLE_INTERRUPTS();
 		{
 			if( pxQueue->uxMessagesWaiting < pxQueue->uxLength )
 			{
@@ -1730,8 +1669,8 @@ PortDisableInt_NoNest();
 				xReturn = errQUEUE_FULL;
 			}
 		}
-		//portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+		portENABLE_INTERRUPTS();
+
 		return xReturn;
 	}
 
@@ -1739,9 +1678,7 @@ PortEnableInt_NoNest();
 /*-----------------------------------------------------------*/
 
 #if ( configUSE_CO_ROUTINES == 1 )
-
-	signed portBASE_TYPE ICACHE_FLASH_ATTR
-	xQueueCRReceive( xQueueHandle xQueue, void *pvBuffer, portTickType xTicksToWait )
+	signed portBASE_TYPE xQueueCRReceive( xQueueHandle xQueue, void *pvBuffer, portTickType xTicksToWait )
 	{
 	signed portBASE_TYPE xReturn;
 	xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
@@ -1749,9 +1686,7 @@ PortEnableInt_NoNest();
 		/* If the queue is already empty we may have to block.  A critical section
 		is required to prevent an interrupt adding something to the queue
 		between the check to see if the queue is empty and blocking on the queue. */
-
-		//portDISABLE_INTERRUPTS();
-PortDisableInt_NoNest();
+		portDISABLE_INTERRUPTS();
 		{
 			if( pxQueue->uxMessagesWaiting == ( unsigned portBASE_TYPE ) 0 )
 			{
@@ -1762,23 +1697,19 @@ PortDisableInt_NoNest();
 					/* As this is a co-routine we cannot block directly, but return
 					indicating that we need to block. */
 					vCoRoutineAddToDelayedList( xTicksToWait, &( pxQueue->xTasksWaitingToReceive ) );
-					//portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+					portENABLE_INTERRUPTS();
 					return errQUEUE_BLOCKED;
 				}
 				else
 				{
-					//portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+					portENABLE_INTERRUPTS();
 					return errQUEUE_FULL;
 				}
 			}
 		}
-		//portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+		portENABLE_INTERRUPTS();
 
-		//portDISABLE_INTERRUPTS();
-PortDisableInt_NoNest();
+		portDISABLE_INTERRUPTS();
 		{
 			if( pxQueue->uxMessagesWaiting > ( unsigned portBASE_TYPE ) 0 )
 			{
@@ -1811,8 +1742,7 @@ PortDisableInt_NoNest();
 				xReturn = pdFAIL;
 			}
 		}
-		//portENABLE_INTERRUPTS();
-PortEnableInt_NoNest();
+		portENABLE_INTERRUPTS();
 
 		return xReturn;
 	}
@@ -1821,9 +1751,7 @@ PortEnableInt_NoNest();
 /*-----------------------------------------------------------*/
 
 #if ( configUSE_CO_ROUTINES == 1 )
-
-	signed portBASE_TYPE 
-	xQueueCRSendFromISR( xQueueHandle xQueue, const void *pvItemToQueue, signed portBASE_TYPE xCoRoutinePreviouslyWoken )
+	signed portBASE_TYPE xQueueCRSendFromISR( xQueueHandle xQueue, const void *pvItemToQueue, signed portBASE_TYPE xCoRoutinePreviouslyWoken )
 	{
 	xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 
@@ -1855,8 +1783,7 @@ PortEnableInt_NoNest();
 
 #if ( configUSE_CO_ROUTINES == 1 )
 
-	signed portBASE_TYPE 
-	xQueueCRReceiveFromISR( xQueueHandle xQueue, void *pvBuffer, signed portBASE_TYPE *pxCoRoutineWoken )
+	signed portBASE_TYPE xQueueCRReceiveFromISR( xQueueHandle xQueue, void *pvBuffer, signed portBASE_TYPE *pxCoRoutineWoken )
 	{
 	signed portBASE_TYPE xReturn;
 	xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
@@ -1900,8 +1827,7 @@ PortEnableInt_NoNest();
 
 #if ( configQUEUE_REGISTRY_SIZE > 0 )
 
-	void ICACHE_FLASH_ATTR
-	vQueueAddToRegistry( xQueueHandle xQueue, signed char *pcQueueName )
+	void vQueueAddToRegistry( xQueueHandle xQueue, signed char *pcQueueName )
 	{
 	unsigned portBASE_TYPE ux;
 
@@ -1924,8 +1850,7 @@ PortEnableInt_NoNest();
 
 #if ( configQUEUE_REGISTRY_SIZE > 0 )
 
-	void ICACHE_FLASH_ATTR
-	vQueueUnregisterQueue( xQueueHandle xQueue )
+	void vQueueUnregisterQueue( xQueueHandle xQueue )
 	{
 	unsigned portBASE_TYPE ux;
 
@@ -1948,8 +1873,7 @@ PortEnableInt_NoNest();
 
 #if ( configUSE_TIMERS == 1 )
 
-	void ICACHE_FLASH_ATTR
-	vQueueWaitForMessageRestricted( xQueueHandle xQueue, portTickType xTicksToWait )
+	void vQueueWaitForMessageRestricted( xQueueHandle xQueue, portTickType xTicksToWait )
 	{
 	xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 
@@ -1981,8 +1905,7 @@ PortEnableInt_NoNest();
 
 #if ( configUSE_QUEUE_SETS == 1 )
 
-	xQueueSetHandle ICACHE_FLASH_ATTR
-	xQueueCreateSet( unsigned portBASE_TYPE uxEventQueueLength )
+	xQueueSetHandle xQueueCreateSet( unsigned portBASE_TYPE uxEventQueueLength )
 	{
 	xQueueSetHandle pxQueue;
 
@@ -1996,8 +1919,7 @@ PortEnableInt_NoNest();
 
 #if ( configUSE_QUEUE_SETS == 1 )
 
-	portBASE_TYPE ICACHE_FLASH_ATTR
-	xQueueAddToSet( xQueueSetMemberHandle xQueueOrSemaphore, xQueueSetHandle xQueueSet )
+	portBASE_TYPE xQueueAddToSet( xQueueSetMemberHandle xQueueOrSemaphore, xQueueSetHandle xQueueSet )
 	{
 	portBASE_TYPE xReturn;
 
@@ -2030,8 +1952,7 @@ PortEnableInt_NoNest();
 
 #if ( configUSE_QUEUE_SETS == 1 )
 
-	portBASE_TYPE ICACHE_FLASH_ATTR
-	xQueueRemoveFromSet( xQueueSetMemberHandle xQueueOrSemaphore, xQueueSetHandle xQueueSet )
+	portBASE_TYPE xQueueRemoveFromSet( xQueueSetMemberHandle xQueueOrSemaphore, xQueueSetHandle xQueueSet )
 	{
 	portBASE_TYPE xReturn;
 	xQUEUE * const pxQueueOrSemaphore = ( xQUEUE * ) xQueueOrSemaphore;
@@ -2067,8 +1988,7 @@ PortEnableInt_NoNest();
 
 #if ( configUSE_QUEUE_SETS == 1 )
 
-	xQueueSetMemberHandle ICACHE_FLASH_ATTR
-	xQueueSelectFromSet( xQueueSetHandle xQueueSet, portTickType xBlockTimeTicks )
+	xQueueSetMemberHandle xQueueSelectFromSet( xQueueSetHandle xQueueSet, portTickType xBlockTimeTicks )
 	{
 	xQueueSetMemberHandle xReturn = NULL;
 
@@ -2081,8 +2001,7 @@ PortEnableInt_NoNest();
 
 #if ( configUSE_QUEUE_SETS == 1 )
 
-	xQueueSetMemberHandle 
-	xQueueSelectFromSetFromISR( xQueueSetHandle xQueueSet )
+	xQueueSetMemberHandle xQueueSelectFromSetFromISR( xQueueSetHandle xQueueSet )
 	{
 	xQueueSetMemberHandle xReturn = NULL;
 
@@ -2095,8 +2014,7 @@ PortEnableInt_NoNest();
 
 #if ( configUSE_QUEUE_SETS == 1 )
 
-	static portBASE_TYPE ICACHE_FLASH_ATTR
-	prvNotifyQueueSetContainer( const xQUEUE * const pxQueue, portBASE_TYPE xCopyPosition )
+	static portBASE_TYPE prvNotifyQueueSetContainer( const xQUEUE * const pxQueue, portBASE_TYPE xCopyPosition )
 	{
 	xQUEUE *pxQueueSetContainer = pxQueue->pxQueueSetContainer;
 	portBASE_TYPE xReturn = pdFALSE;
