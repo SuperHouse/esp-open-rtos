@@ -114,7 +114,6 @@ enum SVC_ReqType {
 
 static int pending_soft_sv;
 static int pending_maclayer_sv;
-static int pending_sv_posted;
 
 /* PendSV is called in place of vPortYield() to request a supervisor
    call.
@@ -138,11 +137,7 @@ void PendSV( char req )
 	else if(req == SVC_MACLayer)
 		pending_maclayer_sv= 1;
 
-	if(pending_sv_posted == 0)
-	{
-		pending_sv_posted = 1;
-		xthal_set_intset(1<<ETS_SOFT_INUM);
-	}
+	xthal_set_intset(1<<ETS_SOFT_INUM);
 	vPortExitCritical();
 }
 
@@ -154,7 +149,6 @@ extern portBASE_TYPE MacIsrSigPostDefHdl(void);
 
 void SV_ISR(void)
 {
-	pending_sv_posted = 0;
 	portBASE_TYPE xHigherPriorityTaskWoken=pdFALSE ;
 	if(pending_maclayer_sv)
 	{
