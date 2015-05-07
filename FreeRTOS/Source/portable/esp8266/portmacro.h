@@ -71,12 +71,11 @@ extern "C" {
 #endif
 
 #include "esp_common.h"
-
 #include    <xtruntime.h>
 #include    "xtensa_rtos.h"
 
 /*-----------------------------------------------------------
- * Port specific definitions.
+ * Port specific definitions for ESP8266
  *
  * The settings in this file configure FreeRTOS correctly for the
  * given hardware and compiler.
@@ -86,17 +85,17 @@ extern "C" {
  */
 
 /* Type definitions. */
-#define portCHAR		char
-#define portFLOAT		float
-#define portDOUBLE		double
-#define portLONG		long
-#define portSHORT		short
-#define portSTACK_TYPE	unsigned portLONG
-#define portBASE_TYPE	long
+#define portCHAR                char
+#define portFLOAT               float
+#define portDOUBLE              double
+#define portLONG                long
+#define portSHORT               short
+#define portSTACK_TYPE          unsigned portLONG
+#define portBASE_TYPE           long
 
 typedef unsigned portLONG portTickType;
-typedef unsigned int INT32U;
-#define portMAX_DELAY ( portTickType ) 0xffffffff
+
+#define portMAX_DELAY (( portTickType ) UINT32_MAX)
 /*-----------------------------------------------------------*/
 
 /* Architecture specifics. */
@@ -105,44 +104,36 @@ typedef unsigned int INT32U;
 #define portBYTE_ALIGNMENT			8
 /*-----------------------------------------------------------*/
 
-#define ICACHE_FLASH_ATTR __attribute__((section(".irom0.text")))
-
 enum SVC_ReqType {
   SVC_Software = 1,
   SVC_MACLayer = 2,
 };
 
 /* Scheduler utilities. */
-extern void PendSV(enum SVC_ReqType);
-//#define portYIELD()	vPortYield()
+void PendSV(enum SVC_ReqType);
 #define portYIELD()	PendSV(SVC_Software)
 
 /* Task utilities. */
-#define portEND_SWITCHING_ISR( xSwitchRequired ) 	\
-{													\
-extern void vTaskSwitchContext( void );				\
-													\
-	if( xSwitchRequired ) 							\
-	{												\
-		vTaskSwitchContext();						\
-	}												\
-}
-
+#define portEND_SWITCHING_ISR( xSwitchRequired )			\
+    {									\
+	extern void vTaskSwitchContext( void );				\
+									\
+	if( xSwitchRequired )						\
+	{								\
+	    vTaskSwitchContext();					\
+	}								\
+    }
 
 /*-----------------------------------------------------------*/
-
-/* Critical section management. */
-extern void vPortEnterCritical( void );
-extern void vPortExitCritical( void );
-
-//DYC_ISR_DBG
-void PortDisableInt_NoNest( void );
-void PortEnableInt_NoNest( void );
 
 extern char NMIIrqIsOn;
 extern char level1_int_disabled;
 extern unsigned cpu_sr;
 
+/* ESPTODO: Currently we store the old interrupt level (ps) in a global variable
+   cpu_sr. It may not be necessary to do this, but it depends on how the blob libraries
+   call into these functions.
+*/
 inline static __attribute__((always_inline)) void _esp_disable_interrupts(void)
 {
     if(!NMIIrqIsOn && !level1_int_disabled) {
@@ -165,23 +156,12 @@ inline static __attribute__((always_inline)) void _esp_enable_interrupts(void)
 /* Restore interrupts to previous level saved in cpu_sr */
 #define  portENABLE_INTERRUPTS() _esp_enable_interrupts()
 
+/* Critical section management. */
+void vPortEnterCritical( void );
+void vPortExitCritical( void );
+
 #define portENTER_CRITICAL()                vPortEnterCritical()
 #define portEXIT_CRITICAL()                 vPortExitCritical()
-
-// no need to disable/enable lvl1 isr again in ISR
-//#define  portSET_INTERRUPT_MASK_FROM_ISR()		PortDisableInt_NoNest()
-//#define  portCLEAR_INTERRUPT_MASK_FROM_ISR(x)		PortEnableInt_NoNest()
-
-
-/*-----------------------------------------------------------*/
-
-/* Tickless idle/low power functionality. */
-
-/*-----------------------------------------------------------*/
-
-/* Port specific optimisations. */
-
-/*-----------------------------------------------------------*/
 
 /* Task function macros as described on the FreeRTOS.org WEB site.  These are
 not necessary for to use this port.  They are defined so the common demo files
