@@ -50,14 +50,12 @@ NM = $(CROSS)nm
 CPP = $(CROSS)g++
 OBJCOPY = $(CROSS)objcopy
 
-# which modules (subdirectories) of the main project to include in compiling
-MODULES		?= FreeRTOS/Source FreeRTOS/Source/portable/MemMang FreeRTOS/Source/portable/esp8266
-MODULE_INCDIR    ?= FreeRTOS/Source/include include
-MODULE_INCDIR    += include/lwip include/lwip/ipv4 include/lwip/ipv6
-SDK_INCDIR=include/espressif
+# Source components to compile and link. Each of these are subdirectories
+# of the root, with a 'component.mk' file.
+COMPONENTS     ?= FreeRTOS
 
 # libraries to link, mainly blobs provided by the esp-iot-rtos SDK
-LIBS		?= gcc json lwip main net80211 phy pp ssl udhcp wpa hal
+LIBS		?= gcc json main net80211 phy pp ssl udhcp wpa hal
 
 CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(ROOT)lib -u call_user_start -Wl,-static -Wl,-Map=build/${TARGET}.map
@@ -70,9 +68,15 @@ else
     LDFLAGS += -g -O2
 endif
 
+LINKER_SCRIPTS  = ld/eagle.app.v6.ld ld/eagle.rom.addr.v6.ld
+
 ####
 #### no user configurable options below here
 ####
+
+# hacky way to get a single space value
+empty :=
+space := $(empty) $(empty)
 
 # assume the target_dir is the directory the top-level makefile was run in
 TARGET_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
@@ -80,33 +84,21 @@ TARGET_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 # assume the 'root' directory (ie top of the tree) is the directory common.mk is in
 ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 
-FW_TOOL		?= $(ESPTOOL)
-SRC_DIR		:= $(TARGET_DIR) $(addprefix $(ROOT),$(MODULES))
-OBJ_DIR	        := $(BUILD_DIR)obj/
+# derive various parts of compiler/linker arguments
+LIB_ARGS         = $(addprefix -l,$(LIBS))
+TARGET_OUT   = $(BUILD_DIR)$(TARGET).out
+LDFLAGS      += $(addprefix -T$(ROOT),$(LINKER_SCRIPTS))
+FW_FILE_1    = $(addprefix $(FW_BASE)/,$(FW_1).bin)
+FW_FILE_2    = $(addprefix $(FW_BASE)/,$(FW_2).bin)
 
-LINKER_SCRIPTS  := ld/eagle.app.v6.ld ld/eagle.rom.addr.v6.ld
+# Common include directories, shared across all "components"
+# components will add their include directories to this argument
+#
+# Placing $(TARGET_DIR) and $(TARGET_DIR)include first allows
+# targets to have their own copies of header config files for components
+# , which is useful for overriding things.
+INC_DIRS      = $(TARGET_DIR) $(TARGET_DIR)include $(ROOT)include
 
-SRC		:= $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
-# double patsubst in OBJ first removes the $(ROOT) prefix from any
-# files in SRC that are relative to ROOT, then replaces .c in any not
-# relative to root (ie the files in the target dir)
-OBJ		:= $(patsubst %,$(OBJ_DIR)%,$(notdir $(patsubst %.c,%.o,$(SRC))))
-LIBS		:= $(addprefix -l,$(LIBS))
-APP_AR		:= $(BUILD_DIR)/$(TARGET)_app.a
-TARGET_OUT	:= $(BUILD_DIR)/$(TARGET).out
-
-LDFLAGS        += $(addprefix -T$(ROOT),$(LINKER_SCRIPTS))
-
-INCARGS	        := $(addprefix -I,$(SRC_DIR))
-MODULE_INCARGS	:= $(addprefix -I$(ROOT),$(MODULE_INCDIR)) # $(addsuffix include,$(MODULE_INCDIR))
-SDK_INCARGS     := $(addprefix -I$(ROOT),$(SDK_INCDIR))
-
-FW_FILE_1	:= $(addprefix $(FW_BASE)/,$(FW_1).bin)
-FW_FILE_2	:= $(addprefix $(FW_BASE)/,$(FW_2).bin)
-
-CC_ARGS		= $(Q) $(CC) $(INCARGS) $(MODULE_INCARGS) $(SDK_INCARGS) $(CFLAGS)
-
-V ?= $(VERBOSE)
 ifeq ("$(V)","1")
 Q :=
 vecho := @true
@@ -115,36 +107,75 @@ Q := @
 vecho := @echo
 endif
 
-vpath %.c $(SRC_DIR)
-
-# Main compilation rule
-$(OBJ_DIR)%.o: %.c $(OBJ_DIR)
-	$(vecho) "CC $<"
-	$(CC_ARGS) -c $< -o $@
-	$(CC_ARGS) -MM -MT $@ -MF $(@:.o=.d) $<
-	$(Q) $(OBJCOPY) --rename-section .text=.irom0.text --rename-section .literal=.irom0.literal $@
-
-.PHONY: all clean
+.PHONY: all clean debug_print
 
 all: $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
+
+# component_compile_rules: Produces compilation rules for a given
+# component
+#
+# Call arguments are:
+# $(1) - component name
+#
+# Expects that the following component-specific variables are defined:
+#
+# $(1)_ROOT    = Top-level dir containing component. Can be in-tree or out-of-tree.
+# $(1)_SRC_DIR = List of source directories for the component. All must be under $(1)_ROOT
+# $(1)_INC_DIR = List of include directories specific for the component
+#
+# Optional variables:
+# $(1)_CFLAGS  = CFLAGS to override the default CFLAGS for this component only.
+#
+# Each call appends to COMPONENT_ARS which is a list of archive files for compiled components
+COMPONENT_ARS =
+define component_compile_rules
+$(1)_OBJ_DIR   = $(BUILD_DIR)$(1)/
+### determine source files and object files ###
+$(1)_SRC_FILES = $$(foreach sdir,$$($(1)_SRC_DIR),$$(realpath $$(wildcard $$(sdir)/*.c)))
+$(1)_REAL_ROOT = $$(realpath $$($(1)_ROOT))
+# patsubst here substitutes real paths for the relative OBJ_DIR path, making things short again
+$(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_SRC_FILES))
+
+### determine compiler arguments ###
+$(1)_CFLAGS ?= $(CFLAGS)
+$(1)_CC_ARGS = $(Q) $(CC) $(addprefix -I,$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
+$(1)_AR = $(BUILD_DIR)$(1).a
+
+$$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c
+	$(vecho) "CC $$<"
+	$(Q) mkdir -p $$(dir $$@)
+	$$($(1)_CC_ARGS) -c $$< -o $$@
+	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+	$(Q) $(OBJCOPY) --rename-section .text=.irom0.text --rename-section .literal=.irom0.literal $$@
+
+$$($(1)_AR): $$($(1)_OBJ_FILES)
+	$(vecho) "AR $$@"
+	$(Q) $(AR) cru $$@ $$^
+
+COMPONENT_ARS += $$($(1)_AR)
+
+-include $$($(1)_OBJ_FILES:.o=.d)
+endef
+
+## Include components (this is where the actual compiler sections are generated)
+$(foreach component,$(COMPONENTS), $(eval include $(ROOT)/$(component)/component.mk))
+
+# include "dummy component" for the 'target' object file
+target_SRC_DIR=$(TARGET_DIR)
+target_ROOT=$(TARGET_DIR)
+$(eval $(call component_compile_rules,target))
+
+# final linking step to produce .elf
+$(TARGET_OUT): $(COMPONENT_ARS)
+	$(vecho) "LD $@"
+	$(Q) $(LD) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
+
+$(BUILD_DIR) $(FW_BASE):
+	$(Q) mkdir -p $@
 
 $(FW_FILE_1) $(FW_FILE_2): $(TARGET_OUT) $(FW_BASE)
 	$(vecho) "FW $@"
 	$(ESPTOOL) elf2image $< -o $(FW_BASE)
-
-$(TARGET_OUT): $(APP_AR)
-	$(vecho) "LD $@"
-	$(Q) $(LD) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(LIBS) $(APP_AR) -Wl,--end-group -o $@
-
-$(APP_AR): $(OBJ)
-	$(vecho) "AR $@"
-	$(Q) $(AR) cru $@ $^
-
-:
-	$(Q) mkdir -p $@
-
-$(BUILD_DIR) $(FW_BASE) $(OBJ_DIR):
-	$(Q) mkdir -p $@
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_1) $(FW_FILE_1) $(FW_2) $(FW_FILE_2)
@@ -155,14 +186,5 @@ test: flash
 rebuild: clean all
 
 clean:
-	$(Q) rm -f $(APP_AR)
-	$(Q) rm -f $(TARGET_OUT)
 	$(Q) rm -rf $(BUILD_DIR)
-	$(Q) rm -rf $(BUILD_BASE)
-	$(Q) rm -f $(FW_FILE_1)
-	$(Q) rm -f $(FW_FILE_2)
 	$(Q) rm -rf $(FW_BASE)
-
-$(foreach bdir,$(BUILD_DIR),$(eval $(call compile-objects,$(bdir))))
-
--include $(OBJ:.o=.d)
