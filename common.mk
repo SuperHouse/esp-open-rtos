@@ -183,7 +183,11 @@ flash: $(FW_FILE_1) $(FW_FILE_2)
 test: flash
 	screen $(ESPPORT) 115200
 
-rebuild: clean all
+# the rebuild target is written like this so it can be run in a parallel build
+# environment without causing weird side effects
+rebuild:
+	$(MAKE) clean
+	$(MAKE) all
 
 clean:
 	$(Q) rm -rf $(BUILD_DIR)
