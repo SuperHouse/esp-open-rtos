@@ -1,11 +1,13 @@
-#include "esp_common.h"
+#include "espressif/esp_common.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "lwip/err.h"
 #include "lwip/sockets.h"
-#include "lwip/dns.h"
+#include "lwip/sys.h"
 #include "lwip/netdb.h"
+#include "lwip/dns.h"
 
 #include "espressif/blob_prototypes.h"
 

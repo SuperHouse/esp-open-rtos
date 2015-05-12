@@ -52,7 +52,7 @@ OBJCOPY = $(CROSS)objcopy
 
 # Source components to compile and link. Each of these are subdirectories
 # of the root, with a 'component.mk' file.
-COMPONENTS     ?= FreeRTOS
+COMPONENTS     ?= FreeRTOS lwip
 
 # libraries to link, mainly blobs provided by the esp-iot-rtos SDK
 LIBS		?= gcc json main net80211 phy pp ssl udhcp wpa hal

@@ -73,7 +73,7 @@ struct server_config_t {
 
 
 typedef uint32_t leasetime_t;
-typedef sint32_t signed_leasetime_t;
+typedef int32_t signed_leasetime_t;
 
 struct dyn_lease {
 	/* Unix time when lease expires. Kept in memory in host order.
