@@ -32,6 +32,12 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
+#define LWIP_ESP                            1
+#define ESP_RTOS                            1
+#define PBUF_RSV_FOR_WLAN                   1
+#define EBUF_LWIP                           1
+#define ESP_TIMEWAIT_THRESHOLD              10000
+
 /*
    -----------------------------------------------
    ---------- Platform specific locking ----------

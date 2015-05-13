@@ -59,7 +59,7 @@ typedef uint32_t    u32_t;
 typedef int32_t    s32_t;
 
 typedef size_t mem_ptr_t;
-typedef u32_t sys_prot_t;
+typedef int sys_prot_t;
 
 /* Define (sn)printf formatters for these lwIP types */
 #define X8_F  "02x"
@@ -83,5 +83,10 @@ typedef u32_t sys_prot_t;
 #define LWIP_ERROR(message, expression, handler) do { if (!(expression)) { \
   printf("Assertion \"%s\" failed at line %d in %s\n", message, __LINE__, __FILE__); \
   handler;} } while(0)
+
+#define LWIP_PLATFORM_BYTESWAP 1
+
+#define LWIP_PLATFORM_HTONS(_n)  ((u16_t)((((_n) & 0xff) << 8) | (((_n) >> 8) & 0xff)))
+#define LWIP_PLATFORM_HTONL(_n)  ((u32_t)( (((_n) & 0xff) << 24) | (((_n) & 0xff00) << 8) | (((_n) >> 8)  & 0xff00) | (((_n) >> 24) & 0xff) ))
 
 #endif /* __ARCH_CC_H__ */
