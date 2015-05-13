@@ -48,6 +48,7 @@ CC = $(CROSS)gcc
 LD = $(CROSS)gcc
 NM = $(CROSS)nm
 CPP = $(CROSS)g++
+SIZE = $(CROSS)size
 OBJCOPY = $(CROSS)objcopy
 
 # Source components to compile and link. Each of these are subdirectories
@@ -179,6 +180,9 @@ $(FW_FILE_1) $(FW_FILE_2): $(TARGET_OUT) $(FW_BASE)
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_1) $(FW_FILE_1) $(FW_2) $(FW_FILE_2)
+
+size: $(TARGET_OUT)
+	$(Q) $(CROSS)size --format=sysv $(TARGET_OUT)
 
 test: flash
 	screen $(ESPPORT) 115200
