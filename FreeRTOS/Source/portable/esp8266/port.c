@@ -199,6 +199,13 @@ void vPortEndScheduler( void )
 variable. */
 static unsigned portBASE_TYPE uxCriticalNesting = 0;
 
+/* These nested vPortEnter/ExitCritical macros are called by SDK
+ * libraries in libmain, libnet80211, libpp
+ *
+ * It may be possible to replace the global nesting count variable
+ * with a save/restore of interrupt level, although it's difficult as
+ * the functions have no return value.
+ */
 void vPortEnterCritical( void )
 {
     portDISABLE_INTERRUPTS();

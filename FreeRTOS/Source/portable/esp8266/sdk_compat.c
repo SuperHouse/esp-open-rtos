@@ -4,23 +4,6 @@
 #include <string.h>
 #include "FreeRTOS.h"
 
-/* Enable/Disable Interrupts
-
-   Called from many of the linked libraries to protect critical sections.
- */
-
-/*
-void vPortEnterCritical( void )
-{
-    portDISABLE_INTERRUPTS();
-}
-
-void vPortExitCritical( void )
-{
-    portEXIT_CRITICAL();
-}
-*/
-
 /* libc memory management functions.
 
    Many of these are linked from the RTOS SDK blob libraries.
