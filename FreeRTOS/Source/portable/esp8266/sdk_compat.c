@@ -4,6 +4,10 @@
 #include <string.h>
 #include "FreeRTOS.h"
 
+/* SDK uses this and so does lwip, it was defined in libudhcp.a
+   but that library has been removed. */
+int errno;
+
 /* libc memory management functions.
 
    Many of these are linked from the RTOS SDK blob libraries.

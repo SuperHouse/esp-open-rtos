@@ -56,7 +56,7 @@ OBJCOPY = $(CROSS)objcopy
 COMPONENTS     ?= FreeRTOS lwip
 
 # libraries to link, mainly blobs provided by the esp-iot-rtos SDK
-LIBS		?= gcc json main net80211 phy pp ssl udhcp wpa hal
+LIBS		?= gcc json main net80211 phy pp ssl wpa hal
 
 CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(ROOT)lib -u call_user_start -Wl,-static -Wl,-Map=build/${TARGET}.map
