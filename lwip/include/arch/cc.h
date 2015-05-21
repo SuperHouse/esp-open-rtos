@@ -32,6 +32,9 @@
 #ifndef __ARCH_CC_H__
 #define __ARCH_CC_H__
 
+/* include ESP SDK prototypes as they're used in some LWIP routines */
+#include "espressif/sdk_prototypes.h"
+
 /* Include some files for defining library routines */
 #include <stdio.h> /* printf, fflush, FILE */
 #include <stdlib.h> /* abort */
