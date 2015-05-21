@@ -38,6 +38,9 @@
 #define EBUF_LWIP                           1
 #define ESP_TIMEWAIT_THRESHOLD              10000
 
+// Uncomment this line, and set the debug options you want below, for IP stack debug output
+//#define LWIP_DEBUG
+
 /*
    -----------------------------------------------
    ---------- Platform specific locking ----------

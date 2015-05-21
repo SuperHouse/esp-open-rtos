@@ -116,7 +116,7 @@ void user_init(void)
     };
 
     /* required to call wifi_set_opmode before station_set_config */
-    wifi_set_opmode(STATIONAP_MODE);
+    wifi_set_opmode(STATION_MODE);
     wifi_station_set_config(&config);
 
     xTaskCreate(&http_get_task, (signed char *)"get_task", 256, NULL, 2, NULL);
