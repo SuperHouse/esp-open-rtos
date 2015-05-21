@@ -42,7 +42,9 @@ void http_get_task(void *pvParameters)
 	    failures++;
 	    continue;
 	}
-	printf("DNS lookup succeeded. IP=%s\r\n", inet_ntoa(res->ai_addr));
+	/* Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
+	struct in_addr *addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
+	printf("DNS lookup succeeded. IP=%s\r\n", inet_ntoa(*addr));
 
 	int s = socket(res->ai_family, res->ai_socktype, 0);
 	if(s < 0) {
