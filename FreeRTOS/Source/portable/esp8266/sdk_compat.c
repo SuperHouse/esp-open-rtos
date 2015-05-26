@@ -8,6 +8,11 @@
    but that library has been removed. */
 int errno;
 
+/* newlib uses __errno in some contexts */
+int *__errno(void) {
+    return &errno;
+}
+
 /* libc memory management functions.
 
    Many of these are linked from the RTOS SDK blob libraries.
