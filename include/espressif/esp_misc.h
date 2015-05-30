@@ -18,9 +18,9 @@
 
 #define IPSTR "%d.%d.%d.%d"
 
-void os_delay_us(uint16_t us);
+void sdk_os_delay_us(uint16_t us);
 
-void os_install_putc1(void (*p)(char c));
-void os_putc(char c);
+void sdk_os_install_putc1(void (*p)(char c));
+void sdk_os_putc(char c);
 
 #endif

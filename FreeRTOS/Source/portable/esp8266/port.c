@@ -99,7 +99,7 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
     SET_STKREG( XT_STK_A0,      0                           );  /* to terminate GDB backtrace       */
     SET_STKREG( XT_STK_A1,      (uint32_t)sp + XT_STK_FRMSZ   );  /* physical top of stack frame      */
     SET_STKREG( XT_STK_A2,      pvParameters   );           /* parameters      */
-    SET_STKREG( XT_STK_EXIT,    _xt_user_exit               );  /* user exception exit dispatcher   */
+    SET_STKREG( XT_STK_EXIT,    sdk__xt_user_exit               );  /* user exception exit dispatcher   */
 
     /* Set initial PS to int level 0, EXCM disabled ('rfe' will enable), user mode. */
     SET_STKREG( XT_STK_PS,      PS_UM | PS_EXCM     );
@@ -139,19 +139,19 @@ void PendSV(enum SVC_ReqType req)
  * after a Blob SV requests a soft interrupt by calling
  * PendSV(SVC_MACLayer).
  */
-extern portBASE_TYPE MacIsrSigPostDefHdl(void);
+extern portBASE_TYPE sdk_MacIsrSigPostDefHdl(void);
 
 void SV_ISR(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken=pdFALSE ;
 	if(pending_maclayer_sv)
 	{
-		xHigherPriorityTaskWoken = MacIsrSigPostDefHdl();
+		xHigherPriorityTaskWoken = sdk_MacIsrSigPostDefHdl();
 		pending_maclayer_sv = 0;
 	}
 	if( xHigherPriorityTaskWoken || pending_soft_sv)
 	{
-	    _xt_timer_int1();
+	    sdk__xt_timer_int1();
 	    pending_soft_sv = 0;
 	}
 }
@@ -175,14 +175,14 @@ void xPortSysTickHandle (void)
 portBASE_TYPE xPortStartScheduler( void )
 {
     _xt_isr_attach(ETS_SOFT_INUM, SV_ISR);
-    _xt_isr_unmask(1<<ETS_SOFT_INUM);
+    sdk__xt_isr_unmask(1<<ETS_SOFT_INUM);
 
     /* Initialize system tick timer interrupt and schedule the first tick. */
-    _xt_tick_timer_init();
+    sdk__xt_tick_timer_init();
 
     vTaskSwitchContext();
 
-    _xt_int_exit();
+    sdk__xt_int_exit();
 
     /* Should not get here as the tasks are now running! */
     return pdTRUE;
@@ -254,7 +254,7 @@ uint16_t _xt_isr_handler(uint16_t i)
 	}
     }
 
-    _xt_clear_ints(1<<index);
+    sdk__xt_clear_ints(1<<index);
 
     isr[index]();
 

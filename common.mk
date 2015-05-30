@@ -55,11 +55,16 @@ OBJCOPY = $(CROSS)objcopy
 # of the root, with a 'component.mk' file.
 COMPONENTS     ?= FreeRTOS lwip
 
-# libraries to link, mainly blobs provided by the esp-iot-rtos SDK
-LIBS		?= gcc main net80211 phy pp ssl wpa hal
+# binary esp-iot-rtos SDK libraries to link. These are pre-processed prior to linking.
+SDK_LIBS		?= main net80211 phy pp wpa
+
+# open source libraries linked in
+LIBS ?= gcc hal
+
+ENTRY_SYMBOL ?= sdk_call_user_start
 
 CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(ROOT)lib -u call_user_start -Wl,-static -Wl,-Map=build/${TARGET}.map
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${TARGET}.map
 
 ifeq ($(FLAVOR),debug)
     CFLAGS += -g -O0
@@ -86,7 +91,8 @@ TARGET_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 
 # derive various parts of compiler/linker arguments
-LIB_ARGS         = $(addprefix -l,$(LIBS))
+SDK_LIB_ARGS         = $(addprefix -l,$(SDK_LIBS))
+LIB_ARGS             = $(addprefix -l,$(LIBS))
 TARGET_OUT   = $(BUILD_DIR)$(TARGET).out
 LDFLAGS      += $(addprefix -T$(ROOT),$(LINKER_SCRIPTS))
 FW_FILE_1    = $(addprefix $(FW_BASE)/,$(FW_1).bin)
@@ -158,6 +164,37 @@ COMPONENT_ARS += $$($(1)_AR)
 -include $$($(1)_OBJ_FILES:.o=.d)
 endef
 
+
+## Linking rules for SDK libraries
+## SDK libraries are preprocessed to:
+# - prefix all defined symbols with 'sdk_'
+# - weaken all global symbols so they can be overriden from the open SDK side
+
+# SDK binary libraries are preprocessed into build/lib
+SDK_PROCESSED_LIBS = $(addsuffix .a,$(addprefix $(BUILD_DIR)sdklib/lib,$(SDK_LIBS)))
+
+# Make rule for preprocessing each SDK library
+#
+$(BUILD_DIR)sdklib/%.a: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/allsymbols.rename
+	$(vecho) "Pre-processing SDK library $< -> $@"
+	$(Q) $(OBJCOPY) --redefine-syms $(word 2,$^) --weaken $< $@
+
+
+# Generate a regex to match symbols we don't want to rename, by parsing
+# a list of symbol names
+$(BUILD_DIR)sdklib/norename.match: $(ROOT)lib/symbols_norename.txt | $(BUILD_DIR)sdklib
+	grep -v "^#" $< | sed ':begin;$!N;s/\n/\\|/;tbegin' > $@
+
+# Generate list of symbols to rename from a single library. Uses grep & sed.
+$(BUILD_DIR)sdklib/%.rename: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/norename.match
+	$(vecho) "Building symbol list for $< -> $@"
+	$(Q) $(NM) --defined $< | grep ' T ' | sed -r 's/(.+) T (.+)/\2 sdk_\2/' | grep -v `cat $(BUILD_DIR)sdklib/norename.match` > $@
+
+# Build master list of all SDK-defined symbols to rename
+$(BUILD_DIR)sdklib/allsymbols.rename: $(patsubst %.a,%.rename,$(SDK_PROCESSED_LIBS))
+	cat $^ > $@
+
+
 ## Include components (this is where the actual compiler sections are generated)
 $(foreach component,$(COMPONENTS), $(eval include $(ROOT)/$(component)/component.mk))
 
@@ -167,16 +204,16 @@ target_ROOT=$(TARGET_DIR)
 $(eval $(call component_compile_rules,target))
 
 # final linking step to produce .elf
-$(TARGET_OUT): $(COMPONENT_ARS)
+$(TARGET_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS)
 	$(vecho) "LD $@"
-	$(Q) $(LD) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
+	$(Q) $(LD) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(SDK_LIB_ARGS) $(LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
 
-$(BUILD_DIR) $(FW_BASE):
+$(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib:
 	$(Q) mkdir -p $@
 
 $(FW_FILE_1) $(FW_FILE_2): $(TARGET_OUT) $(FW_BASE)
 	$(vecho) "FW $@"
-	$(ESPTOOL) elf2image $< -o $(FW_BASE)
+	$(ESPTOOL) elf2image --entry-symbol $(ENTRY_SYMBOL) $< -o $(FW_BASE)
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_1) $(FW_FILE_1) $(FW_2) $(FW_FILE_2)
@@ -196,3 +233,7 @@ rebuild:
 clean:
 	$(Q) rm -rf $(BUILD_DIR)
 	$(Q) rm -rf $(FW_BASE)
+
+# prevent "intermediate" files from being deleted
+.SECONDARY:
+

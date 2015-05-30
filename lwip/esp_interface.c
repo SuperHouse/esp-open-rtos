@@ -47,7 +47,7 @@
 #include "netif/etharp.h"
 
 /* declared in libnet80211.a */
-int8_t ieee80211_output_pbuf(struct netif *ifp, struct pbuf* pb);
+int8_t sdk_ieee80211_output_pbuf(struct netif *ifp, struct pbuf* pb);
 
 static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
@@ -55,7 +55,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   struct pbuf *q;
 
   for(q = p; q != NULL; q = q->next) {
-      ieee80211_output_pbuf(netif, q);
+      sdk_ieee80211_output_pbuf(netif, q);
   }
 
   LINK_STATS_INC(link.xmit);

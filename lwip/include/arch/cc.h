@@ -35,6 +35,14 @@
 /* include ESP SDK prototypes as they're used in some LWIP routines */
 #include "espressif/sdk_prototypes.h"
 
+/* ESP8266 SDK Interface
+
+   The lwip-esp stack is designed to be also compatible with other ESP8266 SDKs,
+   so we can't use our 'sdk_' prefixes there
+*/
+#define system_station_got_ip_set sdk_system_station_got_ip_set
+#define system_pp_recycle_rx_pkt sdk_system_pp_recycle_rx_pkt
+
 /* Include some files for defining library routines */
 #include <stdio.h> /* printf, fflush, FILE */
 #include <stdlib.h> /* abort */

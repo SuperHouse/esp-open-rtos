@@ -183,18 +183,21 @@ not necessary for to use this port.  They are defined so the common demo files
 #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
 /*-----------------------------------------------------------*/
 
+/* ESPTODO: These parts of the FreeRTOS support are still in binary libraries */
+#define vApplicationStackOverflowHook sdk_vApplicationStackOverflowHook
+
 /* XTensa interrupt management functions, used in port.c.
-   Implementations in blob libs */
-void        _xt_int_exit (void);
-void        _xt_user_exit (void);
-void        _xt_tick_timer_init (void);
-void        _xt_isr_unmask (uint32_t unmask);
-void        _xt_isr_mask (uint32_t mask);
-uint32_t    _xt_read_ints (void);
-void        _xt_clear_ints(uint32_t mask);
+   Some (w/ sdk_ prefix) are implemented in blob libs */
+void        sdk__xt_int_exit (void);
+void        sdk__xt_user_exit (void);
+void        sdk__xt_tick_timer_init (void);
+void        sdk__xt_isr_unmask (uint32_t unmask);
+void        sdk__xt_isr_mask (uint32_t mask);
+uint32_t    sdk__xt_read_ints (void);
+void        sdk__xt_clear_ints(uint32_t mask);
 typedef void (* _xt_isr)(void);
 void        _xt_isr_attach (uint8_t i, _xt_isr func);
-void	    _xt_timer_int1(void);
+void	    sdk__xt_timer_int1(void);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,9 @@
 /*
  *  Copyright (C) 2013 -2014  Espressif System
  *
+ * Adapted from BSD licensed esp_iot_rtos_sdk v0.9.9
+ *
+ * Functions declared in this header are defined in libmain.a
  */
 
 #ifndef __ESP_WIFI_H__
@@ -23,8 +26,8 @@ typedef enum _auth_mode {
     AUTH_MAX
 } AUTH_MODE;
 
-uint8_t wifi_get_opmode(void);
-bool wifi_set_opmode(uint8_t opmode);
+uint8_t sdk_wifi_get_opmode(void);
+bool sdk_wifi_set_opmode(uint8_t opmode);
 
 enum {
 	STATION_IF = 0,
@@ -38,29 +41,29 @@ struct ip_info {
     struct ip_addr gw;
 };
 
-bool wifi_get_ip_info(uint8_t if_index, struct ip_info *info);
-bool wifi_set_ip_info(uint8_t if_index, struct ip_info *info);
-bool wifi_get_macaddr(uint8_t if_index, uint8_t *macaddr);
-bool wifi_set_macaddr(uint8_t if_index, uint8_t *macaddr);
+bool sdk_wifi_get_ip_info(uint8_t if_index, struct ip_info *info);
+bool sdk_wifi_set_ip_info(uint8_t if_index, struct ip_info *info);
+bool sdk_wifi_get_macaddr(uint8_t if_index, uint8_t *macaddr);
+bool sdk_wifi_set_macaddr(uint8_t if_index, uint8_t *macaddr);
 
-uint8_t wifi_get_channel(void);
-bool wifi_set_channel(uint8_t channel);
+uint8_t sdk_wifi_get_channel(void);
+bool sdk_wifi_set_channel(uint8_t channel);
 
-void wifi_status_led_install(uint8_t gpio_id, uint32_t gpio_name, uint8_t gpio_func);
+void sdk_wifi_status_led_install(uint8_t gpio_id, uint32_t gpio_name, uint8_t gpio_func);
 
-void wifi_promiscuous_enable(uint8_t promiscuous);
+void sdk_wifi_promiscuous_enable(uint8_t promiscuous);
 
-typedef void (* wifi_promiscuous_cb_t)(uint8_t *buf, uint16_t len);
+typedef void (* sdk_wifi_promiscuous_cb_t)(uint8_t *buf, uint16_t len);
 
-void wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t cb);
+void sdk_wifi_set_promiscuous_rx_cb(sdk_wifi_promiscuous_cb_t cb);
 
-enum phy_mode {
+enum sdk_phy_mode {
 	PHY_MODE_11B	= 1,
 	PHY_MODE_11G	= 2,
 	PHY_MODE_11N    = 3
 };
 
-enum phy_mode wifi_get_phy_mode(void);
-bool wifi_set_phy_mode(enum phy_mode mode);
+enum phy_mode sdk_wifi_get_phy_mode(void);
+bool sdk_wifi_set_phy_mode(enum sdk_phy_mode mode);
 
 #endif

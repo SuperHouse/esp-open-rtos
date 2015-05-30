@@ -1,0 +1,6 @@
+# this is a stop-gap to avoid renaming some useful libc
+# symbols to sdk_xxx
+puts
+printf
+putchar
+atoi

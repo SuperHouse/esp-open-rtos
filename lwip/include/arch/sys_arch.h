@@ -37,6 +37,8 @@
 #include "queue.h"
 #include "semphr.h"
 
+/* MBOX primitives */
+
 #define SYS_MBOX_NULL					( ( xQueueHandle ) NULL )
 #define SYS_SEM_NULL					( ( xSemaphoreHandle ) NULL )
 #define SYS_DEFAULT_THREAD_STACK_DEPTH	configMINIMAL_STACK_SIZE

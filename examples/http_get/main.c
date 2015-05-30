@@ -109,17 +109,17 @@ void http_get_task(void *pvParameters)
 
 void user_init(void)
 {
-    uart_div_modify(0, UART_CLK_FREQ / 115200);
-    printf("SDK version:%s\n", system_get_sdk_version());
+    sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
+    printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
-    struct station_config config = {
+    struct sdk_station_config config = {
 	.ssid = WIFI_SSID,
 	.password = WIFI_PASS,
     };
 
     /* required to call wifi_set_opmode before station_set_config */
-    wifi_set_opmode(STATION_MODE);
-    wifi_station_set_config(&config);
+    sdk_wifi_set_opmode(STATION_MODE);
+    sdk_wifi_station_set_config(&config);
 
     xTaskCreate(&http_get_task, (signed char *)"get_task", 256, NULL, 2, NULL);
 }

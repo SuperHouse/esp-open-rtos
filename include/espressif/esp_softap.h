@@ -6,7 +6,7 @@
 #ifndef __ESP_SOFTAP_H__
 #define __ESP_SOFTAP_H__
 
-struct softap_config {
+struct sdk_softap_config {
     uint8_t ssid[32];
     uint8_t password[64];
     uint8_t ssid_len;
@@ -17,7 +17,7 @@ struct softap_config {
     uint16_t beacon_interval;
 };
 
-bool wifi_softap_get_config(struct softap_config *config);
-bool wifi_softap_set_config(struct softap_config *config);
+bool sdk_wifi_softap_get_config(struct sdk_softap_config *config);
+bool sdk_wifi_softap_set_config(struct sdk_softap_config *config);
 
 #endif

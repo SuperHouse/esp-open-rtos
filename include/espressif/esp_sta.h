@@ -1,6 +1,8 @@
 /*
  *  Copyright (C) 2013 -2014  Espressif System
  *
+ *
+ * Adapted from BSD licensed esp_iot_rtos_sdk v0.9.9
  */
 
 #ifndef __ESP_STA_H__
@@ -8,27 +10,27 @@
 
 #include "queue.h"
 
-struct station_config {
+struct sdk_station_config {
     uint8_t ssid[32];
     uint8_t password[64];
     uint8_t bssid_set;
     uint8_t bssid[6];
 };
 
-bool wifi_station_get_config(struct station_config *config);
-bool wifi_station_set_config(struct station_config *config);
+bool sdk_wifi_station_get_config(struct sdk_station_config *config);
+bool sdk_wifi_station_set_config(struct sdk_station_config *config);
 
-bool wifi_station_connect(void);
-bool wifi_station_disconnect(void);
+bool sdk_wifi_station_connect(void);
+bool sdk_wifi_station_disconnect(void);
 
-struct scan_config {
+struct sdk_scan_config {
     uint8_t *ssid;
     uint8_t *bssid;
     uint8_t channel;
     uint8_t show_hidden;
 };
 
-struct bss_info {
+struct sdk_bss_info {
     STAILQ_ENTRY(bss_info)     next;
 
     uint8_t bssid[6];
@@ -46,14 +48,14 @@ typedef enum {
     SCAN_PENDING,
     SCAN_BUSY,
     SCAN_CANCEL,
-} scan_status_t;
+} sdk_scan_status_t;
 
-typedef void (* scan_done_cb_t)(void *arg, scan_status_t status);
+typedef void (* sdk_scan_done_cb_t)(void *arg, sdk_scan_status_t status);
 
-bool wifi_station_scan(struct scan_config *config, scan_done_cb_t cb);
+bool sdk_wifi_station_scan(struct sdk_scan_config *config, sdk_scan_done_cb_t cb);
 
-uint8_t wifi_station_get_auto_connect(void);
-bool wifi_station_set_auto_connect(uint8_t set);
+uint8_t sdk_wifi_station_get_auto_connect(void);
+bool sdk_wifi_station_set_auto_connect(uint8_t set);
 
 enum {
     STATION_IDLE = 0,
@@ -64,6 +66,6 @@ enum {
     STATION_GOT_IP
 };
 
-uint8_t wifi_station_get_connect_status(void);
+uint8_t sdk_wifi_station_get_connect_status(void);
 
 #endif

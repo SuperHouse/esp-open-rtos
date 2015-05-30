@@ -1,4 +1,8 @@
-/* This linker script generated from xt-genldscripts.tpp for LSP . */
+/* This linker script generated from xt-genldscripts.tpp for LSP .
+
+   Modified for esp open RTOS, this linker script is no longer the same as the esp_iot_rtos_sdk one.
+*/
+
 /* Linker Script for ld -N */
 MEMORY
 {
@@ -19,12 +23,12 @@ PHDRS
 
 
 /*  Default entry point:  */
-ENTRY(call_user_start)
-EXTERN(_DebugExceptionVector)
-EXTERN(_DoubleExceptionVector)
-EXTERN(_KernelExceptionVector)
-EXTERN(_NMIExceptionVector)
-EXTERN(_UserExceptionVector)
+ENTRY(sdk_call_user_start)
+EXTERN(sdk__DebugExceptionVector)
+EXTERN(sdk__DoubleExceptionVector)
+EXTERN(sdk__KernelExceptionVector)
+EXTERN(sdk__NMIExceptionVector)
+EXTERN(sdk__UserExceptionVector)
 PROVIDE(_memmap_vecbase_reset = 0x40000000);
 /* Various memory-map dependent cache attribute settings: */
 _memmap_cacheattr_wb_base = 0x00000110;
