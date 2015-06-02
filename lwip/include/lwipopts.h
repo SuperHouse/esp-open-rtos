@@ -196,6 +196,9 @@
  */
 #define LWIP_DNS                        1
 
+#define DNS_TABLE_SIZE 1
+#define DNS_MAX_NAME_LENGTH 128
+
 /*
    ---------------------------------
    ---------- UDP options ----------
