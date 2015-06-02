@@ -14,6 +14,11 @@
 # https://github.com/tuanpmt/esp_mqtt, but it has changed significantly
 # since then.
 #
+# assume the 'root' directory (ie top of the tree) is the directory common.mk is in
+ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
+
+# include local overrides (if present) at top level, then in program directory
+-include $(ROOT)local.mk
 -include local.mk
 
 ifndef TARGET
@@ -87,9 +92,6 @@ space := $(empty) $(empty)
 
 # assume the target_dir is the directory the top-level makefile was run in
 TARGET_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
-
-# assume the 'root' directory (ie top of the tree) is the directory common.mk is in
-ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 
 # derive various parts of compiler/linker arguments
 SDK_LIB_ARGS         = $(addprefix -l,$(SDK_LIBS))
