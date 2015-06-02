@@ -33,7 +33,7 @@
 #define __ARCH_CC_H__
 
 /* include ESP SDK prototypes as they're used in some LWIP routines */
-#include "espressif/sdk_prototypes.h"
+#include "espressif/sdk_private.h"
 
 /* ESP8266 SDK Interface
 

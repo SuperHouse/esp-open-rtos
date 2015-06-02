@@ -1,14 +1,18 @@
-/* sdk_prototypes.h
+/* sdk_private.h
 
-   This source file contains function prototypes for functions defined
-   in the remaining "binary blob" ESP IoT RTOS SDK libraries. Sorted
-   by which library they appear in.
+   This source file contains function prototypes for "private" but
+   useful functions defined in the "binary blob" ESP IoT RTOS SDK libraries.
 
-   Function names here have the 'sdk_' prefix that is put on all binary library functions
-   by the Open RTOS SDK.
+   For the "public" API, check the esp_common header file and the various
+   sub-headers it includes.
+
+   Function names here have the 'sdk_' prefix that is attached to all
+   binary library symbols by the esp-open-rtos build process.
+
+   This file is a part of esp-open-rtos.
 */
-#ifndef SDK_PROTOTYPES_H
-#define SDK_PROTOTYPES_H
+#ifndef SDK_PRIVATE_H
+#define SDK_PRIVATE_H
 
 #include <stdint.h>
 struct ip_addr;
@@ -43,8 +47,5 @@ void sdk_system_station_got_ip_set(struct ip_addr *ip_addr, struct ip_addr *sn_m
    pbuf data. (See esp-lwip pbuf.h)
  */
 void sdk_system_pp_recycle_rx_pkt(void *eb);
-
-const char* sdk_system_get_sdk_version(void);
-
 
 #endif

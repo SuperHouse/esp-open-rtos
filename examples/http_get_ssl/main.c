@@ -7,6 +7,7 @@
  * This sample code is in the public domain.,
  */
 #include "espressif/esp_common.h"
+#include "espressif/sdk_private.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -19,7 +20,6 @@
 
 #include "ssl.h"
 
-#include "espressif/sdk_prototypes.h"
 
 #define WEB_SERVER "10.10.10.1"
 #define WEB_PORT "8000"

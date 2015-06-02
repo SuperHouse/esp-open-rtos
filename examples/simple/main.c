@@ -1,9 +1,9 @@
 /* Very basic example that just demonstrates we can run at all!
  */
-#include "esp_common.h"
+#include "espressif/esp_common.h"
+#include "espressif/sdk_private.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "espressif/blob_prototypes.h"
 #include "queue.h"
 
 void task1(void *pvParameters)

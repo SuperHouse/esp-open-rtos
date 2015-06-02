@@ -8,9 +8,9 @@
  * This sample code is in the public domain.,
  */
 #include "espressif/esp_common.h"
+#include "espressif/sdk_private.h"
 #include "FreeRTOS.h"
 #include "ssl.h"
-#include "espressif/sdk_prototypes.h"
 
 struct test_vector {
     const uint8_t *key;
