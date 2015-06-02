@@ -6,13 +6,13 @@ Similar to, but substantially different from, the [Espressif IOT RTOS SDK](https
 
 ## Quick Start
 
-* Install [esp-open-sdk](https://github.com/pfalcon/esp-open-sdk/) and make the toolchain available on your PATH. Despite the similar name that project has different maintainers (but we think it's fantastic!)
+* Install [esp-open-sdk](https://github.com/pfalcon/esp-open-sdk/) and make the toolchain available on your PATH. (Despite the similar name esp-open-sdk has different maintainers - but we think it's fantastic!)
 
-    (Alternative toolchains can also work, as long as a gcc cross-compiler is available on the PATH. The official Tensilica "xcc" compiler will probably not work.)
+    (Other toolchains will also work, as long as a gcc cross-compiler is available on the PATH. The proprietary Tensilica "xcc" compiler will probably not work.)
 
 * Install [esptool.py](https://github.com/themadinventor/esptool) and make it available on your PATH.
 
-* The build process uses `GNU Make`, and the utilities `sed` and `grep`. Linux & OS X should have these already. Windows users can get these tools a variety of ways, [MingGW](http://www.mingw.org/wiki/mingw) is one option.
+* The build process uses `GNU Make`, and the utilities `sed` and `grep`. Linux & OS X should have these already. Windows users can get these tools a variety of ways - [MingGW](http://www.mingw.org/wiki/mingw) is one option.
 
 * Use git to clone the esp-open-rtos project (note the `--recursive`):
 
@@ -21,11 +21,15 @@ git clone --recursive git@github.com:superhouse/esp-open-rtos.git
 cd esp-open-rtos
 ```
 
-* Build an example project and flash it to a serial port:
+* Build an example project (found in the 'examples' directory) and flash it to a serial port:
 
 ```
-make -j4 -C examples/http_get flash ESPPORT=/dev/ttyUSB0
+make flash -j4 -C examples/http_get ESPPORT=/dev/ttyUSB0
 ```
+
+Run `make help -C examples/http_get` for a summary of other Make targets.
+
+The [Build Process wiki page](https://github.com/SuperHouse/esp-open-rtos/wiki/Build-Process) has in-depth details of the build process.
 
 ## Goals
 
@@ -44,18 +48,18 @@ Current status is alpha quality, under development. AP STATION mode (ie wifi cli
 
 ## Binary Components
 
-Binary libraries (inside the `lib` dir) are all supplied by Espressif as part of their RTOS SDK which is MIT Licensed.
+Binary libraries (inside the `lib` dir) are all supplied by Espressif as part of their RTOS SDK. These parts were MIT Licensed.
 
 As part of the esp-open-rtos build process, all binary SDK symbols are prefixed with `sdk_`. This makes it easier to differentiate binary & open source code, and also prevents namespace conflicts.
 
 Some binary libraries appear to contain unattributed open source code:
 
-* libnet80211.a appears to be based on FreeBSD net80211, or a fork of it.
+* libnet80211.a & libwpa.a appear to be based on FreeBSD net80211/wpa, or forks of them. ([See this issue](https://github.com/SuperHouse/esp-open-rtos/issues/4)).
 * libudhcp has been removed from esp-open-rtos. It was released with the Espressif RTOS SDK but udhcp is GPL licensed.
 
 ## Licensing
 
-* BSD license (as described in LICENSE) applies to original source files, and [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki). LWIP is CopyrighT (C) Swedish Institute of Computer Science.
+* BSD license (as described in LICENSE) applies to original source files, and [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki). LWIP is Copyright (C) Swedish Institute of Computer Science.
 
 * FreeRTOS is provided under the GPL with the FreeRTOS linking exception, allowing non-GPL firmwares to be produced using FreeRTOS as the RTOS core. License details in files under FreeRTOS dir. FreeRTOS is Copyright (C) Real Time Engineers Ltd.
 
@@ -69,7 +73,7 @@ Contributions are very welcome!
 
 * If you have feature additions or bug fixes then please send a pull request.
 
-* There is a list of outstanding TODO items in the [issues list](https://github.com/superhouse/esp-open-rtos/issues). Contributions to these, as well as other improvements, are very welcome.
+* There is a list of outstanding 'enhancements' in the [issues list](https://github.com/superhouse/esp-open-rtos/issues). Contributions to these, as well as other improvements, are very welcome.
 
 If you are contributing code, *please ensure that it can be licensed under the BSD open source license*. Specifically:
 

@@ -2,10 +2,13 @@
 #
 # ******************************************************************
 # Run 'make help' in any example subdirectory to see a usage summary
-# (or skip to the bottom!)
+# (or skip to the bottom of this file!)
+#
+# For example, from the top level run:
+# make help -C examples/http_get
 # ******************************************************************
 #
-# ESPTODO: Add a documentation link here.
+# In-depth documentation is at https://github.com/SuperHouse/esp-open-rtos/wiki/Build-Process
 #
 # Most sections Copyright 2015 Superhouse Automation Pty Ltd
 # BSD Licensed as described in the file LICENSE at top level.
