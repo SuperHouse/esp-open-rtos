@@ -70,9 +70,12 @@ ifeq ($(FLAVOR),debug)
     CFLAGS += -g -O0
     LDFLAGS += -g -O0
 else
-    CFLAGS += -g -O2 -DGITSHORTREV=$(GITSHORTREV)
+    CFLAGS += -g -O2
     LDFLAGS += -g -O2
 endif
+
+GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
+CFLAGS += -DGITSHORTREV=$(GITSHORTREV)
 
 LINKER_SCRIPTS  = ld/eagle.app.v6.ld ld/eagle.rom.addr.v6.ld
 
@@ -163,8 +166,6 @@ COMPONENT_ARS += $$($(1)_AR)
 
 -include $$($(1)_OBJ_FILES:.o=.d)
 endef
-
-GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
 
 ## Linking rules for SDK libraries
 ## SDK libraries are preprocessed to:
