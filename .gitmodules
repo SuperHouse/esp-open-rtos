@@ -1,3 +1,6 @@
 [submodule "lwip/lwip"]
 	path = lwip/lwip
 	url = git://git.savannah.nongnu.org/lwip.git
+[submodule "axtls/axtls"]
+	path = axtls/axtls
+	url = ../../axtls-code/
