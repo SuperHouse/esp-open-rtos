@@ -96,8 +96,8 @@ SDK_LIB_ARGS         = $(addprefix -l,$(SDK_LIBS))
 LIB_ARGS             = $(addprefix -l,$(LIBS))
 TARGET_OUT   = $(BUILD_DIR)$(TARGET).out
 LDFLAGS      += $(addprefix -T$(ROOT),$(LINKER_SCRIPTS))
-FW_FILE_1    = $(addprefix $(FW_BASE)/,$(FW_1).bin)
-FW_FILE_2    = $(addprefix $(FW_BASE)/,$(FW_2).bin)
+FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_1).bin)
+FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_2).bin)
 
 # Common include directories, shared across all "components"
 # components will add their include directories to this argument
