@@ -149,7 +149,7 @@ $(1)_CFLAGS ?= $(CFLAGS)
 $(1)_CC_ARGS = $(Q) $(CC) $(addprefix -I,$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
 $(1)_AR = $(BUILD_DIR)$(1).a
 
-$$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c
+$$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c | $$($(1)_SRC_DIR)
 	$(vecho) "CC $$<"
 	$(Q) mkdir -p $$(dir $$@)
 	$$($(1)_CC_ARGS) -c $$< -o $$@

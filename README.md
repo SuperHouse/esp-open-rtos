@@ -14,10 +14,10 @@ Similar to, but substantially different from, the [Espressif IOT RTOS SDK](https
 
 * The build process uses `GNU Make`, and the utilities `sed` and `grep`. Linux & OS X should have these already. Windows users can get these tools a variety of ways, [MingGW](http://www.mingw.org/wiki/mingw) is one option.
 
-* Use git to clone the esp-open-rtos project:
+* Use git to clone the esp-open-rtos project (note the `--recursive`):
 
 ```
-git clone git@github.com:superhouse/esp-open-rtos.git
+git clone --recursive git@github.com:superhouse/esp-open-rtos.git
 cd esp-open-rtos
 ```
 

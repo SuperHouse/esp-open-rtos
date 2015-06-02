@@ -1,6 +1,7 @@
 [submodule "lwip/lwip"]
 	path = lwip/lwip
-	url = git://git.savannah.nongnu.org/lwip.git
+	url = git@github.com:SuperHouse/esp-lwip.git
 [submodule "axtls/axtls"]
 	path = axtls/axtls
-	url = ../../axtls-code/
+	url = git@github.com:SuperHouse/axtls.git
+

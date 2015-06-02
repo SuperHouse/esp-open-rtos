@@ -13,3 +13,7 @@ lwip_CFLAGS = $(CFLAGS) -Wno-address
 
 $(eval $(call component_compile_rules,lwip))
 
+# Helpful error if git submodule not initialised
+$(lwip_SRC_DIR):
+	$(error "LWIP git submodule not installed. Please run 'git submodule init' then 'git submodule update'")
+

@@ -17,3 +17,7 @@ axtls_SRC_DIR = $(AXTLS_DIR)crypto $(AXTLS_DIR)ssl $(ROOT)axtls
 #axtls_CFLAGS = $(CFLAGS) -Wno-address
 
 $(eval $(call component_compile_rules,axtls))
+
+# Helpful error if git submodule not initialised
+$(axtls_SRC_DIR):
+	$(error "axtls git submodule not installed. Please run 'git submodule init' then 'git submodule update'")
