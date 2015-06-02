@@ -139,7 +139,7 @@ void PendSV(enum SVC_ReqType);
    ESPTODO: It may be possible to just read the 'ps' register instead
    of accessing thisvariable.
 */
-extern char NMIIrqIsOn;
+extern char sdk_NMIIrqIsOn;
 extern char level1_int_disabled;
 extern unsigned cpu_sr;
 
@@ -150,7 +150,7 @@ extern unsigned cpu_sr;
 */
 inline static __attribute__((always_inline)) void _esp_disable_interrupts(void)
 {
-    if(!NMIIrqIsOn && !level1_int_disabled) {
+    if(!sdk_NMIIrqIsOn && !level1_int_disabled) {
 	__asm__ volatile ("rsil %0, " XTSTR(XCHAL_EXCM_LEVEL) : "=a" (cpu_sr) :: "memory");
 	level1_int_disabled = 1;
     }
@@ -158,7 +158,7 @@ inline static __attribute__((always_inline)) void _esp_disable_interrupts(void)
 
 inline static __attribute__((always_inline)) void _esp_enable_interrupts(void)
 {
-    if(!NMIIrqIsOn && level1_int_disabled) {
+    if(!sdk_NMIIrqIsOn && level1_int_disabled) {
 	level1_int_disabled = 0;
 	__asm__ volatile ("wsr %0, ps" :: "a" (cpu_sr) : "memory");
     }

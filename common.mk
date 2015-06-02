@@ -47,6 +47,7 @@ NM = $(CROSS)nm
 CPP = $(CROSS)g++
 SIZE = $(CROSS)size
 OBJCOPY = $(CROSS)objcopy
+OBJDUMP = $(CROSS)objdump
 
 # Source components to compile and link. Each of these are subdirectories
 # of the root, with a 'component.mk' file.
@@ -184,10 +185,12 @@ $(BUILD_DIR)sdklib/%.a: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/allsymbols.rename
 $(BUILD_DIR)sdklib/norename.match: $(ROOT)lib/symbols_norename.txt | $(BUILD_DIR)sdklib
 	grep -v "^#" $< | sed ':begin;$!N;s/\n/\\|/;tbegin' > $@
 
-# Generate list of symbols to rename from a single library. Uses grep & sed.
+# Generate list of defined symbols to rename from a single library. Uses grep & sed.
 $(BUILD_DIR)sdklib/%.rename: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/norename.match
 	$(vecho) "Building symbol list for $< -> $@"
-	$(Q) $(NM) --defined $< | grep ' T ' | sed -r 's/(.+) T (.+)/\2 sdk_\2/' | grep -v `cat $(BUILD_DIR)sdklib/norename.match` > $@
+	$(Q) $(OBJDUMP) -t $< | grep ' g ' \
+		| sed -r 's/^.+ ([^ ]+)$$/\1 sdk_\1/' \
+		| grep -v `cat $(BUILD_DIR)sdklib/norename.match` > $@
 
 # Build master list of all SDK-defined symbols to rename
 $(BUILD_DIR)sdklib/allsymbols.rename: $(patsubst %.a,%.rename,$(SDK_PROCESSED_LIBS))
