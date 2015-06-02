@@ -70,7 +70,7 @@ ifeq ($(FLAVOR),debug)
     CFLAGS += -g -O0
     LDFLAGS += -g -O0
 else
-    CFLAGS += -g -O2
+    CFLAGS += -g -O2 -DGITSHORTREV=$(GITSHORTREV)
     LDFLAGS += -g -O2
 endif
 
@@ -164,6 +164,7 @@ COMPONENT_ARS += $$($(1)_AR)
 -include $$($(1)_OBJ_FILES:.o=.d)
 endef
 
+GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
 
 ## Linking rules for SDK libraries
 ## SDK libraries are preprocessed to:
