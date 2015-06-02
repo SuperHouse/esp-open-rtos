@@ -1,3 +1,9 @@
+/* http_get - Retrieves a web page over HTTP GET.
+ *
+ * See http_get_ssl for a TLS-enabled version.
+ *
+ * This sample code is in the public domain.,
+ */
 #include "espressif/esp_common.h"
 
 #include "FreeRTOS.h"

@@ -1,9 +1,8 @@
 /* esp8266.h
  *
-<<<<<<< HEAD
  * ESP-specific SoC-level addresses, macros, etc.
- * Part of esp-open-rtos
  *
+ * Part of esp-open-rtos
  * Copyright (C) 2105 Superhouse Automation Pty Ltd
  * BSD Licensed as described in the file LICENSE
  */

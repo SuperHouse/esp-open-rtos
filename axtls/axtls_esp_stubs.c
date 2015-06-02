@@ -1,11 +1,15 @@
+/*
+ * Stub time-related functions for TLS time-related operations
+ *
+ * ESPTODO: Revisit these ASAP as gettimeofday() is used for entropy
+ *
+ * Part of esp-open-rtos
+ * Copyright (C) 2105 Superhouse Automation Pty Ltd
+ * BSD Licensed as described in the file LICENSE
+ */
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h>
-/*
- * Stub time functions for TLS time-related operations
- *
- * ESPTODO: Revisit these soon as gettimeofday() is used for entropy
- */
 
 time_t time(time_t *t)
 {

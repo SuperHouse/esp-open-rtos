@@ -1,3 +1,11 @@
+/* http_get_ssl - HTTPS version of the http_get example.
+ *
+ * Retrieves a web page over HTTPS (TLS) using GET.
+ *
+ * Does not validate server certificate.
+ *
+ * This sample code is in the public domain.,
+ */
 #include "espressif/esp_common.h"
 
 #include "FreeRTOS.h"
@@ -214,3 +222,4 @@ static void display_cipher(SSL *ssl)
 
     printf("\n");
 }
+

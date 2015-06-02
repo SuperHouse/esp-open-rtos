@@ -1,31 +1,28 @@
 # esp-open-rtos common Makefile
 #
-# To use this Makefile, define the variable TARGET with the program
-# name (plus any other variables you want to override) in your
-# progream's makefile, then include common.mk as the last line
-# in the Makefile.
+# ******************************************************************
+# Run 'make help' in any example subdirectory to see a usage summary
+# (or skip to the bottom!)
+# ******************************************************************
 #
-# See the programs in the 'examples' directory for examples.
+# ESPTODO: Add a documentation link here.
 #
-# Note: your program does not have to be under the top esp-open-rtos
-# directory - you can build out of tree programs.
-
+# Most sections Copyright 2015 Superhouse Automation Pty Ltd
+# BSD Licensed as described in the file LICENSE at top level.
+#
 # This makefile is adapted from the esp-mqtt makefile by @tuanpmt
-# https://github.com/tuanpmt/esp_mqtt, but it has change significantly
+# https://github.com/tuanpmt/esp_mqtt, but it has changed significantly
 # since then.
-
-# To override variables assigned below with ?= for the local system,
-# rather than per-project, add the entries to this optional local.mk
-# file, or specify on the command line, or pass as environment vars.
+#
 -include local.mk
-
-# esptool defaults
-ESPTOOL ?= esptool.py
-ESPBAUD ?= 115200
 
 ifndef TARGET
 	$(error "Set the TARGET environment variable in your Makefile before including common.mk"
 endif
+
+# esptool defaults
+ESPTOOL ?= esptool.py
+ESPBAUD ?= 115200
 
 # Output directors to store intermediate compiled files
 # relative to the target directory
@@ -238,4 +235,37 @@ clean:
 
 # prevent "intermediate" files from being deleted
 .SECONDARY:
+
+# print some useful help stuff
+help:
+	@echo "esp-open-rtos make"
+	@echo ""
+	@echo "Other targets:"
+	@echo ""
+	@echo "all"
+	@echo "Default target. Will build firmware including any changed source files."
+	@echo
+	@echo "clean"
+	@echo "Delete all build output."
+	@echo ""
+	@echo "rebuild"
+	@echo "Build everything fresh from scratch."
+	@echo ""
+	@echo "flash"
+	@echo "Build then upload firmware to MCU. Set ESPPORT & ESPBAUD to override port/baud rate."
+	@echo ""
+	@echo "test"
+	@echo "'flash', then start a GNU Screen session on the same serial port to see serial output."
+	@echo ""
+	@echo "size"
+	@echo "Build, then print a summary of built firmware size."
+	@echo ""
+	@echo "TIPS:"
+	@echo "* You can use -jN for parallel builds. Much faster! Use 'make rebuild' instead of 'make clean all' for parallel builds."
+	@echo "* You can create a local.mk file to create local overrides of variables like ESPPORT & ESPBAUD."
+	@echo ""
+	@echo "SAMPLE COMMAND LINE:"
+	@echo "make -j2 test ESPPORT=/dev/ttyUSB0"
+	@echo ""
+
 
