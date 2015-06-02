@@ -70,6 +70,7 @@
 extern "C" {
 #endif
 
+#include "esp8266.h"
 #include "espressif/esp8266/ets_sys.h"
 #include <stdint.h>
 #include    <xtruntime.h>

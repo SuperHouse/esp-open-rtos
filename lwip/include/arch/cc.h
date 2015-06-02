@@ -47,6 +47,8 @@
 #include <stdio.h> /* printf, fflush, FILE */
 #include <stdlib.h> /* abort */
 #include <stdint.h>
+#include <sys/time.h>
+#include <sys/errno.h>
 
 #define BYTE_ORDER LITTLE_ENDIAN
 
@@ -58,8 +60,6 @@
 	#pragma warning (disable: 4996) /* 'strncpy' was declared deprecated */
 	#pragma warning (disable: 4103) /* structure packing changed by including file */
 #endif
-
-#define LWIP_PROVIDE_ERRNO
 
 /* Define generic types used in lwIP */
 typedef uint8_t    u8_t;
@@ -86,6 +86,7 @@ typedef int sys_prot_t;
 #define PACK_STRUCT_STRUCT __attribute__( (packed) )
 
 /* Plaform specific diagnostic output */
+#ifdef LWIP_DEBUG
 #define LWIP_PLATFORM_DIAG(x)   do { printf x; } while(0)
 
 #define LWIP_PLATFORM_ASSERT(x) do { printf("Assertion \"%s\" failed at line %d in %s\n", \
@@ -94,6 +95,11 @@ typedef int sys_prot_t;
 #define LWIP_ERROR(message, expression, handler) do { if (!(expression)) { \
   printf("Assertion \"%s\" failed at line %d in %s\n", message, __LINE__, __FILE__); \
   handler;} } while(0)
+#else
+#define LWIP_PLATFORM_DIAG(x)
+#define LWIP_PLATFORM_ASSERT(x)
+#define LWIP_ERROR(m,e,h)
+#endif
 
 #define LWIP_PLATFORM_BYTESWAP 1
 

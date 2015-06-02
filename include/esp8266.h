@@ -1,5 +1,6 @@
 /* esp8266.h
  *
+<<<<<<< HEAD
  * ESP-specific SoC-level addresses, macros, etc.
  * Part of esp-open-rtos
  *
@@ -22,7 +23,6 @@
    aligned reads. It's up to the user of this attribute to ensure this.
 */
 #define IROM __attribute__((section(".irom0"))) const
-
 
 /* Register addresses
 

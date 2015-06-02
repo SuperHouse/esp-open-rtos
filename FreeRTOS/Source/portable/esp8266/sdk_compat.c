@@ -4,7 +4,7 @@
 #include <string.h>
 #include "FreeRTOS.h"
 
-/* SDK uses this and so does lwip, it was defined in libudhcp.a
+/* SDK uses errno. errno was defined in libudhcp.a
    but that library has been removed. */
 int errno;
 

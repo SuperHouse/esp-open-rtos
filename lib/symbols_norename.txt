@@ -3,4 +3,6 @@
 puts
 printf
 putchar
+rand
+srand
 atoi

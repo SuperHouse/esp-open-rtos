@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2007, Cameron Rich
+ * Copyright (c) 2007-2015, Cameron Rich
+ * Modifications Copyright (c) 2015 Superhouse Automation Pty Ltd
  * 
  * All rights reserved.
  * 
@@ -34,28 +35,58 @@
  * Some stuff to minimise the differences between windows and linux/unix
  */
 
-#ifndef HEADER_OS_PORT_H
-#define HEADER_OS_PORT_H
+#ifndef _HEADER_OS_PORT_H
+#define _HEADER_OS_PORT_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "esp_common.h"
-
-#if 0
-#define ssl_printf(fmt, args...) os_printf(fmt,## args)
-#else
-#define ssl_printf(fmt, args...)
+#include "FreeRTOS.h"
+#include "os_int.h"
+#include "config.h"
+#include <stdio.h>
+#include <pwd.h>
+#include <netdb.h>
+//#include <fcntl.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <posix/sys/socket.h>
+#include <sys/wait.h>
+#include <ipv4/lwip/inet.h>
+#if defined(CONFIG_SSL_CTX_MUTEXING)
+#include "semphr.h"
 #endif
 
-#define STDCALL
-#define EXP_FUNC
+#define SOCKET_READ(A,B,C)      read(A,B,C)
+#define SOCKET_WRITE(A,B,C)     write(A,B,C)
+#define SOCKET_CLOSE(A)         if (A >= 0) close(A)
+#define TTY_FLUSH()
 
+static inline uint64_t be64toh(uint64_t x) {
+  return ntohl(x>>32) | ((uint64_t)(ntohl(x)) << 32);
+}
+
+void exit_now(const char *format, ...) __attribute((noreturn));
+
+#define EXP_FUNC
+#define STDCALL
+
+/* Mutex definitions */
+#if defined(CONFIG_SSL_CTX_MUTEXING)
+#define SSL_CTX_MUTEX_TYPE           xSemaphoreHandle
+#define SSL_CTX_MUTEX_INIT(A)       vSemaphoreCreateBinaryCreateMutex(A)
+#define SSL_CTX_MUTEX_DESTROY(A)    vSemaphoreDelete(A)
+#define SSL_CTX_LOCK(A)             xSemaphoreTakeRecursive(A, portMAX_DELAY)
+#define SSL_CTX_UNLOCK(A)           xSemaphoreGiveRecursive(A)
+#else
+#define SSL_CTX_MUTEX_TYPE
 #define SSL_CTX_MUTEX_INIT(A)
 #define SSL_CTX_MUTEX_DESTROY(A)
 #define SSL_CTX_LOCK(A)
 #define SSL_CTX_UNLOCK(A)
+#endif
 
 #ifdef __cplusplus
 }

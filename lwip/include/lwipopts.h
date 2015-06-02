@@ -37,6 +37,7 @@
 #define PBUF_RSV_FOR_WLAN                   1
 #define EBUF_LWIP                           1
 #define ESP_TIMEWAIT_THRESHOLD              10000
+#define LWIP_TIMEVAL_PRIVATE                0
 
 // Uncomment this line, and set the debug options you want below, for IP stack debug output
 //#define LWIP_DEBUG
