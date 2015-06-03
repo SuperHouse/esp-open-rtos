@@ -46,6 +46,8 @@ Current status is alpha quality, under development. AP STATION mode (ie wifi cli
 * [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki) v1.4.1, modified via the [esp-lwip project](https://github.com/kadamski/esp-lwip) by @kadamski.
 * [axTLS](http://axtls.sourceforge.net/) compiled from development version v1.5.3, plus modifications for low memory devices.
 
+For details of how third party libraries are integrated, [see the wiki page](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries).
+
 ## Binary Components
 
 Binary libraries (inside the `lib` dir) are all supplied by Espressif as part of their RTOS SDK. These parts were MIT Licensed.
@@ -59,11 +61,11 @@ Some binary libraries appear to contain unattributed open source code:
 
 ## Licensing
 
-* BSD license (as described in LICENSE) applies to original source files, and [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki). LWIP is Copyright (C) Swedish Institute of Computer Science.
+* BSD license (as described in LICENSE) applies to original source files, [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki), and [axTLS](http://axtls.sourceforge.net/). lwIP is Copyright (C) Swedish Institute of Computer Science. axTLS is Copyright (C) Cameron Rich.
 
 * FreeRTOS is provided under the GPL with the FreeRTOS linking exception, allowing non-GPL firmwares to be produced using FreeRTOS as the RTOS core. License details in files under FreeRTOS dir. FreeRTOS is Copyright (C) Real Time Engineers Ltd.
 
-* Source & binary components from the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk) were released under the MIT license. Source code components are relicensed here under the BSD license. Components are Copyright (C) Espressif Systems.
+* Source & binary components from the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk) were released under the MIT license. Source code components are relicensed here under the BSD license. The original parts are Copyright (C) Espressif Systems.
 
 ## Contributions
 
