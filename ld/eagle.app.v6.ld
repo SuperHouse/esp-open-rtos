@@ -23,7 +23,7 @@ PHDRS
 
 
 /*  Default entry point:  */
-ENTRY(sdk_call_user_start)
+ENTRY(call_user_start)
 EXTERN(sdk__DebugExceptionVector)
 EXTERN(sdk__DoubleExceptionVector)
 EXTERN(sdk__KernelExceptionVector)

@@ -67,7 +67,8 @@ SDK_LIBS		?= main net80211 phy pp wpa
 # open source libraries linked in
 LIBS ?= gcc hal
 
-ENTRY_SYMBOL ?= sdk_call_user_start
+# Note: this isn't overridable without a not-yet-merged patch to esptool
+ENTRY_SYMBOL = call_user_start
 
 CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${TARGET}.map
@@ -220,7 +221,7 @@ $(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib:
 
 $(FW_FILE_1) $(FW_FILE_2): $(TARGET_OUT) $(FW_BASE)
 	$(vecho) "FW $@"
-	$(ESPTOOL) elf2image --entry-symbol $(ENTRY_SYMBOL) $< -o $(FW_BASE)
+	$(ESPTOOL) elf2image $< -o $(FW_BASE)
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_1) $(FW_FILE_1) $(FW_2) $(FW_FILE_2)
