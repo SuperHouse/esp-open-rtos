@@ -4,7 +4,7 @@
  * ESPTODO: Revisit these ASAP as gettimeofday() is used for entropy
  *
  * Part of esp-open-rtos
- * Copyright (C) 2105 Superhouse Automation Pty Ltd
+ * Copyright (C) 2015 Superhouse Automation Pty Ltd
  * BSD Licensed as described in the file LICENSE
  */
 #include <time.h>

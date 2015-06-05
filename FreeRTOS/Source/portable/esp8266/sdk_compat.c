@@ -2,7 +2,7 @@
  * Stub functions called by binary espressif libraries
  *
  * Part of esp-open-rtos
- * Copyright (C) 2105 Superhouse Automation Pty Ltd
+ * Copyright (C) 2015 Superhouse Automation Pty Ltd
  * BSD Licensed as described in the file LICENSE
  */
 #include <stdlib.h>

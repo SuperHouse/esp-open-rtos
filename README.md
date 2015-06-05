@@ -59,6 +59,15 @@ Some binary libraries appear to contain unattributed open source code:
 * libnet80211.a & libwpa.a appear to be based on FreeBSD net80211/wpa, or forks of them. ([See this issue](https://github.com/SuperHouse/esp-open-rtos/issues/4)).
 * libudhcp has been removed from esp-open-rtos. It was released with the Espressif RTOS SDK but udhcp is GPL licensed.
 
+## Code Structure
+
+* `examples` contains a range of example projects (one per subdirectory). Check them out!
+* `include` contains header files from Espressif RTOS SDK, relating to the binary libraries & Xtensa core.
+* `core` contains source & headers for low-level ESP8266 functions & peripherals. `core/include/esp` contains useful headers for peripheral access, etc. Still being fleshed out. Minimal to no FreeRTOS dependencies.
+* `FreeRTOS` contains FreeRTOS implementation, subdirectory structure is the standard FreeRTOS structure. `FreeRTOS/source/portable/esp8266/` contains the ESP8266 port.
+* `lwip` and `axtls` contain the lwIP TCP/IP library and the axTLS TLS library ('libssl' in the esp8266 SDKs), respectively. See [Third Party Libraries](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries) wiki page for details.
+
+
 ## Licensing
 
 * BSD license (as described in LICENSE) applies to original source files, [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki), and [axTLS](http://axtls.sourceforge.net/). lwIP is Copyright (C) Swedish Institute of Computer Science. axTLS is Copyright (C) Cameron Rich.

@@ -1,15 +1,20 @@
-/* esp8266.h
+/* Some common compiler macros
  *
- * ESP-specific SoC-level addresses, macros, etc.
+ * Not esp8266-specific.
  *
  * Part of esp-open-rtos
- * Copyright (C) 2105 Superhouse Automation Pty Ltd
+ * Copyright (C) 2015 Superhouse Automation Pty Ltd
  * BSD Licensed as described in the file LICENSE
  */
-#include <stdint.h>
 
-#ifndef _ESP8266_H
-#define _ESP8266_H
+#ifndef _COMMON_MACROS_H
+#define _COMMON_MACROS_H
+
+#define UNUSED __attributed((unused))
+
+#ifndef BIT
+#define BIT(X) (1<<X)
+#endif
 
 /* Use this macro to store constant values in IROM flash instead
    of having them loaded into rodata (which resides in DRAM)
@@ -23,10 +28,6 @@
 */
 #define IROM __attribute__((section(".irom0"))) const
 
-/* Register addresses
-
-   ESPTODO: break this out to its own header file and clean it up, add other regs, etc.
-*/
-static volatile __attribute__((unused)) uint32_t *ESP_REG_WDT = (uint32_t *)0x60000900;
+#define INLINED inline static __attribute__((always_inline)) __attribute__((unused))
 
 #endif
