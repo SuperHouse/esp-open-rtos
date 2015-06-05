@@ -152,7 +152,7 @@ $(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_S
 
 ### determine compiler arguments ###
 $(1)_CFLAGS ?= $(CFLAGS)
-$(1)_CC_ARGS = $(Q) $(CC) $(addprefix -I,$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
+$(1)_CC_ARGS = $(Q) $(CC) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
 $(1)_AR = $(BUILD_DIR)$(1).a
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c | $$($(1)_SRC_DIR)
@@ -202,14 +202,13 @@ $(BUILD_DIR)sdklib/%.rename: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/norename.match
 $(BUILD_DIR)sdklib/allsymbols.rename: $(patsubst %.a,%.rename,$(SDK_PROCESSED_LIBS))
 	cat $^ > $@
 
-
-## Include components (this is where the actual compiler sections are generated)
-$(foreach component,$(COMPONENTS), $(eval include $(ROOT)/$(component)/component.mk))
-
-# include "dummy component" for the 'target' object file
+# include "dummy component" for the 'target' object files
 target_SRC_DIR=$(TARGET_DIR)
 target_ROOT=$(TARGET_DIR)
 $(eval $(call component_compile_rules,target))
+
+## Include other components (this is where the actual compiler sections are generated)
+$(foreach component,$(COMPONENTS), $(eval include $(ROOT)/$(component)/component.mk))
 
 # final linking step to produce .elf
 $(TARGET_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS)
