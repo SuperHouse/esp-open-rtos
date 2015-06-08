@@ -78,7 +78,7 @@ void http_get_task(void *pvParameters)
             "GET "WEB_URL"\r\n"
             "User-Agent: esp-open-rtos/0.1 esp8266\r\n"
             "\r\n";
-        if (write(s, req, strlen(req) + 1) < 0) {
+        if (write(s, req, strlen(req)) < 0) {
             printf("... socket send failed\r\n");
             close(s);
             vTaskDelay(4000 / portTICK_RATE_MS);

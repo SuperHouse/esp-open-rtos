@@ -119,7 +119,7 @@ void http_get_task(void *pvParameters)
             "GET "WEB_URL"\r\n"
             "User-Agent: esp-open-rtos/0.1 esp8266\r\n"
             "\r\n";
-        if (ssl_write(ssl, (uint8_t *)req, strlen(req) + 1) < 0) {
+        if (ssl_write(ssl, (uint8_t *)req, strlen(req)) < 0) {
             printf("... socket send failed\r\n");
             ssl_free(ssl);
             close(s);
