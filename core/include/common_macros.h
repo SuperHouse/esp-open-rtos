@@ -26,7 +26,7 @@
    Important to note: IROM flash can only be accessed via 32-bit word
    aligned reads. It's up to the user of this attribute to ensure this.
 */
-#define IROM __attribute__((section(".irom0"))) const
+#define IROM __attribute__((section(".irom0.literal"))) const
 
 #define INLINED inline static __attribute__((always_inline)) __attribute__((unused))
 
