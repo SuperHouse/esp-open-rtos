@@ -120,7 +120,7 @@ static int pending_maclayer_sv;
    In the original esp_iot_rtos_sdk implementation, arg was a char. Using an
    enum is ABI-compatible, though.
 */
-void PendSV(enum SVC_ReqType req)
+void IRAM PendSV(enum SVC_ReqType req)
 {
 	vPortEnterCritical();
 
@@ -141,7 +141,7 @@ void PendSV(enum SVC_ReqType req)
  */
 extern portBASE_TYPE sdk_MacIsrSigPostDefHdl(void);
 
-void SV_ISR(void)
+void IRAM SV_ISR(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken=pdFALSE ;
 	if(pending_maclayer_sv)
@@ -206,14 +206,14 @@ static unsigned portBASE_TYPE uxCriticalNesting = 0;
  * with a save/restore of interrupt level, although it's difficult as
  * the functions have no return value.
  */
-void vPortEnterCritical( void )
+void IRAM vPortEnterCritical( void )
 {
     portDISABLE_INTERRUPTS();
     uxCriticalNesting++;
 }
 /*-----------------------------------------------------------*/
 
-void vPortExitCritical( void )
+void IRAM vPortExitCritical( void )
 {
     uxCriticalNesting--;
     if( uxCriticalNesting == 0 )

@@ -84,7 +84,7 @@ endif
 GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
 CFLAGS += -DGITSHORTREV=$(GITSHORTREV)
 
-LINKER_SCRIPTS  = ld/eagle.app.v6.ld ld/eagle.rom.addr.v6.ld
+LINKER_SCRIPTS  = $(ROOT)ld/eagle.app.v6.ld $(ROOT)ld/eagle.rom.addr.v6.ld
 
 ####
 #### no user configurable options below here
@@ -101,7 +101,7 @@ TARGET_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 SDK_LIB_ARGS         = $(addprefix -l,$(SDK_LIBS))
 LIB_ARGS             = $(addprefix -l,$(LIBS))
 TARGET_OUT   = $(BUILD_DIR)$(TARGET).out
-LDFLAGS      += $(addprefix -T$(ROOT),$(LINKER_SCRIPTS))
+LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS))
 FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_1).bin)
 FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_2).bin)
 
@@ -211,9 +211,9 @@ $(eval $(call component_compile_rules,target))
 $(foreach component,$(COMPONENTS), $(eval include $(ROOT)/$(component)/component.mk))
 
 # final linking step to produce .elf
-$(TARGET_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS)
+$(TARGET_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
 	$(vecho) "LD $@"
-	$(Q) $(LD) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(SDK_LIB_ARGS) $(LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
+	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(SDK_LIB_ARGS) $(LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
 
 $(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib:
 	$(Q) mkdir -p $@

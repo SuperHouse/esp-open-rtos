@@ -30,4 +30,6 @@
 
 #define INLINED inline static __attribute__((always_inline)) __attribute__((unused))
 
+#define IRAM __attribute__((section(".iram1.text")))
+
 #endif
