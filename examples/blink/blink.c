@@ -13,7 +13,8 @@ const int gpio = 14;
 /* This task uses the high level GPIO API (esp_gpio.h) to blink an LED.
  *
  * Even though it reads better than the register-level version in blinkenRegisterTask,
- * they compile to the exact same instructions.
+ * they compile to the exact same instructions (except gpio_enable also set the output type in
+ * the GPIO control register).
  */
 void blinkenTask(void *pvParameters)
 {
@@ -32,8 +33,9 @@ void blinkenTask(void *pvParameters)
    It's not fully parameterised, as the IOMUX_SET macro requires the pin number
    as part of the GPxx value.
 
-   This code compiles to the exact same instructions as blinkenTask,
-   so it's probably better to use the blinkenTask version.
+   There is no significant performance benefit to this way over the
+   blinkenTask version, so it's probably better to use the blinkenTask
+   version.
 
    NOTE: This task isn't enabled by default, see the commented out line in user_init.
 */

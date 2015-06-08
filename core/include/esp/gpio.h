@@ -10,11 +10,14 @@
 #include <stdbool.h>
 #include "esp/registers.h"
 #include "esp/iomux.h"
+#include "esp/cpu.h"
+#include "xtensa_interrupts.h"
 
 typedef enum {
-    GPIO_INPUT = 0,
-    GPIO_OUTPUT = IOMUX_OE,
-    GPIO_INPUT_PULLUP = IOMUX_PU,
+    GPIO_INPUT,
+    GPIO_OUTPUT,         /* "Standard" push-pull output */
+    GPIO_OUT_OPEN_DRAIN, /* Open drain output */
+    GPIO_INPUT_PULLUP,
 } gpio_direction_t;
 
 /* Enable GPIO on the specified pin, and set it to input/output/ with
@@ -22,7 +25,28 @@ typedef enum {
  */
 INLINED void gpio_enable(const uint8_t gpio_num, const gpio_direction_t direction)
 {
-    iomux_set_gpio_function(gpio_num, (uint8_t)direction);
+    uint32_t iomux_flags;
+    uint32_t ctrl_val;
+
+    switch(direction) {
+    case GPIO_INPUT:
+	iomux_flags = 0;
+	ctrl_val = GPIO_SOURCE_GPIO;
+	break;
+    case GPIO_OUTPUT:
+	iomux_flags = IOMUX_OE;
+	ctrl_val = GPIO_DRIVE_PUSH_PULL|GPIO_SOURCE_GPIO;
+	break;
+    case GPIO_OUT_OPEN_DRAIN:
+	iomux_flags = IOMUX_OE;
+	ctrl_val = GPIO_DRIVE_OPEN_DRAIN|GPIO_SOURCE_GPIO;
+	break;
+    case GPIO_INPUT_PULLUP:
+	iomux_flags = IOMUX_PU;
+	ctrl_val = GPIO_SOURCE_GPIO;
+    }
+    iomux_set_gpio_function(gpio_num, iomux_flags);
+    GPIO_CTRL_REG(gpio_num) = (GPIO_CTRL_REG(gpio_num)&GPIO_INT_MASK) | ctrl_val;
     if(direction == GPIO_OUTPUT)
 	GPIO_DIR_SET = BIT(gpio_num);
     else
@@ -80,5 +104,27 @@ INLINED bool gpio_read(const uint8_t gpio_num)
     return GPIO_IN_REG & BIT(gpio_num);
 }
 
+typedef enum {
+    INT_NONE = 0,
+    INT_RISING = GPIO_INT_RISING,
+    INT_FALLING = GPIO_INT_FALLING,
+    INT_CHANGE = GPIO_INT_CHANGE,
+    INT_LOW = GPIO_INT_LOW,
+    INT_HIGH = GPIO_INT_HIGH,
+} gpio_interrupt_t;
+
+extern void gpio_interrupt_handler(void);
+
+/* Set the interrupt type for a given pin
+ */
+INLINED void gpio_set_interrupt(const uint8_t gpio_num, const gpio_interrupt_t int_type)
+{
+    GPIO_CTRL_REG(gpio_num) = (GPIO_CTRL_REG(gpio_num)&~GPIO_INT_MASK)
+	| (int_type & GPIO_INT_MASK);
+    if(int_type != INT_NONE) {
+	_xt_isr_attach(INUM_GPIO, gpio_interrupt_handler);
+	_xt_isr_unmask(1<<INUM_GPIO);
+    }
+}
 
 #endif

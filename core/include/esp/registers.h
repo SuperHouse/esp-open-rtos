@@ -17,6 +17,9 @@
 
 typedef volatile uint32_t *esp_reg_t;
 
+/* Internal macro, only defined in header body */
+#define _REG(BASE, OFFSET) (*(esp_reg_t)((BASE)+(OFFSET)))
+
 /* Register base addresses
 
    You shouldn't need to use these directly.
@@ -43,7 +46,7 @@ typedef volatile uint32_t *esp_reg_t;
  * Note that IOMUX register order is _not_ the same as GPIO order. See
  * esp_iomux.h for programmer-friendly IOMUX configuration options
  */
-#define IOMUX_REG(X) *(esp_reg_t)(IOMUX_BASE+4*(X+1))
+#define IOMUX_REG(X) _REG(IOMUX_BASE,0x04+4*X)
 
 #define IOMUX_OE       BIT(0) /* iomux Output enable bit */
 #define IOMUX_OE_SLEEP BIT(1) /* iomux Output during sleep bit */
@@ -85,25 +88,59 @@ typedef volatile uint32_t *esp_reg_t;
  *
  * ... are equivalent, but latter uses less CPU cycles.
  */
-#define GPIO_OUT_REG   *(esp_reg_t)(GPIO0_BASE)
-#define GPIO_OUT_SET   *(esp_reg_t)(GPIO0_BASE+0x04)
-#define GPIO_OUT_CLEAR *(esp_reg_t)(GPIO0_BASE+0x08)
+#define GPIO_OUT_REG   _REG(GPIO0_BASE, 0x00)
+#define GPIO_OUT_SET   _REG(GPIO0_BASE, 0x04)
+#define GPIO_OUT_CLEAR _REG(GPIO0_BASE, 0x08)
 
 /* GPIO DIR registers GPIO_DIR_REG, GPIO_DIR_SET, GPIO_DIR_CLEAR
  *
  * Set bit in DIR register for output pins. Writing to _SET and _CLEAR
  * registers set and clear bits in _REG, respectively.
 */
-#define GPIO_DIR_REG   *(esp_reg_t)(GPIO0_BASE+0x0C)
-#define GPIO_DIR_SET   *(esp_reg_t)(GPIO0_BASE+0x10)
-#define GPIO_DIR_CLEAR *(esp_reg_t)(GPIO0_BASE+0x14)
+#define GPIO_DIR_REG   _REG(GPIO0_BASE, 0x0C)
+#define GPIO_DIR_SET   _REG(GPIO0_BASE, 0x10)
+#define GPIO_DIR_CLEAR _REG(GPIO0_BASE, 0x14)
+
 
 /* GPIO IN register GPIO_IN_REG
  *
  * Reads current input values.
  */
-#define GPIO_IN_REG    *(esp_reg_t)(GPIO0_BASE+0x18)
+#define GPIO_IN_REG    _REG(GPIO0_BASE, 0x18)
 
+/* GPIO interrupt 'status' flag
+
+   Bit set if interrupt has fired (see below for interrupt config
+   registers.
+
+   Lower 16 bits only are used.
+*/
+#define GPIO_STATUS_REG   _REG(GPIO0_BASE,0x1c)
+#define GPIO_STATUS_SET   _REG(GPIO0_BASE,0x20)
+#define GPIO_STATUS_CLEAR _REG(GPIO0_BASE,0x24)
+
+#define GPIO_STATUS_MASK  0x0000FFFFL
+
+/* GPIO pin control registers for GPIOs 0-15
+ *
+ */
+#define GPIO_CTRL_REG(GPNUM) _REG(GPIO0_BASE, 0x28+(GPNUM*4))
+
+#define GPIO_SOURCE_GPIO 0
+#define GPIO_SOURCE_DAC BIT(0) /* "Sigma-Delta" */
+#define GPIO_SOURCE_MASK BIT(0
+
+#define GPIO_DRIVE_PUSH_PULL 0
+#define GPIO_DRIVE_OPEN_DRAIN BIT(2)
+#define GPIO_DRIVE_MASK BIT(2)
+
+#define GPIO_INT_NONE 0
+#define GPIO_INT_RISING BIT(7)
+#define GPIO_INT_FALLING BIT(8)
+#define GPIO_INT_CHANGE (BIT(7)|BIT(8))
+#define GPIO_INT_LOW BIT(9)
+#define GPIO_INT_HIGH (BIT(7)|BIT(9))
+#define GPIO_INT_MASK (BIT(7)|BIT(8)|BIT(9))
 
 /* WDT register(s)
 
@@ -111,6 +148,6 @@ typedef volatile uint32_t *esp_reg_t;
 
    See ROM functions esp_wdt_xxx
  */
-#define WDT_CTRL       *(esp_reg_t)(WDT_BASE)
+#define WDT_CTRL       _REG(WDT_BASE, 0x00)
 
 #endif
