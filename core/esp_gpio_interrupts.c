@@ -2,21 +2,36 @@
 
    Use with gpio_set_interrupt(), defined in esp/gpio.h
 
-
    These interrupt vectors are default implementations with weak
-   linkage. Override your own GPIO interrupt vectors in your program
-   and they will replace these.
+   linkage. If you write your own GPIO interrupt vectors in your program
+   then they will replace these at link time.
 
    Look in examples/button/ for a simple GPIO interrupt example.
 
-   You can implement your own interrupts in two ways:
+   You can implement GPIO interrupt handlers in either of two ways:
 
-   - Implement gpXX_interrupt_handler() for the GPIO pin numbers that you want to attach interrupts to. This is simple but it may not be enough sometimes
+   - Implement gpXX_interrupt_handler() for each GPIO pin number that
+     you want to use interrupt with. This is simple but it may not
+     be enough in all cases.
 
-   - Implement a single gpio_interrupt_handler() and manually check GPIO_STATUS_REG
-     and clear any status bits after handling interrupts. This gives
-     you full control.
-*/
+     void gpio01_interrupt_handler(void) {
+
+     }
+
+   - Implement a single function named gpio_interrupt_handler(). This
+     will need to manually check GPIO_STATUS_REG and clear any status
+     bits after handling interrupts. This gives you full control, but
+     you can't combine it with the first approach.
+
+     void gpio_interrupt_handler(void) {
+
+     }
+
+
+ * Part of esp-open-rtos
+ * Copyright (C) 2015 Superhouse Automation Pty Ltd
+ * BSD Licensed as described in the file LICENSE
+ */
 #include "esp8266.h"
 
 void gpio_interrupt_handler(void);
