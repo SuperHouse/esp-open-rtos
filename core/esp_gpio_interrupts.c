@@ -14,23 +14,25 @@
      you want to use interrupt with. This is simple but it may not
      be enough in all cases.
 
-     void gpio01_interrupt_handler(void) {
+   void gpio01_interrupt_handler(void) {
+       // Do something when GPIO 01 changes
+   }
 
-     }
+   void gpio12_interrupt_handler(void) {
+       // Do something when GPIO 12 changes
+   }
+
+   OR
 
    - Implement a single function named gpio_interrupt_handler(). This
      will need to manually check GPIO_STATUS_REG and clear any status
      bits after handling interrupts. This gives you full control, but
      you can't combine it with the first approach.
 
-     void gpio_interrupt_handler(void) {
 
-     }
-
-
- * Part of esp-open-rtos
- * Copyright (C) 2015 Superhouse Automation Pty Ltd
- * BSD Licensed as described in the file LICENSE
+  Part of esp-open-rtos
+  Copyright (C) 2015 Superhouse Automation Pty Ltd
+  BSD Licensed as described in the file LICENSE
  */
 #include "esp8266.h"
 
@@ -70,9 +72,9 @@ void __attribute__((weak)) IRAM gpio_interrupt_handler(void)
     uint8_t gpio_idx;
     while((gpio_idx = __builtin_ffs(status_reg)))
     {
-	gpio_idx--;
-	status_reg &= ~BIT(gpio_idx);
-	if(GPIO_CTRL_REG(gpio_idx) & GPIO_INT_MASK)
-	    gpio_interrupt_handlers[gpio_idx]();
+        gpio_idx--;
+        status_reg &= ~BIT(gpio_idx);
+        if(GPIO_CTRL_REG(gpio_idx) & GPIO_INT_MASK)
+            gpio_interrupt_handlers[gpio_idx]();
     }
 }

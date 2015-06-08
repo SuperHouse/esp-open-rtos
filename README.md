@@ -96,6 +96,12 @@ For code submissions based on reverse engineered binary functionality, please ei
 
 The best way to write suitable code is to first add documentation somewhere like the [esp8266 wiki](https://github.com/esp8266/esp8266-wiki/) describing factual information gained from reverse engineering - such as register addresses, bit masks, orders of register writes, etc. Then write new functions referring to that documentation as reference material.
 
+## Coding Style
+
+For new contributions, please use BSD style and indent using 4 spaces. If you're an emacs user then there is a .dir-locals.el file in the root which configures cc-mode.
+
+Upstream code is left with the indentation and style of the upstream project.
+
 ## Sponsors
 
-Work on esp-open-rtos is sponsored by [SuperHouse Automation](http://superhouse.tv/).
+Work on esp-open-rtos has been sponsored by [SuperHouse Automation](http://superhouse.tv/).

@@ -30,12 +30,12 @@ void buttonPollTask(void *pvParameters)
 {
     printf("Polling for button press on gpio %d...\r\n", gpio);
     while(1) {
-	while(gpio_read(gpio) != active)
-	{
-	    taskYIELD();
-	}
-	printf("Polled for button press at %dms\r\n", xTaskGetTickCount()*portTICK_RATE_MS);
-	vTaskDelay(200 / portTICK_RATE_MS);
+        while(gpio_read(gpio) != active)
+        {
+            taskYIELD();
+        }
+        printf("Polled for button press at %dms\r\n", xTaskGetTickCount()*portTICK_RATE_MS);
+        vTaskDelay(200 / portTICK_RATE_MS);
     }
 }
 
@@ -55,13 +55,13 @@ void buttonIntTask(void *pvParameters)
 
     uint32_t last = 0;
     while(1) {
-	uint32_t button_ts;
-	xQueueReceive(*tsqueue, &button_ts, portMAX_DELAY);
-	button_ts *= portTICK_RATE_MS;
-	if(last < button_ts-200) {
-	    printf("Button interrupt fired at %dms\r\n", button_ts);
-	    last = button_ts;
-	}
+        uint32_t button_ts;
+        xQueueReceive(*tsqueue, &button_ts, portMAX_DELAY);
+        button_ts *= portTICK_RATE_MS;
+        if(last < button_ts-200) {
+            printf("Button interrupt fired at %dms\r\n", button_ts);
+            last = button_ts;
+        }
     }
 }
 

@@ -1,5 +1,9 @@
-((c-mode
-  (c-file-style . "BSD")
+(
+ (nil
+  (indent-tabs-mode . nil)
+  )
+ (c-mode
+  (c-file-style . "bsd")
   (c-basic-offset . 4)
   )
  )

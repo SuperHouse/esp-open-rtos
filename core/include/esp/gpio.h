@@ -30,27 +30,27 @@ INLINED void gpio_enable(const uint8_t gpio_num, const gpio_direction_t directio
 
     switch(direction) {
     case GPIO_INPUT:
-	iomux_flags = 0;
-	ctrl_val = GPIO_SOURCE_GPIO;
-	break;
+        iomux_flags = 0;
+        ctrl_val = GPIO_SOURCE_GPIO;
+        break;
     case GPIO_OUTPUT:
-	iomux_flags = IOMUX_OE;
-	ctrl_val = GPIO_DRIVE_PUSH_PULL|GPIO_SOURCE_GPIO;
-	break;
+        iomux_flags = IOMUX_OE;
+        ctrl_val = GPIO_DRIVE_PUSH_PULL|GPIO_SOURCE_GPIO;
+        break;
     case GPIO_OUT_OPEN_DRAIN:
-	iomux_flags = IOMUX_OE;
-	ctrl_val = GPIO_DRIVE_OPEN_DRAIN|GPIO_SOURCE_GPIO;
-	break;
+        iomux_flags = IOMUX_OE;
+        ctrl_val = GPIO_DRIVE_OPEN_DRAIN|GPIO_SOURCE_GPIO;
+        break;
     case GPIO_INPUT_PULLUP:
-	iomux_flags = IOMUX_PU;
-	ctrl_val = GPIO_SOURCE_GPIO;
+        iomux_flags = IOMUX_PU;
+        ctrl_val = GPIO_SOURCE_GPIO;
     }
     iomux_set_gpio_function(gpio_num, iomux_flags);
     GPIO_CTRL_REG(gpio_num) = (GPIO_CTRL_REG(gpio_num)&GPIO_INT_MASK) | ctrl_val;
     if(direction == GPIO_OUTPUT)
-	GPIO_DIR_SET = BIT(gpio_num);
+        GPIO_DIR_SET = BIT(gpio_num);
     else
-	GPIO_DIR_CLEAR = BIT(gpio_num);
+        GPIO_DIR_CLEAR = BIT(gpio_num);
 }
 
 /* Disable GPIO on the specified pin, and set it Hi-Z.
@@ -71,9 +71,9 @@ INLINED void gpio_disable(const uint8_t gpio_num)
 INLINED void gpio_write(const uint8_t gpio_num, const uint32_t set)
 {
     if(set)
-	GPIO_OUT_SET = BIT(gpio_num);
+        GPIO_OUT_SET = BIT(gpio_num);
     else
-	GPIO_OUT_CLEAR = BIT(gpio_num);
+        GPIO_OUT_CLEAR = BIT(gpio_num);
 }
 
 /* Toggle output of a pin
@@ -89,9 +89,9 @@ INLINED void gpio_toggle(const uint8_t gpio_num)
        task's pins, without needing to disable/enable interrupts.
     */
     if(GPIO_OUT_REG & BIT(gpio_num))
-	GPIO_OUT_CLEAR = BIT(gpio_num);
+        GPIO_OUT_CLEAR = BIT(gpio_num);
     else
-	GPIO_OUT_SET = BIT(gpio_num);
+        GPIO_OUT_SET = BIT(gpio_num);
 }
 
 /* Read input value of a GPIO pin.
@@ -120,10 +120,10 @@ extern void gpio_interrupt_handler(void);
 INLINED void gpio_set_interrupt(const uint8_t gpio_num, const gpio_interrupt_t int_type)
 {
     GPIO_CTRL_REG(gpio_num) = (GPIO_CTRL_REG(gpio_num)&~GPIO_INT_MASK)
-	| (int_type & GPIO_INT_MASK);
+        | (int_type & GPIO_INT_MASK);
     if(int_type != INT_NONE) {
-	_xt_isr_attach(INUM_GPIO, gpio_interrupt_handler);
-	_xt_isr_unmask(1<<INUM_GPIO);
+        _xt_isr_attach(INUM_GPIO, gpio_interrupt_handler);
+        _xt_isr_unmask(1<<INUM_GPIO);
     }
 }
 

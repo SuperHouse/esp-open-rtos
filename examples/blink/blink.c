@@ -20,10 +20,10 @@ void blinkenTask(void *pvParameters)
 {
     gpio_enable(gpio, GPIO_OUTPUT);
     while(1) {
-	gpio_write(gpio, 1);
-	vTaskDelay(1000 / portTICK_RATE_MS);
-	gpio_write(gpio, 0);
-	vTaskDelay(1000 / portTICK_RATE_MS);
+        gpio_write(gpio, 1);
+        vTaskDelay(1000 / portTICK_RATE_MS);
+        gpio_write(gpio, 0);
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 }
 
@@ -44,10 +44,10 @@ void blinkenRegisterTask(void *pvParameters)
     GPIO_DIR_SET = BIT(gpio);
     IOMUX_SET(GP14,GPIO,IOMUX_OE); /* change this line if you change 'gpio' */
     while(1) {
-	GPIO_OUT_SET = BIT(gpio);
-	vTaskDelay(1000 / portTICK_RATE_MS);
-	GPIO_OUT_CLEAR = BIT(gpio);
-	vTaskDelay(1000 / portTICK_RATE_MS);
+        GPIO_OUT_SET = BIT(gpio);
+        vTaskDelay(1000 / portTICK_RATE_MS);
+        GPIO_OUT_CLEAR = BIT(gpio);
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 }
 

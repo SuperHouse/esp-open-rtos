@@ -43,70 +43,70 @@ void http_get_task(void *pvParameters)
     if ((ssl_ctx = ssl_ctx_new(options, SSL_DEFAULT_CLNT_SESS)) == NULL)
     {
         printf("Error: SSL Client context is invalid\n");
-	while(1) {}
+        while(1) {}
     }
     printf("Got SSL context.");
 
     while(1) {
-	const struct addrinfo hints = {
-	    .ai_family = AF_INET,
-	    .ai_socktype = SOCK_STREAM,
-	};
-	struct addrinfo *res;
+        const struct addrinfo hints = {
+            .ai_family = AF_INET,
+            .ai_socktype = SOCK_STREAM,
+        };
+        struct addrinfo *res;
 
-	printf("top of loop, free heap = %u\r\n", xPortGetFreeHeapSize());
+        printf("top of loop, free heap = %u\r\n", xPortGetFreeHeapSize());
 
-	printf("Running DNS lookup for %s...\r\n", WEB_SERVER);
-	int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
+        printf("Running DNS lookup for %s...\r\n", WEB_SERVER);
+        int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
 
-	if(err != 0 || res == NULL) {
-	    printf("DNS lookup failed err=%d res=%p\r\n", err, res);
-	    if(res)
-		freeaddrinfo(res);
-	    vTaskDelay(1000 / portTICK_RATE_MS);
-	    failures++;
-	    continue;
-	}
-	/* Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
-	struct in_addr *addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
-	printf("DNS lookup succeeded. IP=%s\r\n", inet_ntoa(*addr));
+        if(err != 0 || res == NULL) {
+            printf("DNS lookup failed err=%d res=%p\r\n", err, res);
+            if(res)
+                freeaddrinfo(res);
+            vTaskDelay(1000 / portTICK_RATE_MS);
+            failures++;
+            continue;
+        }
+        /* Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
+        struct in_addr *addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
+        printf("DNS lookup succeeded. IP=%s\r\n", inet_ntoa(*addr));
 
-	int s = socket(res->ai_family, res->ai_socktype, 0);
-	if(s < 0) {
-	    printf("... Failed to allocate socket.\r\n");
-	    freeaddrinfo(res);
-	    vTaskDelay(1000 / portTICK_RATE_MS);
-	    failures++;
-	    continue;
-	}
+        int s = socket(res->ai_family, res->ai_socktype, 0);
+        if(s < 0) {
+            printf("... Failed to allocate socket.\r\n");
+            freeaddrinfo(res);
+            vTaskDelay(1000 / portTICK_RATE_MS);
+            failures++;
+            continue;
+        }
 
         printf("... allocated socket\r\n");
 
         if(connect(s, res->ai_addr, res->ai_addrlen) != 0) {
             close(s);
-	    freeaddrinfo(res);
+            freeaddrinfo(res);
             printf("... socket connect failed.\r\n");
             vTaskDelay(4000 / portTICK_RATE_MS);
-	    failures++;
+            failures++;
             continue;
         }
 
         printf("... connected. starting TLS session...\r\n");
-	freeaddrinfo(res);
+        freeaddrinfo(res);
 
-	SSL *ssl = ssl_client_new(ssl_ctx, s, NULL, 0);
-	printf("initial status %p %d\r\n", ssl, ssl_handshake_status(ssl));
-	if((err = ssl_handshake_status(ssl)) != SSL_OK) {
-	    ssl_free(ssl);
-	    close(s);
-	    printf("SSL handshake failed. :( %d\r\n", err);
-	    vTaskDelay(4000 / portTICK_RATE_MS);
-	    failures++;
-	    continue;
-	}
+        SSL *ssl = ssl_client_new(ssl_ctx, s, NULL, 0);
+        printf("initial status %p %d\r\n", ssl, ssl_handshake_status(ssl));
+        if((err = ssl_handshake_status(ssl)) != SSL_OK) {
+            ssl_free(ssl);
+            close(s);
+            printf("SSL handshake failed. :( %d\r\n", err);
+            vTaskDelay(4000 / portTICK_RATE_MS);
+            failures++;
+            continue;
+        }
 
         const char *common_name = ssl_get_cert_dn(ssl,
-                SSL_X509_CERT_COMMON_NAME);
+                                                  SSL_X509_CERT_COMMON_NAME);
         if (common_name)
         {
             printf("Common Name:\t\t\t%s\n", common_name);
@@ -115,41 +115,41 @@ void http_get_task(void *pvParameters)
         display_session_id(ssl);
         display_cipher(ssl);
 
-	const char *req =
-	    "GET "WEB_URL"\r\n"
-	    "User-Agent: esp-open-rtos/0.1 esp8266\r\n"
-	    "\r\n";
+        const char *req =
+            "GET "WEB_URL"\r\n"
+            "User-Agent: esp-open-rtos/0.1 esp8266\r\n"
+            "\r\n";
         if (ssl_write(ssl, (uint8_t *)req, strlen(req) + 1) < 0) {
             printf("... socket send failed\r\n");
-	    ssl_free(ssl);
-	    close(s);
-	    vTaskDelay(4000 / portTICK_RATE_MS);
-	    failures++;
-	    continue;
+            ssl_free(ssl);
+            close(s);
+            vTaskDelay(4000 / portTICK_RATE_MS);
+            failures++;
+            continue;
         }
         printf("... socket send success\r\n");
 
-	uint8_t *recv_buf;
-	int r;
-	do {
-	    r = ssl_read(ssl, &recv_buf);
-	    for(int i = 0; i < r; i++)
-		printf("%c", recv_buf[i]);
-	} while(r > 0);
+        uint8_t *recv_buf;
+        int r;
+        do {
+            r = ssl_read(ssl, &recv_buf);
+            for(int i = 0; i < r; i++)
+                printf("%c", recv_buf[i]);
+        } while(r > 0);
 
-	printf("... done reading from socket. Last read return=%d errno=%d\r\n", r, errno);
-	if(r != 0)
-	    failures++;
-	else
-	    successes++;
-	ssl_free(ssl);
-	close(s);
-	printf("successes = %d failures = %d\r\n", successes, failures);
-	for(int countdown = 10; countdown >= 0; countdown--) {
-	    printf("%d... ", countdown);
-	    vTaskDelay(1000 / portTICK_RATE_MS);
-	}
-	printf("\r\nStarting again!\r\n");
+        printf("... done reading from socket. Last read return=%d errno=%d\r\n", r, errno);
+        if(r != 0)
+            failures++;
+        else
+            successes++;
+        ssl_free(ssl);
+        close(s);
+        printf("successes = %d failures = %d\r\n", successes, failures);
+        for(int countdown = 10; countdown >= 0; countdown--) {
+            printf("%d... ", countdown);
+            vTaskDelay(1000 / portTICK_RATE_MS);
+        }
+        printf("\r\nStarting again!\r\n");
     }
 }
 
@@ -159,8 +159,8 @@ void user_init(void)
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
     struct sdk_station_config config = {
-	.ssid = WIFI_SSID,
-	.password = WIFI_PASS,
+        .ssid = WIFI_SSID,
+        .password = WIFI_PASS,
     };
 
     /* required to call wifi_set_opmode before station_set_config */
@@ -192,34 +192,33 @@ static void display_session_id(SSL *ssl)
 }
 
 /**
- * Display what cipher we are using 
+ * Display what cipher we are using
  */
 static void display_cipher(SSL *ssl)
 {
     printf("CIPHER is ");
     switch (ssl_get_cipher_id(ssl))
     {
-        case SSL_AES128_SHA:
-            printf("AES128-SHA");
-            break;
+    case SSL_AES128_SHA:
+        printf("AES128-SHA");
+        break;
 
-        case SSL_AES256_SHA:
-            printf("AES256-SHA");
-            break;
+    case SSL_AES256_SHA:
+        printf("AES256-SHA");
+        break;
 
-        case SSL_RC4_128_SHA:
-            printf("RC4-SHA");
-            break;
+    case SSL_RC4_128_SHA:
+        printf("RC4-SHA");
+        break;
 
-        case SSL_RC4_128_MD5:
-            printf("RC4-MD5");
-            break;
+    case SSL_RC4_128_MD5:
+        printf("RC4-MD5");
+        break;
 
-        default:
-            printf("Unknown - %d", ssl_get_cipher_id(ssl));
-            break;
+    default:
+        printf("Unknown - %d", ssl_get_cipher_id(ssl));
+        break;
     }
 
     printf("\n");
 }
-

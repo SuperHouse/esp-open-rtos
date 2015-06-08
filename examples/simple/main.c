@@ -12,9 +12,9 @@ void task1(void *pvParameters)
     printf("Hello from task1!\r\n");
     uint32_t count = 0;
     while(1) {
-	vTaskDelay(100);
-	xQueueSend(*queue, &count, 0);
-	count++;
+        vTaskDelay(100);
+        xQueueSend(*queue, &count, 0);
+        count++;
     }
 }
 
@@ -23,12 +23,12 @@ void task2(void *pvParameters)
     printf("Hello from task 2!\r\n");
     xQueueHandle *queue = (xQueueHandle *)pvParameters;
     while(1) {
-	uint32_t count;
-	if(xQueueReceive(*queue, &count, 1000)) {
-	    printf("Got %d\n", count);
-	} else {
-	    printf("No msg :(\n");
-	}
+        uint32_t count;
+        if(xQueueReceive(*queue, &count, 1000)) {
+            printf("Got %d\n", count);
+        } else {
+            printf("No msg :(\n");
+        }
     }
 }
 
@@ -42,5 +42,3 @@ void user_init(void)
     xTaskCreate(task1, (signed char *)"tsk1", 256, &mainqueue, 2, NULL);
     xTaskCreate(task2, (signed char *)"tsk2", 256, &mainqueue, 2, NULL);
 }
-
-
