@@ -131,7 +131,7 @@ void IRAM PendSV(enum SVC_ReqType req)
 	else if(req == SVC_MACLayer)
 		pending_maclayer_sv= 1;
 
-	xthal_set_intset(1<<ETS_SOFT_INUM);
+	xthal_set_intset(BIT(INUM_SOFT));
 	vPortExitCritical();
 }
 
@@ -162,7 +162,6 @@ void xPortSysTickHandle (void)
 	{
 		if(xTaskIncrementTick() !=pdFALSE )
 		{
-			//GPIO_REG_WRITE(GPIO_STATUS_W1TS_ADDRESS, 0x40);
 			vTaskSwitchContext();
 		}
 	}
@@ -174,8 +173,8 @@ void xPortSysTickHandle (void)
  */
 portBASE_TYPE xPortStartScheduler( void )
 {
-    _xt_isr_attach(ETS_SOFT_INUM, SV_ISR);
-    sdk__xt_isr_unmask(1<<ETS_SOFT_INUM);
+    _xt_isr_attach(INUM_SOFT, SV_ISR);
+    _xt_isr_unmask(BIT(INUM_SOFT));
 
     /* Initialize system tick timer interrupt and schedule the first tick. */
     sdk__xt_tick_timer_init();
@@ -236,25 +235,42 @@ void _xt_isr_attach(uint8_t i, _xt_isr func)
     isr[i] = func;
 }
 
-uint16_t _xt_isr_handler(uint16_t i)
+uint16_t IRAM _xt_isr_handler(uint16_t i)
 {
     uint8_t index;
 
-    if (i & (1 << ETS_WDT_INUM)) {
-	index = ETS_WDT_INUM;
+    /* I think this is implementing some kind of interrupt priority or
+       short-circuiting an expensive ffs for most common interrupts - ie
+       WDT And GPIO are common or high priority, then remaining flags.
+    */
+    if (i & (1 << INUM_WDT)) {
+	index = INUM_WDT;
     }
-    else if (i & (1 << ETS_GPIO_INUM)) {
-	index = ETS_GPIO_INUM;
+    else if (i & (1 << INUM_GPIO)) {
+	index = INUM_GPIO;
     }else {
 	index = __builtin_ffs(i) - 1;
 
-	if (index == ETS_MAX_INUM) {
-	    i &= ~(1 << ETS_MAX_INUM);
+	if (index == INUM_MAX) {
+	    /* I don't understand what happens here. INUM_MAX is not
+	       the highest interrupt number listed (and the isr array
+	       has 16 entries).
+
+	       Clearing that flag and then setting index to
+	       __builtin_ffs(i)-1 may result in index == 255 if no
+	       higher flags are set, unless this is guarded against
+	       somehow by the caller?
+
+	       I also don't understand why the code is written like
+	       this in esp_iot_rtos_sdk instead of just putting the i
+	       &= line near the top... Probably no good reason?
+	    */
+	    i &= ~(1 << INUM_MAX);
 	    index = __builtin_ffs(i) - 1;
 	}
     }
 
-    sdk__xt_clear_ints(1<<index);
+    _xt_clear_ints(1<<index);
 
     isr[index]();
 
