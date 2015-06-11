@@ -17,7 +17,7 @@ Similar to, but substantially different from, the [Espressif IOT RTOS SDK](https
 * Use git to clone the esp-open-rtos project (note the `--recursive`):
 
 ```
-git clone --recursive git@github.com:superhouse/esp-open-rtos.git
+git clone --recursive https://github.com/Superhouse/esp-open-rtos.git
 cd esp-open-rtos
 ```
 
