@@ -157,13 +157,15 @@ $(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR),$$(realpath $$(wildcard $$(sd
 $(1)_REAL_ROOT = $$(realpath $$($(1)_ROOT))
 # patsubst here substitutes real paths for the relative OBJ_DIR path, making things short again
 $(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_SRC_FILES))
+# the last included makefile is our component's component.mk makefile (rebuild the component if it changes)
+$(1)_MAKEFILE ?= $(lastword $(MAKEFILE_LIST))
 
 ### determine compiler arguments ###
 $(1)_CFLAGS ?= $(CFLAGS)
 $(1)_CC_ARGS = $(Q) $(CC) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
 $(1)_AR = $(call lc,$(BUILD_DIR)$(1).a)
 
-$$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c | $$($(1)_SRC_DIR)
+$$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "CC $$<"
 	$(Q) mkdir -p $$(dir $$@)
 	$$($(1)_CC_ARGS) -c $$< -o $$@
@@ -213,10 +215,11 @@ $(BUILD_DIR)sdklib/allsymbols.rename: $(patsubst %.a,%.rename,$(SDK_PROCESSED_LI
 # include "dummy component" for the 'target' object files
 TARGET_SRC_DIR ?= $(TARGET_DIR)
 TARGET_ROOT ?= $(TARGET_DIR)
+TARGET_MAKEFILE = $(firstword $(MAKEFILE_LIST))
 $(eval $(call component_compile_rules,TARGET))
 
 ## Include other components (this is where the actual compiler sections are generated)
-$(foreach component,$(COMPONENTS), $(eval include $(ROOT)/$(component)/component.mk))
+$(foreach component,$(COMPONENTS), $(eval include $(ROOT)$(component)/component.mk))
 
 # final linking step to produce .elf
 $(TARGET_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
