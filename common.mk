@@ -94,6 +94,9 @@ LINKER_SCRIPTS  = $(ROOT)ld/eagle.app.v6.ld $(ROOT)ld/eagle.rom.addr.v6.ld
 empty :=
 space := $(empty) $(empty)
 
+# GNU Make lowercase function, bit of a horrorshow but works (courtesy http://stackoverflow.com/a/665045)
+lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(subst G,g,$(subst H,h,$(subst I,i,$(subst J,j,$(subst K,k,$(subst L,l,$(subst M,m,$(subst N,n,$(subst O,o,$(subst P,p,$(subst Q,q,$(subst R,r,$(subst S,s,$(subst T,t,$(subst U,u,$(subst V,v,$(subst W,w,$(subst X,x,$(subst Y,y,$(subst Z,z,$1))))))))))))))))))))))))))
+
 # assume the target_dir is the directory the top-level makefile was run in
 TARGET_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 
@@ -137,15 +140,20 @@ all: $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
 # $(1)_SRC_DIR = List of source directories for the component. All must be under $(1)_ROOT
 # $(1)_INC_DIR = List of include directories specific for the component
 #
+# As an alternative to $(1)_SRC_DIR, you can specify source filenames
+# as $(1)_SRC_FILES. If you want to specify both directories and
+# some additional files, specify directories in $(1)_SRC_DIR and
+# additional files in $(1)_EXTRA_SRC_FILES.
+#
 # Optional variables:
 # $(1)_CFLAGS  = CFLAGS to override the default CFLAGS for this component only.
 #
 # Each call appends to COMPONENT_ARS which is a list of archive files for compiled components
 COMPONENT_ARS =
 define component_compile_rules
-$(1)_OBJ_DIR   = $(BUILD_DIR)$(1)/
+$(1)_OBJ_DIR   = $(call lc,$(BUILD_DIR)$(1)/)
 ### determine source files and object files ###
-$(1)_SRC_FILES = $$(foreach sdir,$$($(1)_SRC_DIR),$$(realpath $$(wildcard $$(sdir)/*.c)))
+$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR),$$(realpath $$(wildcard $$(sdir)/*.c))) $$($(1)_EXTRA_SRC_FILES)
 $(1)_REAL_ROOT = $$(realpath $$($(1)_ROOT))
 # patsubst here substitutes real paths for the relative OBJ_DIR path, making things short again
 $(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_SRC_FILES))
@@ -153,7 +161,7 @@ $(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_S
 ### determine compiler arguments ###
 $(1)_CFLAGS ?= $(CFLAGS)
 $(1)_CC_ARGS = $(Q) $(CC) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
-$(1)_AR = $(BUILD_DIR)$(1).a
+$(1)_AR = $(call lc,$(BUILD_DIR)$(1).a)
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c | $$($(1)_SRC_DIR)
 	$(vecho) "CC $$<"
@@ -203,9 +211,9 @@ $(BUILD_DIR)sdklib/allsymbols.rename: $(patsubst %.a,%.rename,$(SDK_PROCESSED_LI
 	cat $^ > $@
 
 # include "dummy component" for the 'target' object files
-target_SRC_DIR=$(TARGET_DIR)
-target_ROOT=$(TARGET_DIR)
-$(eval $(call component_compile_rules,target))
+TARGET_SRC_DIR ?= $(TARGET_DIR)
+TARGET_ROOT ?= $(TARGET_DIR)
+$(eval $(call component_compile_rules,TARGET))
 
 ## Include other components (this is where the actual compiler sections are generated)
 $(foreach component,$(COMPONENTS), $(eval include $(ROOT)/$(component)/component.mk))
