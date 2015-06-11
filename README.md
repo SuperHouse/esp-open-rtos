@@ -6,7 +6,7 @@ Similar to, but substantially different from, the [Espressif IOT RTOS SDK](https
 
 ## Quick Start
 
-* Install [esp-open-sdk](https://github.com/pfalcon/esp-open-sdk/) and make the toolchain available on your PATH. (Despite the similar name esp-open-sdk has different maintainers - but we think it's fantastic!)
+* Install [esp-open-sdk](https://github.com/pfalcon/esp-open-sdk/), build it with `make STANDALONE=n`, then edit your PATH and add the generated toolchain `bin` directory. (Despite the similar name esp-open-sdk has different maintainers - but we think it's fantastic!)
 
     (Other toolchains will also work, as long as a gcc cross-compiler is available on the PATH. The proprietary Tensilica "xcc" compiler will probably not work.)
 
