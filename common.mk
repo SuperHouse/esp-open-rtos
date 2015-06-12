@@ -153,10 +153,11 @@ COMPONENT_ARS =
 define component_compile_rules
 $(1)_OBJ_DIR   = $(call lc,$(BUILD_DIR)$(1)/)
 ### determine source files and object files ###
-$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR),$$(realpath $$(wildcard $$(sdir)/*.c))) $$($(1)_EXTRA_SRC_FILES)
+$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR),$$(wildcard $$(sdir)/*.c)) $$($(1)_EXTRA_SRC_FILES)
+$(1)_REAL_SRC_FILES = $$(foreach sfile,$$($(1)_SRC_FILES),$$(realpath $$(sfile)))
 $(1)_REAL_ROOT = $$(realpath $$($(1)_ROOT))
-# patsubst here substitutes real paths for the relative OBJ_DIR path, making things short again
-$(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_SRC_FILES))
+# patsubst here substitutes real component root path for the relative OBJ_DIR path, making things short again
+$(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_REAL_SRC_FILES))
 # the last included makefile is our component's component.mk makefile (rebuild the component if it changes)
 $(1)_MAKEFILE ?= $(lastword $(MAKEFILE_LIST))
 
@@ -172,7 +173,9 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 	$(Q) $(OBJCOPY) --rename-section .text=.irom0.text --rename-section .literal=.irom0.literal $$@
 
-$$($(1)_AR): $$($(1)_OBJ_FILES)
+# the component is shown to depend on both obj and source files so we get a meaningful error message
+# for missing explicitly named source files
+$$($(1)_AR): $$($(1)_OBJ_FILES) $$($(1)_SRC_FILES)
 	$(vecho) "AR $$@"
 	$(Q) $(AR) cru $$@ $$^
 
