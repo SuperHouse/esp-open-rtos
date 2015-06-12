@@ -6,3 +6,4 @@ GTAGS
 build
 firmware
 .gdb_history
+local.mk
