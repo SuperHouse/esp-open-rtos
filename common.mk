@@ -20,22 +20,22 @@
 # assume the 'root' directory (ie top of the tree) is the directory common.mk is in
 ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 
-# include local overrides (if present) at top level, then in program directory
+# include optional local overrides at the root level, then in program directory
 -include $(ROOT)local.mk
 -include local.mk
 
-ifndef TARGET
-	$(error "Set the TARGET environment variable in your Makefile before including common.mk"
+ifndef PROGRAM
+	$(error "Set the PROGRAM environment variable in your Makefile before including common.mk"
 endif
 
 # esptool defaults
 ESPTOOL ?= esptool.py
 ESPBAUD ?= 115200
 
-# Output directors to store intermediate compiled files
-# relative to the target directory
-BUILD_DIR ?= $(TARGET_DIR)build/
-FW_BASE ?= $(TARGET_DIR)firmware/
+# Output directories to store intermediate compiled files
+# relative to the program directory
+BUILD_DIR ?= $(PROGRAM_DIR)build/
+FW_BASE ?= $(PROGRAM_DIR)firmware/
 
 # we create two different files for uploading into the flash
 # these are the names and options to generate them
@@ -71,7 +71,7 @@ LIBS ?= gcc hal
 ENTRY_SYMBOL = call_user_start
 
 CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${TARGET}.map
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map
 
 ifeq ($(FLAVOR),debug)
     CFLAGS += -g -O0
@@ -97,13 +97,13 @@ space := $(empty) $(empty)
 # GNU Make lowercase function, bit of a horrorshow but works (courtesy http://stackoverflow.com/a/665045)
 lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(subst G,g,$(subst H,h,$(subst I,i,$(subst J,j,$(subst K,k,$(subst L,l,$(subst M,m,$(subst N,n,$(subst O,o,$(subst P,p,$(subst Q,q,$(subst R,r,$(subst S,s,$(subst T,t,$(subst U,u,$(subst V,v,$(subst W,w,$(subst X,x,$(subst Y,y,$(subst Z,z,$1))))))))))))))))))))))))))
 
-# assume the target_dir is the directory the top-level makefile was run in
-TARGET_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
+# assume the program dir is the directory the top-level makefile was run in
+PROGRAM_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 
 # derive various parts of compiler/linker arguments
 SDK_LIB_ARGS         = $(addprefix -l,$(SDK_LIBS))
 LIB_ARGS             = $(addprefix -l,$(LIBS))
-TARGET_OUT   = $(BUILD_DIR)$(TARGET).out
+PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
 LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS))
 FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_1).bin)
 FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_2).bin)
@@ -111,10 +111,10 @@ FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_2).bin)
 # Common include directories, shared across all "components"
 # components will add their include directories to this argument
 #
-# Placing $(TARGET_DIR) and $(TARGET_DIR)include first allows
-# targets to have their own copies of header config files for components
+# Placing $(PROGRAM_DIR) and $(PROGRAM_DIR)include first allows
+# programs to have their own copies of header config files for components
 # , which is useful for overriding things.
-INC_DIRS      = $(TARGET_DIR) $(TARGET_DIR)include $(ROOT)include
+INC_DIRS      = $(PROGRAM_DIR) $(PROGRAM_DIR)include $(ROOT)include
 
 ifeq ("$(V)","1")
 Q :=
@@ -126,7 +126,7 @@ endif
 
 .PHONY: all clean debug_print
 
-all: $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
+all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2)
 
 # component_compile_rules: Produces compilation rules for a given
 # component
@@ -212,32 +212,32 @@ $(BUILD_DIR)sdklib/%.rename: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/norename.match
 $(BUILD_DIR)sdklib/allsymbols.rename: $(patsubst %.a,%.rename,$(SDK_PROCESSED_LIBS))
 	cat $^ > $@
 
-# include "dummy component" for the 'target' object files
-TARGET_SRC_DIR ?= $(TARGET_DIR)
-TARGET_ROOT ?= $(TARGET_DIR)
-TARGET_MAKEFILE = $(firstword $(MAKEFILE_LIST))
-$(eval $(call component_compile_rules,TARGET))
+# include "dummy component" for the 'program' object files, defined in the Makefile
+PROGRAM_SRC_DIR ?= $(PROGRAM_DIR)
+PROGRAM_ROOT ?= $(PROGRAM_DIR)
+PROGRAM_MAKEFILE = $(firstword $(MAKEFILE_LIST))
+$(eval $(call component_compile_rules,PROGRAM))
 
 ## Include other components (this is where the actual compiler sections are generated)
 $(foreach component,$(COMPONENTS), $(eval include $(ROOT)$(component)/component.mk))
 
 # final linking step to produce .elf
-$(TARGET_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
+$(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
 	$(vecho) "LD $@"
 	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(SDK_LIB_ARGS) $(LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
 
 $(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib:
 	$(Q) mkdir -p $@
 
-$(FW_FILE_1) $(FW_FILE_2): $(TARGET_OUT) $(FW_BASE)
+$(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FW_BASE)
 	$(vecho) "FW $@"
 	$(ESPTOOL) elf2image $< -o $(FW_BASE)
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_1) $(FW_FILE_1) $(FW_2) $(FW_FILE_2)
 
-size: $(TARGET_OUT)
-	$(Q) $(CROSS)size --format=sysv $(TARGET_OUT)
+size: $(PROGRAM_OUT)
+	$(Q) $(CROSS)size --format=sysv $(PROGRAM_OUT)
 
 test: flash
 	screen $(ESPPORT) 115200

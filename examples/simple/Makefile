@@ -1,3 +1,3 @@
 # Simple makefile for simple example
-TARGET=simple
+PROGRAM=simple
 include ../../common.mk

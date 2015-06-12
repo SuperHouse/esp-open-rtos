@@ -1,2 +1,2 @@
-TARGET=button
+PROGRAM=button
 include ../../common.mk

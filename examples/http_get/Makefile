@@ -1,2 +1,2 @@
-TARGET=http_get
+PROGRAM=http_get
 include ../../common.mk

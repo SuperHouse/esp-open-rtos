@@ -1,2 +1,2 @@
-TARGET=hmac_test
+PROGRAM=hmac_test
 include ../../../common.mk

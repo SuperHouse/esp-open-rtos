@@ -1,2 +1,2 @@
-TARGET=blink
+PROGRAM=blink
 include ../../common.mk
