@@ -3,6 +3,21 @@
    Modified for esp open RTOS, this linker script is no longer the same as the esp_iot_rtos_sdk one.
 */
 
+/* FreeRTOS memory management functions
+
+   We link these directly to newlib functions (have to do it at link
+   time as binary libraries use these symbols too.)
+*/
+pvPortMalloc = malloc;
+vPortFree = free;
+
+_lock_acquire = vPortEnterCritical;
+_lock_acquire_recursive = vPortEnterCritical;
+_lock_try_acquire = vPortEnterCritical;
+_lock_try_acquire_recursive = vPortEnterCritical;
+_lock_release = vPortExitCritical;
+_lock_release_recursive = vPortExitCritical;
+
 /* Linker Script for ld -N */
 MEMORY
 {
@@ -156,7 +171,7 @@ SECTIONS
     *(COMMON)
     . = ALIGN (8);
     _bss_end = ABSOLUTE(.);
-    _heap_start = ABSOLUTE(.); /* ESPTODO: Remove this symbol */
+    _heap_start = ABSOLUTE(.);
 /*    _stack_sentry = ALIGN(0x8); */
   } >dram0_0_seg :dram0_0_bss_phdr
 /* __stack = 0x3ffc8000; */
