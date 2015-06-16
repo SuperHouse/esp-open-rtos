@@ -69,8 +69,10 @@
  * which is in turn based on the ARM CM3 port.
  *----------------------------------------------------------*/
 
-/* Scheduler includes. */
 #include <xtensa/config/core.h>
+#include <malloc.h>
+#include <unistd.h>
+#include <stdio.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -78,6 +80,14 @@
 
 unsigned cpu_sr;
 char level1_int_disabled;
+
+/* Supervisor stack pointer entry. This is the "high water mark" of how far the
+   supervisor stack grew down before task started.
+
+   After tasks start, task stacks are all allocated from the heap and
+   FreeRTOS checks for stack overflow.
+*/
+static uint32_t xPortSupervisorStackPointer;
 
 /*
  * Stack initialization
@@ -181,10 +191,35 @@ portBASE_TYPE xPortStartScheduler( void )
 
     vTaskSwitchContext();
 
+    /* mark the supervisor stack pointer high water mark. xt_int_exit
+       actually frees ~0x50 bytes off the stack, so this value is
+       conservative.
+    */
+    __asm__ __volatile__ ("mov %0, a1\n" : "=a"(xPortSupervisorStackPointer));
+
     sdk__xt_int_exit();
 
     /* Should not get here as the tasks are now running! */
     return pdTRUE;
+}
+
+/* Determine free heap size via libc sbrk function & mallinfo
+
+   sbrk gives total size in totally unallocated memory,
+   mallinfo.fordblks gives free space inside area dedicated to heap.
+
+   mallinfo is possibly non-portable, although glibc & newlib both support
+   the fordblks member.
+*/
+size_t xPortGetFreeHeapSize( void )
+{
+    struct mallinfo mi = mallinfo();
+    uint32_t brk_val = (uint32_t) sbrk(0);
+
+    uint32_t sp = xPortSupervisorStackPointer;
+    if(sp == 0) /* scheduler not started */
+        __asm__ __volatile__ ("mov %0, a1\n" : "=a"(sp));
+    return sp - brk_val + mi.fordblks;
 }
 
 void vPortEndScheduler( void )
