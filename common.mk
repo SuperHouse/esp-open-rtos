@@ -65,7 +65,7 @@ COMPONENTS     ?= core FreeRTOS lwip axtls
 SDK_LIBS		?= main net80211 phy pp wpa
 
 # open source libraries linked in
-LIBS ?= gcc hal
+LIBS ?= gcc hal cirom
 
 # Note: this isn't overridable without a not-yet-merged patch to esptool
 ENTRY_SYMBOL = call_user_start
@@ -186,34 +186,49 @@ endef
 
 ## Linking rules for SDK libraries
 ## SDK libraries are preprocessed to:
+# - remove object files named in <libname>.remove
 # - prefix all defined symbols with 'sdk_'
 # - weaken all global symbols so they can be overriden from the open SDK side
-
-# SDK binary libraries are preprocessed into build/lib
+#
+# SDK binary libraries are preprocessed into build/sdklib
 SDK_PROCESSED_LIBS = $(addsuffix .a,$(addprefix $(BUILD_DIR)sdklib/lib,$(SDK_LIBS)))
 
-# Make rule for preprocessing each SDK library
-#
-$(BUILD_DIR)sdklib/%.a: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/allsymbols.rename
-	$(vecho) "Pre-processing SDK library $< -> $@"
-	$(Q) $(OBJCOPY) --redefine-syms $(word 2,$^) --weaken $< $@
+# Make rules for preprocessing each SDK library
 
+# hacky, but prevents confusing error messages if one of these files disappears
+$(ROOT)lib/%.remove:
+	touch $@
 
-# Generate a regex to match symbols we don't want to rename, by parsing
-# a list of symbol names
+# Remove comment lines from <libname>.remove files
+$(BUILD_DIR)sdklib/%.remove: $(ROOT)lib/%.remove | $(BUILD_DIR)sdklib
+	$(Q) grep -v "^#" $< | cat > $@
+
+# Stage 1: remove unwanted object files listed in <libname>.remove alongside each library
+$(BUILD_DIR)sdklib/%_stage1.a: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/%.remove | $(BUILD_DIR)sdklib
+	@echo "SDK processing stage 1: Removing unwanted objects from $<"
+	$(Q) cat $< > $@
+	$(Q) $(AR) d $@ @$(word 2,$^)
+
+# Generate a regex to match symbols we don't want to rename, listed in
+# symbols_norename.txt
 $(BUILD_DIR)sdklib/norename.match: $(ROOT)lib/symbols_norename.txt | $(BUILD_DIR)sdklib
-	grep -v "^#" $< | sed ':begin;$!N;s/\n/\\|/;tbegin' > $@
+	cat $< | grep -v "^#" | sed ':begin;$!N;s/\n/\\|/;tbegin' > $@
 
-# Generate list of defined symbols to rename from a single library. Uses grep & sed.
-$(BUILD_DIR)sdklib/%.rename: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/norename.match
-	$(vecho) "Building symbol list for $< -> $@"
+# Stage 2: Build a list of defined symbols per library, renamed with sdk_ prefix
+$(BUILD_DIR)sdklib/%.rename: $(BUILD_DIR)sdklib/%_stage1.a $(BUILD_DIR)sdklib/norename.match
+	@echo "SDK processing stage 2: Building symbol list for $< -> $@"
 	$(Q) $(OBJDUMP) -t $< | grep ' g ' \
 		| sed -r 's/^.+ ([^ ]+)$$/\1 sdk_\1/' \
 		| grep -v `cat $(BUILD_DIR)sdklib/norename.match` > $@
 
-# Build master list of all SDK-defined symbols to rename
+# Build a master list of all SDK-defined symbols to rename across all libraries
 $(BUILD_DIR)sdklib/allsymbols.rename: $(patsubst %.a,%.rename,$(SDK_PROCESSED_LIBS))
 	cat $^ > $@
+
+# Stage 3: Redefine all SDK symbols as sdk_, weaken all symbols.
+$(BUILD_DIR)sdklib/%.a: $(BUILD_DIR)sdklib/%_stage1.a $(BUILD_DIR)sdklib/allsymbols.rename
+	@echo "SDK processing stage 3: Renaming symbols in SDK library $< -> $@"
+	$(Q) $(OBJCOPY) --redefine-syms $(word 2,$^) --weaken $< $@
 
 # include "dummy component" for the 'program' object files, defined in the Makefile
 PROGRAM_SRC_DIR ?= $(PROGRAM_DIR)
@@ -227,7 +242,7 @@ $(foreach component,$(COMPONENTS), $(eval include $(ROOT)$(component)/component.
 # final linking step to produce .elf
 $(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
 	$(vecho) "LD $@"
-	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(SDK_LIB_ARGS) $(LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
+	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(LIB_ARGS) $(SDK_LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
 
 $(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib:
 	$(Q) mkdir -p $@
