@@ -18,6 +18,9 @@ _lock_try_acquire_recursive = vPortEnterCritical;
 _lock_release = vPortExitCritical;
 _lock_release_recursive = vPortExitCritical;
 
+/* SDK compatibility */
+ets_printf = printf;
+
 /* Linker Script for ld -N */
 MEMORY
 {
