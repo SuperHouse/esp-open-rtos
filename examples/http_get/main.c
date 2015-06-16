@@ -20,9 +20,9 @@
 #define WEB_PORT 80
 #define WEB_URL "http://chainxor.org/"
 
-/* FILL THESE IN!!!!!!!!!! */
-#define WIFI_SSID "SSID Name Here"
-#define WIFI_PASS "Wifi Password Here"
+#if !defined(WIFI_SSID) || !defined(WIFI_PASS)
+#error "Please define macros WIFI_SSID & WIFI_PASS (here, or better in a local.h file at root level or in program dir."
+#endif
 
 void http_get_task(void *pvParameters)
 {

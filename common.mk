@@ -194,7 +194,7 @@ SDK_PROCESSED_LIBS = $(addsuffix .a,$(addprefix $(BUILD_DIR)sdklib/lib,$(SDK_LIB
 
 # Make rule for preprocessing each SDK library
 #
-$(BUILD_DIR)sdklib/%.a: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/allsymbols.rename
+$(BUILD_DIR)sdklib/%.a: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/allsymbols.rename $(ROOT)common.mk
 	$(vecho) "Pre-processing SDK library $< -> $@"
 	$(Q) $(OBJCOPY) --redefine-syms $(word 2,$^) --weaken $< $@
 
@@ -219,6 +219,12 @@ $(BUILD_DIR)sdklib/allsymbols.rename: $(patsubst %.a,%.rename,$(SDK_PROCESSED_LI
 PROGRAM_SRC_DIR ?= $(PROGRAM_DIR)
 PROGRAM_ROOT ?= $(PROGRAM_DIR)
 PROGRAM_MAKEFILE = $(firstword $(MAKEFILE_LIST))
+# if there's a local.h file in either the program dir or the
+# root dir, load macros from it (for WIFI_SSID,WIFI_PASS, etc.)
+PROGRAM_LOCAL_H = $(lastword $(wildcard $(ROOT)local.h $(PROGRAM_DIR)local.h))
+ifneq ($(PROGRAM_LOCAL_H),)
+PROGRAM_CFLAGS = $(CFLAGS) -imacros $(PROGRAM_LOCAL_H)
+endif
 $(eval $(call component_compile_rules,PROGRAM))
 
 ## Include other components (this is where the actual compiler sections are generated)

@@ -21,6 +21,12 @@ git clone --recursive https://github.com/Superhouse/esp-open-rtos.git
 cd esp-open-rtos
 ```
 
+* To build any examples that use WiFi, create a file "local.h" in the top-level directory and add two macro defines to it:
+```c
+#define WIFI_SSID "mywifissid"
+#define WIFI_PASS "my secret password"
+```
+
 * Build an example project (found in the 'examples' directory) and flash it to a serial port:
 
 ```
