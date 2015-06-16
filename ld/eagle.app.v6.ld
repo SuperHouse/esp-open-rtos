@@ -11,6 +11,13 @@
 pvPortMalloc = malloc;
 vPortFree = free;
 
+/* FreeRTOS lock functions.
+
+   Rely on a patch to libc that produces weak linked versions of the
+   below symbols. Currently treating locking primitives like universal
+   global critical section rather than individual locks, but this seems
+   OK from the use cases in newlib.
+*/
 _lock_acquire = vPortEnterCritical;
 _lock_acquire_recursive = vPortEnterCritical;
 _lock_try_acquire = vPortEnterCritical;
