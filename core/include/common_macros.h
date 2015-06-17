@@ -13,7 +13,7 @@
 #define UNUSED __attributed((unused))
 
 #ifndef BIT
-#define BIT(X) (1<<X)
+#define BIT(X) (1<<(X))
 #endif
 
 /* Use this macro to store constant values in IROM flash instead

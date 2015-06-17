@@ -7,6 +7,7 @@
  * BSD Licensed as described in the file LICENSE
  */
 #ifndef _ESP_GPIO_H
+#define _ESP_GPIO_H
 #include <stdbool.h>
 #include "esp/registers.h"
 #include "esp/iomux.h"

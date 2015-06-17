@@ -1,5 +1,6 @@
 *~
 *#
+.#*
 GPATH
 GRTAGS
 GTAGS
@@ -8,3 +9,4 @@ firmware
 .gdb_history
 local.mk
 local.h
+screenlog.*
