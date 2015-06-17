@@ -11,18 +11,21 @@
 #define _XTENSA_INTERRUPTS_H
 #include <stdint.h>
 #include <xtensa/hal.h>
+#include <common_macros.h>
 
 void sdk__xt_int_exit (void);
 void sdk__xt_user_exit (void);
 void sdk__xt_tick_timer_init (void);
 void sdk__xt_timer_int1(void);
 
+/* ESPTODO: the mask/unmask functions aren't thread safe */
+
 INLINED void _xt_isr_unmask (uint32_t unmask)
 {
     uint32_t intenable;
     asm volatile ("rsr %0, intenable" : "=a" (intenable));
     intenable |= unmask;
-    asm volatile ("wsr %0, intenable" :: "a" (intenable));
+    asm volatile ("wsr %0, intenable; esync" :: "a" (intenable));
 }
 
 INLINED void _xt_isr_mask (uint32_t mask)
@@ -30,7 +33,7 @@ INLINED void _xt_isr_mask (uint32_t mask)
     uint32_t intenable;
     asm volatile ("rsr %0, intenable" : "=a" (intenable));
     intenable &= ~mask;
-    asm volatile ("wsr %0, intenable" :: "a" (intenable));
+    asm volatile ("wsr %0, intenable; esync" :: "a" (intenable));
 }
 
 INLINED uint32_t _xt_read_ints (void)
@@ -42,7 +45,7 @@ INLINED uint32_t _xt_read_ints (void)
 
 INLINED void _xt_clear_ints(uint32_t mask)
 {
-    asm volatile ("wsr %0, intclear" :: "a" (mask));
+    asm volatile ("wsr %0, intclear; esync" :: "a" (mask));
 }
 
 typedef void (* _xt_isr)(void);
