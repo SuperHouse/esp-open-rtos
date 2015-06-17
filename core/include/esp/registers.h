@@ -159,14 +159,16 @@ typedef volatile uint32_t *esp_reg_t;
 
 /* Load value for FRC1, read/write.
 
-   When TIMER_CTRL_RELOAD is cleared in TIMER_FRC1_CTRL_REG, FRC1
-   will reload to 0x7fffff once overflowed (unless the load value is
-   rewritten in the interrupt handler.)
+   When TIMER_CTRL_RELOAD is cleared in TIMER_FRC1_CTRL_REG, FRC1 will
+   reload to TIMER_FRC1_MAX_LOAD once overflowed (unless the load
+   value is rewritten in the interrupt handler.)
 
    When TIMER_CTRL_RELOAD is set in TIMER_FRC1_CTRL_REG, FRC1 will reload
    from the load register value once overflowed.
 */
 #define TIMER_FRC1_LOAD_REG   _REG(TIMER_BASE, 0x00)
+
+#define TIMER_FRC1_MAX_LOAD 0x7fffff
 
 /* Current count value for FRC1, read only? */
 #define TIMER_FRC1_COUNT_REG  _REG(TIMER_BASE, 0x04)
@@ -254,7 +256,7 @@ typedef volatile uint32_t *esp_reg_t;
 
 /* Timer auto-reload bit
 
-   This bit interacts with TIMER_FCR1_LOAD_REG & TIMER_FCR2_LOAD_REG
+   This bit interacts with TIMER_FRC1_LOAD_REG & TIMER_FRC2_LOAD_REG
    differently, see those registers for details.
 */
 #define TIMER_CTRL_RELOAD BIT(6)

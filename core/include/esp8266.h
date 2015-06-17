@@ -16,5 +16,6 @@
 #include "esp/cpu.h"
 #include "esp/iomux.h"
 #include "esp/gpio.h"
+#include "esp/timer.h"
 
 #endif

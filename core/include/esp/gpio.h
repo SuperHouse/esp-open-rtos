@@ -117,6 +117,8 @@ typedef enum {
 extern void gpio_interrupt_handler(void);
 
 /* Set the interrupt type for a given pin
+ *
+ * If int_type is not INT_NONE, the gpio_interrupt_handler will be attached and unmasked.
  */
 INLINED void gpio_set_interrupt(const uint8_t gpio_num, const gpio_interrupt_t int_type)
 {
@@ -126,6 +128,12 @@ INLINED void gpio_set_interrupt(const uint8_t gpio_num, const gpio_interrupt_t i
         _xt_isr_attach(INUM_GPIO, gpio_interrupt_handler);
         _xt_isr_unmask(1<<INUM_GPIO);
     }
+}
+
+/* Return the interrupt type set for a pin */
+INLINED gpio_interrupt_t gpio_get_interrupt(const uint8_t gpio_num)
+{
+    return (gpio_interrupt_t)(GPIO_CTRL_REG(gpio_num) & GPIO_INT_MASK);
 }
 
 #endif
