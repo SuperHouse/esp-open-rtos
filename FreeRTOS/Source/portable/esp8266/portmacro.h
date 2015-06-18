@@ -73,7 +73,6 @@ extern "C" {
 #include "esp8266.h"
 #include "espressif/esp8266/ets_sys.h"
 #include <stdint.h>
-#include    <xtruntime.h>
 #include    "xtensa_rtos.h"
 #include "xtensa_interrupts.h"
 
@@ -144,32 +143,30 @@ extern char sdk_NMIIrqIsOn;
 extern char level1_int_disabled;
 extern unsigned cpu_sr;
 
-/* ESPTODO: Currently we store the old interrupt level (ps) in a
-   global variable cpu_sr. It may not be necessary to do this,
-   especially as lx106 has only one real interrupt level + NMI, but it
-   all depends on how the blob libraries call into these functions.
+/* Disable interrupts, store old ps level in global variable cpu_sr.
+
+   Note: cpu_sr is also referenced by the binary SDK.
+
+   Where possible (and when writing non-FreeRTOS specific code),
+   prefer to _xt_disable_interrupts & _xt_enable_interrupts and store
+   the ps value in a local variable - that approach is recursive-safe
+   and generally better.
 */
-inline static __attribute__((always_inline)) void _esp_disable_interrupts(void)
+inline static __attribute__((always_inline)) void portDISABLE_INTERRUPTS(void)
 {
     if(!sdk_NMIIrqIsOn && !level1_int_disabled) {
-	__asm__ volatile ("rsil %0, " XTSTR(XCHAL_EXCM_LEVEL) : "=a" (cpu_sr) :: "memory");
+	cpu_sr = _xt_disable_interrupts();
 	level1_int_disabled = 1;
     }
 }
 
-inline static __attribute__((always_inline)) void _esp_enable_interrupts(void)
+inline static __attribute__((always_inline)) void portENABLE_INTERRUPTS(void)
 {
     if(!sdk_NMIIrqIsOn && level1_int_disabled) {
 	level1_int_disabled = 0;
-	__asm__ volatile ("wsr %0, ps" :: "a" (cpu_sr) : "memory");
+        _xt_restore_interrupts(cpu_sr);
     }
 }
-
-/* Disable interrupts, saving previous state in cpu_sr */
-#define  portDISABLE_INTERRUPTS() _esp_disable_interrupts()
-
-/* Restore interrupts to previous level saved in cpu_sr */
-#define  portENABLE_INTERRUPTS() _esp_enable_interrupts()
 
 /* Critical section management. */
 void vPortEnterCritical( void );
