@@ -65,7 +65,7 @@ COMPONENTS     ?= core FreeRTOS lwip axtls
 SDK_LIBS		?= main net80211 phy pp wpa
 
 # open source libraries linked in
-LIBS ?= gcc hal cirom
+LIBS ?= hal gcc c
 
 # Note: this isn't overridable without a not-yet-merged patch to esptool
 ENTRY_SYMBOL = call_user_start
@@ -171,7 +171,6 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 	$(Q) mkdir -p $$(dir $$@)
 	$$($(1)_CC_ARGS) -c $$< -o $$@
 	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
-	$(Q) $(OBJCOPY) --rename-section .text=.irom0.text --rename-section .literal=.irom0.literal $$@
 
 # the component is shown to depend on both obj and source files so we get a meaningful error message
 # for missing explicitly named source files
