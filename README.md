@@ -1,8 +1,8 @@
 # esp-open-rtos
 
-A community developed open source [FreeRTOS](http://www.freertos.org/)-based framework for [ESP8266 WiFi-enabled microcontrollers](https://github.com/esp8266/esp8266-wiki/wiki). Intended for use in both commercial and open source projects.
+A community developed open source [FreeRTOS](http://www.freertos.org/)-based framework for ESP8266 WiFi-enabled microcontrollers. Intended for use in both commercial and open source projects.
 
-Similar to, but substantially different from, the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk).
+Originally based on, but substantially different from, the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk).
 
 ## Quick Start
 
@@ -51,6 +51,7 @@ Current status is alpha quality, under development. AP STATION mode (ie wifi cli
 * [FreeRTOS](http://freertos.org) V7.5.2
 * [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki) v1.4.1, modified via the [esp-lwip project](https://github.com/kadamski/esp-lwip) by @kadamski.
 * [axTLS](http://axtls.sourceforge.net/) compiled from development version v1.5.3, plus modifications for low memory devices.
+* [newlib](https://github.com/projectgus/newlib-xtensa) v2.2.0, with patches for xtensa support and locking stubs for thread-safe operation on FreeRTOS.
 
 For details of how third party libraries are integrated, [see the wiki page](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries).
 
@@ -82,6 +83,8 @@ Some binary libraries appear to contain unattributed open source code:
 
 * Source & binary components from the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk) were released under the MIT license. Source code components are relicensed here under the BSD license. The original parts are Copyright (C) Espressif Systems.
 
+* Newlib is covered by several copyrights and licenses, as per the files in the `libc` directory.
+
 ## Contributions
 
 Contributions are very welcome!
@@ -100,7 +103,7 @@ If you are contributing code, *please ensure that it can be licensed under the B
 
 For code submissions based on reverse engineered binary functionality, please either reverse engineer functionality from MIT Licensed Espressif releases or make sure that the reverse engineered code does not directly copy the code structure of the binaries - it cannot be a "derivative work" of an incompatible binary.
 
-The best way to write suitable code is to first add documentation somewhere like the [esp8266 wiki](https://github.com/esp8266/esp8266-wiki/) describing factual information gained from reverse engineering - such as register addresses, bit masks, orders of register writes, etc. Then write new functions referring to that documentation as reference material.
+The best way to write suitable code is to first add documentation somewhere like the [esp8266 reverse engineering wiki](http://esp8266-re.foogod.com/) describing factual information gained from reverse engineering - such as register addresses, bit masks, orders of register writes, etc. Then write new functions referring to that documentation as reference material.
 
 ## Coding Style
 
@@ -110,4 +113,4 @@ Upstream code is left with the indentation and style of the upstream project.
 
 ## Sponsors
 
-Work on esp-open-rtos has been sponsored by [SuperHouse Automation](http://superhouse.tv/).
+Work on parts of esp-open-rtos has been sponsored by [SuperHouse Automation](http://superhouse.tv/).
