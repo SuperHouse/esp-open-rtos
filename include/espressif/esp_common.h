@@ -10,7 +10,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "esp_libc.h"
 #include "esp_misc.h"
 #include "esp_wifi.h"
 #include "esp_softap.h"

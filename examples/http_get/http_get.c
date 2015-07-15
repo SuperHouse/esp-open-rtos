@@ -7,6 +7,8 @@
 #include "espressif/esp_common.h"
 #include "espressif/sdk_private.h"
 
+#include <string.h>
+
 #include "FreeRTOS.h"
 #include "task.h"
 

@@ -3,13 +3,38 @@
    Modified for esp open RTOS, this linker script is no longer the same as the esp_iot_rtos_sdk one.
 */
 
+/* FreeRTOS memory management functions
+
+   We link these directly to newlib functions (have to do it at link
+   time as binary libraries use these symbols too.)
+*/
+pvPortMalloc = malloc;
+vPortFree = free;
+
+/* FreeRTOS lock functions.
+
+   Rely on a patch to libc that produces weak linked versions of the
+   below symbols. Currently treating locking primitives like universal
+   global critical section rather than individual locks, but this seems
+   OK from the use cases in newlib.
+*/
+_lock_acquire = vPortEnterCritical;
+_lock_acquire_recursive = vPortEnterCritical;
+_lock_try_acquire = vPortEnterCritical;
+_lock_try_acquire_recursive = vPortEnterCritical;
+_lock_release = vPortExitCritical;
+_lock_release_recursive = vPortExitCritical;
+
+/* SDK compatibility */
+ets_printf = printf;
+
 /* Linker Script for ld -N */
 MEMORY
 {
   dport0_0_seg :                      	org = 0x3FF00000, len = 0x10
   dram0_0_seg :                       	org = 0x3FFE8000, len = 0x14000
-  iram1_0_seg :                       	org = 0x40100000, len = 0x8000
-  irom0_0_seg :                       	org = 0x40240000, len = 0x3C000
+  iram1_0_seg :                       	org = 0x40100000, len = 0x08000
+  irom0_0_seg :                       	org = 0x40240000, len = 0x7C000
 }
 
 PHDRS
@@ -156,12 +181,12 @@ SECTIONS
     *(COMMON)
     . = ALIGN (8);
     _bss_end = ABSOLUTE(.);
-    _heap_start = ABSOLUTE(.); /* ESPTODO: Remove this symbol */
+    _heap_start = ABSOLUTE(.);
 /*    _stack_sentry = ALIGN(0x8); */
   } >dram0_0_seg :dram0_0_bss_phdr
 /* __stack = 0x3ffc8000; */
 
-  .text : ALIGN(4)
+  .text : ALIGN(4) /* IRAM */
   {
     _stext = .;
     _text_start = ABSOLUTE(.);
@@ -192,13 +217,35 @@ SECTIONS
     *(.entry.text)
     *(.init.literal)
     *(.init)
-    *(.literal .text .literal.* .text.* .iram1.text iram1.literal .stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
+    /* esp-open-rtos compiled source files use the .iram1.* section names for IRAM
+       functions, etc. */
+    *(.iram1.*)
+    /* SDK libraries expect their .text sections to link to iram, not irom */
+    *sdklib*:*(.literal .text .literal.* .text.*)
+    /* libgcc functions also need to be in .text, as some are called before
+       flash is mapped (also performance)
+    */
+    *libgcc.a:*.o(.literal .text .literal.* .text.*)
+
+    *(.stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
     *(.fini.literal)
     *(.fini)
     *(.gnu.version)
     _text_end = ABSOLUTE(.);
     _etext = .;
   } >iram1_0_seg :iram1_0_phdr
+
+  .irom0.text : ALIGN(4)
+  {
+    _irom0_text_start = ABSOLUTE(.);
+    /* esp-open-rtos compiled code goes into IROM by default
+       (except for libgcc which is matched above.)
+    */
+    *(.literal .text .literal.* .text.*)
+    /* SDK libraries expect ICACHE_FLASH_ATTR/etc functions to be loaded explicitly as IROM */
+    *sdklib*:*(.irom.* .irom.*.* .irom0.*)
+    _irom0_text_end = ABSOLUTE(.);
+  } >irom0_0_seg :irom0_0_phdr
 
   .lit4 : ALIGN(4)
   {
@@ -208,11 +255,4 @@ SECTIONS
     *(.gnu.linkonce.lit4.*)
     _lit4_end = ABSOLUTE(.);
   } >iram1_0_seg :iram1_0_phdr
-
-  .irom0.text : ALIGN(4)
-  {
-    _irom0_text_start = ABSOLUTE(.);
-    *(.irom0.literal .irom.literal .irom.text.literal .irom0.text .irom.text)
-    _irom0_text_end = ABSOLUTE(.);
-  } >irom0_0_seg :irom0_0_phdr
 }

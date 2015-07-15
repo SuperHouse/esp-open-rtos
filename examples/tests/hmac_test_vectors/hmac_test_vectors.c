@@ -12,6 +12,8 @@
 #include "FreeRTOS.h"
 #include "ssl.h"
 
+#include <string.h>
+
 struct test_vector {
     const uint8_t *key;
     const uint8_t key_len;

@@ -1,2 +1,2 @@
-PROGRAM=http_get
+PROGRAM=http_get_ssl
 include ../../common.mk
