@@ -67,6 +67,9 @@ SDK_LIBS		?= main net80211 phy pp wpa
 # open source libraries linked in
 LIBS ?= hal gcc c
 
+# set to 0 if you want to use the toolchain libc instead of esp-open-rtos newlib
+OWN_LIBC ?= 1
+
 # Note: this isn't overridable without a not-yet-merged patch to esptool
 ENTRY_SYMBOL = call_user_start
 
@@ -115,6 +118,11 @@ FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_2).bin)
 # programs to have their own copies of header config files for components
 # , which is useful for overriding things.
 INC_DIRS      = $(PROGRAM_DIR) $(PROGRAM_DIR)include $(ROOT)include
+
+ifeq ($(OWN_LIBC),1)
+    INC_DIRS += $(ROOT)libc/xtensa-lx106-elf/include
+    LDFLAGS += -L$(ROOT)libc/xtensa-lx106-elf/lib
+endif
 
 ifeq ("$(V)","1")
 Q :=
