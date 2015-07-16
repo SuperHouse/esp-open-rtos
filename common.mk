@@ -50,9 +50,10 @@ CROSS ?= xtensa-lx106-elf-
 
 AR = $(CROSS)ar
 CC = $(CROSS)gcc
+CPP = $(CROSS)cpp
 LD = $(CROSS)gcc
 NM = $(CROSS)nm
-CPP = $(CROSS)g++
+C++ = $(CROSS)g++
 SIZE = $(CROSS)size
 OBJCOPY = $(CROSS)objcopy
 OBJDUMP = $(CROSS)objdump
@@ -73,7 +74,7 @@ OWN_LIBC ?= 1
 # Note: this isn't overridable without a not-yet-merged patch to esptool
 ENTRY_SYMBOL = call_user_start
 
-CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99
+CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99 $(CPPFLAGS)
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map
 
 ifeq ($(FLAVOR),debug)
@@ -85,9 +86,10 @@ else
 endif
 
 GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
-CFLAGS += -DGITSHORTREV=$(GITSHORTREV)
+CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV)
 
-LINKER_SCRIPTS  = $(ROOT)ld/eagle.app.v6.ld $(ROOT)ld/eagle.rom.addr.v6.ld
+# Linker scripts, all found in $(ROOT)/ld
+LINKER_SCRIPTS  = eagle.app.v6.ld eagle.rom.addr.v6.ld
 
 ####
 #### no user configurable options below here
@@ -103,11 +105,14 @@ lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(s
 # assume the program dir is the directory the top-level makefile was run in
 PROGRAM_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 
+# linker scripts get run through the C preprocessor
+LINKER_SCRIPTS_PROCESSED = $(addprefix $(BUILD_DIR)ld/,$(LINKER_SCRIPTS))
+
 # derive various parts of compiler/linker arguments
 SDK_LIB_ARGS         = $(addprefix -l,$(SDK_LIBS))
 LIB_ARGS             = $(addprefix -l,$(LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
-LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS))
+LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS_PROCESSED))
 FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_1).bin)
 FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_2).bin)
 
@@ -252,12 +257,17 @@ $(eval $(call component_compile_rules,PROGRAM))
 ## Include other components (this is where the actual compiler sections are generated)
 $(foreach component,$(COMPONENTS), $(eval include $(ROOT)$(component)/component.mk))
 
+
+## Run linker scripts via C preprocessor to evaluate macros
+$(BUILD_DIR)ld/%.ld: $(ROOT)ld/%.ld | $(BUILD_DIR)ld
+	$(Q) $(CPP) $(CPPFLAGS) -E -C -P $< > $@
+
 # final linking step to produce .elf
-$(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
+$(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS_PROCESSED)
 	$(vecho) "LD $@"
 	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(LIB_ARGS) $(SDK_LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
 
-$(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib:
+$(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib $(BUILD_DIR)ld:
 	$(Q) mkdir -p $@
 
 $(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FW_BASE)
