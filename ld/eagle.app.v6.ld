@@ -28,13 +28,54 @@ _lock_release_recursive = vPortExitCritical;
 /* SDK compatibility */
 ets_printf = printf;
 
+/* Evaluate FLASH_SIZE to calculate irom size, etc.
+*/
+#ifndef OTA
+
+#define IROM0_START 0x40240000
+
+/* Non-OTA sizes */
+#if FLASH_SIZE == 2 /* 256kB */
+#define IROM0_LEN 0x3C000
+#elif FLASH_SIZE == 4 /* 512kB */
+#define IROM0_LEN 0x7C000
+#elif FLASH_SIZE == 8 /* 1MB */
+#define IROM0_LEN 0xFC000
+#elif FLASH_SIZE == 16 /* 2MB */
+#define IROM0_LEN 0x1FC000
+#elif FLASH_SIZE == 32 /* 4MB */
+#define IROM0_LEN 0x3FC000
+#else /*FLASH_SIZE*/
+#error "Unknown flash size for linker script. Check the FLASH_SIZE variable in your Makefile."
+#endif
+
+#else /* OTA */
+
+/* IROM0 becomes an actual "section" of the bootloader image, so we need to leave
+   space for the bootloader (0x2000 bytes) and space for the bootloader & section
+   headers (0x10 bytes)
+*/
+#define IROM0_START 0x40202010
+
+/* OTA sizes */
+#if FLASH_SIZE < 16
+#error "OTA support currently requires 16 or 32 megabit flash"
+#elif FLASH_SIZE == 16 || FLASH_SIZE == 32
+/* 1MB irom0 section regardless, minus the space for the bootloader */
+#define IROM0_LEN (0x100000 - 0x2010)
+#else /*FLASH_SIZE*/
+#error "Unknown flash size for linker script. Check the FLASH_SIZE variable in your Makefile."
+#endif
+
+#endif
+
 /* Linker Script for ld -N */
 MEMORY
 {
   dport0_0_seg :                      	org = 0x3FF00000, len = 0x10
   dram0_0_seg :                       	org = 0x3FFE8000, len = 0x14000
   iram1_0_seg :                       	org = 0x40100000, len = 0x08000
-  irom0_0_seg :                       	org = 0x40240000, len = 0x7C000
+  irom0_0_seg :                       	org = IROM0_START, len = IROM0_LEN
 }
 
 PHDRS

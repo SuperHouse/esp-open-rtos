@@ -14,38 +14,52 @@
 # BSD Licensed as described in the file LICENSE at top level.
 #
 # This makefile is adapted from the esp-mqtt makefile by @tuanpmt
-# https://github.com/tuanpmt/esp_mqtt, but it has changed significantly
+# https://github.com/tuanpmt/esp_mqtt, but it has changed very significantly
 # since then.
-#
+
 # assume the 'root' directory (ie top of the tree) is the directory common.mk is in
 ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 
 # include optional local overrides at the root level, then in program directory
+#
+# Create either of these files for local system overrides if possible,
+# instead of editing this makefile directly.
 -include $(ROOT)local.mk
 -include local.mk
 
-ifndef PROGRAM
-	$(error "Set the PROGRAM environment variable in your Makefile before including common.mk"
-endif
-
-# esptool defaults
-ESPTOOL ?= esptool.py
-ESPBAUD ?= 115200
+# Flash size in megabits
+# Valid values are same as for esptool.py - 2m,4m,8m,16m,32m
+FLASH_SIZE ?= 16
 
 # Output directories to store intermediate compiled files
 # relative to the program directory
 BUILD_DIR ?= $(PROGRAM_DIR)build/
 FW_BASE ?= $(PROGRAM_DIR)firmware/
 
-# we create two different files for uploading into the flash
-# these are the names and options to generate them
-FW_1	= 0x00000
-FW_2	= 0x40000
+# esptool.py from https://github.com/themadinventor/esptool
+ESPTOOL ?= esptool.py
+# serial port settings for esptool.py
+ESPPORT ?= /dev/ttyUSB0
+ESPBAUD ?= 115200
+
+# Set OTA to 1 to build an image that supports rBoot OTA bootloader
+#
+# Currently only works with 16mbit or more flash sizes, with 8mbit
+# images for each "slot"
+OTA ?= 0
+
+ifeq ($(OTA),1)
+# for OTA, we build a "SDK v1.2 bootloader" compatible image where everything is in
+# one file (should work with the v1.2 binary bootloader, and the FOSS rBoot bootloader).
+IMGTOOL ?= esptool2
+
+# Tell C preprocessor that we're building for OTA
+CPPFLAGS = -DOTA
+endif
 
 FLAVOR ?= release # or debug
 
 # Compiler names, etc. assume gdb
-ESPPORT ?= /dev/ttyUSB0
 CROSS ?= xtensa-lx106-elf-
 
 AR = $(CROSS)ar
@@ -71,8 +85,8 @@ LIBS ?= hal gcc c
 # set to 0 if you want to use the toolchain libc instead of esp-open-rtos newlib
 OWN_LIBC ?= 1
 
-# Note: this isn't overridable without a not-yet-merged patch to esptool
-ENTRY_SYMBOL = call_user_start
+# Note: you will need a recent esp
+ENTRY_SYMBOL ?= call_user_start
 
 CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99 $(CPPFLAGS)
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map
@@ -86,7 +100,7 @@ else
 endif
 
 GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
-CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV)
+CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV) -DFLASH_SIZE=$(FLASH_SIZE)
 
 # Linker scripts, all found in $(ROOT)/ld
 LINKER_SCRIPTS  = eagle.app.v6.ld eagle.rom.addr.v6.ld
@@ -94,6 +108,10 @@ LINKER_SCRIPTS  = eagle.app.v6.ld eagle.rom.addr.v6.ld
 ####
 #### no user configurable options below here
 ####
+
+ifndef PROGRAM
+	$(error "Set the PROGRAM environment variable in your Makefile before including common.mk"
+endif
 
 # hacky way to get a single space value
 empty :=
@@ -106,15 +124,30 @@ lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(s
 PROGRAM_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 
 # linker scripts get run through the C preprocessor
-LINKER_SCRIPTS_PROCESSED = $(addprefix $(BUILD_DIR)ld/,$(LINKER_SCRIPTS))
+ifeq ($(OTA),1)
+LD_DIR = $(BUILD_DIR)ld-$(FLASH_SIZE)-ota/
+else
+LD_DIR = $(BUILD_DIR)ld-$(FLASH_SIZE)/
+endif
+LINKER_SCRIPTS_PROCESSED = $(addprefix $(LD_DIR),$(LINKER_SCRIPTS))
 
 # derive various parts of compiler/linker arguments
 SDK_LIB_ARGS         = $(addprefix -l,$(SDK_LIBS))
 LIB_ARGS             = $(addprefix -l,$(LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
 LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS_PROCESSED))
-FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_1).bin)
-FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_2).bin)
+
+ifeq ($(OTA),0)
+# for non-OTA, we create two different files for uploading into the flash
+# these are the names and options to generate them
+FW_ADDR_1	= 0x00000
+FW_ADDR_2	= 0x40000
+FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_ADDR_1).bin)
+FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_ADDR_2).bin)
+else
+# for OTA, it's a single monolithic image
+FW_FILE = $(addprefix $(FW_BASE),$(FW_NAME).bin)
+endif
 
 # Common include directories, shared across all "components"
 # components will add their include directories to this argument
@@ -139,7 +172,7 @@ endif
 
 .PHONY: all clean debug_print
 
-all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2)
+all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 
 # component_compile_rules: Produces compilation rules for a given
 # component
@@ -259,7 +292,7 @@ $(foreach component,$(COMPONENTS), $(eval include $(ROOT)$(component)/component.
 
 
 ## Run linker scripts via C preprocessor to evaluate macros
-$(BUILD_DIR)ld/%.ld: $(ROOT)ld/%.ld | $(BUILD_DIR)ld
+$(LD_DIR)%.ld: $(ROOT)ld/%.ld | $(LD_DIR)
 	$(Q) $(CPP) $(CPPFLAGS) -E -C -P $< > $@
 
 # final linking step to produce .elf
@@ -267,15 +300,24 @@ $(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS_PROCESSE
 	$(vecho) "LD $@"
 	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(LIB_ARGS) $(SDK_LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
 
-$(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib $(BUILD_DIR)ld:
+$(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib $(LD_DIR):
 	$(Q) mkdir -p $@
 
 $(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FW_BASE)
 	$(vecho) "FW $@"
 	$(ESPTOOL) elf2image $< -o $(FW_BASE)
 
+$(FW_FILE): $(PROGRAM_OUT) $(FW_BASE)
+	$(IMGTOOL) -bin -boot2 $(PROGRAM_OUT) $(FW_FILE) .text .data .rodata
+
+ifeq ($(OTA),0)
 flash: $(FW_FILE_1) $(FW_FILE_2)
-	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_1) $(FW_FILE_1) $(FW_2) $(FW_FILE_2)
+	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_ADDR_1) $(FW_FILE_1) $(FW_ADDR_2) $(FW_FILE_2)
+else
+flash: $(FW_FILE)
+	$(vecho) "Flashing OTA image slot 0 (bootloader not updated)"
+	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash 0x2000 $(FW_FILE)
+endif
 
 size: $(PROGRAM_OUT)
 	$(Q) $(CROSS)size --format=sysv $(PROGRAM_OUT)
