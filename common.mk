@@ -146,7 +146,7 @@ FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_ADDR_1).bin)
 FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_ADDR_2).bin)
 else
 # for OTA, it's a single monolithic image
-FW_FILE = $(addprefix $(FW_BASE),$(FW_NAME).bin)
+FW_FILE = $(addprefix $(FW_BASE),$(PROGRAM).bin)
 endif
 
 # Common include directories, shared across all "components"
