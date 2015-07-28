@@ -224,7 +224,7 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.s $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "AS $$<"
 	$(Q) mkdir -p $$(dir $$@)
-	$$($(1)_CC_ARGS) -c $$< -o $$@
+	$$($(1)_CC_ARGS) -Xassembler -I$$(dir $$<) -c $$< -o $$@
 
 # the component is shown to depend on both obj and source files so we get a meaningful error message
 # for missing explicitly named source files
