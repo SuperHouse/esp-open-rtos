@@ -199,11 +199,14 @@ COMPONENT_ARS =
 define component_compile_rules
 $(1)_OBJ_DIR   = $(call lc,$(BUILD_DIR)$(1)/)
 ### determine source files and object files ###
-$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR),$$(wildcard $$(sdir)/*.c)) $$($(1)_EXTRA_SRC_FILES)
+$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR), \
+			$$(wildcard $$(sdir)/*.c) $$(wildcard $$(sdir)/*.s)) \
+			$$($(1)_EXTRA_SRC_FILES)
 $(1)_REAL_SRC_FILES = $$(foreach sfile,$$($(1)_SRC_FILES),$$(realpath $$(sfile)))
 $(1)_REAL_ROOT = $$(realpath $$($(1)_ROOT))
 # patsubst here substitutes real component root path for the relative OBJ_DIR path, making things short again
-$(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_REAL_SRC_FILES))
+$(1)_OBJ_FILES_C = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_REAL_SRC_FILES))
+$(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.s,$$($(1)_OBJ_DIR)%.o,$$($(1)_OBJ_FILES_C))
 # the last included makefile is our component's component.mk makefile (rebuild the component if it changes)
 $(1)_MAKEFILE ?= $(lastword $(MAKEFILE_LIST))
 
@@ -217,6 +220,11 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 	$(Q) mkdir -p $$(dir $$@)
 	$$($(1)_CC_ARGS) -c $$< -o $$@
 	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+
+$$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.s $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
+	$(vecho) "AS $$<"
+	$(Q) mkdir -p $$(dir $$@)
+	$$($(1)_CC_ARGS) -c $$< -o $$@
 
 # the component is shown to depend on both obj and source files so we get a meaningful error message
 # for missing explicitly named source files
