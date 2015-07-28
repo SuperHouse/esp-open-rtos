@@ -305,12 +305,6 @@ $(BUILD_DIR)sdklib/%.a: $(BUILD_DIR)sdklib/%_stage1.a $(BUILD_DIR)sdklib/allsymb
 PROGRAM_SRC_DIR ?= $(PROGRAM_DIR)
 PROGRAM_ROOT ?= $(PROGRAM_DIR)
 PROGRAM_MAKEFILE = $(firstword $(MAKEFILE_LIST))
-# if there's a local.h file in either the program dir or the
-# root dir, load macros from it (for WIFI_SSID,WIFI_PASS, etc.)
-PROGRAM_LOCAL_H = $(lastword $(wildcard $(ROOT)local.h $(PROGRAM_DIR)local.h))
-ifneq ($(PROGRAM_LOCAL_H),)
-PROGRAM_CFLAGS = $(CFLAGS) -imacros $(PROGRAM_LOCAL_H)
-endif
 $(eval $(call component_compile_rules,PROGRAM))
 
 ## Include other components (this is where the actual compiler sections are generated)
