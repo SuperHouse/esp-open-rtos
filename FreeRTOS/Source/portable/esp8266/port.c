@@ -109,7 +109,7 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
     SET_STKREG( XT_STK_A0,      0                           );  /* to terminate GDB backtrace       */
     SET_STKREG( XT_STK_A1,      (uint32_t)sp + XT_STK_FRMSZ   );  /* physical top of stack frame      */
     SET_STKREG( XT_STK_A2,      pvParameters   );           /* parameters      */
-    SET_STKREG( XT_STK_EXIT,    sdk__xt_user_exit               );  /* user exception exit dispatcher   */
+    SET_STKREG( XT_STK_EXIT,    _xt_user_exit               );  /* user exception exit dispatcher   */
 
     /* Set initial PS to int level 0, EXCM disabled ('rfe' will enable), user mode. */
     SET_STKREG( XT_STK_PS,      PS_UM | PS_EXCM     );

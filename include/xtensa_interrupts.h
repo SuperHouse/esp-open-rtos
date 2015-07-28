@@ -16,7 +16,7 @@
 #include <common_macros.h>
 
 void sdk__xt_int_exit (void);
-void sdk__xt_user_exit (void);
+void _xt_user_exit (void);
 void sdk__xt_tick_timer_init (void);
 void sdk__xt_timer_int1(void);
 

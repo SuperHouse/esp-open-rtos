@@ -90,11 +90,6 @@ PHDRS
 
 /*  Default entry point:  */
 ENTRY(call_user_start)
-EXTERN(sdk__DebugExceptionVector)
-EXTERN(sdk__DoubleExceptionVector)
-EXTERN(sdk__KernelExceptionVector)
-EXTERN(sdk__NMIExceptionVector)
-EXTERN(sdk__UserExceptionVector)
 PROVIDE(_memmap_vecbase_reset = 0x40000000);
 /* Various memory-map dependent cache attribute settings: */
 _memmap_cacheattr_wb_base = 0x00000110;
@@ -196,13 +191,6 @@ SECTIONS
     _rodata_end = ABSOLUTE(.);
   } >dram0_0_seg :dram0_0_phdr
 
-  .UserExceptionVector.literal : AT(LOADADDR(.rodata) + (ADDR(.UserExceptionVector.literal) - ADDR(.rodata))) ALIGN(4)
-  {
-  	_UserExceptionVector_literal_start = ABSOLUTE(.);
-  	*(.UserExceptionVector.literal)
-  	_UserExceptionVector_literal_end = ABSOLUTE(.);
-  } >dram0_0_seg :dram0_0_phdr
-
   .bss ALIGN(8) (NOLOAD) : ALIGN(4)
   {
     . = ALIGN (8);
@@ -231,30 +219,8 @@ SECTIONS
   {
     _stext = .;
     _text_start = ABSOLUTE(.);
-    *(.UserEnter.text)
-    . = ALIGN(16);
-    *(.DebugExceptionVector.text)
-    . = ALIGN(16);
-    *(.NMIExceptionVector.text)
-    . = ALIGN(16);
-    *(.KernelExceptionVector.text)
-    LONG(0)
-    LONG(0)
-    LONG(0)
-    LONG(0)
-    . = ALIGN(16);
-    *(.UserExceptionVector.text)
-    LONG(0)
-    LONG(0)
-    LONG(0)
-    LONG(0)
-    . = ALIGN(16);
-    *(.DoubleExceptionVector.text)
-    LONG(0)
-    LONG(0)
-    LONG(0)
-    LONG(0)
     . = ALIGN (16);
+    *(.vecbase.text)
     *(.entry.text)
     *(.init.literal)
     *(.init)
