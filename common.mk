@@ -74,7 +74,7 @@ OBJDUMP = $(CROSS)objdump
 
 # Source components to compile and link. Each of these are subdirectories
 # of the root, with a 'component.mk' file.
-COMPONENTS     ?= core FreeRTOS lwip axtls
+COMPONENTS     ?= core FreeRTOS lwip axtls $(EXTRA_COMPONENTS)
 
 # binary esp-iot-rtos SDK libraries to link. These are pre-processed prior to linking.
 SDK_LIBS		?= main net80211 phy pp wpa
@@ -89,7 +89,7 @@ OWN_LIBC ?= 1
 ENTRY_SYMBOL ?= call_user_start
 
 CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99 $(CPPFLAGS)
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(EXTRA_LDFLAGS)
 
 ifeq ($(FLAVOR),debug)
     CFLAGS += -g -O0
