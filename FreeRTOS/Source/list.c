@@ -98,7 +98,7 @@ void vListInitialiseItem( xListItem * const pxItem )
 }
 /*-----------------------------------------------------------*/
 
-void vListInsertEnd( xList * const pxList, xListItem * const pxNewListItem )
+void IRAM vListInsertEnd( xList * const pxList, xListItem * const pxNewListItem )
 {
 xListItem * pxIndex;
 
@@ -119,7 +119,7 @@ xListItem * pxIndex;
 }
 /*-----------------------------------------------------------*/
 
-void vListInsert( xList * const pxList, xListItem * const pxNewListItem )
+void IRAM vListInsert( xList * const pxList, xListItem * const pxNewListItem )
 {
 xListItem *pxIterator;
 portTickType xValueOfInsertion;
@@ -177,7 +177,7 @@ portTickType xValueOfInsertion;
 }
 /*-----------------------------------------------------------*/
 
-unsigned portBASE_TYPE uxListRemove( xListItem * const pxItemToRemove )
+unsigned portBASE_TYPE IRAM uxListRemove( xListItem * const pxItemToRemove )
 {
 xList * pxList;
 

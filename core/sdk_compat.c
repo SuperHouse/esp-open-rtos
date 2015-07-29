@@ -8,8 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <common_macros.h>
 
-void *zalloc(size_t nbytes)
+void IRAM *zalloc(size_t nbytes)
 {
     return calloc(1, nbytes);
 }

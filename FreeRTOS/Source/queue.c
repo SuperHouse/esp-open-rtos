@@ -179,7 +179,7 @@ typedef struct QueueDefinition
  * to indicate that a task may require unblocking.  When the queue in unlocked
  * these lock counts are inspected, and the appropriate action taken.
  */
-static void prvUnlockQueue( xQUEUE *pxQueue ) PRIVILEGED_FUNCTION;
+static void IRAM prvUnlockQueue( xQUEUE *pxQueue ) PRIVILEGED_FUNCTION;
 
 /*
  * Uses a critical section to determine if there is any data in a queue.
@@ -543,7 +543,7 @@ xQueueHandle xReturn = NULL;
 
 #endif /* configUSE_COUNTING_SEMAPHORES */
 /*-----------------------------------------------------------*/
-signed portBASE_TYPE xQueueGenericSend( xQueueHandle xQueue, const void * const pvItemToQueue, portTickType xTicksToWait, portBASE_TYPE xCopyPosition )
+signed portBASE_TYPE IRAM xQueueGenericSend( xQueueHandle xQueue, const void * const pvItemToQueue, portTickType xTicksToWait, portBASE_TYPE xCopyPosition )
 {
 signed portBASE_TYPE xEntryTimeSet = pdFALSE;
 xTimeOutType xTimeOut;
@@ -1316,7 +1316,7 @@ unsigned portBASE_TYPE uxReturn;
 } /*lint !e818 Pointer cannot be declared const as xQueue is a typedef not pointer. */
 /*-----------------------------------------------------------*/
 
-unsigned portBASE_TYPE uxQueueMessagesWaitingFromISR( const xQueueHandle xQueue )
+unsigned portBASE_TYPE IRAM uxQueueMessagesWaitingFromISR( const xQueueHandle xQueue )
 {
 unsigned portBASE_TYPE uxReturn;
 
@@ -1374,7 +1374,7 @@ xQUEUE * const pxQueue = ( xQUEUE * ) xQueue;
 
 #endif /* configUSE_TRACE_FACILITY */
 /*-----------------------------------------------------------*/
-static void prvCopyDataToQueue( xQUEUE *pxQueue, const void *pvItemToQueue, portBASE_TYPE xPosition )
+static void IRAM prvCopyDataToQueue( xQUEUE *pxQueue, const void *pvItemToQueue, portBASE_TYPE xPosition )
 {
 	if( pxQueue->uxItemSize == ( unsigned portBASE_TYPE ) 0 )
 	{
@@ -1436,7 +1436,7 @@ static void prvCopyDataFromQueue( xQUEUE * const pxQueue, const void * const pvB
 	}
 }
 /*-----------------------------------------------------------*/
-static void prvUnlockQueue( xQUEUE *pxQueue )
+static void IRAM prvUnlockQueue( xQUEUE *pxQueue )
 {
 	/* THIS FUNCTION MUST BE CALLED WITH THE SCHEDULER SUSPENDED. */
 

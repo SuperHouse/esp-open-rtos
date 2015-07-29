@@ -427,7 +427,7 @@ static void prvCheckTasksWaitingTermination( void ) PRIVILEGED_FUNCTION;
  * The currently executing task is entering the Blocked state.  Add the task to
  * either the current or the overflow delayed task list.
  */
-static void prvAddCurrentTaskToDelayedList( portTickType xTimeToWake ) PRIVILEGED_FUNCTION;
+static void IRAM prvAddCurrentTaskToDelayedList( portTickType xTimeToWake ) PRIVILEGED_FUNCTION;
 
 /*
  * Allocates memory from the heap for a TCB and associated stack.  Checks the
@@ -1297,7 +1297,7 @@ void vTaskEndScheduler( void )
 }
 /*----------------------------------------------------------*/
 
-void vTaskSuspendAll( void )
+void IRAM vTaskSuspendAll( void )
 {
 	/* A critical section is not required as the variable is of type
 	portBASE_TYPE. */
@@ -1333,7 +1333,7 @@ void vTaskSuspendAll( void )
 #endif /* configUSE_TICKLESS_IDLE */
 /*----------------------------------------------------------*/
 
-signed portBASE_TYPE xTaskResumeAll( void )
+signed portBASE_TYPE IRAM xTaskResumeAll( void )
 {
 tskTCB *pxTCB;
 portBASE_TYPE xAlreadyYielded = pdFALSE;
@@ -1568,7 +1568,7 @@ implementations require configUSE_TICKLESS_IDLE to be set to a value other than
 #endif /* configUSE_TICKLESS_IDLE */
 /*----------------------------------------------------------*/
 
-portBASE_TYPE xTaskIncrementTick( void )
+portBASE_TYPE IRAM xTaskIncrementTick( void )
 {
 tskTCB * pxTCB;
 portTickType xItemValue;
@@ -1843,7 +1843,7 @@ void vTaskSwitchContext( void )
 }
 /*-----------------------------------------------------------*/
 
-void vTaskPlaceOnEventList( xList * const pxEventList, portTickType xTicksToWait )
+void IRAM vTaskPlaceOnEventList( xList * const pxEventList, portTickType xTicksToWait )
 {
 portTickType xTimeToWake;
 
@@ -1936,7 +1936,7 @@ portTickType xTimeToWake;
 #endif /* configUSE_TIMERS */
 /*-----------------------------------------------------------*/
 
-signed portBASE_TYPE xTaskRemoveFromEventList( const xList * const pxEventList )
+signed portBASE_TYPE IRAM xTaskRemoveFromEventList( const xList * const pxEventList )
 {
 tskTCB *pxUnblockedTCB;
 portBASE_TYPE xReturn;
@@ -1987,7 +1987,7 @@ portBASE_TYPE xReturn;
 }
 /*-----------------------------------------------------------*/
 
-void vTaskSetTimeOutState( xTimeOutType * const pxTimeOut )
+void IRAM vTaskSetTimeOutState( xTimeOutType * const pxTimeOut )
 {
 	configASSERT( pxTimeOut );
 	pxTimeOut->xOverflowCount = xNumOfOverflows;
@@ -1995,7 +1995,7 @@ void vTaskSetTimeOutState( xTimeOutType * const pxTimeOut )
 }
 /*-----------------------------------------------------------*/
 
-portBASE_TYPE xTaskCheckForTimeOut( xTimeOutType * const pxTimeOut, portTickType * const pxTicksToWait )
+portBASE_TYPE IRAM xTaskCheckForTimeOut( xTimeOutType * const pxTimeOut, portTickType * const pxTicksToWait )
 {
 portBASE_TYPE xReturn;
 
@@ -2044,7 +2044,7 @@ portBASE_TYPE xReturn;
 }
 /*-----------------------------------------------------------*/
 
-void vTaskMissedYield( void )
+void IRAM vTaskMissedYield( void )
 {
 	xYieldPending = pdTRUE;
 }
@@ -2397,7 +2397,7 @@ static void prvCheckTasksWaitingTermination( void )
 }
 /*-----------------------------------------------------------*/
 
-static void prvAddCurrentTaskToDelayedList( portTickType xTimeToWake )
+static void IRAM prvAddCurrentTaskToDelayedList( portTickType xTimeToWake )
 {
 	/* The list item will be inserted in wake time order. */
 	listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), xTimeToWake );
@@ -2676,7 +2676,7 @@ tskTCB *pxNewTCB;
 
 #if ( configUSE_MUTEXES == 1 )
 
-	void vTaskPriorityDisinherit( xTaskHandle const pxMutexHolder )
+	void IRAM vTaskPriorityDisinherit( xTaskHandle const pxMutexHolder )
 	{
 	tskTCB * const pxTCB = ( tskTCB * ) pxMutexHolder;
 

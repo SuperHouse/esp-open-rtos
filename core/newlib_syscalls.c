@@ -7,9 +7,10 @@
 #include <sys/reent.h>
 #include <sys/types.h>
 #include <espressif/sdk_private.h>
+#include <common_macros.h>
 #include <stdlib.h>
 
-caddr_t _sbrk_r (struct _reent *r, int incr)
+IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
 {
     extern char   _heap_start; /* linker script defined */
     static char * heap_end;

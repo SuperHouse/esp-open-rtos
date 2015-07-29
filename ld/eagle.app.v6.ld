@@ -229,10 +229,28 @@ SECTIONS
     *(.iram1.*)
     /* SDK libraries expect their .text sections to link to iram, not irom */
     *sdklib*:*(.literal .text .literal.* .text.*)
-    /* libgcc functions also need to be in .text, as some are called before
+    /* libgcc integer functions also need to be in .text, as some are called before
        flash is mapped (also performance)
     */
-    *libgcc.a:*.o(.literal .text .literal.* .text.*)
+    *libgcc.a:*i3.o(.literal .text .literal.* .text.*)
+
+    /* libc also in IRAM */
+    *libc.a:*malloc.o(.literal .text .literal.* .text.*)
+    *libc.a:*mallocr.o(.literal .text .literal.* .text.*)
+    *libc.a:*freer.o(.literal .text .literal.* .text.*)
+    *libc.a:*memcpy.o(.literal .text .literal.* .text.*)
+    *libc.a:*memset.o(.literal .text .literal.* .text.*)
+    *libc.a:*memcmp.o(.literal .text .literal.* .text.*)
+    *libc.a:*rand.o(.literal .text .literal.* .text.*)
+    *libc.a:*bzero.o(.literal .text .literal.* .text.*)
+    *libc.a:*lock.o(.literal .text .literal.* .text.*)
+
+    *libc.a:*printf.o(.literal .text .literal.* .text.*)
+    *libc.a:*findfp.o(.literal .text .literal.* .text.*)
+    *libc.a:*fputwc.o(.literal .text .literal.* .text.*)
+
+    /* xthal_set_intset() called from PendSV in NMI context */
+    *libhal.a:*set_intset.o(.literal .text .literal.* .text.*)
 
     *(.stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
     *(.fini.literal)
