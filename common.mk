@@ -230,6 +230,7 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.s $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 # for missing explicitly named source files
 $$($(1)_AR): $$($(1)_OBJ_FILES) $$($(1)_SRC_FILES)
 	$(vecho) "AR $$@"
+	$(Q) mkdir -p $$(dir $$@)
 	$(Q) $(AR) cru $$@ $$^
 
 COMPONENT_ARS += $$($(1)_AR)
