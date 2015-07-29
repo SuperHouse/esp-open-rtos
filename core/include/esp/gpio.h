@@ -69,7 +69,7 @@ INLINED void gpio_disable(const uint8_t gpio_num)
  *
  * Only works if pin has been set to GPIO_OUTPUT via gpio_enable()
  */
-INLINED void gpio_write(const uint8_t gpio_num, const uint32_t set)
+INLINED void gpio_write(const uint8_t gpio_num, const bool set)
 {
     if(set)
         GPIO_OUT_SET = BIT(gpio_num);

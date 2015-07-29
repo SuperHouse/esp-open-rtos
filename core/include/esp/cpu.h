@@ -5,6 +5,7 @@
  */
 #ifndef _ESP_CPU_H
 #define _ESP_CPU_H
+#include <stdbool.h>
 
 /* Interrupt numbers for level 1 exception handler.
  *
