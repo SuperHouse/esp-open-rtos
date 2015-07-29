@@ -87,8 +87,12 @@ typedef int sys_prot_t;
 
 /* Plaform specific diagnostic output */
 #ifdef LWIP_DEBUG
-#define LWIP_PLATFORM_DIAG(x)   do { printf x; } while(0)
-
+#define LWIP_PLATFORM_DIAG(x) do {                      \
+        _Pragma("GCC diagnostic push")                  \
+        _Pragma("GCC diagnostic ignored \"-Wformat\"")  \
+            printf x;                                   \
+        _Pragma("GCC diagnostic pop")                   \
+    } while(0)
 #define LWIP_PLATFORM_ASSERT(x) do { printf("Assertion \"%s\" failed at line %d in %s\n", \
 					    x, __LINE__, __FILE__); while(1) {} } while(0)
 
