@@ -8,6 +8,10 @@
 
 #include "lwip/ip_addr.h"
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #define MAC2STR(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
 #define MACSTR "%02x:%02x:%02x:%02x:%02x:%02x"
 
@@ -22,5 +26,9 @@ void sdk_os_delay_us(uint16_t us);
 
 void sdk_os_install_putc1(void (*p)(char c));
 void sdk_os_putc(char c);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
