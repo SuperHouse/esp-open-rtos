@@ -6,6 +6,10 @@
 #ifndef __ESP_SOFTAP_H__
 #define __ESP_SOFTAP_H__
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 struct sdk_softap_config {
     uint8_t ssid[32];
     uint8_t password[64];
@@ -19,5 +23,9 @@ struct sdk_softap_config {
 
 bool sdk_wifi_softap_get_config(struct sdk_softap_config *config);
 bool sdk_wifi_softap_set_config(struct sdk_softap_config *config);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
