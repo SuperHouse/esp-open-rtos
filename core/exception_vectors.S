@@ -43,7 +43,7 @@ KernelExceptionVector:
 	call0 sdk_user_fatal_exception_handler
 	rfe
 	.align 16
-_EmptyVectorEntry:
+.L_EmptyVectorEntry:
 	nop
 	.align 16
 UserExceptionVector:
@@ -51,14 +51,14 @@ UserExceptionVector:
 	call0 CallUserExceptionHandler
 	rfe /* CallUserExceptionHandler should call rfe itself */
 	.align 16
-_EmptyVectorEntry2:
+.L_EmptyVectorEntry2:
 	nop
 	.align 16
 DoubleExceptionVector:
 	break 1, 4
 	call0 sdk_user_fatal_exception_handler
 	.align 16
-_UnusedResetVector:
+.L_UnusedResetVector:
 	/* reset vector slot doesn't get used, as vecbase goes back to mask ROM on reset */
 	nop
 
@@ -172,8 +172,8 @@ CallNMIExceptionHandler:
 	rfi 0x3
 
 /* Some UserException causes, see table Table 4–64 in ISA reference */
-CAUSE_SYSCALL = 1
-CAUSE_LVL1INT = 4
+#define CAUSE_SYSCALL 1
+#define CAUSE_LVL1INT 4
 
         .type   CallUserExceptionHandler, @function
 CallUserExceptionHandler:
