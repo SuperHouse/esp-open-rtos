@@ -6,6 +6,10 @@
 #ifndef __SPI_FLASH_H__
 #define __SPI_FLASH_H__
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     SPI_FLASH_RESULT_OK,
     SPI_FLASH_RESULT_ERR,
@@ -21,6 +25,7 @@ sdk_SpiFlashOpResult sdk_spi_flash_erase_sector(uint16_t sec);
 sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, uint32_t *src_addr, uint32_t size);
 sdk_SpiFlashOpResult sdk_spi_flash_read(uint32_t src_addr, uint32_t *des_addr, uint32_t size);
 
+    
 /* SDK uses this structure internally to account for flash size.
 
    chip_size field is initialised during startup from the flash size
@@ -41,5 +46,10 @@ typedef struct {
 } sdk_flashchip_t;
 
 extern sdk_flashchip_t sdk_flashchip;
+
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
