@@ -15,6 +15,11 @@
 #define SDK_PRIVATE_H
 
 #include <stdint.h>
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 struct ip_addr;
 
 /*********************************************
@@ -48,5 +53,9 @@ void sdk_system_station_got_ip_set(struct ip_addr *ip_addr, struct ip_addr *sn_m
    pbuf data. (See esp-lwip pbuf.h)
  */
 void sdk_system_pp_recycle_rx_pkt(void *eb);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
