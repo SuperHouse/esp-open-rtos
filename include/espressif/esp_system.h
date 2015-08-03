@@ -28,6 +28,14 @@ struct rst_info* sdk_system_get_rst_info(void);
 
 const char* sdk_system_get_sdk_version(void);
 
+enum sdk_sleep_type {
+    WIFI_SLEEP_NONE = 0,
+    WIFI_SLEEP_LIGHT = 1,
+    WIFI_SLEEP_MODEM = 2,
+};
+void sdk_wifi_set_sleep_type(enum sdk_sleep_type);
+enum sdk_sleep_type sdk_wifi_get_sleep_type(enum sdk_sleep_type);
+
 void sdk_system_restore(void);
 void sdk_system_restart(void);
 void sdk_system_deep_sleep(uint32_t time_in_us);
