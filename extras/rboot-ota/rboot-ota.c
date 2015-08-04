@@ -7,18 +7,32 @@
 #include <espressif/spi_flash.h>
 #include <espressif/esp_system.h>
 
-#include <lwip/sockets.h>
-
 #include <FreeRTOS.h>
 #include <task.h>
-
-#define SECTOR_SIZE 0x1000
-#define BOOT_CONFIG_SECTOR 1
 
 #include "rboot-ota.h"
 
 #define ROM_MAGIC_OLD 0xe9
 #define ROM_MAGIC_NEW 0xea
+#define CHECKSUM_INIT 0xef
+
+#if 0
+#define RBOOT_DEBUG(f_, ...) printf((f_), __VA_ARGS__)
+#else
+#define RBOOT_DEBUG(f_, ...)
+#endif
+
+typedef struct __attribute__((packed)) {
+    uint8_t magic;
+    uint8_t section_count;
+    uint8_t val[2]; /* flash size & speed when placed @ offset 0, I think ignored otherwise */
+    uint32_t entrypoint;
+} image_header_t;
+
+typedef struct __attribute__((packed)) {
+    uint32_t load_addr;
+    uint32_t length;
+} section_header_t;
 
 
 // get the rboot config
@@ -41,7 +55,7 @@ bool rboot_set_config(rboot_config_t *conf) {
 
 	buffer = (uint8_t*)malloc(SECTOR_SIZE);
 	if (!buffer) {
-		printf("Failed to allocate sector buffer\r\n");
+		printf("rboot_set_config: Failed to allocate sector buffer\r\n");
 		return false;
 	}
 
@@ -82,122 +96,105 @@ bool rboot_set_current_rom(uint8_t rom) {
 	return rboot_set_config(&conf);
 }
 
-int rboot_ota_update(int fd, int slot, bool reboot_now)
+// Check that a valid-looking rboot image is found at this offset on the flash, and
+// takes up 'expected_length' bytes.
+bool rboot_verify_image(uint32_t offset, uint32_t expected_length, const char **error_message)
 {
-    rboot_config_t conf;
-    conf = rboot_get_config();
-
-    if(slot == -1) {
-        slot = (conf.current_rom + 1) % RBOOT_MAX_ROMS;
+    char *error = NULL;
+    if(offset % 4) {
+        error = "Unaligned flash offset";
+        goto fail;
     }
 
-    size_t sector = conf.roms[slot] / SECTOR_SIZE;
-    uint8_t *sector_buf = (uint8_t *)malloc(SECTOR_SIZE);
-    if(!sector_buf) {
-        printf("Failed to malloc sector buffer\r\n");
-        return 0;
+    uint32_t end_offset = offset + expected_length;
+    image_header_t image_header;
+    sdk_spi_flash_read(offset, (uint32_t *)&image_header, sizeof(image_header_t));
+    offset += sizeof(image_header_t);
+
+    if(image_header.magic != ROM_MAGIC_OLD && image_header.magic != ROM_MAGIC_NEW) {
+        error = "Missing initial magic";
+        goto fail;
     }
 
-    printf("New image going into sector %d @ 0x%lx\r\n", slot, conf.roms[slot]);
+    bool is_new_header = (image_header.magic == ROM_MAGIC_NEW); /* a v1.2/rboot header, so expect a v1.1 header after the initial section */
 
-    /* Read bootloader header */
-    int r = read(fd, sector_buf, 8);
-    if(r != 8 || (sector_buf[0] != ROM_MAGIC_OLD && sector_buf[0] != ROM_MAGIC_NEW)) {
-        printf("Failed to read ESP bootloader header r=%d magic=%d.\r\n", r, sector_buf[0]);
-        slot = -1;
-        goto cleanup;
-    }
-    /* if we saw a v1.2 header, we can expect a v1.1 header after the first section */
-    bool in_new_header = (sector_buf[0] == ROM_MAGIC_NEW);
+    int remaining_sections = image_header.section_count;
 
-    int remaining_sections = sector_buf[1];
-    size_t offs = 8;
-    size_t total_read = 8;
-    size_t left_section = 0; /* Number of bytes left in this section */
+    uint8_t checksum = CHECKSUM_INIT;
 
-    while(remaining_sections > 0 || left_section > 0)
+    while(remaining_sections > 0 && offset < end_offset)
     {
-        if(left_section == 0) {
-            /* No more bytes in this section, read the next section header */
+        /* read section header */
+        section_header_t header;
+        sdk_spi_flash_read(offset, (uint32_t *)&header, sizeof(section_header_t));
+        RBOOT_DEBUG("Found section @ 0x%08lx length 0x%08lx load 0x%08lx padded 0x%08lx\r\n", offset, header.length, header.load_addr, header.length);
+        offset += sizeof(section_header_t);
 
-            if(offs + (in_new_header ? 16 : 8) > SECTOR_SIZE) {
-                printf("PANIC: reading section header overflows sector boundary. FIXME.\r\n");
-                slot = -1;
-                goto cleanup;
-            }
 
-            if(in_new_header && total_read > 8)
-            {
-                /* expecting an "old" style 8 byte image header here, following irom0 */
-                int r = read(fd, sector_buf+offs, 8);
-                if(r != 8 || sector_buf[offs] != ROM_MAGIC_OLD) {
-                    printf("Failed to read second flash header r=%d magic=0x%02x.\r\n", r, sector_buf[offs]);
-                    slot = -1;
-                    goto cleanup;
-                }
-                /* treat this number as the reliable number of remaining sections */
-                remaining_sections = sector_buf[offs+1];
-                in_new_header = false;
-            }
-
-            int r = read(fd, sector_buf+offs, 8);
-            if(r != 8) {
-                printf("Failed to read section header.\r\n");
-                slot = -1;
-                goto cleanup;
-            }
-            offs += 8;
-            total_read += 8;
-            left_section = *((uint32_t *)(sector_buf+offs-4));
-
-            /* account for padding from the reported section size out to the alignment barrier */
-            size_t section_align = in_new_header ? 16 : 4;
-            left_section = (left_section+section_align-1) & ~(section_align-1);
-
-            remaining_sections--;
-            printf("New section @ 0x%x length 0x%x align 0x%x remaining 0x%x\r\n", total_read, left_section, section_align, remaining_sections);
+        if(header.length+offset > end_offset) {
+            break; /* sanity check: will reading section take us off end of expected flashregion? */
         }
 
-        size_t bytes_to_read = left_section > (SECTOR_SIZE-offs) ? (SECTOR_SIZE-offs) : left_section;
-        int r = read(fd, sector_buf+offs, bytes_to_read);
-        if(r < 0) {
-            printf("Failed to read from fd\r\n");
-            slot = -1;
-            goto cleanup;
+        if(!is_new_header) {
+            /* Add individual data of the section to the checksum. */
+            char chunk[16];
+            for(int i = 0; i < header.length; i++) {
+                if(i % sizeof(chunk) == 0)
+                    sdk_spi_flash_read(offset+i, (uint32_t *)chunk, sizeof(chunk));
+                checksum ^= chunk[i % sizeof(chunk)];
+            }
         }
-        if(r == 0) {
-            printf("EOF before end of image remaining_sections=%d this_section=%d\r\n",
-                   remaining_sections, left_section);
-            slot = -1;
-            goto cleanup;
-        }
-        offs += r;
-        total_read += r;
-        left_section -= r;
 
-        if(offs == SECTOR_SIZE || (left_section == 0 && remaining_sections == 0)) {
-            /* sector buffer is full, or we're at the very end, so write sector to flash */
-            printf("Sector buffer full. Erasing sector 0x%02x\r\n", sector);
-            sdk_spi_flash_erase_sector(sector);
-            printf("Erase done.\r\n");
-            //sdk_spi_flash_write(sector * SECTOR_SIZE, (uint32_t*)sector_buf, SECTOR_SIZE);
-            printf("Flash done.\r\n");
-            offs = 0;
-            sector++;
+        offset += header.length;
+        /* pad section to 4 byte align */
+        offset = (offset+3) & ~3;
+
+        remaining_sections--;
+
+        if(is_new_header) {
+            /* pad to a 16 byte offset */
+            offset = (offset+15) & ~15;
+
+            /* expect a v1.1 header here at start of "real" sections */
+            sdk_spi_flash_read(offset, (uint32_t *)&image_header, sizeof(image_header_t));
+            offset += sizeof(image_header_t);
+            if(image_header.magic != ROM_MAGIC_OLD) {
+                error = "Bad second magic";
+                goto fail;
+            }
+            remaining_sections = image_header.section_count;
+            is_new_header = false;
         }
     }
 
-    /* Done reading image from fd and writing it out */
-    if(reboot_now)
-    {
-        close(fd);
-        conf.current_rom = slot;
-        rboot_set_config(&conf);
-        sdk_system_restart();
+    if(remaining_sections > 0) {
+        error = "Image truncated";
+        goto fail;
     }
 
- cleanup:
-    free(sector_buf);
-    return slot;
+    /* add a byte for the image checksum (actually comes after the padding) */
+    offset++;
+    /* pad the image length to a 16 byte boundary */
+    offset = (offset+15) & ~15;
+
+    uint8_t read_checksum;
+    sdk_spi_flash_read(offset-1, (uint32_t *)&read_checksum, 1); /* not sure if this will work */
+    if(read_checksum != checksum) {
+        error = "Invalid checksum";
+        goto fail;
+    }
+
+    if(offset != end_offset) {
+        error = "Wrong length";
+        goto fail;
+    }
+
+    RBOOT_DEBUG("rboot_verify_image: verified expected 0x%08lx bytes.\r\n", expected_length);
+    return true;
+
+ fail:
+    if(error_message)
+        *error_message = error;
+    printf("%s: %s\r\n", __func__, error);
+    return false;
 }
-

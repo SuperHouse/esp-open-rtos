@@ -8,8 +8,17 @@ PROVIDE ( Wait_SPI_Idle = 0x4000448c );
 PROVIDE ( Enable_QMode = 0x400044c0 );
 PROVIDE ( Disable_QMode = 0x40004508 );
 
-PROVIDE ( Cache_Read_Enable = 0x40004678 );
+PROVIDE ( rom_Cache_Read_Enable = 0x40004678 );
 PROVIDE ( Cache_Read_Disable = 0x400047f0 );
+
+#ifndef OTA
+/* If not building an OTA image for boot, can use the default (simple)
+   cache enable function from ROM.
+
+   Otherwise, we need an OTA-aware one (see extras/rboot-ota/rboot-cache.S)
+*/
+Cache_Read_Enable = rom_Cache_Read_Enable;
+#endif
 
 PROVIDE ( lldesc_build_chain = 0x40004f40 );
 PROVIDE ( lldesc_num2link = 0x40005050 );

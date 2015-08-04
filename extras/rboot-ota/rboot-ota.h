@@ -1,5 +1,5 @@
 #ifndef __RBOOT_OTA_H__
-#define __RBOOTOTA_H__
+#define __RBOOT_OTA_H__
 /* rboot-ota client API
  *
  * Ported from https://github.com/raburton/esp8266/ to esp-open-rtos
@@ -8,6 +8,7 @@
  * Copyright (c) 2015 Richard A Burton & SuperHouse Pty Ltd
  */
 #include <stdint.h>
+#include <stdbool.h>
 #include <rboot-config.h>
 
 /* rboot config block structure (stored in flash offset 0x1000)
@@ -30,6 +31,9 @@ typedef struct {
 } rboot_config_t;
 
 
+#define SECTOR_SIZE 0x1000
+#define BOOT_CONFIG_SECTOR 1
+
 // timeout for the initial connect (in ms)
 #define OTA_CONNECT_TIMEOUT  10000
 
@@ -42,21 +46,10 @@ typedef struct {
 
 #define FLASH_BY_ADDR 0xff
 
-/* Perform an OTA update.
- *
- * * 'fd' is the file descriptor to read the OTA image from.
- * * 'slot' is the slot to update, or -1 to automatically update next slot.
- * * 'reboot_now' means to reboot to the new slot immediately
- *   (if true, function won't return if successful).
- *
- * Returns '0' if the update fails. Returns the newly loaded slot if
- * reboot_now is false, and the update succeeds so the next restart
- * will hit the new image.
- */
-int rboot_ota_update(int fd, int slot, bool reboot_now);
 rboot_config_t rboot_get_config();
 bool rboot_set_config(rboot_config_t *conf);
 uint8_t rboot_get_current_rom();
 bool rboot_set_current_rom(uint8_t rom);
+bool rboot_verify_image(uint32_t offset, uint32_t expected_length, const char **error_message);
 
 #endif
