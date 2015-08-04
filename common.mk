@@ -28,8 +28,14 @@ ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 -include local.mk
 
 # Flash size in megabits
-# Valid values are same as for esptool.py - 2m,4m,8m,16m,32m
+# Valid values are same as for esptool.py - 2,4,8,16,32
 FLASH_SIZE ?= 16
+
+# Flash mode, valid values are same as for esptool.py - qio,qout,dio.dout
+FLASH_MODE ?= qio
+
+# Flash speed in MHz, valid values are same as for esptool.py - 80, 40, 26, 20
+FLASH_SPEED ?= 40
 
 # Output directories to store intermediate compiled files
 # relative to the program directory
@@ -314,10 +320,18 @@ $(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib $(LD_DIR):
 
 $(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FW_BASE)
 	$(vecho) "FW $@"
-	$(ESPTOOL) elf2image $< -o $(FW_BASE)
+	$(ESPTOOL) elf2image -fs $(FLASH_SIZE)m -fm $(FLASH_MODE) -ff $(FLASH_SPEED)m $< -o $(FW_BASE)
+
+IMGTOOL_FLASH_SIZE_2=256
+IMGTOOL_FLASH_SIZE_4=512
+IMGTOOL_FLASH_SIZE_8=1024
+IMGTOOL_FLASH_SIZE_16=2048
+IMGTOOL_FLASH_SIZE_32=4096
+IMGTOOL_FLASH_SIZE=$(value IMGTOOL_FLASH_SIZE_$(FLASH_SIZE))
 
 $(FW_FILE): $(PROGRAM_OUT) $(FW_BASE)
-	$(IMGTOOL) -bin -boot2 $(PROGRAM_OUT) $(FW_FILE) .text .data .rodata
+	echo $(FLASH_SIZE) $(IMGTOOL_FLASH_SIZE)
+	$(IMGTOOL) -$(IMGTOOL_FLASH_SIZE) -$(FLASH_MODE) -$(FLASH_SPEED) -bin -boot2 $(PROGRAM_OUT) $(FW_FILE) .text .data .rodata
 
 ifeq ($(OTA),0)
 flash: $(FW_FILE_1) $(FW_FILE_2)
