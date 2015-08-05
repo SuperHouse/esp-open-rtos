@@ -17,7 +17,7 @@
 */
 	.text
 	.section .vecbase.text, "x"
-        .align  128
+        .align  256
         .global VecBase
         .type   VecBase, @function /* it's not really a function, but treat it like one */
 VecBase:
