@@ -335,7 +335,7 @@ $(FW_FILE): $(PROGRAM_OUT) $(FW_BASE)
 
 ifeq ($(OTA),0)
 flash: $(FW_FILE_1) $(FW_FILE_2)
-	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_ADDR_1) $(FW_FILE_1) $(FW_ADDR_2) $(FW_FILE_2)
+	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_ADDR_2) $(FW_FILE_2) $(FW_ADDR_1) $(FW_FILE_1)
 else
 flash: $(FW_FILE)
 	$(vecho) "Flashing OTA image slot 0 (bootloader not updated)"
