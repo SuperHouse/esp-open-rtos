@@ -48,9 +48,13 @@ long _write_r(struct _reent *r, int fd, const char *ptr, int len )
  */
 long _read_r( struct _reent *r, int fd, char *ptr, int len )
 {
-    for(int i = 0; i < len; i++)
-	ptr[i] = sdk_uart_rx_one_char();
-    return len;
+  for(int i = 0; i < len; i++) {
+    char ch;
+    while (sdk_uart_rx_one_char(&ch)) ;
+    ptr[i] = ch;
+
+  }
+  return len;
 }
 
 /* These are stub implementations for the reentrant syscalls that
