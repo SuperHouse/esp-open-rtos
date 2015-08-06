@@ -155,6 +155,17 @@ else
 FW_FILE = $(addprefix $(FW_BASE),$(PROGRAM).bin)
 endif
 
+# firmware tool arguments
+ESPTOOL_ARGS=-fs $(FLASH_SIZE)m -fm $(FLASH_MODE) -ff $(FLASH_SPEED)m
+
+IMGTOOL_FLASH_SIZE_2=256
+IMGTOOL_FLASH_SIZE_4=512
+IMGTOOL_FLASH_SIZE_8=1024
+IMGTOOL_FLASH_SIZE_16=2048
+IMGTOOL_FLASH_SIZE_32=4096
+IMGTOOL_FLASH_SIZE=$(value IMGTOOL_FLASH_SIZE_$(FLASH_SIZE))
+IMGTOOL_ARGS=-$(IMGTOOL_FLASH_SIZE) -$(FLASH_MODE) -$(FLASH_SPEED)
+
 # Common include directories, shared across all "components"
 # components will add their include directories to this argument
 #
@@ -320,26 +331,18 @@ $(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib $(LD_DIR):
 
 $(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FW_BASE)
 	$(vecho) "FW $@"
-	$(ESPTOOL) elf2image -fs $(FLASH_SIZE)m -fm $(FLASH_MODE) -ff $(FLASH_SPEED)m $< -o $(FW_BASE)
-
-IMGTOOL_FLASH_SIZE_2=256
-IMGTOOL_FLASH_SIZE_4=512
-IMGTOOL_FLASH_SIZE_8=1024
-IMGTOOL_FLASH_SIZE_16=2048
-IMGTOOL_FLASH_SIZE_32=4096
-IMGTOOL_FLASH_SIZE=$(value IMGTOOL_FLASH_SIZE_$(FLASH_SIZE))
+	$(Q) $(ESPTOOL) elf2image $(ESPTOOL_ARGS) $< -o $(FW_BASE)
 
 $(FW_FILE): $(PROGRAM_OUT) $(FW_BASE)
-	echo $(FLASH_SIZE) $(IMGTOOL_FLASH_SIZE)
-	$(IMGTOOL) -$(IMGTOOL_FLASH_SIZE) -$(FLASH_MODE) -$(FLASH_SPEED) -bin -boot2 $(PROGRAM_OUT) $(FW_FILE) .text .data .rodata
+	$(Q) $(IMGTOOL) $(IMGTOOL_ARGS) -bin -boot2 $(PROGRAM_OUT) $(FW_FILE) .text .data .rodata
 
 ifeq ($(OTA),0)
 flash: $(FW_FILE_1) $(FW_FILE_2)
-	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(FW_ADDR_2) $(FW_FILE_2) $(FW_ADDR_1) $(FW_FILE_1)
+	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) $(FW_ADDR_2) $(FW_FILE_2) $(FW_ADDR_1) $(FW_FILE_1)
 else
 flash: $(FW_FILE)
 	$(vecho) "Flashing OTA image slot 0 (bootloader not updated)"
-	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash 0x2000 $(FW_FILE)
+	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) 0x2000 $(FW_FILE)
 endif
 
 size: $(PROGRAM_OUT)
