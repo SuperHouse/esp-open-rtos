@@ -30,8 +30,9 @@ struct ip_addr;
 void sdk_uart_div_modify(uint32_t uart_no, uint32_t new_divisor);
 
 /* Read a single character from the UART.
+   Returns 0 on success, 1 if no character in fifo
  */
-char sdk_uart_rx_one_char(void);
+int sdk_uart_rx_one_char(char *buf);
 
 /* Write a single character to the UART.
  */
