@@ -52,7 +52,7 @@ long _write_r(struct _reent *r, int fd, const char *ptr, int len )
 }
 
 /* syscall implementation for stdio read from UART */
-long _read_r( struct _reent *r, int fd, char *ptr, int len )
+__attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len )
 {
     int ch, i;
 
