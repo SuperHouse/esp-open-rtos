@@ -23,10 +23,13 @@ sdk_SpiFlashOpResult sdk_spi_flash_read(uint32_t src_addr, uint32_t *des_addr, u
 
 /* SDK uses this structure internally to account for flash size.
 
+   chip_size field is initialised during startup from the flash size
+   saved in the image header (on the first 8 bytes of SPI flash).
+
+   Other field are initialised to hardcoded values by the SDK.
+
    Based on RE work by @foogod at
    http://esp8266-re.foogod.com/wiki/Flashchip_%28IoT_RTOS_SDK_0.9.9%29
-
-   Note that the only field the SDK actually uses appears to be chip_size
 */
 typedef struct {
     uint32_t device_id;
