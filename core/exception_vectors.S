@@ -230,7 +230,7 @@ UserIntExit:
 UserSyscallHandler:
 	addi sp, sp, -0x10
 	s32i a2, sp, 0x08
-	s32i a2, sp, 0x0c
+	s32i a3, sp, 0x0c
 	rsr.epc1 a2
 	addi a3, a2, 0x3
 	wsr.epc1 a3
