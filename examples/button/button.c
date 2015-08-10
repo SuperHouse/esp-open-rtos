@@ -34,7 +34,7 @@ void buttonPollTask(void *pvParameters)
         {
             taskYIELD();
         }
-        printf("Polled for button press at %dms\r\n", xTaskGetTickCount()*portTICK_RATE_MS);
+        printf("Polled for button press at %ldms\r\n", xTaskGetTickCount()*portTICK_RATE_MS);
         vTaskDelay(200 / portTICK_RATE_MS);
     }
 }
@@ -59,7 +59,7 @@ void buttonIntTask(void *pvParameters)
         xQueueReceive(*tsqueue, &button_ts, portMAX_DELAY);
         button_ts *= portTICK_RATE_MS;
         if(last < button_ts-200) {
-            printf("Button interrupt fired at %dms\r\n", button_ts);
+            printf("Button interrupt fired at %ldms\r\n", button_ts);
             last = button_ts;
         }
     }
