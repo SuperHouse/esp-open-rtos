@@ -45,8 +45,9 @@ long _write_r(struct _reent *r, int fd, const char *ptr, int len )
 /* syscall implementation for stdio read from UART
 
    at the moment UART functionality is all still in the binary SDK
+   but there is support for IRQ driven UART0 RX in extras/serial-driver
  */
-long _read_r( struct _reent *r, int fd, char *ptr, int len )
+long __attribute__((weak)) _read_r( struct _reent *r, int fd, char *ptr, int len )
 {
   for(int i = 0; i < len; i++) {
     char ch;
