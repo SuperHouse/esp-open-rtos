@@ -11,13 +11,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "esp8266.h"
+#include "ssid_config.h"
 
 #include "ota-tftp.h"
 #include "rboot-ota.h"
-
-#if !defined(WIFI_SSID) || !defined(WIFI_PASS)
-#error "Please define macros WIFI_SSID & WIFI_PASS (here, or better in a local.h file at root level or in program dir."
-#endif
 
 void user_init(void)
 {
