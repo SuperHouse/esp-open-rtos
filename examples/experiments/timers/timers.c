@@ -19,8 +19,8 @@ IRAM void dump_frc1_seq(void)
     uint32_t f1_a = TIMER_FRC1_COUNT_REG;
     uint32_t f1_b = TIMER_FRC1_COUNT_REG;
     uint32_t f1_c = TIMER_FRC1_COUNT_REG;
-    printf("FRC1 sequence 0x%08x 0x%08x 0x%08x\r\n", f1_a, f1_b, f1_c);
-    printf("FRC1 deltas %d %d \r\n", f1_b-f1_a, f1_c-f1_b);
+    printf("FRC1 sequence 0x%08lx 0x%08lx 0x%08lx\r\n", f1_a, f1_b, f1_c);
+    printf("FRC1 deltas %ld %ld \r\n", f1_b-f1_a, f1_c-f1_b);
 }
 
 IRAM void dump_frc2_seq(void)
@@ -36,8 +36,8 @@ IRAM void dump_frc2_seq(void)
     uint32_t f2_a = TIMER_FRC2_COUNT_REG;
     uint32_t f2_b = TIMER_FRC2_COUNT_REG;
     uint32_t f2_c = TIMER_FRC2_COUNT_REG;
-    printf("FRC2 sequence 0x%08x 0x%08x 0x%08x\r\n", f2_a, f2_b, f2_c);
-    printf("FRC2 deltas %d %d \r\n", f2_b-f2_a, f2_c-f2_b);
+    printf("FRC2 sequence 0x%08lx 0x%08lx 0x%08lx\r\n", f2_a, f2_b, f2_c);
+    printf("FRC2 deltas %ld %ld \r\n", f2_b-f2_a, f2_c-f2_b);
 }
 
 IRAM void dump_timer_regs(const char *msg)
@@ -55,7 +55,7 @@ IRAM void dump_timer_regs(const char *msg)
     for(int i = 0; i < DUMP_SZ; i++) {
         if(i % 4 == 0)
             printf("%s0x%02x: ", i ? "\r\n" : "", i*4);
-        printf("%08x ", chunk[i]);
+        printf("%08lx ", chunk[i]);
     }
     printf("\r\n");
 
@@ -76,7 +76,7 @@ static volatile uint32_t frc1_last_count_val;
 void timerRegTask(void *pvParameters)
 {
     while(1) {
-        printf("state at task tick count %d:\r\n", xTaskGetTickCount());
+        printf("state at task tick count %ld:\r\n", xTaskGetTickCount());
         dump_timer_regs("");
 
         /*
@@ -86,10 +86,10 @@ void timerRegTask(void *pvParameters)
         printf("INUM_MAX count %d\r\n", max_count);
         */
 
-        printf("frc1 handler called %d times, last value 0x%08x\r\n", frc1_handler_call_count,
+        printf("frc1 handler called %ld times, last value 0x%08lx\r\n", frc1_handler_call_count,
                frc1_last_count_val);
 
-        printf("frc2 handler called %d times, last value 0x%08x\r\n", frc2_handler_call_count,
+        printf("frc2 handler called %ld times, last value 0x%08lx\r\n", frc2_handler_call_count,
                frc2_last_count_val);
 
         vTaskDelay(500 / portTICK_RATE_MS);
