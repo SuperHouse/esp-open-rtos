@@ -241,6 +241,7 @@ SECTIONS
     *libc.a:*memcpy.o(.literal .text .literal.* .text.*)
     *libc.a:*memset.o(.literal .text .literal.* .text.*)
     *libc.a:*memcmp.o(.literal .text .literal.* .text.*)
+    *libc.a:*memmove.o(.literal .text .literal.* .text.*)
     *libc.a:*rand.o(.literal .text .literal.* .text.*)
     *libc.a:*bzero.o(.literal .text .literal.* .text.*)
     *libc.a:*lock.o(.literal .text .literal.* .text.*)
