@@ -302,6 +302,8 @@ UserLoadStoreExceptionHandler:
 	movi a4, 0x001002 /* l16ui opcode after masking */
 	beq a3, a4, .Lcan_fix_16bit
 
+	movi a4, 0x009002 /* l16si opcode after masking */
+	beq a3, a4, .Lcan_fix_16bit_signed
 .Lcant_fix:
 	/* not an l8ui or an l16ui, or not in the instruction space, so bomb out
 TODO: the exception dump will have some wrong values in it */
@@ -310,6 +312,9 @@ TODO: the exception dump will have some wrong values in it */
 	call0 printf
 	call0 sdk_user_fatal_exception_handler
 
+.Lcan_fix_16bit_signed:
+	movi a5, 0x7FFF
+	j .Lcan_fix
 .Lcan_fix_16bit:
 	movi a5, 0xFFFF
 	j .Lcan_fix
@@ -334,11 +339,15 @@ TODO: the exception dump will have some wrong values in it */
 
 	l32i a3, a3, 0  /* perform the actual read */
 	srl a3, a3	/* shift right correct distance */
-	and a3, a3, a5  /* mask off bits we need for an l8/l16 */
+	and a4, a3, a5  /* mask off bits we need for an l8/l16 */
+
+	bbci a5, 15, .Lextend_sign
+.Lafter_extend_sign:
+	/* a4 holds the correctly read value */
 
 	/* write read value to register slot */
 	add a5, sp, a2
-	s32i a3, a5, 0
+	s32i a4, a5, 0
 
 	/* Footer*/
 	//Increment PC
@@ -366,6 +375,13 @@ TODO: the exception dump will have some wrong values in it */
 	l32i a15, sp, 0x3c
 	addi sp, sp, 0x40
 	rfe
+
+.Lextend_sign: /* apply 16-bit sign extension if necessary
+	          a3 holds raw value, a4 holds masked */
+	bbci a3, 15, .Lafter_extend_sign /* sign bit not set, do nothing */
+	movi a3, (1<<31)
+	or a4, a3, a4 /* set sign bit */
+	j .Lafter_extend_sign
 
 	.global _xt_user_exit
 	.type _xt_user_exit, @function

@@ -64,6 +64,17 @@ void test_naive_strcpy(const char *string)
         ;
 }
 
+void test_l16si(const char *string)
+{
+    /* This follows most of the l16si path, but as the
+     values in the string are all 7 bit none of them get sign extended */
+    int16_t *src_int16 = (int16_t *)string;
+    int32_t *dst_int32 = (int32_t *)buf;
+    dst_int32[0] = src_int16[0];
+    dst_int32[1] = src_int16[1];
+    dst_int32[2] = src_int16[2];
+}
+
 #define TEST_REPEATS 1000
 
 void test_noop(const char *string)
@@ -104,6 +115,7 @@ void test_string(const char *string, char *label, bool evict_cache)
     run_test(string, test_naive_strcpy, "naive strcpy", nullvalue, evict_cache);
     run_test(string, test_sprintf, "sprintf", nullvalue, evict_cache);
     run_test(string, test_sprintf_arg, "sprintf format arg", nullvalue, evict_cache);
+    run_test(string, test_l16si, "load as l16si", nullvalue, evict_cache);
 }
 
 void user_init(void)
