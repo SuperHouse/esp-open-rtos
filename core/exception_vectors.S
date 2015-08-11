@@ -268,7 +268,7 @@ PRINT_MULTI:
 	.global UserLoadStoreExceptionHandler
 /* "Fix" LoadStoreException exceptions thatare l8/l16 from an Instruction region */
 UserLoadStoreExceptionHandler:
-	addi sp, sp, -0x40
+	addi sp, sp, -0x18
 	s32i a2, sp, 0x08
 	s32i a3, sp, 0x0c
 	s32i a4, sp, 0x10
@@ -284,7 +284,7 @@ UserLoadStoreExceptionHandler:
 	l32i a4, a2, 4
 	src a2, a4, a3 // a2 now instruction that failed
 
-	/* Check if a2 matches l8ui or l16ui */
+	/* Check if a2 matches l8ui, l16ui or l16si opcodes */
 	movi a3, 0x00F00F /* opcode mask */
 	and a3, a2, a3
 	beqi a3, 0x000002, .Lcan_fix_8bit  /* l8ui opcode after masking */
@@ -320,18 +320,17 @@ TODO: the exception dump will have some wrong values in it */
 	movi	a4, ~3
 	and	a3, a3, a4 /* a3 now word aligned read address */
 
-	/* Sanity check the top nibble of the faulting address is 4, otherwise
-	   we can't help out here */
-	extui a4, a3, 28, 4
-	bnei a4, 0x4, .Lcant_fix
-
 	l32i a3, a3, 0  /* perform the actual read */
 	srl a3, a3	/* shift right correct distance */
 	and a4, a3, a5  /* mask off bits we need for an l8/l16 */
 
-	bbci a5, 15, .Lextend_sign
+	bbci a5, 14, .Lafter_extend_sign /* 8-bit, no sign extension */
+	bbsi a5, 15, .Lafter_extend_sign /* 16-bit unsigned, no sign extension */
+	bbci a3, 15, .Lafter_extend_sign /* sign bit not set, no sign extension */
+	movi a3, (1<<31)
+	or a4, a3, a4 /* set 32-bit sign bit */
 .Lafter_extend_sign:
-	/* a4 holds the correctly read value */
+	/* a2 holds instruction, a4 holds the correctly read value */
 	extui a2, a2, 4, 4 /* a2 now destination register 0-15 */
 
 	/* test if a4 needs to be written directly to a register (ie not a working register) */
@@ -339,9 +338,8 @@ TODO: the exception dump will have some wrong values in it */
 	/* test if a4 needs to be written to a0 */
 	beqz a2, .Lwrite_value_a0_reg
 
-	/* otherwise, a4 needs to be written to a saved working register 'slot' on the stack */
-	slli a2, a2, 2
-	add a5, sp, a2
+	/* otherwise, a4 can be written to a saved working register 'slot' on the stack */
+	addx4 a5, a2, sp
 	s32i a4, a5, 0
 
 .Lafter_write_value:
@@ -359,7 +357,7 @@ TODO: the exception dump will have some wrong values in it */
 	l32i a3, sp, 0x0c
 	l32i a4, sp, 0x10
 	l32i a5, sp, 0x14
-	addi sp, sp, 0x40
+	addi sp, sp, 0x18
 	rfe
 
 .Lextend_sign: /* apply 16-bit sign extension if necessary
