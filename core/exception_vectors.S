@@ -245,22 +245,6 @@ UserSyscallHandler:
 	rfe
 
 
-	.section .bss
-	.global LoadStoreErrorFlag
-	.align 4
-LoadStoreErrorFlag:
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-
-	.section .data
-	.align 4
-PRINT_ADDR:
-	.string "0x%08lx '%c'\r\n"
-PRINT_MULTI:
-	.string "a3=0x%08lx a4=0x%08lx a5=0x%08lx a6=0x%08lx a7=0x%08lx\r\n"
-
 	.text
 	.section .vecbase.text
 	.literal_position
@@ -295,11 +279,8 @@ UserLoadStoreExceptionHandler:
 	movi a4, 0x009002 /* l16si opcode after masking */
 	beq a3, a4, .Lcan_fix_16bit_signed
 .Lcant_fix:
-	/* not an l8ui or an l16ui, or not in the instruction space, so bomb out
-TODO: the exception dump will have some wrong values in it */
-	movi a2, PRINT_ADDR
-	movi a3, 0xafafafaf
-	call0 printf
+	/* not an opcode we can try to fix, so bomb out
+           TODO: the exception dump will have some wrong values in it */
 	call0 sdk_user_fatal_exception_handler
 
 .Lcan_fix_16bit_signed:
