@@ -270,10 +270,6 @@ PRINT_MULTI:
 UserLoadStoreExceptionHandler:
 	addi sp, sp, -0x40
 	s32i a2, sp, 0x08
-	rsr.excsave1 a2 /* a0 value */
-	s32i a2, sp, 0x00
-	addi a2, sp, 0x40
-	s32i a2, sp, 0x04 /* original sp value */
 	s32i a3, sp, 0x0c
 	s32i a4, sp, 0x10
 	s32i a5, sp, 0x14
@@ -287,33 +283,24 @@ UserLoadStoreExceptionHandler:
 	s32i a13, sp, 0x34
 	s32i a14, sp, 0x38
 	s32i a15, sp, 0x3c
-
-	/* Check the top nibble of the faulting address is 4, otherwise
-	we can't help out here */
-	rsr.excvaddr a2
-	extui a2, a2, 28, 4
-	bnei a2, 0x4, .Lcant_fix
+	rsr.sar a0 // save sar in a0
 
 	/* Load the instruction we failed to execute */
-	rsr.epc1 a3
-	movi	a4, ~3
-	and	a2, a3, a4
-	l32i a4, a2, 0
-	l32i a5, a2, 4
-	ssa8l a3
-	src a4, a5, a4
-	/* a4 is now the instruction that failed */
+	rsr.epc1 a2
+	ssa8l a2 // sar is now correct shift to read a3
+	movi	a3, ~3
+	and a2, a2, a3 // a2 now 4-byte aligned address of instruction
+	l32i a3, a2, 0
+	l32i a4, a2, 4
+	src a2, a4, a3 // a2 now instruction that failed
 
-	/* example l8ui instr 040c72 */
-	movi a2, 0x00F00F /* l8ui/l16ui opcode mask */
-	and a3, a4, a2
-	movi a8, 0xFF
-	movi a5, 0x000002 /* l8ui opcode after masking */
-	beq a3, a5, .Lcan_fix
+	/* Check if a2 matches l8ui or l16ui */
+	movi a3, 0x00F00F /* opcode mask */
+	and a3, a2, a3
+	beqi a3, 0x000002, .Lcan_fix_8bit  /* l8ui opcode after masking */
 
-	movi a8, 0xFFFF
-	movi a5, 0x001002 /* l16ui opcode after masking */
-	beq a3, a5, .Lcan_fix
+	movi a4, 0x001002 /* l16ui opcode after masking */
+	beq a3, a4, .Lcan_fix_16bit
 
 .Lcant_fix:
 	/* not an l8ui or an l16ui, or not in the instruction space, so bomb out
@@ -322,28 +309,36 @@ TODO: the exception dump will have some wrong values in it */
 	movi a3, 0xafafafaf
 	call0 printf
 	call0 sdk_user_fatal_exception_handler
+
+.Lcan_fix_16bit:
+	movi a5, 0xFFFF
+	j .Lcan_fix
+.Lcan_fix_8bit:
+	movi a5, 0xFF
 .Lcan_fix:
-	/* verified an 8- or 16-bit read in an instruction address space.
-
-	a4 holds instruction, a8 holds mask
+	/* verified an 8- or 16-bit read
+	a2 holds instruction, a5 holds mask to apply to read value
 	*/
-	extui a2, a4, 4, 4 /* a2 is destination register 0-15 */
-	slli a2, a2, 2 /* a2 is now offset of destination register, relative to stack pointer */
+	extui a2, a2, 4, 4 /* a2 now destination register 0-15 */
+	slli a2, a2, 2 /* a2 now offset of destination register, relative to stack pointer */
 
-	rsr.sar a6
-	rsr.excvaddr a3
-	ssa8l a3 /* sar is the shift to extract a3's byte */
+	rsr.excvaddr a3 // read faulting address
+	ssa8l a3 /* sar is now shift to extract a3's byte */
 	movi	a4, ~3
-	and	a4, a3, a4 /* a4 is word aligned read address */
+	and	a3, a3, a4 /* a3 now word aligned read address */
 
-	l32i a5, a4, 0 /* perform the actual read */
-	srl a5, a5
-	and a5, a5, a8 /* mask off bits we need for an l8/l16 */
+	/* Sanity check the top nibble of the faulting address is 4, otherwise
+	   we can't help out here */
+	extui a4, a3, 28, 4
+	bnei a4, 0x4, .Lcant_fix
 
-	wsr.sar a6
+	l32i a3, a3, 0  /* perform the actual read */
+	srl a3, a3	/* shift right correct distance */
+	and a3, a3, a5  /* mask off bits we need for an l8/l16 */
 
-	add a6, sp, a2
-	s32i a5, a6, 0  /* overwrite correct value on register slot @ stack+a2 */
+	/* write read value to register slot */
+	add a5, sp, a2
+	s32i a3, a5, 0
 
 	/* Footer*/
 	//Increment PC
@@ -351,8 +346,10 @@ TODO: the exception dump will have some wrong values in it */
 	addi a3, a2, 0x3
 	wsr.epc1 a3
 
+.Lexit:
+	wsr.sar a0 // restore saved sar
 	// Restore registers
-	l32i a0, sp, 0x00
+	rsr.excsave1 a0 // restore a0 saved in exception vector
 	l32i a2, sp, 0x08
 	l32i a3, sp, 0x0c
 	l32i a4, sp, 0x10
@@ -367,7 +364,7 @@ TODO: the exception dump will have some wrong values in it */
 	l32i a13, sp, 0x34
 	l32i a14, sp, 0x38
 	l32i a15, sp, 0x3c
-	l32i sp, sp, 0x04
+	addi sp, sp, 0x40
 	rfe
 
 	.global _xt_user_exit
