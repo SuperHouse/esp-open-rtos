@@ -273,16 +273,6 @@ UserLoadStoreExceptionHandler:
 	s32i a3, sp, 0x0c
 	s32i a4, sp, 0x10
 	s32i a5, sp, 0x14
-	s32i a6, sp, 0x18
-	s32i a7, sp, 0x1c
-	s32i a8, sp, 0x20
-	s32i a9, sp, 0x24
-	s32i a10, sp, 0x28
-	s32i a11, sp, 0x2c
-	s32i a12, sp, 0x30
-	s32i a13, sp, 0x34
-	s32i a14, sp, 0x38
-	s32i a15, sp, 0x3c
 	rsr.sar a0 // save sar in a0
 
 	/* Load the instruction we failed to execute */
@@ -324,8 +314,6 @@ TODO: the exception dump will have some wrong values in it */
 	/* verified an 8- or 16-bit read
 	a2 holds instruction, a5 holds mask to apply to read value
 	*/
-	extui a2, a2, 4, 4 /* a2 now destination register 0-15 */
-	slli a2, a2, 2 /* a2 now offset of destination register, relative to stack pointer */
 
 	rsr.excvaddr a3 // read faulting address
 	ssa8l a3 /* sar is now shift to extract a3's byte */
@@ -344,11 +332,19 @@ TODO: the exception dump will have some wrong values in it */
 	bbci a5, 15, .Lextend_sign
 .Lafter_extend_sign:
 	/* a4 holds the correctly read value */
+	extui a2, a2, 4, 4 /* a2 now destination register 0-15 */
 
-	/* write read value to register slot */
+	/* test if a4 needs to be written directly to a register (ie not a working register) */
+	bgei a2, 6, .Lwrite_value_direct_reg
+	/* test if a4 needs to be written to a0 */
+	beqz a2, .Lwrite_value_a0_reg
+
+	/* otherwise, a4 needs to be written to a saved working register 'slot' on the stack */
+	slli a2, a2, 2
 	add a5, sp, a2
 	s32i a4, a5, 0
 
+.Lafter_write_value:
 	/* Footer*/
 	//Increment PC
 	rsr.epc1 a2
@@ -363,16 +359,6 @@ TODO: the exception dump will have some wrong values in it */
 	l32i a3, sp, 0x0c
 	l32i a4, sp, 0x10
 	l32i a5, sp, 0x14
-	l32i a6, sp, 0x18
-	l32i a7, sp, 0x1c
-	l32i a8, sp, 0x20
-	l32i a9, sp, 0x24
-	l32i a10, sp, 0x28
-	l32i a11, sp, 0x2c
-	l32i a12, sp, 0x30
-	l32i a13, sp, 0x34
-	l32i a14, sp, 0x38
-	l32i a15, sp, 0x3c
 	addi sp, sp, 0x40
 	rfe
 
@@ -382,6 +368,50 @@ TODO: the exception dump will have some wrong values in it */
 	movi a3, (1<<31)
 	or a4, a3, a4 /* set sign bit */
 	j .Lafter_extend_sign
+
+.Lwrite_value_direct_reg:
+	/* Directly update register index a2, in range 6-15, using value in a4 */
+	addi a2, a2, -6
+	slli a2, a2, 3 /* offset from a6, x8 */
+	movi a3, .Ldirect_reg_jumptable
+	add a2, a2, a3
+	jx a2
+	.align 8
+.Ldirect_reg_jumptable:
+	mov a6, a4
+	j .Lafter_write_value
+	.align 8
+	mov a7, a4
+	j .Lafter_write_value
+	.align 8
+	mov a8, a4
+	j .Lafter_write_value
+	.align 8
+	mov a9, a4
+	j .Lafter_write_value
+	.align 8
+	mov a10, a4
+	j .Lafter_write_value
+	.align 8
+	mov a11, a4
+	j .Lafter_write_value
+	.align 8
+	mov a12, a4
+	j .Lafter_write_value
+	.align 8
+	mov a13, a4
+	j .Lafter_write_value
+	.align 8
+	mov a14, a4
+	j .Lafter_write_value
+	.align 8
+	mov a15, a4
+	j .Lafter_write_value
+
+.Lwrite_value_a0_reg:
+	/* a0 is saved in excsave1,so just update this with value */
+	wsr.excsave1 a4
+	j .Lafter_write_value
 
 	.global _xt_user_exit
 	.type _xt_user_exit, @function
