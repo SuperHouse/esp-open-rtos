@@ -35,11 +35,23 @@ static Counter static_counter(99);
 void task1(void *pvParameters)
 {
   Counter local_counter = Counter(12);
+  Counter *new_counter = new Counter(24);
   while(1) {
-    Counter &counter = rand() % 2 ? static_counter : local_counter;
-    counter.Increment();
-    printf("local counter %ld static counter %ld\r\n", local_counter.getCount(),
-	   static_counter.getCount());
+    Counter *counter = NULL;
+    switch(rand() % 3) {
+    case 0:
+      counter = &local_counter;
+      break;
+    case 1:
+      counter = &static_counter;
+      break;
+    default:
+      counter = new_counter;
+      break;
+    }
+    counter->Increment();
+    printf("local counter %ld static counter %ld newly allocated counter %ld\r\n", local_counter.getCount(),
+	   static_counter.getCount(), new_counter->getCount());
     vTaskDelay(100);
   }
 }
