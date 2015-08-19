@@ -8,7 +8,7 @@
 #ifndef _ESP_GPIO_REGS_H
 #define _ESP_GPIO_REGS_H
 
-#include <stdint.h>
+#include "esp/types.h"
 #include "common_macros.h"
 
 #define GPIO_BASE 0x60000300
