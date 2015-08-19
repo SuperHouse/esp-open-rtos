@@ -56,7 +56,7 @@ inline static esp_reg_t gpio_iomux_reg(const uint8_t gpio_number)
 inline static void iomux_set_gpio_function(const uint8_t gpio_number, const uint32_t flags)
 {
     const uint8_t reg_idx = gpio_to_iomux(gpio_number);
-    const uint32_t func = (reg_idx > 11 ? IOMUX_FUNC_A : IOMUX_FUNC_D) | flags;
+    const uint32_t func = (reg_idx > 11 ? IOMUX_FUNC(0) : IOMUX_FUNC(3)) | flags;
     IOMUX.PIN[reg_idx] = func | flags;
 }
 
