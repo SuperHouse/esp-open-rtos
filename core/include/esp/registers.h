@@ -17,6 +17,7 @@
 #include "esp/types.h"
 
 #include "esp/iomux_regs.h"
+#include "esp/gpio_regs.h"
 
 /* Internal macro, only defined in header body */
 #define _REG(BASE, OFFSET) (*(esp_reg_t)((BASE)+(OFFSET)))
@@ -31,7 +32,7 @@
 #define UART0_BASE (MMIO_BASE + 0)
 #define SPI1_BASE  (MMIO_BASE + 0x0100)
 #define SPI_BASE   (MMIO_BASE + 0x0200)
-#define GPIO0_BASE (MMIO_BASE + 0x0300)
+//#define GPIO0_BASE (MMIO_BASE + 0x0300)
 #define TIMER_BASE (MMIO_BASE + 0x0600)
 #define RTC_BASE   (MMIO_BASE + 0x0700)
 //#define IOMUX_BASE (MMIO_BASE + 0x0800)
@@ -41,79 +42,6 @@
 #define RTCB_BASE  (MMIO_BASE + 0x1000)
 #define RTCS_BASE  (MMIO_BASE + 0x1100)
 #define RTCU_BASE  (MMIO_BASE + 0x1200)
-
-
-/*
- * Based on descriptions by mamalala at https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
- */
-
-/** GPIO OUTPUT registers GPIO_OUT_REG, GPIO_OUT_SET, GPIO_OUT_CLEAR
- *
- * Registers for pin outputs.
- *
- * _SET and _CLEAR write-only registers set and clear bits in _REG,
- * respectively.
- *
- * ie
- * GPIO_OUT_REG |= BIT(3);
- * and
- * GPIO_OUT_SET = BIT(3);
- *
- * ... are equivalent, but latter uses less CPU cycles.
- */
-#define GPIO_OUT_REG   _REG(GPIO0_BASE, 0x00)
-#define GPIO_OUT_SET   _REG(GPIO0_BASE, 0x04)
-#define GPIO_OUT_CLEAR _REG(GPIO0_BASE, 0x08)
-
-/* GPIO DIR registers GPIO_DIR_REG, GPIO_DIR_SET, GPIO_DIR_CLEAR
- *
- * Set bit in DIR register for output pins. Writing to _SET and _CLEAR
- * registers set and clear bits in _REG, respectively.
-*/
-#define GPIO_DIR_REG   _REG(GPIO0_BASE, 0x0C)
-#define GPIO_DIR_SET   _REG(GPIO0_BASE, 0x10)
-#define GPIO_DIR_CLEAR _REG(GPIO0_BASE, 0x14)
-
-
-/* GPIO IN register GPIO_IN_REG
- *
- * Reads current input values.
- */
-#define GPIO_IN_REG    _REG(GPIO0_BASE, 0x18)
-
-/* GPIO interrupt 'status' flag
-
-   Bit set if interrupt has fired (see below for interrupt config
-   registers.
-
-   Lower 16 bits only are used.
-*/
-#define GPIO_STATUS_REG   _REG(GPIO0_BASE,0x1c)
-#define GPIO_STATUS_SET   _REG(GPIO0_BASE,0x20)
-#define GPIO_STATUS_CLEAR _REG(GPIO0_BASE,0x24)
-
-#define GPIO_STATUS_MASK  0x0000FFFFL
-
-/* GPIO pin control registers for GPIOs 0-15
- *
- */
-#define GPIO_CTRL_REG(GPNUM) _REG(GPIO0_BASE, 0x28+(GPNUM*4))
-
-#define GPIO_SOURCE_GPIO 0
-#define GPIO_SOURCE_DAC BIT(0) /* "Sigma-Delta" */
-#define GPIO_SOURCE_MASK BIT(0
-
-#define GPIO_DRIVE_PUSH_PULL 0
-#define GPIO_DRIVE_OPEN_DRAIN BIT(2)
-#define GPIO_DRIVE_MASK BIT(2)
-
-#define GPIO_INT_NONE 0
-#define GPIO_INT_RISING BIT(7)
-#define GPIO_INT_FALLING BIT(8)
-#define GPIO_INT_CHANGE (BIT(7)|BIT(8))
-#define GPIO_INT_LOW BIT(9)
-#define GPIO_INT_HIGH (BIT(7)|BIT(9))
-#define GPIO_INT_MASK (BIT(7)|BIT(8)|BIT(9))
 
 /* TIMER registers
  *

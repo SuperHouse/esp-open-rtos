@@ -41,12 +41,12 @@ void blinkenTask(void *pvParameters)
 */
 void blinkenRegisterTask(void *pvParameters)
 {
-    GPIO_DIR_SET = BIT(gpio);
+    GPIO.ENABLE_OUT_SET = BIT(gpio);
     IOMUX_GPIO14 = IOMUX_GPIO14_FUNC_GPIO | IOMUX_PIN_OUTPUT_ENABLE; /* change this line if you change 'gpio' */
     while(1) {
-        GPIO_OUT_SET = BIT(gpio);
+        GPIO.OUT_SET = BIT(gpio);
         vTaskDelay(1000 / portTICK_RATE_MS);
-        GPIO_OUT_CLEAR = BIT(gpio);
+        GPIO.OUT_CLEAR = BIT(gpio);
         vTaskDelay(1000 / portTICK_RATE_MS);
     }
 }
