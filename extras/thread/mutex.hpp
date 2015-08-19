@@ -19,8 +19,8 @@
  * 
  */
 
-#ifndef COM_THOLUSI_ESP_OPEN_RTOS_MUTEX_HPP
-#define	COM_THOLUSI_ESP_OPEN_RTOS_MUTEX_HPP
+#ifndef ESP_OPEN_RTOS_MUTEX_HPP
+#define	ESP_OPEN_RTOS_MUTEX_HPP
 
 #include "semphr.h"
 
@@ -86,5 +86,5 @@ private:
 } //namespace esp_open_rtos {
 
 
-#endif	/* COM_THOLUSI_ESP_OPEN_RTOS_MUTEX_HPP */
+#endif	/* ESP_OPEN_RTOS_MUTEX_HPP */
 
