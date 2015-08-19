@@ -11,12 +11,12 @@
 
 #include <stdbool.h>
 #include <xtensa_interrupts.h>
-#include "esp/registers.h"
+#include "esp/timer_regs.h"
 #include "esp/cpu.h"
 
 typedef enum {
-    TIMER_FRC1,
-    TIMER_FRC2,
+    FRC1 = 0,
+    FRC2 = 1,
 } timer_frc_t;
 
 /* Return current count value for timer. */
@@ -31,14 +31,8 @@ INLINED void timer_set_load(const timer_frc_t frc, const uint32_t load);
 /* Returns maximum load value for timer. */
 INLINED uint32_t timer_max_load(const timer_frc_t frc);
 
-typedef enum {
-    TIMER_DIV1,
-    TIMER_DIV16,
-    TIMER_DIV256,
-} timer_div_t;
-
 /* Set the timer divider value */
-INLINED void timer_set_divider(const timer_frc_t frc, const timer_div_t div);
+INLINED void timer_set_divider(const timer_frc_t frc, const timer_clkdiv_t div);
 
 /* Enable or disable timer interrupts
 
@@ -62,7 +56,7 @@ INLINED bool timer_get_reload(const timer_frc_t frc);
 /* Return a suitable timer divider for the specified frequency,
    or -1 if none is found.
  */
-INLINED timer_div_t timer_freq_to_div(uint32_t freq);
+INLINED timer_clkdiv_t timer_freq_to_div(uint32_t freq);
 
 /* Return the number of timer counts to achieve the specified
  * frequency with the specified divisor.
@@ -73,12 +67,12 @@ INLINED timer_div_t timer_freq_to_div(uint32_t freq);
  *
  * Compile-time evaluates if all arguments are available at compile time.
  */
-INLINED uint32_t timer_freq_to_count(const timer_frc_t frc, uint32_t freq, const timer_div_t div);
+INLINED uint32_t timer_freq_to_count(const timer_frc_t frc, uint32_t freq, const timer_clkdiv_t div);
 
 /* Return a suitable timer divider for the specified duration in
    microseconds or -1 if none is found.
  */
-INLINED timer_div_t timer_time_to_div(uint32_t us);
+INLINED timer_clkdiv_t timer_time_to_div(uint32_t us);
 
 /* Return the number of timer counts for the specified timer duration
  * in microseconds, when using the specified divisor.
@@ -89,7 +83,7 @@ INLINED timer_div_t timer_time_to_div(uint32_t us);
  *
  * Compile-time evaluates if all arguments are available at compile time.
  */
-INLINED uint32_t timer_time_to_count(const timer_frc_t frc, uint32_t us, const timer_div_t div);
+INLINED uint32_t timer_time_to_count(const timer_frc_t frc, uint32_t us, const timer_clkdiv_t div);
 
 /* Set a target timer interrupt frequency in Hz.
 
