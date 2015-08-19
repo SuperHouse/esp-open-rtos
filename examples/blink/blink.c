@@ -30,8 +30,8 @@ void blinkenTask(void *pvParameters)
 
 /* This task uses all raw register operations to set the pins.
 
-   It's not fully parameterised, as the IOMUX_SET macro requires the pin number
-   as part of the GPxx value.
+   It's not fully parameterised, as the IOMUX_GPIO# macros involve a non-linear
+   mapping from GPIO to IOMUX ports.
 
    There is no significant performance benefit to this way over the
    blinkenTask version, so it's probably better to use the blinkenTask
@@ -42,7 +42,7 @@ void blinkenTask(void *pvParameters)
 void blinkenRegisterTask(void *pvParameters)
 {
     GPIO_DIR_SET = BIT(gpio);
-    IOMUX_SET(GP14,GPIO,IOMUX_OE); /* change this line if you change 'gpio' */
+    IOMUX_GPIO14 = IOMUX_GPIO14_FUNC_GPIO | IOMUX_PIN_OUTPUT_ENABLE; /* change this line if you change 'gpio' */
     while(1) {
         GPIO_OUT_SET = BIT(gpio);
         vTaskDelay(1000 / portTICK_RATE_MS);
