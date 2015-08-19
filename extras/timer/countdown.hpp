@@ -19,8 +19,8 @@
  * 
  */
 
-#ifndef COM_THOLUSI_ESP_OPEN_RTOS_TIMER_HPP
-#define	COM_THOLUSI_ESP_OPEN_RTOS_TIMER_HPP
+#ifndef ESP_OPEN_RTOS_TIMER_HPP
+#define	ESP_OPEN_RTOS_TIMER_HPP
 
 #include "FreeRTOS.h"
 #include "task.h"
