@@ -59,12 +59,9 @@ struct GPIO_REGS {
     uint32_t volatile RTC_CALIB_RESULT; // 0x70
 } __attribute__ (( packed ));
 
-/* Double-check the structure size to make sure the compiler hasn't done
- * something strange (or somebody typoed in the struct definition, etc)
- */
 _Static_assert(sizeof(struct GPIO_REGS) == 0x74, "GPIO_REGS is the wrong size");
 
-/* Bit mapping for CONF[i] registers */
+/* Details for CONF[i] registers */
 
 /* GPIO.CONF[i] control the pin behavior for the corresponding GPIO in/output.
  *
@@ -109,7 +106,7 @@ typedef enum {
     GPIO_INTTYPE_LEVEL_HIGH = 5,
 } gpio_inttype_t;
 
-/* Bit mapping for PWM register */
+/* Details for PWM register */
 
 #define GPIO_PWM_ENABLE          BIT(16)
 #define GPIO_PWM_PRESCALER_M     0x000000ff
@@ -117,13 +114,13 @@ typedef enum {
 #define GPIO_PWM_TARGET_M        0x000000ff
 #define GPIO_PWM_TARGET_S        0
 
-/* Bit mapping for RTC_CALIB register */
+/* Details for RTC_CALIB register */
 
 #define GPIO_RTC_CALIB_START     BIT(31)
 #define GPIO_RTC_CALIB_PERIOD_M  0x000003ff
 #define GPIO_RTC_CALIB_PERIOD_S  0
 
-/* Bit mapping for RTC_CALIB_RESULT register */
+/* Details for RTC_CALIB_RESULT register */
 
 #define GPIO_RTC_CALIB_RESULT_READY       BIT(31)
 #define GPIO_RTC_CALIB_RESULT_READY_REAL  BIT(30)
