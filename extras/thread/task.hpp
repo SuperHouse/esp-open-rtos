@@ -19,8 +19,8 @@
  * 
  */
 
-#ifndef COM_THOLUSI_ESP_OPEN_RTOS_TASK_HPP
-#define	COM_THOLUSI_ESP_OPEN_RTOS_TASK_HPP
+#ifndef ESP_OPEN_RTOS_TASK_HPP
+#define	ESP_OPEN_RTOS_TASK_HPP
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -95,5 +95,5 @@ private:
 } //namespace esp_open_rtos {
 
 
-#endif	/* COM_THOLUSI_ESP_OPEN_RTOS_TASK_HPP */
+#endif	/* ESP_OPEN_RTOS_TASK_HPP */
 

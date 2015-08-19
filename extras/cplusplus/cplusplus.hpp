@@ -19,8 +19,8 @@
  * 
  */
 
-#ifndef COM_THOLUSI_ESP_OPEN_RTOS_CPLUSPLUS_HPP
-#define	COM_THOLUSI_ESP_OPEN_RTOS_CPLUSPLUS_HPP
+#ifndef ESP_OPEN_RTOS_CPLUSPLUS_HPP
+#define	ESP_OPEN_RTOS_CPLUSPLUS_HPP
 
 #include <stdlib.h>
 
@@ -64,5 +64,5 @@ inline void operator delete[](void * ptr)
     free(ptr);
 }
 
-#endif	/* COM_THOLUSI_ESP_OPEN_RTOS_CPLUSPLUS_HPP */
+#endif	/* ESP_OPEN_RTOS_CPLUSPLUS_HPP */
 

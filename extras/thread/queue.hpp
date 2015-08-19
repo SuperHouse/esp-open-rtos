@@ -19,8 +19,8 @@
  * 
  */
 
-#ifndef COM_THOLUSI_ESP_OPEN_RTOS_QUEUE_HPP
-#define	COM_THOLUSI_ESP_OPEN_RTOS_QUEUE_HPP
+#ifndef ESP_OPEN_RTOS_QUEUE_HPP
+#define	ESP_OPEN_RTOS_QUEUE_HPP
 
 #include "FreeRTOS.h"
 #include "queue.h"
@@ -116,5 +116,5 @@ private:
 } //namespace esp_open_rtos {
 
 
-#endif	/* COM_THOLUSI_ESP_OPEN_RTOS_QUEUE_HPP */
+#endif	/* ESP_OPEN_RTOS_QUEUE_HPP */
 
