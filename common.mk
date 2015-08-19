@@ -99,7 +99,7 @@ C_CXX_FLAGS     = -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-lit
 # Flags for C only
 CFLAGS		= $(C_CXX_FLAGS) -std=gnu99
 # Flags for C++ only
-CXXFLAGS	= $(C_CXX_FLAGS) -fno-exceptions
+CXXFLAGS	= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(EXTRA_LDFLAGS)
 
 ifeq ($(FLAVOR),debug)
@@ -177,7 +177,7 @@ IMGTOOL_ARGS=-$(IMGTOOL_FLASH_SIZE) -$(FLASH_MODE) -$(FLASH_SPEED)
 # Placing $(PROGRAM_DIR) and $(PROGRAM_DIR)include first allows
 # programs to have their own copies of header config files for components
 # , which is useful for overriding things.
-INC_DIRS      = $(PROGRAM_DIR) $(PROGRAM_DIR)include $(ROOT)include
+INC_DIRS      = $(PROGRAM_DIR) $(PROGRAM_DIR)include $(ROOT)include $(ROOT)extras
 
 ifeq ($(OWN_LIBC),1)
     INC_DIRS += $(ROOT)libc/xtensa-lx106-elf/include
