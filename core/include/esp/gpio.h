@@ -35,15 +35,15 @@ INLINED void gpio_enable(const uint8_t gpio_num, const gpio_direction_t directio
         ctrl_val = GPIO_SOURCE_GPIO;
         break;
     case GPIO_OUTPUT:
-        iomux_flags = IOMUX_OE;
+        iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
         ctrl_val = GPIO_DRIVE_PUSH_PULL|GPIO_SOURCE_GPIO;
         break;
     case GPIO_OUT_OPEN_DRAIN:
-        iomux_flags = IOMUX_OE;
+        iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
         ctrl_val = GPIO_DRIVE_OPEN_DRAIN|GPIO_SOURCE_GPIO;
         break;
     case GPIO_INPUT_PULLUP:
-        iomux_flags = IOMUX_PU;
+        iomux_flags = IOMUX_PIN_PULLUP;
         ctrl_val = GPIO_SOURCE_GPIO;
     }
     iomux_set_gpio_function(gpio_num, iomux_flags);
@@ -57,12 +57,12 @@ INLINED void gpio_enable(const uint8_t gpio_num, const gpio_direction_t directio
 /* Disable GPIO on the specified pin, and set it Hi-Z.
  *
  * If later muxing this pin to a different function, make sure to set
- * IOMUX_OE if necessary to enable the output buffer.
+ * IOMUX_PIN_OUTPUT_ENABLE if necessary to enable the output buffer.
  */
 INLINED void gpio_disable(const uint8_t gpio_num)
 {
     GPIO_DIR_CLEAR = BIT(gpio_num);
-    *gpio_iomux_reg(gpio_num) &= ~IOMUX_OE;
+    *gpio_iomux_reg(gpio_num) &= ~IOMUX_PIN_OUTPUT_ENABLE;
 }
 
 /* Set output of a pin high or low.

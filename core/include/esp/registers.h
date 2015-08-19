@@ -14,8 +14,9 @@
 #ifndef _ESP_REGISTERS
 #define _ESP_REGISTERS
 #include "common_macros.h"
+#include "esp/types.h"
 
-typedef volatile uint32_t *esp_reg_t;
+#include "esp/iomux_regs.h"
 
 /* Internal macro, only defined in header body */
 #define _REG(BASE, OFFSET) (*(esp_reg_t)((BASE)+(OFFSET)))
@@ -33,42 +34,13 @@ typedef volatile uint32_t *esp_reg_t;
 #define GPIO0_BASE (MMIO_BASE + 0x0300)
 #define TIMER_BASE (MMIO_BASE + 0x0600)
 #define RTC_BASE   (MMIO_BASE + 0x0700)
-#define IOMUX_BASE (MMIO_BASE + 0x0800)
+//#define IOMUX_BASE (MMIO_BASE + 0x0800)
 #define WDT_BASE   (MMIO_BASE + 0x0900)
 #define I2C_BASE   (MMIO_BASE + 0x0d00)
 #define UART1_BASE (MMIO_BASE + 0x0F00)
 #define RTCB_BASE  (MMIO_BASE + 0x1000)
 #define RTCS_BASE  (MMIO_BASE + 0x1100)
 #define RTCU_BASE  (MMIO_BASE + 0x1200)
-
-/*
- * iomux registers, apply to pin functions.
- *
- * Note that IOMUX register order is _not_ the same as GPIO order. See
- * esp_iomux.h for programmer-friendly IOMUX configuration options
- */
-#define IOMUX_REG(X) _REG(IOMUX_BASE,0x04+4*X)
-
-#define IOMUX_OE       BIT(0) /* iomux Output enable bit */
-#define IOMUX_OE_SLEEP BIT(1) /* iomux Output during sleep bit */
-
-#define IOMUX_PD       BIT(6) /* iomux soft pulldown bit */
-#define IOMUX_PD_SLEEP BIT(2) /* iomux soft pulldown during sleep bit */
-#define IOMUX_PU       BIT(7) /* iomux soft pullup bit */
-#define IOMUX_PU_SLEEP BIT(3) /* iomux soft pullup during sleep bit */
-
-#define IOMUX_FLAG_WAKE_MASK (IOMUX_OE|IOMUX_PD|IOMUX_PU)
-#define IOMUX_FLAG_SLEEP_MASK (IOMUX_OE_SLEEP|IOMUX_PD_SLEEP|IOMUX_PU_SLEEP)
-#define IOMUX_FLAG_MASK (IOMUX_FLAG_WAKE_MASK|IOMUX_FLAG_SLEEP_MASK)
-
-#define IOMUX_FUNC_MASK (BIT(4)|BIT(5)|BIT(12))
-
-/* All pins have FUNC_A on reset (unconfirmed) */
-#define IOMUX_FUNC_A (0)
-#define IOMUX_FUNC_B BIT(4)
-#define IOMUX_FUNC_C BIT(5)
-#define IOMUX_FUNC_D BIT(4)|BIT(5)
-#define IOMUX_FUNC_E BIT(12)
 
 
 /*
