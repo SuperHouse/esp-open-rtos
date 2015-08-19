@@ -22,17 +22,14 @@ struct IOMUX_REGS {
     uint32_t volatile PIN[16]; // 0x04 - 0x40
 } __attribute__ (( packed ));
 
-/* Double-check the structure size to make sure the compiler hasn't done
- * something strange (or somebody typoed in the struct definition, etc)
- */
 _Static_assert(sizeof(struct IOMUX_REGS) == 0x44, "IOMUX_REGS is the wrong size");
 
-/* Bit mapping for CONF register */
+/* Details for CONF register */
 
 #define IOMUX_CONF_SPI0_CLOCK_EQU_SYS_CLOCK  BIT(8)
 #define IOMUX_CONF_SPI1_CLOCK_EQU_SYS_CLOCK  BIT(9)
 
-/* Bit mapping for PIN registers */
+/* Details for PIN registers */
 
 #define IOMUX_PIN_OUTPUT_ENABLE        BIT(0)
 #define IOMUX_PIN_OUTPUT_ENABLE_SLEEP  BIT(1)
@@ -54,12 +51,6 @@ _Static_assert(sizeof(struct IOMUX_REGS) == 0x44, "IOMUX_REGS is the wrong size"
 #define IOMUX_FUNC_VALUE(regbits) (FIELD2VAL(IOMUX_PIN_FUNC_LOW, regbits) | FIELD2VAL(IOMUX_PIN_FUNC_HIGH, regbits))
 
 #define IOMUX_SET_FUNC(regbits, funcval) (((regbits) & ~IOMUX_PIN_FUNC_MASK) | (funcval))
-
-#define IOMUX_FUNC_A  IOMUX_FUNC(0)
-#define IOMUX_FUNC_B  IOMUX_FUNC(1)
-#define IOMUX_FUNC_C  IOMUX_FUNC(2)
-#define IOMUX_FUNC_D  IOMUX_FUNC(3)
-#define IOMUX_FUNC_E  IOMUX_FUNC(4)
 
 #define IOMUX_GPIO0   IOMUX.PIN[12]
 #define IOMUX_GPIO1   IOMUX.PIN[5]
