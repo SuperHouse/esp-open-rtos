@@ -1,4 +1,4 @@
-/* esp/iomux_regs.h
+/* esp/gpio_regs.h
  *
  * ESP8266 GPIO register definitions
  *
