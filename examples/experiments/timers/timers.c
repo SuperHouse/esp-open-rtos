@@ -11,14 +11,15 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "esp8266.h"
+#include "common_macros.h"
 
 #define DUMP_SZ 0x10 /* number of regs not size of buffer */
 
 IRAM void dump_frc1_seq(void)
 {
-    uint32_t f1_a = TIMER_FRC1_COUNT_REG;
-    uint32_t f1_b = TIMER_FRC1_COUNT_REG;
-    uint32_t f1_c = TIMER_FRC1_COUNT_REG;
+    uint32_t f1_a = TIMER(0).COUNT;
+    uint32_t f1_b = TIMER(0).COUNT;
+    uint32_t f1_c = TIMER(0).COUNT;
     printf("FRC1 sequence 0x%08lx 0x%08lx 0x%08lx\r\n", f1_a, f1_b, f1_c);
     printf("FRC1 deltas %ld %ld \r\n", f1_b-f1_a, f1_c-f1_b);
 }
@@ -33,9 +34,9 @@ IRAM void dump_frc2_seq(void)
      * /16 = 0 or 1 (usually 1)
      * 
      */
-    uint32_t f2_a = TIMER_FRC2_COUNT_REG;
-    uint32_t f2_b = TIMER_FRC2_COUNT_REG;
-    uint32_t f2_c = TIMER_FRC2_COUNT_REG;
+    uint32_t f2_a = TIMER(1).COUNT;
+    uint32_t f2_b = TIMER(1).COUNT;
+    uint32_t f2_c = TIMER(1).COUNT;
     printf("FRC2 sequence 0x%08lx 0x%08lx 0x%08lx\r\n", f2_a, f2_b, f2_c);
     printf("FRC2 deltas %ld %ld \r\n", f2_b-f2_a, f2_c-f2_b);
 }
@@ -99,20 +100,20 @@ void timerRegTask(void *pvParameters)
 IRAM void frc1_handler(void)
 {
     frc1_handler_call_count++;
-    frc1_last_count_val = TIMER_FRC1_COUNT_REG;
-    //TIMER_FRC1_LOAD_REG = 0x300000;
-    //TIMER_FRC1_CLEAR_INT = 0;
+    frc1_last_count_val = TIMER(0).COUNT;
+    //TIMER(0).LOAD = 0x300000;
+    //TIMER(0).STATUS = 0;
     //TIMER_FRC1_MATCH_REG = frc1_last_count_val + 0x100000;
 }
 
 void frc2_handler(void)
 {
     frc2_handler_call_count++;
-    frc2_last_count_val = TIMER_FRC2_COUNT_REG;
-    TIMER_FRC2_MATCH_REG = frc2_last_count_val + 0x100000;
-    //TIMER_FRC2_LOAD_REG = 0;
-    //TIMER_FRC2_LOAD_REG = 0x2000000;
-    //TIMER_FRC2_CLEAR_INT_REG = 0;
+    frc2_last_count_val = TIMER(1).COUNT;
+    TIMER(1).ALARM = frc2_last_count_val + 0x100000;
+    //TIMER(1).LOAD = 0;
+    //TIMER(1).LOAD = 0x2000000;
+    //TIMER(1).STATUS = 0;
 }
 
 void user_init(void)
@@ -120,19 +121,19 @@ void user_init(void)
     sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
     xTaskCreate(timerRegTask, (signed char *)"timerRegTask", 1024, NULL, 2, NULL);
 
-    TIMER_FRC1_CTRL_REG = TIMER_CTRL_DIV_256|TIMER_CTRL_INT_EDGE|TIMER_CTRL_RELOAD;
-    TIMER_FRC1_LOAD_REG = 0x200000;
+    TIMER(0).CTRL = VAL2FIELD(TIMER_CTRL_CLKDIV, TIMER_CLKDIV_256) | TIMER_CTRL_RELOAD;
+    TIMER(0).LOAD = 0x200000;
 
-    TIMER_FRC2_CTRL_REG = TIMER_CTRL_DIV_256|TIMER_CTRL_INT_EDGE;
+    TIMER(1).LOAD = VAL2FIELD(TIMER_CTRL_CLKDIV, TIMER_CLKDIV_256);
 
-    DP_INT_ENABLE_REG |= INT_ENABLE_FRC1|INT_ENABLE_FRC2;
+    DPORT.INT_ENABLE |= DPORT_INT_ENABLE_TIMER0 | DPORT_INT_ENABLE_TIMER1;
     _xt_isr_attach(INUM_TIMER_FRC1, frc1_handler);
     _xt_isr_unmask(1<<INUM_TIMER_FRC1);
     _xt_isr_attach(INUM_TIMER_FRC2, frc2_handler);
     _xt_isr_unmask(1<<INUM_TIMER_FRC2);
 
-    TIMER_FRC1_CTRL_REG |= TIMER_CTRL_RUN;
-    TIMER_FRC2_CTRL_REG |= TIMER_CTRL_RUN;
+    TIMER(0).CTRL |= TIMER_CTRL_RUN;
+    TIMER(1).CTRL |= TIMER_CTRL_RUN;
 
     dump_timer_regs("timer regs during user_init");
     dump_timer_regs("#2 timer regs during user_init");
