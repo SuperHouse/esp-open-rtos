@@ -26,7 +26,7 @@ void frc1_interrupt_handler(void)
 void frc2_interrupt_handler(void)
 {
     /* FRC2 needs the match register updated on each timer interrupt */
-    timer_set_frequency(TIMER_FRC2, freq_frc2);
+    timer_set_frequency(FRC2, freq_frc2);
     frc2_count++;
     gpio_toggle(gpio_frc2);
 }
@@ -41,24 +41,24 @@ void user_init(void)
     gpio_write(gpio_frc1, 1);
 
     /* stop both timers and mask their interrupts as a precaution */
-    timer_set_interrupts(TIMER_FRC1, false);
-    timer_set_run(TIMER_FRC1, false);
-    timer_set_interrupts(TIMER_FRC2, false);
-    timer_set_run(TIMER_FRC2, false);
+    timer_set_interrupts(FRC1, false);
+    timer_set_run(FRC1, false);
+    timer_set_interrupts(FRC2, false);
+    timer_set_run(FRC2, false);
 
     /* set up ISRs */
     _xt_isr_attach(INUM_TIMER_FRC1, frc1_interrupt_handler);
     _xt_isr_attach(INUM_TIMER_FRC2, frc2_interrupt_handler);
 
     /* configure timer frequencies */
-    timer_set_frequency(TIMER_FRC1, freq_frc1);
-    timer_set_frequency(TIMER_FRC2, freq_frc2);
+    timer_set_frequency(FRC1, freq_frc1);
+    timer_set_frequency(FRC2, freq_frc2);
 
     /* unmask interrupts and start timers */
-    timer_set_interrupts(TIMER_FRC1, true);
-    timer_set_run(TIMER_FRC1, true);
-    timer_set_interrupts(TIMER_FRC2, true);
-    timer_set_run(TIMER_FRC2, true);
+    timer_set_interrupts(FRC1, true);
+    timer_set_run(FRC1, true);
+    timer_set_interrupts(FRC2, true);
+    timer_set_run(FRC2, true);
 
     gpio_write(gpio_frc1, 0);
 }
