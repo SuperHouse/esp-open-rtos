@@ -1,0 +1,62 @@
+language: c
+sudo: false
+env:
+  # Target commit for https://github.com/pfalcon/esp-open-sdk/
+  OPENSDK_COMMIT=b44afa47
+  CROSS_ROOT="${HOME}/toolchain-${OPENSDK_COMMIT}"
+  CROSS_BINDIR="${CROSS_ROOT}/bin"
+  ESPTOOL2_COMMIT=92530bb8
+  ESPTOOL2_BINDIR="${HOME}/esptool2-${ESPTOOL2_COMMIT}"
+  PATH=${PATH}:${CROSS_BINDIR}:${ESPTOOL2_BINDIR}
+cache:
+  directories:
+    - ${CROSS_ROOT}
+    - ${HOME}/.ccache
+    - ${ESPTOOL2_BINDIR}
+addons:
+  apt:
+    packages:
+    - make
+    - unrar
+    - autoconf
+    - automake
+    - libtool
+    - gcc
+    - g++
+    - gperf
+    - flex
+    - bison
+    - texinfo
+    - gawk
+    - libncurses5-dev
+    - libexpat1-dev
+    - python
+    - python-serial
+    - sed
+    - git
+
+before_install:
+  # Install a toolchain using esp-open-sdk (parts we need for this are the GNU toolchain and libhal)
+  #
+  # Adds hack of "{$HAS_TC} || -Buildstep-" to avoid rebuilding toolchain if it's already
+  # installed from the cache. If this gets any more complex it should be spun out to a standalone shell script.
+  - export HAS_TC="test -d ${CROSS_BINDIR}"
+  - unset CC # Travis sets this due to "language: c", but it confuses autotools configure when cross-building
+  - ${HAS_TC} || git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
+  - ${HAS_TC} || cd esp-open-sdk
+  - ${HAS_TC} || git reset --hard ${OPENSDK_COMMIT}
+  - ${HAS_TC} || git submodule update
+  - ${HAS_TC} || sed -i "s/2.69/2.68/" lx106-hal/configure.ac # this is a nasty hack as Ubuntu Precise only has autoconf 2.68 not 2.69...
+  - ${HAS_TC} || sed -r -i 's%TOOLCHAIN ?=.*%TOOLCHAIN=${CROSS_ROOT}%' Makefile
+  - ${HAS_TC} || make STANDALONE=n
+  - export HAS_ET2="test -f ${ESPTOOL2_BINDIR}/esptool2"
+  - ${HAS_ET2} || git clone https://github.com/raburton/esp8266 ${HOME}/raburton
+  - ${HAS_ET2} || make -C ${HOME}/raburton/esptool2
+  - ${HAS_ET2} || mkdir -p ${ESPTOOL2_BINDIR}
+  - ${HAS_ET2} || cp -a ${HOME}/raburton/esptool2/esptool2 ${ESPTOOL2_BINDIR}/
+
+script:
+  - cd ${TRAVIS_BUILD_DIR}
+  # Remove ssid_config requirement for examples
+  - sed -i "s%#warning%//#warning%" include/ssid_config.h
+  - make -C examples/ build-examples CROSS="ccache xtensa-lx106-elf-"
