@@ -4,6 +4,8 @@ A community developed open source [FreeRTOS](http://www.freertos.org/)-based fra
 
 Originally based on, but substantially different from, the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk).
 
+[![Build Status](https://travis-ci.org/SuperHouse/esp-open-rtos.svg?branch=master)](https://travis-ci.org/SuperHouse/esp-open-rtos)
+
 ## Quick Start
 
 * Install [esp-open-sdk](https://github.com/pfalcon/esp-open-sdk/), build it with `make STANDALONE=n`, then edit your PATH and add the generated toolchain `bin` directory. (Despite the similar name esp-open-sdk has different maintainers - but we think it's fantastic!)
