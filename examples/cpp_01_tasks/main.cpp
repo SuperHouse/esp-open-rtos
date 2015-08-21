@@ -26,9 +26,9 @@
  * 
  */
 
-#include "cplusplus/cplusplus.hpp"
-#include "thread/task.hpp"
-#include "thread/queue.hpp"
+#include "cplusplus.hpp"
+#include "task.hpp"
+#include "queue.hpp"
 
 #include "espressif/esp_common.h"
 
