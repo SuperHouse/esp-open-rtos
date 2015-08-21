@@ -76,7 +76,7 @@ _Static_assert(sizeof(struct GPIO_REGS) == 0x74, "GPIO_REGS is the wrong size");
  *     Under what conditions this GPIO input should generate an interrupt.
  *     (see gpio_inttype_t enum below for values)
  *
- * GPIO_CONF_DRIVER_ENABLE (boolean)
+ * GPIO_CONF_PUSH_PULL (boolean)
  *     When set, a high output state will pull the pin up to +Vcc (3.3V).  When
  *     cleared, output functions in "open drain" mode (low state will pull down
  *     to ground, but high state allows output to "float").
@@ -91,9 +91,9 @@ _Static_assert(sizeof(struct GPIO_REGS) == 0x74, "GPIO_REGS is the wrong size");
 #define GPIO_CONF_CONFIG_M       0x00000003
 #define GPIO_CONF_CONFIG_S       11
 #define GPIO_CONF_WAKEUP_ENABLE  BIT(10)
-#define GPIO_CONF_INTTYPE_M     0x00000007
-#define GPIO_CONF_INTTYPE_S     7
-#define GPIO_CONF_DRIVER_ENABLE  BIT(2)
+#define GPIO_CONF_INTTYPE_M      0x00000007
+#define GPIO_CONF_INTTYPE_S      7
+#define GPIO_CONF_PUSH_PULL      BIT(2)
 #define GPIO_CONF_SOURCE_PWM     BIT(0)
 
 /* Valid values for the GPIO_CONF_INTTYPE field */
