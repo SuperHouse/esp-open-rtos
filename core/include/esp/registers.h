@@ -22,6 +22,7 @@
 #include "esp/gpio_regs.h"
 #include "esp/timer_regs.h"
 #include "esp/wdt_regs.h"
+#include "esp/rtcmem_regs.h"
 #include "esp/dport_regs.h"
 
 /* Register base addresses
@@ -41,8 +42,8 @@
 //#define WDT_BASE   (MMIO_BASE + 0x0900)
 #define I2C_BASE   (MMIO_BASE + 0x0d00)
 //#define UART1_BASE (MMIO_BASE + 0x0F00)
-#define RTCB_BASE  (MMIO_BASE + 0x1000)
-#define RTCS_BASE  (MMIO_BASE + 0x1100)
-#define RTCU_BASE  (MMIO_BASE + 0x1200)
+//#define RTCB_BASE  (MMIO_BASE + 0x1000)
+//#define RTCS_BASE  (MMIO_BASE + 0x1100)
+//#define RTCU_BASE  (MMIO_BASE + 0x1200)
 
 #endif
