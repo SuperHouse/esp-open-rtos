@@ -43,7 +43,7 @@ struct UART_REGS {
     uint32_t volatile LOW_PULSE;      // 0x28
     uint32_t volatile HIGH_PULSE;     // 0x2c
     uint32_t volatile PULSE_COUNT;    // 0x30
-    uint32_t volatile _unused[18];    // 0x34 - 0x74
+    uint32_t volatile _unused[17];    // 0x34 - 0x74
     uint32_t volatile DATE;           // 0x78
     uint32_t volatile ID;             // 0x7c
 } __attribute__ (( packed ));
