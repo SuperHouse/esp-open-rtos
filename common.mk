@@ -177,7 +177,7 @@ IMGTOOL_ARGS=-$(IMGTOOL_FLASH_SIZE) -$(FLASH_MODE) -$(FLASH_SPEED)
 # Placing $(PROGRAM_DIR) and $(PROGRAM_DIR)include first allows
 # programs to have their own copies of header config files for components
 # , which is useful for overriding things.
-INC_DIRS      = $(PROGRAM_DIR) $(PROGRAM_DIR)include $(ROOT)include $(ROOT)extras
+INC_DIRS      = $(PROGRAM_DIR) $(PROGRAM_DIR)include $(ROOT)include
 
 ifeq ($(OWN_LIBC),1)
     INC_DIRS += $(ROOT)libc/xtensa-lx106-elf/include
