@@ -36,7 +36,7 @@ INLINED void gpio_enable(const uint8_t gpio_num, const gpio_direction_t directio
         break;
     case GPIO_OUTPUT:
         iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
-        ctrl_val = GPIO_CONF_DRIVER_ENABLE;
+        ctrl_val = GPIO_CONF_PUSH_PULL;
         break;
     case GPIO_OUT_OPEN_DRAIN:
         iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
