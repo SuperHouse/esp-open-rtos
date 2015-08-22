@@ -16,6 +16,16 @@
 #define BIT(X) (1<<(X))
 #endif
 
+/* These macros convert values to/from bitfields specified by *_M and *_S (mask
+ * and shift) constants.  Used primarily with ESP8266 register access.
+ */
+
+#define VAL2FIELD(fieldname, value) (((value) & fieldname##_M) << fieldname##_S)
+#define FIELD2VAL(fieldname, regbits) (((regbits) >> fieldname##_S) & fieldname##_M)
+
+#define FIELD_MASK(fieldname) (fieldname##_M << fieldname##_S)
+#define SET_FIELD(regbits, fieldname, value) (((regbits) & ~FIELD_MASK(fieldname)) | VAL2FIELD(fieldname, value))
+
 /* Use this macro to store constant values in IROM flash instead
    of having them loaded into rodata (which resides in DRAM)
 

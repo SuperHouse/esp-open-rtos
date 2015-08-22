@@ -14,12 +14,12 @@
  * the arguments aren't known at compile time (values are evaluated at
  * compile time otherwise.)
  */
-uint32_t _timer_freq_to_count_runtime(const timer_frc_t frc, const uint32_t freq, const timer_div_t div)
+uint32_t _timer_freq_to_count_runtime(const timer_frc_t frc, const uint32_t freq, const timer_clkdiv_t div)
 {
     return _timer_freq_to_count_impl(frc, freq, div);
 }
 
-uint32_t _timer_time_to_count_runtime(const timer_frc_t frc, uint32_t us, const timer_div_t div)
+uint32_t _timer_time_to_count_runtime(const timer_frc_t frc, uint32_t us, const timer_clkdiv_t div)
 {
     return _timer_time_to_count_runtime(frc, us, div);
 }
