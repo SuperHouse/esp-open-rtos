@@ -24,7 +24,14 @@
 
 /* Register base addresses
 
-   You shouldn't need to use these directly.
+   The base addresses below are ones which haven't been migrated to
+   the new register header style yet. For any commented out lines, see
+   the matching xxx_regs.h header file referenced above.
+
+   If you want to access registers that aren't mapped to the new
+   register header system yet, you can either use the deprecated
+   Espressif SDK headers (in include/espressif), or you can create a
+   new register header file and contribute it to the project (hooray!)
  */
 #define MMIO_BASE   0x60000000
 //#define DPORT_BASE  0x3ff00000
