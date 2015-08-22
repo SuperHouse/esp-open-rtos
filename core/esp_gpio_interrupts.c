@@ -25,7 +25,7 @@
    OR
 
    - Implement a single function named gpio_interrupt_handler(). This
-     will need to manually check GPIO_STATUS_REG and clear any status
+     will need to manually check GPIO.STATUS and clear any status
      bits after handling interrupts. This gives you full control, but
      you can't combine it with the first approach.
 
@@ -67,14 +67,14 @@ const gpio_interrupt_handler_t gpio_interrupt_handlers[16] = {
 
 void __attribute__((weak)) IRAM gpio_interrupt_handler(void)
 {
-    uint32_t status_reg = GPIO_STATUS_REG;
-    GPIO_STATUS_CLEAR = status_reg;
+    uint32_t status_reg = GPIO.STATUS;
+    GPIO.STATUS_CLEAR = status_reg;
     uint8_t gpio_idx;
     while((gpio_idx = __builtin_ffs(status_reg)))
     {
         gpio_idx--;
         status_reg &= ~BIT(gpio_idx);
-        if(GPIO_CTRL_REG(gpio_idx) & GPIO_INT_MASK)
+        if(FIELD2VAL(GPIO_CONF_INTTYPE, GPIO.CONF[gpio_idx]))
             gpio_interrupt_handlers[gpio_idx]();
     }
 }
