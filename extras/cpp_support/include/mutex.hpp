@@ -46,14 +46,30 @@ public:
      */
     inline mutex_t()
     {
-        mutex = xSemaphoreCreateMutex();
+        mutex = 0;
+    }
+    /**
+     * 
+     * @return 
+     */
+    inline int mutex_create()
+    {
+        mutex = xSemaphoreCreateMutex();        
+        
+        if(mutex == NULL) {
+            return -1;
+        }
+        else {
+            return 0;
+        }
     }
     /**
      * 
      */
-    inline ~mutex_t()
+    inline void mutex_destroy()
     {
         vQueueDelete(mutex);
+        mutex = 0;
     }
     /**
      * 
