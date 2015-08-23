@@ -56,7 +56,7 @@ public:
      * @param uxItemSize
      * @return 
      */
-    inline int create(unsigned portBASE_TYPE uxQueueLength)
+    inline int queue_create(unsigned portBASE_TYPE uxQueueLength)
     {
         queue = xQueueCreate(uxQueueLength, sizeof(Data));
         
@@ -69,11 +69,8 @@ public:
     }
     /**
      * 
-     * @param data
-     * @param ms
-     * @return 
      */
-    inline void destroy()
+    inline void queue_destroy()
     {
         vQueueDelete(queue);
         queue = 0;

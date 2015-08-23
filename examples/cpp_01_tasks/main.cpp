@@ -95,9 +95,9 @@ esp_open_rtos::thread::queue_t<uint32_t> MyQueue;
  */
 extern "C" void user_init(void)
 {
-	sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
+    sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
 	
-    MyQueue.create(10);
+    MyQueue.queue_create(10);
     
     task_1.queue = MyQueue;
     task_2.queue = MyQueue;
