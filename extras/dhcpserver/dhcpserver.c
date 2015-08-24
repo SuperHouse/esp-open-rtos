@@ -29,6 +29,9 @@ typedef struct {
 /* Handlers for various kinds of incoming DHCP messages */
 static void handle_dhcp_discover(server_state_t *state, struct dhcp_msg *received);
 static void handle_dhcp_request(server_state_t *state, struct dhcp_msg *dhcpmsg);
+static void handle_dhcp_release(server_state_t *state, struct dhcp_msg *dhcpmsg);
+
+static void send_dhcp_nak(server_state_t *state, struct dhcp_msg *dhcpmsg);
 
 /* Utility functions */
 static uint8_t *find_dhcp_option(struct dhcp_msg *msg, uint8_t option_num, uint8_t min_length, uint8_t *length);
@@ -62,10 +65,20 @@ static void dhcpserver_task(void *pxParameter)
     {
         struct netbuf *netbuf;
         struct dhcp_msg received = { 0 };
+
+        /* Receive a DHCP packet */
         err_t err = netconn_recv(state.nc, &netbuf);
         if(err != ERR_OK) {
             printf("DHCP Server Error: Failed to receive DHCP packet. err=%d\r\n", err);
             continue;
+        }
+
+        /* expire any leases that have passed */
+        uint32_t now = xTaskGetTickCount();
+        for(int i = 0; i < DHCPSERVER_MAXCLIENTS; i++) {
+            uint32_t expires = state.leases[i].expires;
+            if(expires && expires < now)
+                state.leases[i].expires = 0;
         }
 
         ip_addr_t received_ip;
@@ -98,6 +111,8 @@ static void dhcpserver_task(void *pxParameter)
         case DHCP_REQUEST:
             handle_dhcp_request(&state, &received);
             break;
+        case DHCP_RELEASE:
+            handle_dhcp_release(&state, &received);
         default:
             printf("DHCP Server Error: Unsupported message type %d\r\n", *message_type);
             break;
@@ -155,6 +170,7 @@ static void handle_dhcp_request(server_state_t *state, struct dhcp_msg *dhcpmsg)
         ip_addr_copy(requested_ip, dhcpmsg->ciaddr);
     } else {
         printf("DHCP Server Error: No requested IP\r\n");
+        send_dhcp_nak(state, dhcpmsg);
         return;
     }
     ip_addr_t first_client_ip;
@@ -165,12 +181,14 @@ static void handle_dhcp_request(server_state_t *state, struct dhcp_msg *dhcpmsg)
        || ip4_addr2(&requested_ip) != ip4_addr2(&first_client_ip)
        || ip4_addr3(&requested_ip) != ip4_addr3(&first_client_ip)) {
         printf("DHCP Server Error: 0x%08lx Not an allowed IP\r\n", requested_ip.addr);
+        send_dhcp_nak(state, dhcpmsg);
         return;
     }
     /* Test the last octet is in the MAXCLIENTS range */
     int16_t octet_offs = ip4_addr4(&requested_ip) - ip4_addr4(&first_client_ip);
     if(octet_offs < 0 || octet_offs >= DHCPSERVER_MAXCLIENTS) {
         printf("DHCP Server Error: Address out of range\r\n");
+        send_dhcp_nak(state, dhcpmsg);
         return;
     }
 
@@ -178,6 +196,7 @@ static void handle_dhcp_request(server_state_t *state, struct dhcp_msg *dhcpmsg)
     if(requested_lease->expires != 0 && memcmp(requested_lease->hwaddr, dhcpmsg->chaddr,dhcpmsg->hlen))
     {
         printf("DHCP Server Error: Lease for address already taken\r\n");
+        send_dhcp_nak(state, dhcpmsg);
         return;
     }
 
@@ -185,7 +204,7 @@ static void handle_dhcp_request(server_state_t *state, struct dhcp_msg *dhcpmsg)
     printf("DHCP lease addr 0x%08lx assigned to MAC %02x:%02x:%02x:%02x:%02x:%02x\r\n", requested_ip.addr, requested_lease->hwaddr[0],
            requested_lease->hwaddr[1], requested_lease->hwaddr[2], requested_lease->hwaddr[3], requested_lease->hwaddr[4],
            requested_lease->hwaddr[5]);
-    requested_lease->expires = 1;
+    requested_lease->expires = DHCPSERVER_LEASE_TIME * configTICK_RATE_HZ;
 
     /* Reuse the REQUEST message as the ACK message */
     dhcpmsg->op = DHCP_BOOTREPLY;
@@ -197,6 +216,32 @@ static void handle_dhcp_request(server_state_t *state, struct dhcp_msg *dhcpmsg)
     opt = add_dhcp_option_byte(opt, DHCP_OPTION_MESSAGE_TYPE, DHCP_ACK);
     uint32_t expiry = htonl(DHCPSERVER_LEASE_TIME);
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_LEASE_TIME, &expiry, 4);
+    opt = add_dhcp_option_bytes(opt, DHCP_OPTION_SERVER_ID, &state->server_if->ip_addr, 4);
+    opt = add_dhcp_option_bytes(opt, DHCP_OPTION_END, NULL, 0);
+
+    struct netbuf *netbuf = netbuf_new();
+    netbuf_alloc(netbuf, sizeof(struct dhcp_msg));
+    netbuf_take(netbuf, dhcpmsg, sizeof(struct dhcp_msg));
+    netconn_sendto(state->nc, netbuf, IP_ADDR_BROADCAST, 68);
+    netbuf_delete(netbuf);
+}
+
+static void handle_dhcp_release(server_state_t *state, struct dhcp_msg *dhcpmsg)
+{
+    dhcp_lease_t *lease = find_lease_slot(state->leases, dhcpmsg->chaddr);
+    if(lease) {
+        lease->expires = 0;
+    }
+}
+
+static void send_dhcp_nak(server_state_t *state, struct dhcp_msg *dhcpmsg)
+{
+    /* Reuse 'dhcpmsg' for the NAK */
+    dhcpmsg->op = DHCP_BOOTREPLY;
+    bzero(dhcpmsg->options, DHCP_OPTIONS_LEN);
+
+    uint8_t *opt = (uint8_t *)&dhcpmsg->options;
+    opt = add_dhcp_option_byte(opt, DHCP_OPTION_MESSAGE_TYPE, DHCP_NAK);
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_SERVER_ID, &state->server_if->ip_addr, 4);
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_END, NULL, 0);
 

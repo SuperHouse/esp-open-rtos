@@ -18,7 +18,7 @@
 #endif
 
 #ifndef DHCPSERVER_LEASE_TIME
-#define DHCPSERVER_LEASE_TIME 30
+#define DHCPSERVER_LEASE_TIME 3600
 #endif
 
 /* Start DHCP server.
