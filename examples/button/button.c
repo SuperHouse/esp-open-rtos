@@ -15,7 +15,7 @@
 /* pin config */
 const int gpio = 0;   /* gpio 0 usually has "PROGRAM" button attached */
 const int active = 0; /* active == 0 for active low */
-const gpio_interrupt_t int_type = INT_FALLING;
+const gpio_inttype_t int_type = GPIO_INTTYPE_EDGE_NEG;
 #define GPIO_HANDLER gpio00_interrupt_handler
 
 
@@ -34,7 +34,7 @@ void buttonPollTask(void *pvParameters)
         {
             taskYIELD();
         }
-        printf("Polled for button press at %dms\r\n", xTaskGetTickCount()*portTICK_RATE_MS);
+        printf("Polled for button press at %ldms\r\n", xTaskGetTickCount()*portTICK_RATE_MS);
         vTaskDelay(200 / portTICK_RATE_MS);
     }
 }
@@ -59,7 +59,7 @@ void buttonIntTask(void *pvParameters)
         xQueueReceive(*tsqueue, &button_ts, portMAX_DELAY);
         button_ts *= portTICK_RATE_MS;
         if(last < button_ts-200) {
-            printf("Button interrupt fired at %dms\r\n", button_ts);
+            printf("Button interrupt fired at %ldms\r\n", button_ts);
             last = button_ts;
         }
     }
