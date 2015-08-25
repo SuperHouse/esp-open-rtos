@@ -23,8 +23,6 @@
  */
 
 #include <esp8266.h>
-#include <espressif/esp8266/esp8266.h>
-#include <espressif/esp8266/uart_register.h>
 #include <FreeRTOS.h>
 #include <semphr.h>
 
@@ -53,12 +51,12 @@ static void uart0_rx_init(void);
 IRAM void uart0_rx_handler(void)
 {
     // TODO: Handle UART1, see reg 0x3ff20020, bit2, bit0 represents uart1 and uart0 respectively
-    if (UART_RXFIFO_FULL_INT_ST != (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_FULL_INT_ST)) {
+    if (!UART(UART0).INT_STATUS & UART_INT_STATUS_RXFIFO_FULL) {
         return;
     }
-    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
-    while (READ_PERI_REG(UART_STATUS(UART0)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S)) {
-        char ch = READ_PERI_REG(UART_FIFO(UART0)) & 0xff;
+    UART(UART0).INT_CLEAR = UART_INT_CLEAR_RXFIFO_FULL;
+    while (UART(UART0).STATUS & (UART_STATUS_RXFIFO_COUNT_M << UART_STATUS_RXFIFO_COUNT_S)) {
+        char ch = UART(UART0).FIFO & (UART_FIFO_DATA_M << UART_FIFO_DATA_S);
         uint8_t wr_next = (wr_pos+1) % UART0_RX_SIZE;
         if (wr_next != rd_pos) {
             rx_buf[wr_pos] = ch;
@@ -105,15 +103,18 @@ static void uart0_rx_init(void)
     _xt_isr_unmask(1 << INUM_UART);
 
     //clear rx and tx fifo,not ready
-    SET_PERI_REG_MASK(UART_CONF0(UART0), UART_RXFIFO_RST | UART_TXFIFO_RST);
-    CLEAR_PERI_REG_MASK(UART_CONF0(UART0), UART_RXFIFO_RST | UART_TXFIFO_RST);
+    UART(UART0).CONF0 = UART_CONF0_RXFIFO_RESET | UART_CONF0_TXFIFO_RESET;
+    UART(UART0).CONF0 &= ~(UART_CONF0_RXFIFO_RESET | UART_CONF0_TXFIFO_RESET);
 
     //set rx fifo trigger
-    WRITE_PERI_REG(UART_CONF1(UART0), (trig_lvl & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S);
+    UART(UART0).CONF1 &= ~(UART_CONF1_RXFIFO_FULL_THRESHOLD_M << UART_CONF1_RXFIFO_FULL_THRESHOLD_S);
+    UART(UART0).CONF1 |= (trig_lvl & UART_CONF1_RXFIFO_FULL_THRESHOLD_M) << UART_CONF1_RXFIFO_FULL_THRESHOLD_S;
 
     //clear all interrupt
-    WRITE_PERI_REG(UART_INT_CLR(UART0), 0xffff);
+    UART(UART0).INT_CLEAR = 0x1ff;
+
     //enable rx_interrupt
-    SET_PERI_REG_MASK(UART_INT_ENA(UART0), UART_RXFIFO_FULL_INT_ENA);    
+    UART(UART0).INT_ENABLE = UART_INT_ENABLE_RXFIFO_FULL;
+
     inited = true;
 }
