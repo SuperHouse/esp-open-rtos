@@ -8,6 +8,10 @@
 
 #ifndef __ESP_WIFI_H__
 #define __ESP_WIFI_H__
+#include <stdint.h>
+#include <stdbool.h>
+
+#include <lwip/ip_addr.h>
 
 #ifdef	__cplusplus
 extern "C" {

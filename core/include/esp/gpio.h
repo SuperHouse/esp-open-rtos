@@ -9,7 +9,7 @@
 #ifndef _ESP_GPIO_H
 #define _ESP_GPIO_H
 #include <stdbool.h>
-#include "esp/registers.h"
+#include "esp/gpio_regs.h"
 #include "esp/iomux.h"
 #include "esp/cpu.h"
 #include "xtensa_interrupts.h"
@@ -32,37 +32,38 @@ INLINED void gpio_enable(const uint8_t gpio_num, const gpio_direction_t directio
     switch(direction) {
     case GPIO_INPUT:
         iomux_flags = 0;
-        ctrl_val = GPIO_SOURCE_GPIO;
+        ctrl_val = 0;
         break;
     case GPIO_OUTPUT:
-        iomux_flags = IOMUX_OE;
-        ctrl_val = GPIO_DRIVE_PUSH_PULL|GPIO_SOURCE_GPIO;
+        iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
+        ctrl_val = GPIO_CONF_PUSH_PULL;
         break;
     case GPIO_OUT_OPEN_DRAIN:
-        iomux_flags = IOMUX_OE;
-        ctrl_val = GPIO_DRIVE_OPEN_DRAIN|GPIO_SOURCE_GPIO;
+        iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
+        ctrl_val = 0;
         break;
     case GPIO_INPUT_PULLUP:
-        iomux_flags = IOMUX_PU;
-        ctrl_val = GPIO_SOURCE_GPIO;
+        iomux_flags = IOMUX_PIN_PULLUP;
+        ctrl_val = 0;
+        break;
     }
     iomux_set_gpio_function(gpio_num, iomux_flags);
-    GPIO_CTRL_REG(gpio_num) = (GPIO_CTRL_REG(gpio_num)&GPIO_INT_MASK) | ctrl_val;
-    if(direction == GPIO_OUTPUT)
-        GPIO_DIR_SET = BIT(gpio_num);
+    GPIO.CONF[gpio_num] = (GPIO.CONF[gpio_num] & FIELD_MASK(GPIO_CONF_INTTYPE)) | ctrl_val;
+    if (iomux_flags & IOMUX_PIN_OUTPUT_ENABLE)
+        GPIO.ENABLE_OUT_SET = BIT(gpio_num);
     else
-        GPIO_DIR_CLEAR = BIT(gpio_num);
+        GPIO.ENABLE_OUT_CLEAR = BIT(gpio_num);
 }
 
 /* Disable GPIO on the specified pin, and set it Hi-Z.
  *
  * If later muxing this pin to a different function, make sure to set
- * IOMUX_OE if necessary to enable the output buffer.
+ * IOMUX_PIN_OUTPUT_ENABLE if necessary to enable the output buffer.
  */
 INLINED void gpio_disable(const uint8_t gpio_num)
 {
-    GPIO_DIR_CLEAR = BIT(gpio_num);
-    *gpio_iomux_reg(gpio_num) &= ~IOMUX_OE;
+    GPIO.ENABLE_OUT_CLEAR = BIT(gpio_num);
+    *gpio_iomux_reg(gpio_num) &= ~IOMUX_PIN_OUTPUT_ENABLE;
 }
 
 /* Set output of a pin high or low.
@@ -72,9 +73,9 @@ INLINED void gpio_disable(const uint8_t gpio_num)
 INLINED void gpio_write(const uint8_t gpio_num, const bool set)
 {
     if(set)
-        GPIO_OUT_SET = BIT(gpio_num);
+        GPIO.OUT_SET = BIT(gpio_num);
     else
-        GPIO_OUT_CLEAR = BIT(gpio_num);
+        GPIO.OUT_CLEAR = BIT(gpio_num);
 }
 
 /* Toggle output of a pin
@@ -89,10 +90,10 @@ INLINED void gpio_toggle(const uint8_t gpio_num)
        get an invalid value. Prevents one task from clobbering another
        task's pins, without needing to disable/enable interrupts.
     */
-    if(GPIO_OUT_REG & BIT(gpio_num))
-        GPIO_OUT_CLEAR = BIT(gpio_num);
+    if(GPIO.OUT & BIT(gpio_num))
+        GPIO.OUT_CLEAR = BIT(gpio_num);
     else
-        GPIO_OUT_SET = BIT(gpio_num);
+        GPIO.OUT_SET = BIT(gpio_num);
 }
 
 /* Read input value of a GPIO pin.
@@ -102,38 +103,28 @@ INLINED void gpio_toggle(const uint8_t gpio_num)
  */
 INLINED bool gpio_read(const uint8_t gpio_num)
 {
-    return GPIO_IN_REG & BIT(gpio_num);
+    return GPIO.IN & BIT(gpio_num);
 }
-
-typedef enum {
-    INT_NONE = 0,
-    INT_RISING = GPIO_INT_RISING,
-    INT_FALLING = GPIO_INT_FALLING,
-    INT_CHANGE = GPIO_INT_CHANGE,
-    INT_LOW = GPIO_INT_LOW,
-    INT_HIGH = GPIO_INT_HIGH,
-} gpio_interrupt_t;
 
 extern void gpio_interrupt_handler(void);
 
 /* Set the interrupt type for a given pin
  *
- * If int_type is not INT_NONE, the gpio_interrupt_handler will be attached and unmasked.
+ * If int_type is not GPIO_INTTYPE_NONE, the gpio_interrupt_handler will be attached and unmasked.
  */
-INLINED void gpio_set_interrupt(const uint8_t gpio_num, const gpio_interrupt_t int_type)
+INLINED void gpio_set_interrupt(const uint8_t gpio_num, const gpio_inttype_t int_type)
 {
-    GPIO_CTRL_REG(gpio_num) = (GPIO_CTRL_REG(gpio_num)&~GPIO_INT_MASK)
-        | (int_type & GPIO_INT_MASK);
-    if(int_type != INT_NONE) {
+    GPIO.CONF[gpio_num] = SET_FIELD(GPIO.CONF[gpio_num], GPIO_CONF_INTTYPE, int_type);
+    if(int_type != GPIO_INTTYPE_NONE) {
         _xt_isr_attach(INUM_GPIO, gpio_interrupt_handler);
         _xt_isr_unmask(1<<INUM_GPIO);
     }
 }
 
 /* Return the interrupt type set for a pin */
-INLINED gpio_interrupt_t gpio_get_interrupt(const uint8_t gpio_num)
+INLINED gpio_inttype_t gpio_get_interrupt(const uint8_t gpio_num)
 {
-    return (gpio_interrupt_t)(GPIO_CTRL_REG(gpio_num) & GPIO_INT_MASK);
+    return FIELD2VAL(GPIO_CONF_INTTYPE, GPIO.CONF[gpio_num]);
 }
 
 #endif

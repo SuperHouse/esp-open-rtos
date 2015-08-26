@@ -4,15 +4,17 @@ A community developed open source [FreeRTOS](http://www.freertos.org/)-based fra
 
 Originally based on, but substantially different from, the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk).
 
+[![Build Status](https://travis-ci.org/SuperHouse/esp-open-rtos.svg?branch=master)](https://travis-ci.org/SuperHouse/esp-open-rtos)
+
 ## Quick Start
 
 * Install [esp-open-sdk](https://github.com/pfalcon/esp-open-sdk/), build it with `make STANDALONE=n`, then edit your PATH and add the generated toolchain `bin` directory. (Despite the similar name esp-open-sdk has different maintainers - but we think it's fantastic!)
 
-    (Other toolchains will also work, as long as a gcc cross-compiler is available on the PATH. The proprietary Tensilica "xcc" compiler will probably not work.)
+    (Other toolchains may also work, as long as a gcc cross-compiler is available on the PATH and libhal (and libhal headers) are compiled and available to gcc. The proprietary Tensilica "xcc" compiler will probably not work.)
 
-* Install [esptool.py](https://github.com/themadinventor/esptool) and make it available on your PATH.
+* Install [esptool.py](https://github.com/themadinventor/esptool) and make it available on your PATH. If you used esp-open-sdk then this is done already.
 
-* The build process uses `GNU Make`, and the utilities `sed` and `grep`. Linux & OS X should have these already. Windows users can get these tools a variety of ways - [MingGW](http://www.mingw.org/wiki/mingw) is one option.
+* The esp-open-rtos build process uses `GNU Make`, and the utilities `sed` and `grep`. If you built esp-open-sdk then you probably have these already.
 
 * Use git to clone the esp-open-rtos project (note the `--recursive`):
 
