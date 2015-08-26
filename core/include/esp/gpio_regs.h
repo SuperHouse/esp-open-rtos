@@ -57,7 +57,7 @@ struct GPIO_REGS {
     uint32_t volatile PWM;              // 0x68
     uint32_t volatile RTC_CALIB;        // 0x6c
     uint32_t volatile RTC_CALIB_RESULT; // 0x70
-} __attribute__ (( packed ));
+};
 
 _Static_assert(sizeof(struct GPIO_REGS) == 0x74, "GPIO_REGS is the wrong size");
 

@@ -67,7 +67,7 @@ struct SPI_REGS {
     uint32_t volatile EXT1;         // 0xf4
     uint32_t volatile EXT2;         // 0xf8
     uint32_t volatile EXT3;         // 0xfc
-} __attribute__ (( packed ));
+};
 
 _Static_assert(sizeof(struct SPI_REGS) == 0x100, "SPI_REGS is the wrong size");
 

@@ -46,7 +46,7 @@ struct UART_REGS {
     uint32_t volatile _unused[17];    // 0x34 - 0x74
     uint32_t volatile DATE;           // 0x78
     uint32_t volatile ID;             // 0x7c
-} __attribute__ (( packed ));
+};
 
 _Static_assert(sizeof(struct UART_REGS) == 0x80, "UART_REGS is the wrong size");
 
