@@ -207,9 +207,9 @@ _Static_assert(sizeof(struct sdk_g_ic_st) == 0x548, "sdk_g_ic_st is the wrong si
 
 sdk_SpiFlashOpResult sdk_SPIRead(uint32_t src_addr, uint32_t *des_addr, uint32_t size);
 sdk_SpiFlashOpResult sdk_SPIWrite(uint32_t des_addr, uint32_t *src_addr, uint32_t size);
-void sdk_cnx_attach(struct sdk_g_ic_st);
+void sdk_cnx_attach(struct sdk_g_ic_st *);
 void sdk_ets_timer_init(void);
-void sdk_ieee80211_ifattach(struct sdk_g_ic_st, uint8_t *);
+void sdk_ieee80211_ifattach(struct sdk_g_ic_st *, uint8_t *);
 void sdk_ieee80211_phy_init(enum sdk_phy_mode);
 void sdk_lmacInit(void);
 void sdk_os_install_putc1( void (*func)(uint8_t) );

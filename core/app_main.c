@@ -43,8 +43,8 @@ void user_init(void);
 
 #define halt()  while (1) {}
 
-extern uint32_t *_bss_start;
-extern uint32_t *_bss_end;
+extern uint32_t _bss_start;
+extern uint32_t _bss_end;
 
 // .Ldata003 -- .irom.text+0x0
 static const uint8_t IROM default_phy_info[PHY_INFO_SIZE] = {
@@ -150,7 +150,7 @@ static void IRAM set_spi0_divisor(uint32_t divisor) {
 }
 
 // .text+0x148
-void sdk_user_fatal_exception_handler(void) {
+void IRAM sdk_user_fatal_exception_handler(void) {
     if (!sdk_NMIIrqIsOn) {
         vPortEnterCritical();
         do {
@@ -263,17 +263,17 @@ void IRAM sdk_user_start(void) {
 }
 
 // .text+0x3a8
-void vApplicationStackOverflowHook(xTaskHandle task, char *task_name) {
+void IRAM vApplicationStackOverflowHook(xTaskHandle task, char *task_name) {
     printf("\"%s\"(stack_size = %lu) overflow the heap_size.\n", task_name, uxTaskGetStackHighWaterMark(task));
 }
 
 // .text+0x3d8
-void vApplicationIdleHook(void) {
+void IRAM vApplicationIdleHook(void) {
     printf("idle %lu\n", WDEV.SYS_TIME);
 }
 
 // .text+0x404
-void vApplicationTickHook(void) {
+void IRAM vApplicationTickHook(void) {
     printf("tick %lu\n", WDEV.SYS_TIME);
 }
 
@@ -281,7 +281,7 @@ void vApplicationTickHook(void) {
 static void zero_bss(void) {
     uint32_t *addr;
 
-    for (addr = _bss_start; addr < _bss_end; addr++) {
+    for (addr = &_bss_start; addr < &_bss_end; addr++) {
         *addr = 0;
     }
 }
@@ -299,12 +299,12 @@ static void init_networking(uint8_t *phy_info, uint8_t *mac_addr) {
     sdk_lmacInit();
     sdk_wDev_Initialize();
     sdk_pp_attach();
-    sdk_ieee80211_ifattach(sdk_g_ic, mac_addr);
+    sdk_ieee80211_ifattach(&sdk_g_ic, mac_addr);
     _xt_isr_mask(1);
     DPORT.DPORT0 = SET_FIELD(DPORT.DPORT0, DPORT_DPORT0_FIELD0, 1);
     sdk_pm_attach();
     sdk_phy_enable_agc();
-    sdk_cnx_attach(sdk_g_ic);
+    sdk_cnx_attach(&sdk_g_ic);
     sdk_wDevEnableRx();
 }
 
