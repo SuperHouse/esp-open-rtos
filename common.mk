@@ -100,6 +100,13 @@ LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(RO
 ifeq ($(FLAVOR),debug)
     CFLAGS += -g -O0
     LDFLAGS += -g -O0
+else ifeq ($(FLAVOR),sdklike)
+    # These are flags intended to produce object code as similar as possible to
+    # the output of the compiler used to build the SDK libs (for comparison of
+    # disassemblies when coding replacement routines).  It is not normally
+    # intended to be used otherwise.
+    CFLAGS += -O2 -Os -fno-inline -fno-ipa-cp -fno-toplevel-reorder
+    LDFLAGS += -O2
 else
     CFLAGS += -g -O2
     LDFLAGS += -g -O2
