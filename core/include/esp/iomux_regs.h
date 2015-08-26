@@ -20,7 +20,7 @@
 struct IOMUX_REGS {
     uint32_t volatile CONF;    // 0x00
     uint32_t volatile PIN[16]; // 0x04 - 0x40
-} __attribute__ (( packed ));
+};
 
 _Static_assert(sizeof(struct IOMUX_REGS) == 0x44, "IOMUX_REGS is the wrong size");
 

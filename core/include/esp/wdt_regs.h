@@ -27,7 +27,7 @@ struct WDT_REGS {
     uint32_t volatile REG2;        // 0x08
     uint32_t volatile _unused[2];  // 0x0c - 0x10
     uint32_t volatile FEED;        // 0x14
-} __attribute__ (( packed ));
+};
 
 _Static_assert(sizeof(struct WDT_REGS) == 0x18, "WDT_REGS is the wrong size");
 
