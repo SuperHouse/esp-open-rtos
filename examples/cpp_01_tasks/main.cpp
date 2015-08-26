@@ -26,7 +26,6 @@
  * 
  */
 
-#include "cpp_operators.hpp"
 #include "task.hpp"
 #include "queue.hpp"
 
