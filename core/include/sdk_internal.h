@@ -141,7 +141,7 @@ struct sdk_g_ic_saved_st {
     uint32_t _unknown288;
     uint8_t _unknown28c;
 
-    uint8_t _unknown290[28];
+    uint8_t _unknown28d[31];
 
     uint8_t _unknown2ac[64];
     uint8_t _unknonwn2ec;

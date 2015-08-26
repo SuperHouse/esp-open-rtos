@@ -82,7 +82,7 @@ xTaskHandle sdk_xWatchDogTaskHandle;
 
 static void IRAM get_otp_mac_address(uint8_t *buf);
 static void IRAM set_spi0_divisor(uint32_t divisor);
-static void IRAM default_putc(uint8_t c);
+static int IRAM default_putc(uint8_t c);
 static void IRAM default_putc1(uint8_t c);
 static void zero_bss(void);
 static void init_networking(uint8_t *phy_info, uint8_t *mac_addr);
@@ -167,9 +167,10 @@ void IRAM sdk_user_fatal_exception_handler(void) {
 }
 
 // .Lfunc003 -- .text+0x1d0
-static void IRAM default_putc(uint8_t c) {
+static int IRAM default_putc(uint8_t c) {
     while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS) > 125) {}
     UART(0).FIFO = c;
+    return 0;
 }
 
 // .Lfunc004 -- .text+0x1f4
@@ -467,7 +468,7 @@ static void user_start_phase2(void) {
     free(phy_info);
     tcpip_init(NULL, NULL);
     sdk_wdt_init();
-    xTaskCreate(sdk_user_init_task, (signed char *)"uiT", 1024, 0, 14, sdk_xUserTaskHandle);
+    xTaskCreate(sdk_user_init_task, (signed char *)"uiT", 1024, 0, 14, &sdk_xUserTaskHandle);
 }
 
 // .Lfunc010 -- .irom0.text+0x710
