@@ -45,7 +45,7 @@ struct DPORT_REGS {
     uint32_t volatile OTP_MAC1;            // 0x54
     uint32_t volatile OTP_CHIPID;          // 0x58
     uint32_t volatile OTP_MAC2;            // 0x5c
-} __attribute__ (( packed ));
+};
 
 _Static_assert(sizeof(struct DPORT_REGS) == 0x60, "DPORT_REGS is the wrong size");
 
