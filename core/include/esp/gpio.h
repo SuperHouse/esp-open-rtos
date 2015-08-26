@@ -124,7 +124,7 @@ INLINED void gpio_set_interrupt(const uint8_t gpio_num, const gpio_inttype_t int
 /* Return the interrupt type set for a pin */
 INLINED gpio_inttype_t gpio_get_interrupt(const uint8_t gpio_num)
 {
-    return FIELD2VAL(GPIO_CONF_INTTYPE, GPIO.CONF[gpio_num]);
+    return (gpio_inttype_t)FIELD2VAL(GPIO_CONF_INTTYPE, GPIO.CONF[gpio_num]);
 }
 
 #endif
