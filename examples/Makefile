@@ -22,10 +22,10 @@ build-examples: $(EXAMPLES_BUILD)
 rebuild-examples: $(EXAMPLES_REBUILD)
 
 %.dummybuild:
-	make -C $(dir $@)
+	$(MAKE) -C $(dir $@)
 
 %.dummyrebuild:
-	make -C $(dir $@) rebuild
+	$(MAKE) -C $(dir $@) rebuild
 
 .PHONY: warning rebuild-examples build-examples
 .NOTPARALLEL:
