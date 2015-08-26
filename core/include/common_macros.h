@@ -10,6 +10,8 @@
 #ifndef _COMMON_MACROS_H
 #define _COMMON_MACROS_H
 
+#include <sys/cdefs.h>
+
 #define UNUSED __attributed((unused))
 
 #ifndef BIT
