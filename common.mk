@@ -94,8 +94,18 @@ OWN_LIBC ?= 1
 # Note: you will need a recent esp
 ENTRY_SYMBOL ?= call_user_start
 
+# Set this to zero if you don't want individual function & data sections
+# (some code may be slightly slower, linking will be slighty slower,
+# but compiled code size will come down a small amount.)
+SPLIT_SECTIONS ?= 1
+
 CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99 $(CPPFLAGS)
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(EXTRA_LDFLAGS)
+
+ifeq ($(SPLIT_SECTIONS),1)
+  CFLAGS += -ffunction-sections -fdata-sections
+  LDFLAGS += -Wl,-gc-sections
+endif
 
 ifeq ($(FLAVOR),debug)
     CFLAGS += -g -O0
