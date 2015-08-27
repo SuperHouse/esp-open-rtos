@@ -94,13 +94,24 @@ OWN_LIBC ?= 1
 # Note: you will need a recent esp
 ENTRY_SYMBOL ?= call_user_start
 
+# Set this to zero if you don't want individual function & data sections
+# (some code may be slightly slower, linking will be slighty slower,
+# but compiled code size will come down a small amount.)
+SPLIT_SECTIONS ?= 1
+
 # Common flags for both C & C++_
 C_CXX_FLAGS     = -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals $(CPPFLAGS)
 # Flags for C only
 CFLAGS		= $(C_CXX_FLAGS) -std=gnu99
 # Flags for C++ only
 CXXFLAGS	= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti
+
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(EXTRA_LDFLAGS)
+
+ifeq ($(SPLIT_SECTIONS),1)
+  C_CXX_FLAGS += -ffunction-sections -fdata-sections
+  LDFLAGS += -Wl,-gc-sections
+endif
 
 ifeq ($(FLAVOR),debug)
     C_CXX_FLAGS += -g -O0
