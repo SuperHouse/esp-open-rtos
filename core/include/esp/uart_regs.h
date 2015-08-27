@@ -24,7 +24,7 @@
  */
 
 #define UART_BASE 0x60000000
-#define UART(i) (*(struct UART_REGS *)(0x60000200 - (i)*0xf00))
+#define UART(i) (*(struct UART_REGS *)(UART_BASE + (i)*0xf00))
 
 #define UART0_BASE UART_BASE
 #define UART1_BASE (UART_BASE + 0xf00)
