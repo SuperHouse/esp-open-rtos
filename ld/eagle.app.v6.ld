@@ -267,8 +267,8 @@ SECTIONS
        (except for libgcc which is matched above.)
     */
     *(.literal .text .literal.* .text.*)
-    /* SDK libraries expect ICACHE_FLASH_ATTR/etc functions to be loaded explicitly as IROM */
-    *sdklib*:*(.irom.* .irom.*.* .irom0.*)
+    /* Anything explicitly marked as "irom" or "irom0" should go here */
+    *(.irom.* .irom.*.* .irom0.*)
     _irom0_text_end = ABSOLUTE(.);
   } >irom0_0_seg :irom0_0_phdr
 
