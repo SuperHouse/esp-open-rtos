@@ -23,7 +23,7 @@
 #include "esp/wdev_regs.h"
 #include "os_version.h"
 
-#include "espressif/esp_system.h"
+#include "espressif/esp_common.h"
 #include "sdk_internal.h"
 
 /* This is not declared in any header file (but arguably should be) */
@@ -82,8 +82,8 @@ xTaskHandle sdk_xWatchDogTaskHandle;
 
 static void IRAM get_otp_mac_address(uint8_t *buf);
 static void IRAM set_spi0_divisor(uint32_t divisor);
-static int IRAM default_putc(uint8_t c);
-static void IRAM default_putc1(uint8_t c);
+static int IRAM default_putc(char c);
+static void IRAM default_putc1(char c);
 static void zero_bss(void);
 static void init_networking(uint8_t *phy_info, uint8_t *mac_addr);
 static void init_g_ic(void);
@@ -167,14 +167,14 @@ void IRAM sdk_user_fatal_exception_handler(void) {
 }
 
 // .Lfunc003 -- .text+0x1d0
-static int IRAM default_putc(uint8_t c) {
+static int IRAM default_putc(char c) {
     while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS) > 125) {}
     UART(0).FIFO = c;
     return 0;
 }
 
 // .Lfunc004 -- .text+0x1f4
-static void IRAM default_putc1(uint8_t c) {
+static void IRAM default_putc1(char c) {
     if (c == '\n') {
         default_putc('\r');
     } else if (c == '\r') {
@@ -238,8 +238,8 @@ void IRAM sdk_user_start(void) {
     flash_size = flash_sectors * 4096;
     sdk_flashchip.chip_size = flash_size;
     set_spi0_divisor(flash_speed_divisor);
-    sdk_SPIRead(flash_size - 256, buf32, BOOT_INFO_SIZE);
-    boot_slot = buf8[0];
+    sdk_SPIRead(flash_size - 4096, buf32, BOOT_INFO_SIZE);
+    boot_slot = buf8[0] & 1;
     cksum_magic = buf32[1];
     cksum_len = buf32[3 + boot_slot];
     cksum_value = buf32[5 + boot_slot];
@@ -469,6 +469,7 @@ static void user_start_phase2(void) {
     tcpip_init(NULL, NULL);
     sdk_wdt_init();
     xTaskCreate(sdk_user_init_task, (signed char *)"uiT", 1024, 0, 14, &sdk_xUserTaskHandle);
+    vTaskStartScheduler();
 }
 
 // .Lfunc010 -- .irom0.text+0x710

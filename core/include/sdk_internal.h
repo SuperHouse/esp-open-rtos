@@ -212,7 +212,6 @@ void sdk_ets_timer_init(void);
 void sdk_ieee80211_ifattach(struct sdk_g_ic_st *, uint8_t *);
 void sdk_ieee80211_phy_init(enum sdk_phy_mode);
 void sdk_lmacInit(void);
-void sdk_os_install_putc1( void (*func)(uint8_t) );
 void sdk_phy_disable_agc(void);
 void sdk_phy_enable_agc(void);
 void sdk_pm_attach(void);
@@ -228,8 +227,6 @@ void sdk_wifi_mode_set(uint8_t);
 void sdk_wifi_softap_cacl_mac(uint8_t *, uint8_t *);
 void sdk_wifi_softap_set_default_ssid(void);
 void sdk_wifi_softap_start(void);
-void sdk_wifi_station_connect(void);
-bool sdk_wifi_station_get_auto_connect(void);
 void sdk_wifi_station_start(void);
 
 #endif /* _INTERNAL_SDK_STRUCTURES_H */
