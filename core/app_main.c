@@ -89,8 +89,8 @@ static void init_networking(uint8_t *phy_info, uint8_t *mac_addr);
 static void init_g_ic(void);
 static void dump_excinfo(void);
 static void user_start_phase2(void);
-static void dump_flash_data(uint32_t start_addr, uint32_t length);
-static void dump_flash_config_sectors(uint32_t start_addr);
+static void dump_flash_sector(uint32_t start_sector, uint32_t length);
+static void dump_flash_config_sectors(uint32_t start_sector);
 
 // .Lfunc001 -- .text+0x14
 static void IRAM get_otp_mac_address(uint8_t *buf) {
@@ -473,31 +473,38 @@ static void user_start_phase2(void) {
 }
 
 // .Lfunc010 -- .irom0.text+0x710
-static void dump_flash_data(uint32_t start_addr, uint32_t length) {
+static void dump_flash_sector(uint32_t start_sector, uint32_t length) {
     uint8_t *buf;
     int bufsize, i;
 
     bufsize = (length + 3) & 0xfffc;
     buf = malloc(bufsize);
-    sdk_spi_flash_read(start_addr, (uint32_t *)buf, bufsize);
-    for (i = 0; i < length; ) {
-        printf("%02x ", buf[i]);
-        if ((i & 0x1f) == 0) {
-            printf("\n");
+    sdk_spi_flash_read(start_sector * sdk_flashchip.sector_size, (uint32_t *)buf
+, bufsize);
+    for (i = 0; i < length; i++) {
+        if ((i & 0xf) == 0) {
+            if (i) {
+                printf("\n");
+            }
+            printf("%04x:", i);
         }
+        printf(" %02x", buf[i]);
     }
     printf("\n");
     free(buf);
 }
 
 // .Lfunc011 -- .irom0.text+0x790
-static void dump_flash_config_sectors(uint32_t start_addr) {
+static void dump_flash_config_sectors(uint32_t start_sector) {
     printf("system param error\n");
-    // The original code used start_addr+1, start_addr+2, etc.  This is
-    // obviously wrong as start_addr is clearly a byte address, not a sector
-    // address.
-    dump_flash_data(start_addr + sdk_flashchip.sector_size, sizeof(struct sdk_g_ic_saved_st));
-    dump_flash_data(start_addr + sdk_flashchip.sector_size * 2, sizeof(struct sdk_g_ic_saved_st));
-    dump_flash_data(start_addr + sdk_flashchip.sector_size * 3, BOOT_INFO_SIZE);
+    // Note: original SDK code didn't dump PHY info
+    printf("phy_info:\n");
+    dump_flash_sector(start_sector, PHY_INFO_SIZE);
+    printf("\ng_ic saved 0:\n");
+    dump_flash_sector(start_sector + 1, sizeof(struct sdk_g_ic_saved_st));
+    printf("\ng_ic saved 1:\n");
+    dump_flash_sector(start_sector + 2, sizeof(struct sdk_g_ic_saved_st));
+    printf("\nboot info:\n");
+    dump_flash_sector(start_sector + 3, BOOT_INFO_SIZE);
 }
 
