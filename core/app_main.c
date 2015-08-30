@@ -239,11 +239,11 @@ void IRAM sdk_user_start(void) {
     sdk_flashchip.chip_size = flash_size;
     set_spi0_divisor(flash_speed_divisor);
     sdk_SPIRead(flash_size - 4096, buf32, BOOT_INFO_SIZE);
-    boot_slot = buf8[0] & 1;
+    boot_slot = buf8[0] ? 1 : 0;
     cksum_magic = buf32[1];
     cksum_len = buf32[3 + boot_slot];
     cksum_value = buf32[5 + boot_slot];
-    ic_flash_addr = (flash_sectors - 2 + boot_slot) * sdk_flashchip.sector_size;
+    ic_flash_addr = (flash_sectors - 3 + boot_slot) * sdk_flashchip.sector_size;
     sdk_SPIRead(ic_flash_addr, buf32, sizeof(struct sdk_g_ic_saved_st));
     Cache_Read_Enable(0, 0, 1);
     zero_bss();
