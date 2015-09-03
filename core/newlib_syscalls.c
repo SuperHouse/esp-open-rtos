@@ -65,20 +65,19 @@ long _read_r( struct _reent *r, int fd, char *ptr, int len )
     return len;
 }
 
-/* These are stub implementations for the reentrant syscalls that
- * newlib is configured to expect */
-int _fstat_r(struct _reent *r, int fd, void *buf)
+/* Stub syscall implementations follow, to allow compiling newlib functions that
+   pull these in via various codepaths
+*/
+__attribute__((alias("syscall_returns_enosys"))) int _open_r(struct _reent *r, const char *pathname, int flags, int mode);
+__attribute__((alias("syscall_returns_enosys"))) int _fstat_r(struct _reent *r, int fd, void *buf);
+__attribute__((alias("syscall_returns_enosys"))) int _close_r(struct _reent *r, int fd);
+__attribute__((alias("syscall_returns_enosys"))) off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence);
+
+/* Generic stub for any newlib syscall that fails with errno ENOSYS
+   ("Function not implemented") and a return value equivalent to
+   (int)-1. */
+static int syscall_returns_enosys(struct _reent *r)
 {
+    r->_errno=ENOSYS;
     return -1;
 }
-
-int _close_r(struct _reent *r, int fd)
-{
-    return -1;
-}
-
-off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence)
-{
-    return (off_t)-1;
-}
-
