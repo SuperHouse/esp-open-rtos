@@ -6,6 +6,7 @@
  */
 #include <sys/reent.h>
 #include <sys/types.h>
+#include <sys/errno.h>
 #include <espressif/sdk_private.h>
 #include <common_macros.h>
 #include <stdlib.h>
@@ -37,6 +38,10 @@ IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
  */
 long _write_r(struct _reent *r, int fd, const char *ptr, int len )
 {
+    if(fd != r->_stdout->_file) {
+        r->_errno = EBADF;
+        return -1;
+    }
     for(int i = 0; i < len; i++)
 	sdk_os_putc(ptr[i]);
     return len;
@@ -48,13 +53,16 @@ long _write_r(struct _reent *r, int fd, const char *ptr, int len )
  */
 long _read_r( struct _reent *r, int fd, char *ptr, int len )
 {
-  for(int i = 0; i < len; i++) {
-    char ch;
-    while (sdk_uart_rx_one_char(&ch)) ;
-    ptr[i] = ch;
-
-  }
-  return len;
+    if(fd != r->_stdin->_file) {
+        r->_errno = EBADF;
+        return -1;
+    }
+    for(int i = 0; i < len; i++) {
+        char ch;
+        while (sdk_uart_rx_one_char(&ch)) ;
+        ptr[i] = ch;
+    }
+    return len;
 }
 
 /* These are stub implementations for the reentrant syscalls that
