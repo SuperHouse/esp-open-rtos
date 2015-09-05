@@ -26,7 +26,7 @@ void user_init(void)
 
     printf("Image addresses in flash:\r\n");
     for(int i = 0; i <conf.count; i++) {
-        printf("%c%d: offset 0x%08lx\r\n", i == conf.current_rom ? '*':' ', i, conf.roms[i]);
+        printf("%c%d: offset 0x%08x\r\n", i == conf.current_rom ? '*':' ', i, conf.roms[i]);
     }
 
     struct sdk_station_config config = {
