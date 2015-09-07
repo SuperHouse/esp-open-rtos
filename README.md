@@ -4,7 +4,15 @@ A community developed open source [FreeRTOS](http://www.freertos.org/)-based fra
 
 Originally based on, but substantially different from, the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk).
 
+## Resources
+
 [![Build Status](https://travis-ci.org/SuperHouse/esp-open-rtos.svg?branch=master)](https://travis-ci.org/SuperHouse/esp-open-rtos)
+
+Email discussion list: https://groups.google.com/d/forum/esp-open-rtos
+
+Github issues list/bugtracker: http://github.com/superhouse/esp-open-rtos/issues
+
+Please note that this project is released with a [Contributor Code of Conduct](https://github.com/SuperHouse/esp-open-rtos/blob/master/code_of_conduct.md). By participating in this project you agree to abide by its terms.
 
 ## Quick Start
 
