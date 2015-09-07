@@ -200,6 +200,7 @@ all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 # Expects that the following component-specific variables are defined:
 #
 # $(1)_ROOT    = Top-level dir containing component. Can be in-tree or out-of-tree.
+#                (if this variable isn't defined, directory containing component.mk is used)
 # $(1)_SRC_DIR = List of source directories for the component. All must be under $(1)_ROOT
 # $(1)_INC_DIR = List of include directories specific for the component
 #
@@ -214,6 +215,8 @@ all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 # Each call appends to COMPONENT_ARS which is a list of archive files for compiled components
 COMPONENT_ARS =
 define component_compile_rules
+$(1)_DEFAULT_ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
+$(1)_ROOT ?= $$($(1)_DEFAULT_ROOT)
 $(1)_OBJ_DIR   = $(call lc,$(BUILD_DIR)$(1)/)
 ### determine source files and object files ###
 $(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR), \
