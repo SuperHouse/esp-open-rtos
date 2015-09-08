@@ -307,8 +307,15 @@ PROGRAM_MAKEFILE = $(firstword $(MAKEFILE_LIST))
 $(eval $(call component_compile_rules,PROGRAM))
 
 ## Include other components (this is where the actual compiler sections are generated)
-$(foreach component,$(COMPONENTS), $(eval include $(ROOT)$(component)/component.mk))
-
+##
+## if component directory exists relative to $(ROOT), use that.
+## otherwise try to resolve it as an absolute path
+$(foreach component,$(COMPONENTS), 					\
+	$(if $(wildcard $(ROOT)$(component)),				\
+		$(eval include $(ROOT)$(component)/component.mk), 	\
+		$(eval include $(component)/component.mk)		\
+	)								\
+)
 
 ## Run linker scripts via C preprocessor to evaluate macros
 $(LD_DIR)%.ld: $(ROOT)ld/%.ld | $(LD_DIR)
