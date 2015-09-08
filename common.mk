@@ -194,6 +194,9 @@ all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 # component_compile_rules: Produces compilation rules for a given
 # component
 #
+# For user-facing documentation, see:
+# https://github.com/SuperHouse/esp-open-rtos/wiki/Build-Process#adding-a-new-component
+#
 # Call arguments are:
 # $(1) - component name
 #
@@ -204,13 +207,6 @@ all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 # $(1)_SRC_DIR = List of source directories for the component. All must be under $(1)_ROOT
 # $(1)_INC_DIR = List of include directories specific for the component
 #
-# As an alternative to $(1)_SRC_DIR, you can specify source filenames
-# as $(1)_SRC_FILES. If you want to specify both directories and
-# some additional files, specify directories in $(1)_SRC_DIR and
-# additional files in $(1)_EXTRA_SRC_FILES.
-#
-# Optional variables:
-# $(1)_CFLAGS  = CFLAGS to override the default CFLAGS for this component only.
 #
 # Each call appends to COMPONENT_ARS which is a list of archive files for compiled components
 COMPONENT_ARS =
