@@ -22,13 +22,11 @@
 
 #include "ssl.h"
 
+#include "ssid_config.h"
+
 #define WEB_SERVER "192.168.0.18"
 #define WEB_PORT "8000"
 #define WEB_URL "/test"
-
-#if !defined(WIFI_SSID) || !defined(WIFI_PASS)
-#error "Please define macros WIFI_SSID & WIFI_PASS (here, or better in a local.h file at root level or in program dir."
-#endif
 
 static void display_cipher(SSL *ssl);
 static void display_session_id(SSL *ssl);

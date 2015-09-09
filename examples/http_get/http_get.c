@@ -18,13 +18,11 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
+#include "ssid_config.h"
+
 #define WEB_SERVER "chainxor.org"
 #define WEB_PORT 80
 #define WEB_URL "http://chainxor.org/"
-
-#if !defined(WIFI_SSID) || !defined(WIFI_PASS)
-#error "Please define macros WIFI_SSID & WIFI_PASS (here, or better in a local.h file at root level or in program dir."
-#endif
 
 void http_get_task(void *pvParameters)
 {

@@ -39,9 +39,6 @@
 #define ESP_TIMEWAIT_THRESHOLD              10000
 #define LWIP_TIMEVAL_PRIVATE                0
 
-// Uncomment this line, and set the debug options you want below, for IP stack debug output
-//#define LWIP_DEBUG
-
 /*
    -----------------------------------------------
    ---------- Platform specific locking ----------
@@ -390,6 +387,10 @@
    ---------- Debugging options ----------
    ---------------------------------------
 */
+
+// Uncomment this line, and set the individual debug options you want, for IP stack debug output
+//#define LWIP_DEBUG
+
 /**
  * ETHARP_DEBUG: Enable debugging in etharp.c.
  */
@@ -431,9 +432,20 @@
 #define TCP_OUTPUT_DEBUG                LWIP_DBG_OFF
 
 /**
+ * UDP_DEBUG: Enable debugging in udp.c.
+ */
+#define UDP_DEBUG                     LWIP_DBG_OFF
+
+/**
+ * ICMP_DEBUG: Enable debugging in udp.c.
+ */
+#define ICMP_DEBUG                     LWIP_DBG_OFF
+
+/**
  * TCPIP_DEBUG: Enable debugging in tcpip.c.
  */
 #define TCPIP_DEBUG                     LWIP_DBG_OFF
+
 
 /**
  * DHCP_DEBUG: Enable debugging in dhcp.c.
