@@ -80,7 +80,7 @@ OBJDUMP = $(CROSS)objdump
 
 # Source components to compile and link. Each of these are subdirectories
 # of the root, with a 'component.mk' file.
-COMPONENTS     ?= core FreeRTOS lwip axtls $(EXTRA_COMPONENTS)
+COMPONENTS     ?= $(EXTRA_COMPONENTS) FreeRTOS lwip axtls core
 
 # binary esp-iot-rtos SDK libraries to link. These are pre-processed prior to linking.
 SDK_LIBS		?= main net80211 phy pp wpa
@@ -194,26 +194,25 @@ all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 # component_compile_rules: Produces compilation rules for a given
 # component
 #
+# For user-facing documentation, see:
+# https://github.com/SuperHouse/esp-open-rtos/wiki/Build-Process#adding-a-new-component
+#
 # Call arguments are:
 # $(1) - component name
 #
 # Expects that the following component-specific variables are defined:
 #
 # $(1)_ROOT    = Top-level dir containing component. Can be in-tree or out-of-tree.
+#                (if this variable isn't defined, directory containing component.mk is used)
 # $(1)_SRC_DIR = List of source directories for the component. All must be under $(1)_ROOT
 # $(1)_INC_DIR = List of include directories specific for the component
 #
-# As an alternative to $(1)_SRC_DIR, you can specify source filenames
-# as $(1)_SRC_FILES. If you want to specify both directories and
-# some additional files, specify directories in $(1)_SRC_DIR and
-# additional files in $(1)_EXTRA_SRC_FILES.
-#
-# Optional variables:
-# $(1)_CFLAGS  = CFLAGS to override the default CFLAGS for this component only.
 #
 # Each call appends to COMPONENT_ARS which is a list of archive files for compiled components
 COMPONENT_ARS =
 define component_compile_rules
+$(1)_DEFAULT_ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
+$(1)_ROOT ?= $$($(1)_DEFAULT_ROOT)
 $(1)_OBJ_DIR   = $(call lc,$(BUILD_DIR)$(1)/)
 ### determine source files and object files ###
 $(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR), \
@@ -305,17 +304,18 @@ $(BUILD_DIR)sdklib/%.a: $(BUILD_DIR)sdklib/%_stage1.a $(BUILD_DIR)sdklib/allsymb
 PROGRAM_SRC_DIR ?= $(PROGRAM_DIR)
 PROGRAM_ROOT ?= $(PROGRAM_DIR)
 PROGRAM_MAKEFILE = $(firstword $(MAKEFILE_LIST))
-# if there's a local.h file in either the program dir or the
-# root dir, load macros from it (for WIFI_SSID,WIFI_PASS, etc.)
-PROGRAM_LOCAL_H = $(lastword $(wildcard $(ROOT)local.h $(PROGRAM_DIR)local.h))
-ifneq ($(PROGRAM_LOCAL_H),)
-PROGRAM_CFLAGS = $(CFLAGS) -imacros $(PROGRAM_LOCAL_H)
-endif
 $(eval $(call component_compile_rules,PROGRAM))
 
 ## Include other components (this is where the actual compiler sections are generated)
-$(foreach component,$(COMPONENTS), $(eval include $(ROOT)$(component)/component.mk))
-
+##
+## if component directory exists relative to $(ROOT), use that.
+## otherwise try to resolve it as an absolute path
+$(foreach component,$(COMPONENTS), 					\
+	$(if $(wildcard $(ROOT)$(component)),				\
+		$(eval include $(ROOT)$(component)/component.mk), 	\
+		$(eval include $(component)/component.mk)		\
+	)								\
+)
 
 ## Run linker scripts via C preprocessor to evaluate macros
 $(LD_DIR)%.ld: $(ROOT)ld/%.ld | $(LD_DIR)
@@ -324,7 +324,7 @@ $(LD_DIR)%.ld: $(ROOT)ld/%.ld | $(LD_DIR)
 # final linking step to produce .elf
 $(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS_PROCESSED)
 	$(vecho) "LD $@"
-	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(LIB_ARGS) $(SDK_LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
+	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(COMPONENT_ARS) $(LIB_ARGS) $(SDK_LIB_ARGS) -Wl,--end-group -o $@
 
 $(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib $(LD_DIR):
 	$(Q) mkdir -p $@

@@ -11,13 +11,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "esp8266.h"
+#include "ssid_config.h"
 
 #include "ota-tftp.h"
 #include "rboot-ota.h"
-
-#if !defined(WIFI_SSID) || !defined(WIFI_PASS)
-#error "Please define macros WIFI_SSID & WIFI_PASS (here, or better in a local.h file at root level or in program dir."
-#endif
 
 void user_init(void)
 {
@@ -29,7 +26,7 @@ void user_init(void)
 
     printf("Image addresses in flash:\r\n");
     for(int i = 0; i <conf.count; i++) {
-        printf("%c%d: offset 0x%08lx\r\n", i == conf.current_rom ? '*':' ', i, conf.roms[i]);
+        printf("%c%d: offset 0x%08x\r\n", i == conf.current_rom ? '*':' ', i, conf.roms[i]);
     }
 
     struct sdk_station_config config = {
