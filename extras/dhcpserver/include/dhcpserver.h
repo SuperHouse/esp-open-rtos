@@ -1,21 +1,14 @@
 /* Very basic LWIP & FreeRTOS-based DHCP server
-
+ *
+ * Header file contains default configuration for the DHCP server.
+ *
+ *
+ * Part of esp-open-rtos
+ * Copyright (C) 2015 Superhouse Automation Pty Ltd
+ * BSD Licensed as described in the file LICENSE
  */
 #ifndef _DHCPSERVER_H
 #define _DHCPSERVER_H
-
-#ifndef DHCPSERVER_MAXCLIENTS
-#define DHCPSERVER_MAXCLIENTS 4
-#endif
-
-/* First client IP to hand out.
-
-   IP assignment routine is very simple - Fourth octet in IP will be incremented
-   from this value to (value+DHCPSERVER_MAXCLIENTS-1).
-*/
-#ifndef DHCPSERVER_FIRST_CLIENT_IP
-#define DHCPSERVER_FIRST_CLIENT_IP(DST) IP4_ADDR(DST, 192, 168, 3, 5)
-#endif
 
 #ifndef DHCPSERVER_LEASE_TIME
 #define DHCPSERVER_LEASE_TIME 3600
@@ -24,8 +17,12 @@
 /* Start DHCP server.
 
    Static IP of server should already be set and network interface enabled.
+
+   first_client_addr is the IP address of the first lease to be handed
+   to a client.  Subsequent lease addresses are calculated by
+   incrementing the final octet of the IPv4 address, up to max_leases.
 */
-void dhcpserver_start(void);
+void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases);
 
 /* Stop DHCP server.
  */
