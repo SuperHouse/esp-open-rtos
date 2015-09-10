@@ -97,7 +97,7 @@ uint32_t IRAM run_test(const char *string, test_with_fn_t testfn, const char *te
     uint32_t after = get_ccount();
     vPortExitCritical();
     uint32_t instructions = (after-before)/TEST_REPEATS - nullvalue;
-    printf("%5ld instructions\r\n", instructions);
+    printf("%5d instructions\r\n", instructions);
     return instructions;
 }
 
