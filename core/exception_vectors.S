@@ -15,6 +15,12 @@
    Additions Copyright (C) Superhouse Automation Pty Ltd
    BSD Licensed as described in the file LICENSE
 */
+
+/* Some UserException causes, see table Table 4–64 in ISA reference */
+#define CAUSE_SYSCALL 1
+#define CAUSE_LOADSTORE 3
+#define CAUSE_LVL1INT 4
+
 	.text
 	.section .vecbase.text, "x"
         .align  256
@@ -48,15 +54,15 @@ KernelExceptionVector:
 	.align 16
 UserExceptionVector:
 	wsr.excsave1 a0
-	call0 CallUserExceptionHandler
-	rfe /* CallUserExceptionHandler should call rfe itself */
-	.align 16
-.L_EmptyVectorEntry2:
-	nop
+	rsr.exccause a0
+	beqi a0, CAUSE_SYSCALL, UserSyscallHandler
+	beqi a0, CAUSE_LOADSTORE, UserExceptionLoadStoreHandler
+	j UserExceptionHandler
+	/* Empty exception slot goes here, but previous slot is large enough we can skip it */
 	.align 16
 DoubleExceptionVector:
 	break 1, 4
-	call0 sdk_user_fatal_exception_handler
+	j DoubleExceptionHandler
 	.align 16
 .L_UnusedResetVector:
 	/* reset vector slot doesn't get used, as vecbase goes back to mask ROM on reset */
@@ -171,24 +177,16 @@ CallNMIExceptionHandler:
 	LOAD_REG a1, 1
 	rfi 0x3
 
-/* Some UserException causes, see table Table 4–64 in ISA reference */
-#define CAUSE_SYSCALL 1
-#define CAUSE_LOADSTORE 3
-#define CAUSE_LVL1INT 4
-
-        .type   CallUserExceptionHandler, @function
-CallUserExceptionHandler:
-	rsr.exccause a0
-	beqi a0, CAUSE_SYSCALL, UserSyscallHandler
-	beqi a0, CAUSE_LOADSTORE, UserLoadStoreExceptionHandler
-	mov a0, sp
+        .type   UserExceptionHandler, @function
+UserExceptionHandler:
+	mov a0, sp /* a0 was saved in UserExceptionVector */
 	addi sp, sp, -0x50
 	s32i a0, sp, 0x10
 	rsr.ps a0
 	s32i a0, sp, 0x08
 	rsr.epc1 a0
 	s32i a0, sp, 0x04
-	rsr.excsave1 a0 /* a0 was saved in UserExceptionVector */
+	rsr.excsave1 a0
 	s32i a0, sp, 0x0c
 	movi a0, _xt_user_exit
 	s32i a0, sp, 0x0
@@ -244,24 +242,51 @@ UserSyscallHandler:
 	rsr.excsave1 a0
 	rfe
 
+	.text
+	.section .vecbase.text
+	.literal_position
+	.align 4
+DoubleExceptionHandler:
+	rsr.exccause a0
+	beqi a0, CAUSE_LOADSTORE, DoubleExceptionLoadStoreHandler
+	call0 sdk_user_fatal_exception_handler
 
 	.text
 	.section .vecbase.text
 	.literal_position
 	.align 4
-	.global UserLoadStoreExceptionHandler
-/* "Fix" LoadStoreException exceptions thatare l8/l16 from an Instruction region */
-UserLoadStoreExceptionHandler:
+
+/* "Fix" LoadStoreException exceptions that are l8/l16 from an Instruction region,
+   DoubleException exception variant (ie load happened in a level1 exception handler). */
+DoubleExceptionLoadStoreHandler:
 	addi sp, sp, -0x18
 	s32i a2, sp, 0x08
+	rsr.epc2 a2
+	j InnerLoadStoreExceptionHandler
+
+	.text
+	.section .vecbase.text
+	.literal_position
+	.align 4
+
+/* "Fix" LoadStoreException exceptions that are l8/l16 from an Instruction region,
+   normal exception variant. */
+UserExceptionLoadStoreHandler:
+	addi sp, sp, -0x18
+	s32i a2, sp, 0x08
+	rsr.epc1 a2
+/* Inner UserLoadStoreExceptionHandler handlers. Works for both level1 & level 2 interrupt level.
+ *
+ * Called from level-specific handler above which sets up stack and loads epcX into a2.
+ */
+InnerLoadStoreExceptionHandler:
 	s32i a3, sp, 0x0c
 	s32i a4, sp, 0x10
 	s32i a5, sp, 0x14
 	rsr.sar a0 // save sar in a0
 
-	/* Load the instruction we failed to execute */
-	rsr.epc1 a2
-	ssa8l a2 // sar is now correct shift to read a3
+	/* Examine the instruction we failed to execute (in a2) */
+	ssa8l a2 // sar is now correct shift for aligned read
 	movi	a3, ~3
 	and a2, a2, a3 // a2 now 4-byte aligned address of instruction
 	l32i a3, a2, 0
@@ -324,22 +349,32 @@ UserLoadStoreExceptionHandler:
 	s32i a4, a5, 0
 
 .Lafter_write_value:
-	/* Footer*/
-	//Increment PC
+	/* test PS.INTLEVEL (1=User, 2=Double) to see which interrupt level we restore from
+	*/
+	rsr.ps a2
+	bbsi a2, 1, .Lincrement_PC_intlevel2
+.Lincrement_PC_intlevel1:
 	rsr.epc1 a2
 	addi a3, a2, 0x3
 	wsr.epc1 a3
-
-.Lexit:
 	wsr.sar a0 // restore saved sar
-	// Restore registers
 	rsr.excsave1 a0 // restore a0 saved in exception vector
+.Lafter_increment_PC:
+	// Restore registers
 	l32i a2, sp, 0x08
 	l32i a3, sp, 0x0c
 	l32i a4, sp, 0x10
 	l32i a5, sp, 0x14
 	addi sp, sp, 0x18
 	rfe
+
+.Lincrement_PC_intlevel2:
+	rsr.epc2 a2
+	addi a3, a2, 0x3
+	wsr.epc2 a3
+	wsr.sar a0 // restore saved sar
+	rsr.excsave2 a0 // restore a0 saved in exception vector
+	j .Lafter_increment_PC
 
 .Lextend_sign: /* apply 16-bit sign extension if necessary
 	          a3 holds raw value, a4 holds masked */
@@ -388,9 +423,13 @@ UserLoadStoreExceptionHandler:
 	j .Lafter_write_value
 
 .Lwrite_value_a0_reg:
-	/* a0 is saved in excsave1,so just update this with value */
+	/* a0 is saved in excsave1,so just update this with value
+           TODO: This won't work with interrupt level 2
+	*/
 	wsr.excsave1 a4
 	j .Lafter_write_value
+
+/* End of InnerUserLoadStoreExceptionHandler */
 
 	.global _xt_user_exit
 	.type _xt_user_exit, @function
