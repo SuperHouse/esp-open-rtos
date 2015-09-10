@@ -12,7 +12,7 @@
 
    Part of esp-open-rtos
    Original vector contents Copyright (C) 2014-2015 Espressif Systems
-   Additions Copyright (C) Superhouse Automation Pty Ltd
+   Additions Copyright (C) Superhouse Automation Pty Ltd and Angus Gratton
    BSD Licensed as described in the file LICENSE
 */
 
@@ -23,9 +23,9 @@
 
 	.text
 	.section .vecbase.text, "x"
-        .align  256
         .global VecBase
         .type   VecBase, @function /* it's not really a function, but treat it like one */
+	.org 0
 VecBase:
 	/* IMPORTANT: exception vector literals will go here, but we
 	  can't have more than 4 otherwise we push DebugExceptionVector past
@@ -33,40 +33,43 @@ VecBase:
 	  and also keep the VecBase offsets easy to read, but this works for now.
 	*/
 	.literal_position
-	.align 16
+	.org 0x10
 DebugExceptionVector:
 	wsr.excsave2 a0
 	call0 sdk_user_fatal_exception_handler
 	rfi 2
-	.align 16
+
+	.org 0x20
 NMIExceptionVector:
 	wsr.excsave3 a0
 	call0 CallNMIExceptionHandler
 	rfi 3 /* CallNMIExceptionHandler should call rfi itself */
-	.align 16
+
+	.org 0x30
 KernelExceptionVector:
 	break 1, 0
 	call0 sdk_user_fatal_exception_handler
 	rfe
-	.align 16
-.L_EmptyVectorEntry:
-	nop
-	.align 16
+
+	.org 0x50
 UserExceptionVector:
 	wsr.excsave1 a0
 	rsr.exccause a0
 	beqi a0, CAUSE_SYSCALL, UserSyscallHandler
 	beqi a0, CAUSE_LOADSTORE, UserExceptionLoadStoreHandler
 	j UserExceptionHandler
-	/* Empty exception slot goes here, but previous slot is large enough we can skip it */
-	.align 16
+
+	.org 0x70
 DoubleExceptionVector:
 	break 1, 4
-	j DoubleExceptionHandler
-	.align 16
-.L_UnusedResetVector:
-	/* reset vector slot doesn't get used, as vecbase goes back to mask ROM on reset */
-	nop
+	rsr.exccause a0
+	beqi a0, CAUSE_LOADSTORE, DoubleExceptionLoadStoreHandler
+	call0 sdk_user_fatal_exception_handler
+
+/* Reset vector would go here at offset 0x80 but should be unused,
+   as vecbase goes back to mask ROM vectors on reset */
+
+/***** end of exception vectors  *****/
 
 	.section .bss
 NMIHandlerStack: /* stack space for NMI handler */
@@ -241,15 +244,6 @@ UserSyscallHandler:
 	movnez a2, a0, a2
 	rsr.excsave1 a0
 	rfe
-
-	.text
-	.section .vecbase.text
-	.literal_position
-	.align 4
-DoubleExceptionHandler:
-	rsr.exccause a0
-	beqi a0, CAUSE_LOADSTORE, DoubleExceptionLoadStoreHandler
-	call0 sdk_user_fatal_exception_handler
 
 	.text
 	.section .vecbase.text
