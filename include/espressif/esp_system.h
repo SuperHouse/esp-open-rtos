@@ -6,6 +6,10 @@
 #ifndef __ESP_SYSTEM_H__
 #define __ESP_SYSTEM_H__
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 enum sdk_rst_reason {
 	DEFAULT_RST	  = 0,
 	WDT_RST	      = 1,
@@ -53,5 +57,9 @@ bool sdk_system_rtc_mem_read(uint8_t src, void *dst, uint16_t n);
 bool sdk_system_rtc_mem_write(uint8_t dst, const void *src, uint16_t n);
 
 void sdk_system_uart_swap(void);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
