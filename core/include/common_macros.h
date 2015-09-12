@@ -10,6 +10,8 @@
 #ifndef _COMMON_MACROS_H
 #define _COMMON_MACROS_H
 
+#include <sys/cdefs.h>
+
 #define UNUSED __attributed((unused))
 
 #ifndef BIT
@@ -45,7 +47,11 @@
    Important to note: IROM flash can only be accessed via 32-bit word
    aligned reads. It's up to the user of this attribute to ensure this.
 */
-#define IROM __attribute__((section(".irom0.literal"))) const
+#ifdef	__cplusplus
+    #define IROM __attribute__((section(".irom0.literal")))
+#else
+    #define IROM __attribute__((section(".irom0.literal"))) const
+#endif
 
 #define INLINED inline static __attribute__((always_inline)) __attribute__((unused))
 

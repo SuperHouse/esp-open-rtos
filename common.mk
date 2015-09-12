@@ -94,14 +94,19 @@ OWN_LIBC ?= 1
 # Note: you will need a recent esp
 ENTRY_SYMBOL ?= call_user_start
 
-CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99 $(CPPFLAGS)
+# Common flags for both C & C++_
+C_CXX_FLAGS     = -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals $(CPPFLAGS)
+# Flags for C only
+CFLAGS		= $(C_CXX_FLAGS) -std=gnu99
+# Flags for C++ only
+CXXFLAGS	= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(EXTRA_LDFLAGS)
 
 ifeq ($(FLAVOR),debug)
-    CFLAGS += -g -O0
+    C_CXX_FLAGS += -g -O0
     LDFLAGS += -g -O0
 else
-    CFLAGS += -g -O2
+    C_CXX_FLAGS += -g -O2
     LDFLAGS += -g -O2
 endif
 
@@ -138,8 +143,8 @@ endif
 LINKER_SCRIPTS_PROCESSED = $(addprefix $(LD_DIR),$(LINKER_SCRIPTS))
 
 # derive various parts of compiler/linker arguments
-SDK_LIB_ARGS         = $(addprefix -l,$(SDK_LIBS))
-LIB_ARGS             = $(addprefix -l,$(LIBS))
+SDK_LIB_ARGS  = $(addprefix -l,$(SDK_LIBS))
+LIB_ARGS      = $(addprefix -l,$(LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
 LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS_PROCESSED))
 
@@ -215,20 +220,24 @@ $(1)_DEFAULT_ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 $(1)_ROOT ?= $$($(1)_DEFAULT_ROOT)
 $(1)_OBJ_DIR   = $(call lc,$(BUILD_DIR)$(1)/)
 ### determine source files and object files ###
-$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR), \
-			$$(wildcard $$(sdir)/*.c) $$(wildcard $$(sdir)/*.S)) \
+$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR), 				\
+			$$(wildcard $$(sdir)/*.c) $$(wildcard $$(sdir)/*.S) 	\
+			$$(wildcard $$(sdir)/*.cpp)) 				\
 			$$($(1)_EXTRA_SRC_FILES)
 $(1)_REAL_SRC_FILES = $$(foreach sfile,$$($(1)_SRC_FILES),$$(realpath $$(sfile)))
 $(1)_REAL_ROOT = $$(realpath $$($(1)_ROOT))
 # patsubst here substitutes real component root path for the relative OBJ_DIR path, making things short again
-$(1)_OBJ_FILES_C = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_REAL_SRC_FILES))
+$(1)_OBJ_FILES_CXX = $$(patsubst $$($(1)_REAL_ROOT)%.cpp,$$($(1)_OBJ_DIR)%.o,$$($(1)_REAL_SRC_FILES))
+$(1)_OBJ_FILES_C = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_OBJ_FILES_CXX))
 $(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.S,$$($(1)_OBJ_DIR)%.o,$$($(1)_OBJ_FILES_C))
 # the last included makefile is our component's component.mk makefile (rebuild the component if it changes)
 $(1)_MAKEFILE ?= $(lastword $(MAKEFILE_LIST))
 
 ### determine compiler arguments ###
 $(1)_CFLAGS ?= $(CFLAGS)
+$(1)_CXXFLAGS ?= $(CXXFLAGS)
 $(1)_CC_ARGS = $(Q) $(CC) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
+$(1)_CXX_ARGS = $(Q) $(C++) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CXXFLAGS)
 $(1)_AR = $(call lc,$(BUILD_DIR)$(1).a)
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
@@ -236,6 +245,12 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 	$(Q) mkdir -p $$(dir $$@)
 	$$($(1)_CC_ARGS) -c $$< -o $$@
 	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+
+$$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.cpp $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
+	$(vecho) "C++ $$<"
+	$(Q) mkdir -p $$(dir $$@)
+	$$($(1)_CXX_ARGS) -c $$< -o $$@
+	$$($(1)_CXX_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "AS $$<"
