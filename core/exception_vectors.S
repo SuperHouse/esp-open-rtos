@@ -301,11 +301,7 @@ InnerLoadStoreExceptionHandler:
 	srl a3, a3	/* shift right correct distance */
 	and a4, a3, a5  /* mask off bits we need for an l8/l16 */
 
-	bbci a5, 14, .Lafter_extend_sign /* 8-bit, no sign extension */
-	bbsi a5, 15, .Lafter_extend_sign /* 16-bit unsigned, no sign extension */
-	bbci a3, 15, .Lafter_extend_sign /* sign bit not set, no sign extension */
-	movi a3, (1<<31)
-	or a4, a3, a4 /* set 32-bit sign bit */
+	bbsi a5, 14, .Lmaybe_extend_sign
 .Lafter_extend_sign:
 	/* a2 holds instruction, a4 holds the correctly read value */
 	extui a2, a2, 4, 4 /* a2 now destination register 0-15 */
@@ -347,11 +343,12 @@ InnerLoadStoreExceptionHandler:
 	rsr.excsave2 a0 // restore a0 saved in exception vector
 	j .Lafter_increment_PC
 
-.Lextend_sign: /* apply 16-bit sign extension if necessary
-	          a3 holds raw value, a4 holds masked */
-	bbci a3, 15, .Lafter_extend_sign /* sign bit not set, do nothing */
-	movi a3, (1<<31)
-	or a4, a3, a4 /* set sign bit */
+.Lmaybe_extend_sign: /* apply 16-bit sign extension if necessary
+	                a3 holds raw value, a4 holds masked */
+	bbsi a5, 15, .Lafter_extend_sign /* 16-bit unsigned, no sign extension */
+	bbci a3, 15, .Lafter_extend_sign /* sign bit not set, no sign extension */
+	movi a3, 0xFFFF0000
+	or a4, a3, a4 /* set 32-bit sign bits */
 	j .Lafter_extend_sign
 
 .Lwrite_value_direct_reg:
