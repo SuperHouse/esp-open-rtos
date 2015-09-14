@@ -16,6 +16,8 @@
    BSD Licensed as described in the file LICENSE
 */
 
+#include "led_debug.s"
+
 /* Some UserException causes, see table Table 4–64 in ISA reference */
 #define CAUSE_SYSCALL 1
 #define CAUSE_LOADSTORE 3
@@ -314,7 +316,6 @@ InnerLoadStoreExceptionHandler:
 	/* verified an 8- or 16-bit read
 	a2 holds instruction, a5 holds mask to apply to read value
 	*/
-
 	rsr.excvaddr a3 // read faulting address
 	ssa8l a3 /* sar is now shift to extract a3's byte */
 	movi	a4, ~3

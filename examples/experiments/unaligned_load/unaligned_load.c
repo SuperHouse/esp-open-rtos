@@ -121,6 +121,10 @@ void test_string(const char *string, char *label, bool evict_cache)
 void user_init(void)
 {
     sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
+
+    gpio_enable(2, GPIO_OUTPUT); /* used for LED debug */
+    gpio_write(2, 1); /* active low */
+
     printf("\r\n\r\nSDK version:%s\r\n", sdk_system_get_sdk_version());
     test_string(dramtest, "DRAM", 0);
     test_string(iramtest, "IRAM", 0);
