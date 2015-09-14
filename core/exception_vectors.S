@@ -265,29 +265,16 @@ InnerLoadStoreExceptionHandler:
 	l32i a4, a2, 4
 	src a2, a4, a3 // a2 now instruction that failed
 
-	/* Check if a2 matches l8ui, l16ui or l16si opcodes */
-	movi a3, 0x00F00F /* opcode mask */
+	/* Check if a2 matches l16ui, l16si or l8ui opcode */
+	movi a3, 0x00700F /* opcode mask */
 	and a3, a2, a3
-	beqi a3, 0x000002, .Lcan_fix_8bit  /* l8ui opcode after masking */
 
-	movi a4, 0x001002 /* l16ui opcode after masking */
+	movi a4, 0x001002 /* l16si or l16ui opcode after masking */
 	beq a3, a4, .Lcan_fix_16bit
 
-	movi a4, 0x009002 /* l16si opcode after masking */
-	beq a3, a4, .Lcan_fix_16bit_signed
-.Lcant_fix:
-	/* not an opcode we can try to fix, so bomb out
-           TODO: the exception dump will have some wrong values in it */
-	call0 sdk_user_fatal_exception_handler
-
-.Lcan_fix_16bit_signed:
-	movi a5, 0x7FFF
-	j .Lcan_fix
-.Lcan_fix_16bit:
-	movi a5, 0xFFFF
-	j .Lcan_fix
-.Lcan_fix_8bit:
+	bnei a3, 0x000002, .Lcant_fix  /* no l8ui opcode, then can't fix */
 	movi a5, 0xFF
+
 .Lcan_fix:
 	/* verified an 8- or 16-bit read
 	a2 holds instruction, a5 holds mask to apply to read value
@@ -334,6 +321,15 @@ InnerLoadStoreExceptionHandler:
 	l32i a5, sp, 0x14
 	addi sp, sp, 0x18
 	rfe
+
+.Lcan_fix_16bit:
+	movi a5, 0xFFFF
+	j .Lcan_fix
+
+.Lcant_fix:
+	/* not an opcode we can try to fix, so bomb out
+           TODO: the exception dump will have some wrong values in it */
+	call0 sdk_user_fatal_exception_handler
 
 .Lincrement_PC_intlevel2:
 	rsr.epc2 a2
