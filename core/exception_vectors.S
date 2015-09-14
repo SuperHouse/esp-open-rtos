@@ -76,14 +76,9 @@ DoubleExceptionVector:
 	.section .bss
 NMIHandlerStack: /* stack space for NMI handler */
 	.skip 4*0x100
+.LNMIHandlerStackTop:
 NMIRegisterSaved: /* register space for saving NMI registers */
 	.skip 4*(0x16 + 6)
-
-/* this symbol is _Pri_3_HandlerAddress in the RTOS SDK, appears totally
-	unused (stays zero at all times) */
-	.global NMIHandlerAddress
-NMIHandlerAddress:
-	.long 0
 
 /* Save register relative to a0 */
 .macro SAVE_REG register, regnum
@@ -112,11 +107,9 @@ call_user_start:
 CallNMIExceptionHandler:
 	movi a0, NMIRegisterSaved
 	SAVE_REG a2, 2
-	movi a2, NMIHandlerAddress
-	l32i a2, a2, 0
 	SAVE_REG sp, 1
 	SAVE_REG a3, 3
-	xsr.excsave3 a2 /* excsave3 is now NMIHandlerAddress, a2 is former a0 */
+	rsr.excsave3 a2 /* a2 is now former a0 */
 	SAVE_REG a4, 4
 	SAVE_REG a2, 0
 	rsr.epc1 a3
@@ -138,7 +131,7 @@ CallNMIExceptionHandler:
 	SAVE_REG a13, 13
 	SAVE_REG a14, 14
 	SAVE_REG a15, 15
-	movi sp, NMIRegisterSaved /* also top of NMIHandlerStack */
+	movi sp, .LNMIHandlerStackTop
 	movi a0, 0
 	movi a2, 0x23 /* argument for handler */
 	wsr.ps a2
