@@ -57,7 +57,6 @@ KernelExceptionVector:
 UserExceptionVector:
 	wsr.excsave1 a0
 	rsr.exccause a0
-	beqi a0, CAUSE_SYSCALL, UserSyscallHandler
 	beqi a0, CAUSE_LOADSTORE, UserExceptionLoadStoreHandler
 	j UserExceptionHandler
 
@@ -223,22 +222,6 @@ UserIntDone:
 	call0 sdk_user_fatal_exception_handler
 UserIntExit:
 	call0 sdk__xt_int_exit /* calls rfi */
-
-/* As far as I can tell, the syscall handler is basically a no-op */
-UserSyscallHandler:
-	addi sp, sp, -0x10
-	s32i a2, sp, 0x08
-	s32i a3, sp, 0x0c
-	rsr.epc1 a2
-	addi a3, a2, 0x3
-	wsr.epc1 a3
-	l32i a2, sp, 0x8
-	l32i a3, sp, 0xc
-	addi sp, sp, 0x10
-	movi a0, 0x7f
-	movnez a2, a0, a2
-	rsr.excsave1 a0
-	rfe
 
 	.text
 	.section .vecbase.text
