@@ -78,7 +78,7 @@ NMIHandlerStack: /* stack space for NMI handler */
 	.skip 4*0x100
 .LNMIHandlerStackTop:
 NMIRegisterSaved: /* register space for saving NMI registers */
-	.skip 4*(0x16 + 6)
+	.skip 4*(16 + 6)
 
 /* Save register relative to a0 */
 .macro SAVE_REG register, regnum
