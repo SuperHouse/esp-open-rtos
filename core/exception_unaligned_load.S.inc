@@ -94,15 +94,6 @@ InnerLoadStoreExceptionHandler:
 	rfe
 
 
-	.literal_position
-/* "Fix" LoadStoreException exceptions that are l8/l16 from an Instruction region,
-   DoubleException exception variant (ie load happened in a level1 exception handler). */
-DoubleExceptionLoadStoreHandler:
-	addi sp, sp, -0x18
-	s32i a2, sp, 0x08
-	rsr.epc2 a2
-	j InnerLoadStoreExceptionHandler
-
 /* Check the load instruction a2 for an l16si/16ui instruction
 
    First test for a signed vs unsigned load.
@@ -186,5 +177,14 @@ DoubleExceptionLoadStoreHandler:
 	*/
 	wsr.excsave1 a4
 	j .Lafter_write_value
+
+	.literal_position
+/* "Fix" LoadStoreException exceptions that are l8/l16 from an Instruction region,
+   DoubleException exception variant (ie load happened in a level1 exception handler). */
+DoubleExceptionLoadStoreHandler:
+	addi sp, sp, -0x18
+	s32i a2, sp, 0x08
+	rsr.epc2 a2
+	j InnerLoadStoreExceptionHandler
 
 /* End of InnerUserLoadStoreExceptionHandler */
