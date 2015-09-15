@@ -241,6 +241,7 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 	$(vecho) "AS $$<"
 	$(Q) mkdir -p $$(dir $$@)
 	$$($(1)_CC_ARGS) -c $$< -o $$@
+	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 # the component is shown to depend on both obj and source files so we get a meaningful error message
 # for missing explicitly named source files
