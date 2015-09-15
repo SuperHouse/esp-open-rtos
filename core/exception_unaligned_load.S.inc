@@ -138,7 +138,7 @@ DoubleExceptionLoadStoreHandler:
 	                a3 holds raw value, a4 holds masked */
 	bbsi a5, 15, .Lafter_extend_sign /* 16-bit unsigned, no sign extension */
 	bbci a3, 15, .Lafter_extend_sign /* sign bit not set, no sign extension */
-	movi a3, 0xFFFF0000
+	movi a3, 0xFFFF8000
 	or a4, a3, a4 /* set 32-bit sign bits */
 	j .Lafter_extend_sign
 
