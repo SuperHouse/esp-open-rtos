@@ -1,6 +1,7 @@
 /* Very basic example that just demonstrates we can run at all!
  */
 #include "esp/rom.h"
+#include "esp/timer.h"
 #include "espressif/esp_common.h"
 #include "espressif/sdk_private.h"
 #include "FreeRTOS.h"
@@ -118,6 +119,8 @@ void test_string(const char *string, char *label, bool evict_cache)
     run_test(string, test_l16si, "load as l16si", nullvalue, evict_cache);
 }
 
+static void test_doubleexceptions();
+
 void user_init(void)
 {
     sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
@@ -130,4 +133,39 @@ void user_init(void)
     test_string(iramtest, "IRAM", 0);
     test_string(iromtest, "Cached flash", 0);
     test_string(iromtest, "'Uncached' flash", 1);
+
+    test_doubleexceptions();
+}
+
+static volatile bool frc1_ran;
+static volatile bool frc1_finished;
+static volatile char frc1_buf[80];
+
+static void frc1_interrupt_handler(void)
+{
+    frc1_ran = true;
+    timer_set_run(FRC1, false);
+    strcpy((char *)frc1_buf, iramtest);
+    frc1_finished = true;
+}
+
+static void test_doubleexceptions()
+{
+    printf("Testing DoubleException behaviour...\r\n");
+    timer_set_interrupts(FRC1, false);
+    timer_set_run(FRC1, false);
+    _xt_isr_attach(INUM_TIMER_FRC1, frc1_interrupt_handler);
+    timer_set_frequency(FRC1, 1000);
+    timer_set_interrupts(FRC1, true);
+    timer_set_run(FRC1, true);
+    sdk_os_delay_us(2000);
+
+    if(!frc1_ran)
+        printf("ERROR: FRC1 timer exception never fired.\r\n");
+    else if(!frc1_finished)
+        printf("ERROR: FRC1 timer exception never finished.\r\n");
+    else if(strcmp((char *)frc1_buf, iramtest))
+        printf("ERROR: FRC1 strcpy from IRAM failed.\r\n");
+    else
+        printf("PASSED\r\n");
 }
