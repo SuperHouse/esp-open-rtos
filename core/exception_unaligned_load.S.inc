@@ -40,14 +40,10 @@ InnerLoadStoreExceptionHandler:
 	l32i a4, a2, 4
 	src a2, a4, a3 // a2 now instruction that failed
 
-	/* Check if a2 matches l16ui, l16si or l8ui opcode */
-	movi a3, 0x00700F /* opcode mask */
+	/* check for l8ui opcode 0x000002, or branch to check l16 */
+	movi a3, 0x00700F /* opcode mask for l8ui/l16si/l16ui */
 	and a3, a2, a3
-
-	movi a4, 0x001002 /* l16si or l16ui opcode after masking */
-	beq a3, a4, .Lcan_fix_16bit
-
-	bnei a3, 0x000002, .Lcant_fix  /* no l8ui opcode, then can't fix */
+	bnei a3, 0x000002, .Lcheck_fix_16bit
 	movi a5, 0xFF
 
 .Lcan_fix:
@@ -107,12 +103,15 @@ DoubleExceptionLoadStoreHandler:
 	rsr.epc2 a2
 	j InnerLoadStoreExceptionHandler
 
-/* Load mask for an l16si/16ui instruction that needs loading
+/* Check the load instruction a2 for an l16si/16ui instruction
 
    First test for a signed vs unsigned load.
 
    a2 is the instruction, need to load a5 with the mask to use */
-.Lcan_fix_16bit:
+.Lcheck_fix_16bit:
+	movi a4, 0x001002 /* l16si or l16ui opcode after masking */
+	bne a3, a4, .Lcant_fix
+
 	bbsi a2, 15, .Lcan_fix_16bit_signed
 	movi a5, 0xFFFF
 	j .Lcan_fix
