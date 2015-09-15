@@ -68,7 +68,11 @@ void test_naive_strcpy(const char *string)
 void test_l16si(const char *string)
 {
     /* This follows most of the l16si path, but as the
-     values in the string are all 7 bit none of them get sign extended */
+     values in the string are all 7 bit none of them get sign extended.
+
+    See separate test_sign_extension function which validates
+    sign extension works as expected.
+    */
     int16_t *src_int16 = (int16_t *)string;
     int32_t *dst_int32 = (int32_t *)buf;
     dst_int32[0] = src_int16[0];
@@ -119,7 +123,8 @@ void test_string(const char *string, char *label, bool evict_cache)
     run_test(string, test_l16si, "load as l16si", nullvalue, evict_cache);
 }
 
-static void test_doubleexceptions();
+static void test_doubleexception();
+static void test_sign_extension();
 
 void user_init(void)
 {
@@ -134,7 +139,8 @@ void user_init(void)
     test_string(iromtest, "Cached flash", 0);
     test_string(iromtest, "'Uncached' flash", 1);
 
-    test_doubleexceptions();
+    test_doubleexception();
+    test_sign_extension();
 }
 
 static volatile bool frc1_ran;
@@ -149,7 +155,7 @@ static void frc1_interrupt_handler(void)
     frc1_finished = true;
 }
 
-static void test_doubleexceptions()
+static void test_doubleexception()
 {
     printf("Testing DoubleException behaviour...\r\n");
     timer_set_interrupts(FRC1, false);
@@ -168,4 +174,18 @@ static void test_doubleexceptions()
         printf("ERROR: FRC1 strcpy from IRAM failed.\r\n");
     else
         printf("PASSED\r\n");
+}
+
+const volatile __attribute__((section(".iram1.notliterals"))) int16_t unsigned_shorts[] = { -3, -4, -5, -32767, 44 };
+
+static void test_sign_extension()
+{
+    /* this step seems to be necessary so the compiler will actually generate l16si */
+    int16_t *shorts_p = (int16_t *)unsigned_shorts;
+    if(shorts_p[0] == -3 && shorts_p[1] == -4 && shorts_p[2] == -5 && shorts_p[3] == -32767 && shorts_p[4] == 44)
+    {
+        printf("l16si sign extension worked as expected.\r\n");
+    } else {
+        printf("l16si sign extension failed. Got values %d %d %d %d %d\r\n", shorts_p[0], shorts_p[1], shorts_p[2], shorts_p[3], shorts_p[4]);
+    }
 }
