@@ -163,7 +163,7 @@ ifeq ($(OTA),0)
 # for non-OTA, we create two different files for uploading into the flash
 # these are the names and options to generate them
 FW_ADDR_1	= 0x00000
-FW_ADDR_2	= 0x40000
+FW_ADDR_2	= 0x20000
 FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_ADDR_1).bin)
 FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_ADDR_2).bin)
 else

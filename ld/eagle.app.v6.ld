@@ -32,7 +32,7 @@ ets_printf = printf;
 */
 #ifndef OTA
 
-#define IROM0_START 0x40240000
+#define IROM0_START 0x40220000
 
 /* Non-OTA sizes */
 #if FLASH_SIZE == 2 /* 256kB */
