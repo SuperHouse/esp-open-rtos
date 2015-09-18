@@ -33,7 +33,7 @@ typedef uint32_t bmp180_press_t;
 typedef struct
 {
     uint8_t cmd;
-    bmp180_temp_t  temperatue;
+    bmp180_temp_t  temperature;
     bmp180_press_t pressure;
 } bmp180_result_t;
 
@@ -50,6 +50,6 @@ void bmp180_trigger_temperature_measurement(const xQueueHandle* resultQueue);
 void bmp180_trigger_pressure_measurement(const xQueueHandle* resultQueue);
 
 // Give the user the chance to create it's own handler
-extern bool (*bmp180_informUser)(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperatue, bmp180_press_t pressure);
+extern bool (*bmp180_informUser)(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
 
 #endif /* DRIVER_BMP180_H_ */
