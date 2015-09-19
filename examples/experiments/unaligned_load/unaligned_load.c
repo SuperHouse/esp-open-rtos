@@ -125,6 +125,7 @@ void test_string(const char *string, char *label, bool evict_cache)
 
 static void test_doubleexception();
 static void test_sign_extension();
+void sanity_tests(void);
 
 void user_init(void)
 {
@@ -134,6 +135,7 @@ void user_init(void)
     gpio_write(2, 1); /* active low */
 
     printf("\r\n\r\nSDK version:%s\r\n", sdk_system_get_sdk_version());
+    sanity_tests();
     test_string(dramtest, "DRAM", 0);
     test_string(iramtest, "IRAM", 0);
     test_string(iromtest, "Cached flash", 0);
@@ -188,4 +190,127 @@ static void test_sign_extension()
     } else {
         printf("l16si sign extension failed. Got values %d %d %d %d %d\r\n", shorts_p[0], shorts_p[1], shorts_p[2], shorts_p[3], shorts_p[4]);
     }
+}
+
+/* The following "sanity tests" are designed to try to execute every code path
+ * of the LoadStoreError handler, with a variety of offsets and data values
+ * designed to catch any mask/shift errors, sign-extension bugs, etc */
+
+/* (Contrary to expectations, 'mov a15, a15' in Xtensa is not technically a
+ * no-op, but is officially "undefined and reserved for future use", so we need
+ * a special case in the case where reg == "a15" so we don't end up generating
+ * those opcodes.  GCC is smart enough to optimize away the whole conditional
+ * and just insert the correct asm block, since `reg` is a static argument.) */
+#define LOAD_VIA_REG(op, reg, addr, var) \
+    if (strcmp(reg, "a15")) { \
+        asm volatile ( \
+        "mov a15, " reg "\n\t" \
+        op " " reg ", %1, 0\n\t" \
+        "mov %0, " reg "\n\t" \
+        "mov " reg ", a15\n\t" \
+        : "=r" (var) : "r" (addr) : "a15" ); \
+    } else { \
+        asm volatile ( \
+        op " " reg ", %1, 0\n\t" \
+        "mov %0, " reg "\n\t" \
+        : "=r" (var) : "r" (addr) : "a15" ); \
+    }
+
+#define TEST_LOAD(op, reg, addr, value) \
+    { \
+        int32_t result; \
+        LOAD_VIA_REG(op, reg, addr, result); \
+        if (result != value) sanity_test_failed(op, reg, addr, value, result); \
+    }
+
+void sanity_test_failed(const char *testname, const char *reg, const void *addr, int32_t value, int32_t result) {
+    uint32_t actual_data = *(uint32_t *)((uint32_t)addr & 0xfffffffc);
+
+    printf("*** SANITY TEST FAILED: '%s %s' from %p (underlying 32-bit value: 0x%x): Expected 0x%08x (%d), got 0x%08x (%d)\n", testname, reg, addr, actual_data, value, value, result, result);
+}
+
+const __attribute__((section(".iram1.notrodata"))) char sanity_test_data[] = {
+    0x01, 0x55, 0x7e, 0x2a, 0x81, 0xd5, 0xfe, 0xaa
+};
+
+void sanity_test_l8ui(const void *addr, int32_t value) {
+    TEST_LOAD("l8ui", "a0", addr, value);
+    TEST_LOAD("l8ui", "a1", addr, value);
+    TEST_LOAD("l8ui", "a2", addr, value);
+    TEST_LOAD("l8ui", "a3", addr, value);
+    TEST_LOAD("l8ui", "a4", addr, value);
+    TEST_LOAD("l8ui", "a5", addr, value);
+    TEST_LOAD("l8ui", "a6", addr, value);
+    TEST_LOAD("l8ui", "a7", addr, value);
+    TEST_LOAD("l8ui", "a8", addr, value);
+    TEST_LOAD("l8ui", "a9", addr, value);
+    TEST_LOAD("l8ui", "a10", addr, value);
+    TEST_LOAD("l8ui", "a11", addr, value);
+    TEST_LOAD("l8ui", "a12", addr, value);
+    TEST_LOAD("l8ui", "a13", addr, value);
+    TEST_LOAD("l8ui", "a14", addr, value);
+    TEST_LOAD("l8ui", "a15", addr, value);
+}
+
+void sanity_test_l16ui(const void *addr, int32_t value) {
+    TEST_LOAD("l16ui", "a0", addr, value);
+    TEST_LOAD("l16ui", "a1", addr, value);
+    TEST_LOAD("l16ui", "a2", addr, value);
+    TEST_LOAD("l16ui", "a3", addr, value);
+    TEST_LOAD("l16ui", "a4", addr, value);
+    TEST_LOAD("l16ui", "a5", addr, value);
+    TEST_LOAD("l16ui", "a6", addr, value);
+    TEST_LOAD("l16ui", "a7", addr, value);
+    TEST_LOAD("l16ui", "a8", addr, value);
+    TEST_LOAD("l16ui", "a9", addr, value);
+    TEST_LOAD("l16ui", "a10", addr, value);
+    TEST_LOAD("l16ui", "a11", addr, value);
+    TEST_LOAD("l16ui", "a12", addr, value);
+    TEST_LOAD("l16ui", "a13", addr, value);
+    TEST_LOAD("l16ui", "a14", addr, value);
+    TEST_LOAD("l16ui", "a15", addr, value);
+}
+
+void sanity_test_l16si(const void *addr, int32_t value) {
+    TEST_LOAD("l16si", "a0", addr, value);
+    TEST_LOAD("l16si", "a1", addr, value);
+    TEST_LOAD("l16si", "a2", addr, value);
+    TEST_LOAD("l16si", "a3", addr, value);
+    TEST_LOAD("l16si", "a4", addr, value);
+    TEST_LOAD("l16si", "a5", addr, value);
+    TEST_LOAD("l16si", "a6", addr, value);
+    TEST_LOAD("l16si", "a7", addr, value);
+    TEST_LOAD("l16si", "a8", addr, value);
+    TEST_LOAD("l16si", "a9", addr, value);
+    TEST_LOAD("l16si", "a10", addr, value);
+    TEST_LOAD("l16si", "a11", addr, value);
+    TEST_LOAD("l16si", "a12", addr, value);
+    TEST_LOAD("l16si", "a13", addr, value);
+    TEST_LOAD("l16si", "a14", addr, value);
+    TEST_LOAD("l16si", "a15", addr, value);
+}
+
+void sanity_tests(void) {
+    printf("== Performing sanity tests (sanity_test_data @ %p)...\n", sanity_test_data);
+
+    sanity_test_l8ui(sanity_test_data + 0, 0x01);
+    sanity_test_l8ui(sanity_test_data + 1, 0x55);
+    sanity_test_l8ui(sanity_test_data + 2, 0x7e);
+    sanity_test_l8ui(sanity_test_data + 3, 0x2a);
+    sanity_test_l8ui(sanity_test_data + 4, 0x81);
+    sanity_test_l8ui(sanity_test_data + 5, 0xd5);
+    sanity_test_l8ui(sanity_test_data + 6, 0xfe);
+    sanity_test_l8ui(sanity_test_data + 7, 0xaa);
+
+    sanity_test_l16ui(sanity_test_data + 0, 0x5501);
+    sanity_test_l16ui(sanity_test_data + 2, 0x2a7e);
+    sanity_test_l16ui(sanity_test_data + 4, 0xd581);
+    sanity_test_l16ui(sanity_test_data + 6, 0xaafe);
+
+    sanity_test_l16si(sanity_test_data + 0, 0x5501);
+    sanity_test_l16si(sanity_test_data + 2, 0x2a7e);
+    sanity_test_l16si(sanity_test_data + 4, -10879);
+    sanity_test_l16si(sanity_test_data + 6, -21762);
+
+    printf("== Sanity tests completed.\n");
 }
