@@ -65,6 +65,84 @@ void test_naive_strcpy(const char *string)
         ;
 }
 
+void test_naive_strcpy_a0(const char *string)
+{
+    asm volatile (
+"            mov          a8, %0    \n"
+"            mov          a9, %1    \n"
+"tns_loop%=: l8ui         a0, a9, 0 \n"
+"            addi.n       a9, a9, 1 \n"
+"            s8i          a0, a8, 0 \n"
+"            addi.n       a8, a8, 1 \n"
+"            bnez         a0, tns_loop%=\n"
+        : : "r" (buf), "r" (string) : "a0", "a8", "a9");
+}
+
+void test_naive_strcpy_a2(const char *string)
+{
+    asm volatile (
+"            mov          a8, %0    \n"
+"            mov          a9, %1    \n"
+"tns_loop%=: l8ui         a2, a9, 0 \n"
+"            addi.n       a9, a9, 1 \n"
+"            s8i          a2, a8, 0 \n"
+"            addi.n       a8, a8, 1 \n"
+"            bnez         a2, tns_loop%=\n"
+        : : "r" (buf), "r" (string) : "a2", "a8", "a9");
+}
+
+void test_naive_strcpy_a3(const char *string)
+{
+    asm volatile (
+"            mov          a8, %0    \n"
+"            mov          a9, %1    \n"
+"tns_loop%=: l8ui         a3, a9, 0 \n"
+"            addi.n       a9, a9, 1 \n"
+"            s8i          a3, a8, 0 \n"
+"            addi.n       a8, a8, 1 \n"
+"            bnez         a3, tns_loop%=\n"
+        : : "r" (buf), "r" (string) : "a3", "a8", "a9");
+}
+
+void test_naive_strcpy_a4(const char *string)
+{
+    asm volatile (
+"            mov          a8, %0    \n"
+"            mov          a9, %1    \n"
+"tns_loop%=: l8ui         a4, a9, 0 \n"
+"            addi.n       a9, a9, 1 \n"
+"            s8i          a4, a8, 0 \n"
+"            addi.n       a8, a8, 1 \n"
+"            bnez         a4, tns_loop%=\n"
+        : : "r" (buf), "r" (string) : "a4", "a8", "a9");
+}
+
+void test_naive_strcpy_a5(const char *string)
+{
+    asm volatile (
+"            mov          a8, %0    \n"
+"            mov          a9, %1    \n"
+"tns_loop%=: l8ui         a5, a9, 0 \n"
+"            addi.n       a9, a9, 1 \n"
+"            s8i          a5, a8, 0 \n"
+"            addi.n       a8, a8, 1 \n"
+"            bnez         a5, tns_loop%=\n"
+        : : "r" (buf), "r" (string) : "a5", "a8", "a9");
+}
+
+void test_naive_strcpy_a6(const char *string)
+{
+    asm volatile (
+"            mov          a8, %0    \n"
+"            mov          a9, %1    \n"
+"tns_loop%=: l8ui         a6, a9, 0 \n"
+"            addi.n       a9, a9, 1 \n"
+"            s8i          a6, a8, 0 \n"
+"            addi.n       a8, a8, 1 \n"
+"            bnez         a6, tns_loop%=\n"
+        : : "r" (buf), "r" (string) : "a6", "a8", "a9");
+}
+
 void test_l16si(const char *string)
 {
     /* This follows most of the l16si path, but as the
@@ -118,6 +196,12 @@ void test_string(const char *string, char *label, bool evict_cache)
     run_test(string, test_memcpy_unaligned2, "memcpy - unaligned start&len", nullvalue, evict_cache);
     run_test(string, test_strcpy, "strcpy", nullvalue, evict_cache);
     run_test(string, test_naive_strcpy, "naive strcpy", nullvalue, evict_cache);
+    run_test(string, test_naive_strcpy_a0, "naive strcpy (a0)", nullvalue, evict_cache);
+    run_test(string, test_naive_strcpy_a2, "naive strcpy (a2)", nullvalue, evict_cache);
+    run_test(string, test_naive_strcpy_a3, "naive strcpy (a3)", nullvalue, evict_cache);
+    run_test(string, test_naive_strcpy_a4, "naive strcpy (a4)", nullvalue, evict_cache);
+    run_test(string, test_naive_strcpy_a5, "naive strcpy (a5)", nullvalue, evict_cache);
+    run_test(string, test_naive_strcpy_a6, "naive strcpy (a6)", nullvalue, evict_cache);
     run_test(string, test_sprintf, "sprintf", nullvalue, evict_cache);
     run_test(string, test_sprintf_arg, "sprintf format arg", nullvalue, evict_cache);
     run_test(string, test_l16si, "load as l16si", nullvalue, evict_cache);
