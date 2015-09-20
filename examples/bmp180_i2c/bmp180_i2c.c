@@ -30,13 +30,13 @@ static xQueueHandle mainqueue;
 static xTimerHandle timerHandle;
 
 // Own BMP180 User Inform Implementation
-bool bmp180_i2c_informUser(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperatue, bmp180_press_t pressure)
+bool bmp180_i2c_informUser(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure)
 {
     my_event_t ev;
 
     ev.event_type = MY_EVT_BMP180;
     ev.bmp180_data.cmd = cmd;
-    ev.bmp180_data.temperatue = temperatue;
+    ev.bmp180_data.temperature = temperature;
     ev.bmp180_data.pressure = pressure;
 
     return (xQueueSend(*resultQueue, &ev, 0) == pdTRUE);
@@ -74,7 +74,7 @@ void bmp180_task(void *pvParameters)
             break;
         case MY_EVT_BMP180:
             printf("%s: Received BMP180 Event temp:=%d.%d°C press=%d.%02dhPa\n", __FUNCTION__, \
-                       (int32_t)ev.bmp180_data.temperatue, abs((int32_t)(ev.bmp180_data.temperatue*10)%10), \
+                       (int32_t)ev.bmp180_data.temperature, abs((int32_t)(ev.bmp180_data.temperature*10)%10), \
                        ev.bmp180_data.pressure/100, ev.bmp180_data.pressure%100 );
             break;
         default:
