@@ -270,12 +270,12 @@ void IRAM vApplicationStackOverflowHook(xTaskHandle task, char *task_name) {
 
 // .text+0x3d8
 void IRAM vApplicationIdleHook(void) {
-    printf("idle %lu\n", WDEV.SYS_TIME);
+    printf("idle %u\n", WDEV.SYS_TIME);
 }
 
 // .text+0x404
 void IRAM vApplicationTickHook(void) {
-    printf("tick %lu\n", WDEV.SYS_TIME);
+    printf("tick %u\n", WDEV.SYS_TIME);
 }
 
 // .Lfunc005 -- .irom0.text+0x8
@@ -360,12 +360,12 @@ static void dump_excinfo(void) {
     RSR(excvaddr, excvaddr);
     RSR(depc, depc);
     RSR(excsave1, excsave1);
-    printf("%s=0x%08lx\n", "epc1", epc1);
-    printf("%s=0x%08lx\n", "epc2", epc2);
-    printf("%s=0x%08lx\n", "epc3", epc3);
-    printf("%s=0x%08lx\n", "excvaddr", excvaddr);
-    printf("%s=0x%08lx\n", "depc", depc);
-    printf("%s=0x%08lx\n", "excsave1", excsave1);
+    printf("%s=0x%08x\n", "epc1", epc1);
+    printf("%s=0x%08x\n", "epc2", epc2);
+    printf("%s=0x%08x\n", "epc3", epc3);
+    printf("%s=0x%08x\n", "excvaddr", excvaddr);
+    printf("%s=0x%08x\n", "depc", depc);
+    printf("%s=0x%08x\n", "excsave1", excsave1);
     sdk_system_rtc_mem_read(0, excinfo, 32); // Why?
     excinfo[0] = 2;
     excinfo[1] = exccause;
