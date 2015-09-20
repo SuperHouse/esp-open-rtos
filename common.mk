@@ -80,7 +80,7 @@ OBJDUMP = $(CROSS)objdump
 
 # Source components to compile and link. Each of these are subdirectories
 # of the root, with a 'component.mk' file.
-COMPONENTS     ?= core FreeRTOS lwip axtls $(EXTRA_COMPONENTS)
+COMPONENTS     ?= $(EXTRA_COMPONENTS) FreeRTOS lwip axtls core
 
 # binary esp-iot-rtos SDK libraries to link. These are pre-processed prior to linking.
 SDK_LIBS		?= main net80211 phy pp wpa
@@ -94,11 +94,16 @@ OWN_LIBC ?= 1
 # Note: you will need a recent esp
 ENTRY_SYMBOL ?= call_user_start
 
-CFLAGS		= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals -std=gnu99 $(CPPFLAGS)
+# Common flags for both C & C++_
+C_CXX_FLAGS     = -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals $(CPPFLAGS)
+# Flags for C only
+CFLAGS		= $(C_CXX_FLAGS) -std=gnu99
+# Flags for C++ only
+CXXFLAGS	= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(EXTRA_LDFLAGS)
 
 ifeq ($(FLAVOR),debug)
-    CFLAGS += -g -O0
+    C_CXX_FLAGS += -g -O0
     LDFLAGS += -g -O0
 else ifeq ($(FLAVOR),sdklike)
     # These are flags intended to produce object code as similar as possible to
@@ -108,7 +113,7 @@ else ifeq ($(FLAVOR),sdklike)
     CFLAGS += -O2 -Os -fno-inline -fno-ipa-cp -fno-toplevel-reorder
     LDFLAGS += -O2
 else
-    CFLAGS += -g -O2
+    C_CXX_FLAGS += -g -O2
     LDFLAGS += -g -O2
 endif
 
@@ -145,8 +150,8 @@ endif
 LINKER_SCRIPTS_PROCESSED = $(addprefix $(LD_DIR),$(LINKER_SCRIPTS))
 
 # derive various parts of compiler/linker arguments
-SDK_LIB_ARGS         = $(addprefix -l,$(SDK_LIBS))
-LIB_ARGS             = $(addprefix -l,$(LIBS))
+SDK_LIB_ARGS  = $(addprefix -l,$(SDK_LIBS))
+LIB_ARGS      = $(addprefix -l,$(LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
 LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS_PROCESSED))
 
@@ -201,42 +206,45 @@ all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 # component_compile_rules: Produces compilation rules for a given
 # component
 #
+# For user-facing documentation, see:
+# https://github.com/SuperHouse/esp-open-rtos/wiki/Build-Process#adding-a-new-component
+#
 # Call arguments are:
 # $(1) - component name
 #
 # Expects that the following component-specific variables are defined:
 #
 # $(1)_ROOT    = Top-level dir containing component. Can be in-tree or out-of-tree.
+#                (if this variable isn't defined, directory containing component.mk is used)
 # $(1)_SRC_DIR = List of source directories for the component. All must be under $(1)_ROOT
 # $(1)_INC_DIR = List of include directories specific for the component
 #
-# As an alternative to $(1)_SRC_DIR, you can specify source filenames
-# as $(1)_SRC_FILES. If you want to specify both directories and
-# some additional files, specify directories in $(1)_SRC_DIR and
-# additional files in $(1)_EXTRA_SRC_FILES.
-#
-# Optional variables:
-# $(1)_CFLAGS  = CFLAGS to override the default CFLAGS for this component only.
 #
 # Each call appends to COMPONENT_ARS which is a list of archive files for compiled components
 COMPONENT_ARS =
 define component_compile_rules
+$(1)_DEFAULT_ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
+$(1)_ROOT ?= $$($(1)_DEFAULT_ROOT)
 $(1)_OBJ_DIR   = $(call lc,$(BUILD_DIR)$(1)/)
 ### determine source files and object files ###
-$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR), \
-			$$(wildcard $$(sdir)/*.c) $$(wildcard $$(sdir)/*.S)) \
+$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR), 				\
+			$$(wildcard $$(sdir)/*.c) $$(wildcard $$(sdir)/*.S) 	\
+			$$(wildcard $$(sdir)/*.cpp)) 				\
 			$$($(1)_EXTRA_SRC_FILES)
 $(1)_REAL_SRC_FILES = $$(foreach sfile,$$($(1)_SRC_FILES),$$(realpath $$(sfile)))
 $(1)_REAL_ROOT = $$(realpath $$($(1)_ROOT))
 # patsubst here substitutes real component root path for the relative OBJ_DIR path, making things short again
-$(1)_OBJ_FILES_C = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_REAL_SRC_FILES))
+$(1)_OBJ_FILES_CXX = $$(patsubst $$($(1)_REAL_ROOT)%.cpp,$$($(1)_OBJ_DIR)%.o,$$($(1)_REAL_SRC_FILES))
+$(1)_OBJ_FILES_C = $$(patsubst $$($(1)_REAL_ROOT)%.c,$$($(1)_OBJ_DIR)%.o,$$($(1)_OBJ_FILES_CXX))
 $(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.S,$$($(1)_OBJ_DIR)%.o,$$($(1)_OBJ_FILES_C))
 # the last included makefile is our component's component.mk makefile (rebuild the component if it changes)
 $(1)_MAKEFILE ?= $(lastword $(MAKEFILE_LIST))
 
 ### determine compiler arguments ###
 $(1)_CFLAGS ?= $(CFLAGS)
+$(1)_CXXFLAGS ?= $(CXXFLAGS)
 $(1)_CC_ARGS = $(Q) $(CC) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
+$(1)_CXX_ARGS = $(Q) $(C++) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CXXFLAGS)
 $(1)_AR = $(call lc,$(BUILD_DIR)$(1).a)
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
@@ -244,6 +252,12 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 	$(Q) mkdir -p $$(dir $$@)
 	$$($(1)_CC_ARGS) -c $$< -o $$@
 	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+
+$$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.cpp $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
+	$(vecho) "C++ $$<"
+	$(Q) mkdir -p $$(dir $$@)
+	$$($(1)_CXX_ARGS) -c $$< -o $$@
+	$$($(1)_CXX_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "AS $$<"
@@ -299,8 +313,15 @@ PROGRAM_MAKEFILE = $(firstword $(MAKEFILE_LIST))
 $(eval $(call component_compile_rules,PROGRAM))
 
 ## Include other components (this is where the actual compiler sections are generated)
-$(foreach component,$(COMPONENTS), $(eval include $(ROOT)$(component)/component.mk))
-
+##
+## if component directory exists relative to $(ROOT), use that.
+## otherwise try to resolve it as an absolute path
+$(foreach component,$(COMPONENTS), 					\
+	$(if $(wildcard $(ROOT)$(component)),				\
+		$(eval include $(ROOT)$(component)/component.mk), 	\
+		$(eval include $(component)/component.mk)		\
+	)								\
+)
 
 ## Run linker scripts via C preprocessor to evaluate macros
 $(LD_DIR)%.ld: $(ROOT)ld/%.ld | $(LD_DIR)
@@ -309,7 +330,7 @@ $(LD_DIR)%.ld: $(ROOT)ld/%.ld | $(LD_DIR)
 # final linking step to produce .elf
 $(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS_PROCESSED)
 	$(vecho) "LD $@"
-	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(LIB_ARGS) $(SDK_LIB_ARGS) $(COMPONENT_ARS) -Wl,--end-group -o $@
+	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(COMPONENT_ARS) $(LIB_ARGS) $(SDK_LIB_ARGS) -Wl,--end-group -o $@
 
 $(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib $(LD_DIR):
 	$(Q) mkdir -p $@

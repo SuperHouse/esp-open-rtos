@@ -6,13 +6,12 @@
 
 # We supply our own hand tweaked config.h in the external 'include' dir.
 
-AXTLS_DIR = $(ROOT)axtls/axtls/
-INC_DIRS += $(ROOT)axtls/include $(AXTLS_DIR)ssl $(AXTLS_DIR)crypto
+AXTLS_DIR = $(axtls_ROOT)axtls/
+INC_DIRS += $(axtls_ROOT)include $(AXTLS_DIR)ssl $(AXTLS_DIR)crypto
 
 # args for passing into compile rule generation
-axtls_ROOT = $(ROOT)axtls
 axtls_INC_DIR =  $(AXTLS_DIR)include $(AXTLS_DIR)
-axtls_SRC_DIR = $(AXTLS_DIR)crypto $(AXTLS_DIR)ssl $(ROOT)axtls
+axtls_SRC_DIR = $(AXTLS_DIR)crypto $(AXTLS_DIR)ssl $(axtls_ROOT)
 
 #axtls_CFLAGS = $(CFLAGS) -Wno-address
 
