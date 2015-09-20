@@ -76,10 +76,15 @@ _Static_assert(sizeof(struct GPIO_REGS) == 0x74, "GPIO_REGS is the wrong size");
  *     Under what conditions this GPIO input should generate an interrupt.
  *     (see gpio_inttype_t enum below for values)
  *
- * GPIO_CONF_PUSH_PULL (boolean)
- *     When set, a high output state will pull the pin up to +Vcc (3.3V).  When
- *     cleared, output functions in "open drain" mode (low state will pull down
- *     to ground, but high state allows output to "float").
+ * GPIO_CONF_OPEN_DRAIN (boolean)
+ *     If this bit is set, the pin is in "open drain" mode - a high output state
+ *     will leave the pin floating but not source any current. If bit is cleared,
+ *     the pin is in push/pull mode so a high output state will drive the pin up
+ *     to +Vcc (3.3V).  In either case, a low output state will pull the pin down
+ *     to ground.
+ *
+ *     GPIO_CONF_OPEN_DRAIN does not appear to work on all pins.
+ *
  *
  * GPIO_CONF_SOURCE_PWM (boolean)
  *     When set, GPIO pin output will be connected to the sigma-delta PWM
@@ -93,7 +98,7 @@ _Static_assert(sizeof(struct GPIO_REGS) == 0x74, "GPIO_REGS is the wrong size");
 #define GPIO_CONF_WAKEUP_ENABLE  BIT(10)
 #define GPIO_CONF_INTTYPE_M      0x00000007
 #define GPIO_CONF_INTTYPE_S      7
-#define GPIO_CONF_PUSH_PULL      BIT(2)
+#define GPIO_CONF_OPEN_DRAIN     BIT(2)
 #define GPIO_CONF_SOURCE_PWM     BIT(0)
 
 /* Valid values for the GPIO_CONF_INTTYPE field */

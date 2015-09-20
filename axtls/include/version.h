@@ -5,6 +5,6 @@
 
 #ifndef _VERSION_H
 
-#define AXTLS_VERSION "esp-open-rtos axTLS "GITSHORTREV
+#define AXTLS_VERSION "esp-open-rtos axTLS " GITSHORTREV
 
 #endif

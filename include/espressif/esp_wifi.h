@@ -13,6 +13,10 @@
 
 #include <lwip/ip_addr.h>
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 enum {
 	NULL_MODE = 0,
 	STATION_MODE,
@@ -67,7 +71,11 @@ enum sdk_phy_mode {
 	PHY_MODE_11N    = 3
 };
 
-enum phy_mode sdk_wifi_get_phy_mode(void);
+enum sdk_phy_mode sdk_wifi_get_phy_mode(void);
 bool sdk_wifi_set_phy_mode(enum sdk_phy_mode mode);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
