@@ -72,7 +72,7 @@ private:
             uint32_t count;
 
             if(queue.receive(count, 1500) == 0) {
-                printf("task_2_t::task(): got %lu\n", count);
+                printf("task_2_t::task(): got %u\n", count);
             } 
             else {
                 printf("task_2_t::task(): no msg\n");

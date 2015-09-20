@@ -16,7 +16,7 @@ public:
   Counter(uint32_t initial_count)
   {
     this->_count = initial_count;
-    printf("Counter initialised with count %ld\r\n", initial_count);
+    printf("Counter initialised with count %d\r\n", initial_count);
   }
 
   void Increment()
@@ -50,7 +50,7 @@ void task1(void *pvParameters)
       break;
     }
     counter->Increment();
-    printf("local counter %ld static counter %ld newly allocated counter %ld\r\n", local_counter.getCount(),
+    printf("local counter %d static counter %d newly allocated counter %d\r\n", local_counter.getCount(),
 	   static_counter.getCount(), new_counter->getCount());
     vTaskDelay(100);
   }
