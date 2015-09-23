@@ -75,10 +75,10 @@ static int16_t  MD;
 // Forward declarations
 //
 static void bmp180_meassure(const bmp180_command_t* command);
-static bool bmp180_informUser_Impl(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperatue, bmp180_press_t pressure);
+static bool bmp180_informUser_Impl(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
 
 // Set default implementation .. User gets result as bmp180_result_t event
-bool (*bmp180_informUser)(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperatue, bmp180_press_t pressure) = bmp180_informUser_Impl;
+bool (*bmp180_informUser)(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure) = bmp180_informUser_Impl;
 
 // I2C Driver Task
 static void bmp180_driver_task(void *pvParameters)
@@ -279,12 +279,12 @@ static void bmp180_meassure(const bmp180_command_t* command)
 }
 
 // Default user inform implementation
-static bool bmp180_informUser_Impl(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperatue, bmp180_press_t pressure)
+static bool bmp180_informUser_Impl(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure)
 {
     bmp180_result_t result;
 
     result.cmd = cmd;
-    result.temperatue = temperatue;
+    result.temperature = temperature;
     result.pressure = pressure;
 
     return (xQueueSend(*resultQueue, &result, 0) == pdTRUE);
