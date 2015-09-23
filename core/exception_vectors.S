@@ -58,9 +58,9 @@ KernelExceptionVector:
 	.org 0x50
 	.type   UserExceptionVector, @function
 UserExceptionVector:
-	wsr.excsave1 a0
-	rsr.exccause a0
-	beqi a0, CAUSE_LOADSTORE, LoadStoreErrorHandler
+	wsr.excsave1 a1
+	rsr.exccause a1
+	beqi a1, CAUSE_LOADSTORE, LoadStoreErrorHandler
 	j UserExceptionHandler
 
 	.org 0x70
@@ -87,25 +87,15 @@ DoubleExceptionVector:
 
 	.type   LoadStoreErrorHandler, @function
 LoadStoreErrorHandler:
-	# Note: we use a0 as our "stack pointer" here because it's already been
-	# saved in UserExceptionVector, and we never call out to other routines
-	# so we don't have to worry about it being clobbered.  It would be
-	# preferable to use a1 instead, but this would require changes to other
-	# parts of UserExceptionHandler code which we haven't gotten around to
-	# yet.
-	# TODO: Eventually, switch everything over to saving a1 instead of a0
-	# in UserExceptionVector so we can use the more mnemonic SP for this.
-
-	# Note: registers are saved in the (regnum * 4) address so calculation
-	# is easier later on.  This means we don't use the first two entries
-	# (since we don't save a0 or a1 here), so we just adjust the pointer in
-	# a0 to pretend we have two extra slots at the beginning.
-	movi	a0, LoadStoreErrorHandlerStack - 8
-	s32i	a2, a0, 0x08
-	s32i	a3, a0, 0x0c
-	s32i	a4, a0, 0x10
-	s32i	a5, a0, 0x14
-	rsr.sar a5              # Save SAR in a5 to restore later
+	# Note: registers are saved in the address corresponding to their
+	# register number times 4.  This allows a quick and easy mapping later
+	# on when needing to store the value to a particular register number.
+	movi	sp, LoadStoreErrorHandlerStack
+	s32i	a0, sp, 0
+	s32i	a2, sp, 0x08
+	s32i	a3, sp, 0x0c
+	s32i	a4, sp, 0x10
+	rsr.sar a0              # Save SAR in a0 to restore later
 
 	# Examine the opcode which generated the exception
 	# Note: Instructions are in this order to avoid pipeline stalls.
@@ -143,11 +133,11 @@ LoadStoreErrorHandler:
 	# At this point, a2 holds the faulting instruction and a4 holds the
 	# correctly read value.
 
-	# Restore original SAR value (saved in a5) and update EPC so we'll
+	# Restore original SAR value (saved in a0) and update EPC so we'll
 	# return back to the instruction following the one we just emulated
 	# Note: Instructions are in this order to avoid pipeline stalls
 	rsr.epc1 a3
-	wsr.sar	a5
+	wsr.sar	a0
 	addi	a3, a3, 0x3
 	wsr.epc1 a3
 
@@ -162,34 +152,35 @@ LoadStoreErrorHandler:
 	# needing any extra shift operations.
 	extui a2, a2, 3, 5 /* a2 now destination register 0-15 times 2 */
 
-	bgei    a2, 12, .LSE_assign_reg  # a6..a15 use jumptable
-	blti    a2, 4, .LSE_assign_reg   # a0..a1 use jumptable
+	bgei    a2, 10, .LSE_assign_reg  # a5..a15 use jumptable
+	beqi    a2, 2, .LSE_assign_a1    # a1 uses a special routine
 
-	# We're storing into a2..a5, which are all saved in our "stack" area.
+	# We're storing into a0 or a2..a4, which are all saved in our "stack" area.
 	# Calculate the correct address and stick the value in there, then just
 	# do our normal restore and RFE (no jumps required, which actually
-	# makes a2..a5 substantially faster).
-	addx2	a2, a2, a0
+	# makes a0..a4 substantially faster).
+	addx2	a2, a2, sp
 	s32i	a4, a2, 0
 
 	# Restore all regs and return
-	l32i	a2, a0, 0x08
-	l32i	a3, a0, 0x0c
-	l32i	a4, a0, 0x10
-	l32i	a5, a0, 0x14
-	rsr.excsave1 a0       # restore a0 saved by UserExceptionVector
+	l32i	a0, sp, 0
+	l32i	a2, sp, 0x08
+	l32i	a3, sp, 0x0c
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1       # restore a1 saved by UserExceptionVector
 	rfe
 
 .LSE_assign_reg:
 	# At this point, a2 contains the register number times 2, a4 is the
 	# read value.
 
-	movi a3, .LSE_assign_jumptable
-	addx8 a2, a2, a3  # a2 is now the address to jump to
-
-	# Restore everything except a2 and a4
-	l32i	a3, a0, 0x0c
-	l32i	a5, a0, 0x14
+	# Calculate the jumptable address, and restore regs except a2 and a4
+	# so we have less to do after jumping.
+	# Note: Instructions are in this order to avoid pipeline stalls.
+	movi	a3, .LSE_jumptable_base
+	l32i	a0, sp, 0
+	addx8	a2, a2, a3  # a2 is now the address to jump to
+	l32i	a3, sp, 0x0c
 
 	jx a2
 
@@ -226,105 +217,109 @@ LoadStoreErrorHandler:
 .LSE_wrong_opcode:
 	# Restore registers so any dump the fatal exception routine produces
 	# will have correct values
-	wsr.sar a5            # Restore SAR saved in a5
-	l32i	a2, a0, 0x08
-	l32i	a3, a0, 0x0c
-	l32i	a4, a0, 0x10
-	l32i	a5, a0, 0x14
+	wsr.sar a0            # Restore SAR saved in a0
+	l32i	a0, sp, 0
+	l32i	a2, sp, 0x08
+	l32i	a3, sp, 0x0c
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	call0	sdk_user_fatal_exception_handler
 
 	.balign 4
-.LSE_assign_jumptable:
-	.org    .LSE_assign_jumptable + (16 * 0)
-	# a0 is saved in excsave1, so just update that with the value
+.LSE_assign_a1:
+	# a1 is saved in excsave1, so just update that with the value
 	wsr.excsave1 a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	# Restore all regs and return
+	l32i	a0, sp, 0
+	l32i	a2, sp, 0x08
+	l32i	a3, sp, 0x0c
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1       # restore a1 saved by UserExceptionVector
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 1)
-	mov	a1, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	.balign 4
+.LSE_jumptable:
+	# The first 5 entries (80 bytes) of this table are unused (registers
+	# a0..a4 are handled separately above).  Rather than have a whole bunch
+	# of wasted space, we just pretend that the table starts 80 bytes
+	# earlier in memory.
+	.set	.LSE_jumptable_base, .LSE_jumptable - (16 * 5)
+
+	.org    .LSE_jumptable_base + (16 * 5)
+	mov	a5, a4
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	# NOTE: Opcodes a2 .. a5 are not handled by the jumptable routines
-	# (they're taken care of directly in .LSE_post_fetch above)
-	# This leaves 64 bytes of wasted space here.  We could fill it with
-	# other things, but that would just make it harder to understand what's
-	# going on, and that's bad enough with this routine already.  Even on
-	# the ESP8266, 64 bytes of IRAM wasted aren't the end of the world..
-
-	.org    .LSE_assign_jumptable + (16 * 6)
+	.org    .LSE_jumptable_base + (16 * 6)
 	mov	a6, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 7)
+	.org    .LSE_jumptable_base + (16 * 7)
 	mov	a7, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 8)
+	.org    .LSE_jumptable_base + (16 * 8)
 	mov	a8, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 9)
+	.org    .LSE_jumptable_base + (16 * 9)
 	mov	a9, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 10)
+	.org    .LSE_jumptable_base + (16 * 10)
 	mov	a10, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 11)
+	.org    .LSE_jumptable_base + (16 * 11)
 	mov	a11, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 12)
+	.org    .LSE_jumptable_base + (16 * 12)
 	mov	a12, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 13)
+	.org    .LSE_jumptable_base + (16 * 13)
 	mov	a13, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 14)
+	.org    .LSE_jumptable_base + (16 * 14)
 	mov	a14, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
-	.org    .LSE_assign_jumptable + (16 * 15)
+	.org    .LSE_jumptable_base + (16 * 15)
 	mov	a15, a4
-	l32i	a2, a0, 0x08
-	l32i	a4, a0, 0x10
-	rsr.excsave1 a0
+	l32i	a2, sp, 0x08
+	l32i	a4, sp, 0x10
+	rsr.excsave1 a1
 	rfe
 
 /* End of LoadStoreErrorHandler */
@@ -337,10 +332,11 @@ NMIRegisterSaved: /* register space for saving NMI registers */
 	.skip 4*(16 + 6)
 
 LoadStoreErrorHandlerStack:
+	.word	0	# a0
+	.word	0	# (unused)
 	.word	0	# a2
 	.word	0	# a3
 	.word	0	# a4
-	.word	0	# a5
 
 /* Save register relative to a0 */
 .macro SAVE_REG register, regnum
@@ -439,7 +435,8 @@ CallNMIExceptionHandler:
 
         .type   UserExceptionHandler, @function
 UserExceptionHandler:
-	mov a0, sp /* a0 was saved by UserExceptionVector */
+	xsr.excsave1 a0  # a0 now contains sp
+	mov sp, a0
 	addi sp, sp, -0x50
 	s32i a0, sp, 0x10
 	rsr.ps a0
