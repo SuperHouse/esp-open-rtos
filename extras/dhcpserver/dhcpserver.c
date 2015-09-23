@@ -65,7 +65,17 @@ static void dhcpserver_task(void *pxParameter);
 static uint8_t *find_dhcp_option(struct dhcp_msg *msg, uint8_t option_num, uint8_t min_length, uint8_t *length);
 static uint8_t *add_dhcp_option_byte(uint8_t *opt, uint8_t type, uint8_t value);
 static uint8_t *add_dhcp_option_bytes(uint8_t *opt, uint8_t type, void *value, uint8_t len);
-static dhcp_lease_t *find_lease_slot(dhcp_lease_t *leases, uint8_t *hwaddr);
+static dhcp_lease_t *find_lease_slot(uint8_t *hwaddr);
+
+/* Copy IP address as dotted decimal to 'dest', must be at least 16 bytes long */
+inline static void sprintf_ipaddr(const ip_addr_t *addr, char *dest)
+{
+    if(addr == NULL)
+        sprintf(dest, "NULL");
+    else
+        sprintf(dest, "%d.%d.%d.%d", ip4_addr1(addr),
+                ip4_addr2(addr), ip4_addr3(addr), ip4_addr4(addr));
+}
 
 void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases)
 {
@@ -146,6 +156,16 @@ static void dhcpserver_task(void *pxParameter)
             printf("DHCP Server Error: No message type field found");
             continue;
         }
+
+
+        printf("State dump. Message type %d\n", *message_type);
+        for(int i = 0; i < state->max_leases; i++) {
+            dhcp_lease_t *lease = &state->leases[i];
+            printf("lease slot %d expiry %d hwaddr %02x:%02x:%02x:%02x:%02x:%02x\r\n", i, lease->expires, lease->hwaddr[0],
+                   lease->hwaddr[1], lease->hwaddr[2], lease->hwaddr[3], lease->hwaddr[4],
+                   lease->hwaddr[5]);
+        }
+
         switch(*message_type) {
         case DHCP_DISCOVER:
             handle_dhcp_discover(&received);
@@ -169,7 +189,7 @@ static void handle_dhcp_discover(struct dhcp_msg *dhcpmsg)
     if(dhcpmsg->hlen > NETIF_MAX_HWADDR_LEN)
         return;
 
-    dhcp_lease_t *freelease = find_lease_slot(state->leases, dhcpmsg->chaddr);
+    dhcp_lease_t *freelease = find_lease_slot(dhcpmsg->chaddr);
     if(!freelease) {
         printf("DHCP Server: All leases taken.\r\n");
         return; /* Nothing available, so do nothing */
@@ -197,6 +217,7 @@ static void handle_dhcp_discover(struct dhcp_msg *dhcpmsg)
 
 static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
 {
+    static char ipbuf[16];
     if(dhcpmsg->htype != DHCP_HTYPE_ETH)
         return;
     if(dhcpmsg->hlen > NETIF_MAX_HWADDR_LEN)
@@ -218,7 +239,8 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
     if(ip4_addr1(&requested_ip) != ip4_addr1(&state->first_client_addr)
        || ip4_addr2(&requested_ip) != ip4_addr2(&state->first_client_addr)
        || ip4_addr3(&requested_ip) != ip4_addr3(&state->first_client_addr)) {
-        printf("DHCP Server Error: 0x%08x Not an allowed IP\r\n", requested_ip.addr);
+        sprintf_ipaddr(&requested_ip, ipbuf);
+        printf("DHCP Server Error: %s not an allowed IP\r\n", ipbuf);
         send_dhcp_nak(dhcpmsg);
         return;
     }
@@ -239,7 +261,8 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
     }
 
     memcpy(requested_lease->hwaddr, dhcpmsg->chaddr, dhcpmsg->hlen);
-    printf("DHCP lease addr 0x%08x assigned to MAC %02x:%02x:%02x:%02x:%02x:%02x\r\n", requested_ip.addr, requested_lease->hwaddr[0],
+    sprintf_ipaddr(&requested_ip, ipbuf);
+    printf("DHCP lease addr %s assigned to MAC %02x:%02x:%02x:%02x:%02x:%02x\r\n", ipbuf, requested_lease->hwaddr[0],
            requested_lease->hwaddr[1], requested_lease->hwaddr[2], requested_lease->hwaddr[3], requested_lease->hwaddr[4],
            requested_lease->hwaddr[5]);
     requested_lease->expires = DHCPSERVER_LEASE_TIME * configTICK_RATE_HZ;
@@ -267,7 +290,7 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
 
 static void handle_dhcp_release(struct dhcp_msg *dhcpmsg)
 {
-    dhcp_lease_t *lease = find_lease_slot(state->leases, dhcpmsg->chaddr);
+    dhcp_lease_t *lease = find_lease_slot(dhcpmsg->chaddr);
     if(lease) {
         lease->expires = 0;
     }
@@ -334,15 +357,14 @@ static uint8_t *add_dhcp_option_bytes(uint8_t *opt, uint8_t type, void *value, u
 }
 
 /* Find a free DHCP lease, or a lease already assigned to 'hwaddr' */
-static dhcp_lease_t *find_lease_slot(dhcp_lease_t *leases, uint8_t *hwaddr)
+static dhcp_lease_t *find_lease_slot(uint8_t *hwaddr)
 {
     dhcp_lease_t *empty_lease = NULL;
     for(int i = 0; i < state->max_leases; i++) {
-        if(leases->expires == 0 && !empty_lease)
-            empty_lease = &leases[i];
-        else if (memcmp(hwaddr, leases[i].hwaddr, 6) == 0)
-            return &leases[i];
-
+        if(state->leases[i].expires == 0 && !empty_lease)
+            empty_lease = &state->leases[i];
+        else if (memcmp(hwaddr, state->leases[i].hwaddr, 6) == 0)
+            return &state->leases[i];
     }
     return empty_lease;
 }

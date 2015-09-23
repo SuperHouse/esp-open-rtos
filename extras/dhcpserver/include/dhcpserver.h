@@ -24,6 +24,8 @@
 */
 void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases);
 
+void dhcpserver_get_lease(const ip_addr_t *first_client_addr, uint8_t max_leases);
+
 /* Stop DHCP server.
  */
 void dhcpserver_stop(void);
