@@ -1,4 +1,4 @@
-/* Xtensa interrupt management functions
+/* ESP8266 Xtensa interrupt management functions
  *
  * Some (w/ sdk_ prefix) are implemented in binary libs, rest are
  * inlines replacing functions in the binary libraries.
@@ -14,6 +14,23 @@
 #include <xtruntime.h>
 #include <xtensa/hal.h>
 #include <common_macros.h>
+
+/* Interrupt numbers for level 1 exception handler. */
+typedef enum {
+    INUM_SPI = 2,
+    INUM_GPIO = 4,
+    INUM_UART = 5,
+    INUM_MAX = 6, /* in some places this is documented as timer0 CCOMPARE0 interrupt */
+    INUM_SOFT = 7,
+    INUM_WDT = 8,
+    INUM_TIMER_FRC1 = 9,
+
+    /* FRC2 default handler. Configured by sdk_ets_timer_init, which
+       runs as part of default libmain.a startup code, assigns
+       interrupt handler to sdk_vApplicationTickHook+0x68
+     */
+    INUM_TIMER_FRC2 = 10,
+} xt_isr_num_t;
 
 void sdk__xt_int_exit (void);
 void _xt_user_exit (void);
