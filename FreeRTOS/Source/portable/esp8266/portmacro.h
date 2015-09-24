@@ -182,9 +182,6 @@ not necessary for to use this port.  They are defined so the common demo files
 #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
 /*-----------------------------------------------------------*/
 
-/* ESPTODO: These parts of the FreeRTOS support are still in binary libraries */
-#define vApplicationStackOverflowHook sdk_vApplicationStackOverflowHook
-
 #ifdef __cplusplus
 }
 #endif

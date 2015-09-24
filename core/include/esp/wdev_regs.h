@@ -1,44 +1,42 @@
-/* esp/dport_regs.h
+/* esp/wdev_regs.h
  *
- * ESP8266 WDEV register definitions
+ * ESP8266 register definitions for the "wdev" region (0x3FF2xxx)
  *
  * In the DPORT memory space, alongside DPORT regs. However mostly
  * concerned with the WiFi hardware interface.
  *
- * Not well understood at all, 100% figured out via reverse engineering.
+ * Not compatible with ESP SDK register access code.
  */
 
-#ifndef _ESP_WDEV__REGS_H
-#define _ESP_WDEV__REGS_H
+#ifndef _ESP_WDEV_REGS_H
+#define _ESP_WDEV_REGS_H
 
 #include "esp/types.h"
 #include "common_macros.h"
 
-#define WDEV_BASE 0x3ff20e00
+#define WDEV_BASE 0x3FF20000
 #define WDEV (*(struct WDEV_REGS *)(WDEV_BASE))
 
-/* WDEV registers
-*/
+/* Note: This memory region is not currently well understood.  Pretty much all
+ * of the definitions here are from reverse-engineering the Espressif SDK code,
+ * many are just educated guesses, and almost certainly some are misleading or
+ * wrong.  If you can improve on any of this, please contribute!
+ */
 
 struct WDEV_REGS {
-    uint32_t volatile _unknown00;          // 0x00
-    uint32_t volatile _unknown04;          // 0x04
-    uint32_t volatile _unknown08;          // 0x08
-    uint32_t volatile _unknown0c;          // 0x0c
-    uint32_t volatile _unknown10;          // 0x10
-    uint32_t volatile _unknown14;          // 0x14
-    uint32_t volatile _unknown18;          // 0x18
-    uint32_t volatile _unknown1c;          // 0x1c
-    uint32_t volatile _unknown20;          // 0x20
-    uint32_t volatile _unknown24;          // 0x24
-    uint32_t volatile _unknown28;          // 0x28
-    uint32_t volatile _unknown2c;          // 0x2c
-    uint32_t volatile _unknown30;          // 0x30
-    uint32_t volatile _unknown34;          // 0x34
-    uint32_t volatile _unknown38;          // 0x38
-    uint32_t volatile _unknown3c;          // 0x3c
-    uint32_t volatile _unknown40;          // 0x40
-    uint32_t volatile HWRNG;               // 0x44 Appears to be HW RNG, see https://github.com/SuperHouse/esp-open-rtos/issues/3#issuecomment-139453094
-};
+    uint32_t volatile _unknown0[768];  // 0x0000 - 0x0bfc
+    uint32_t volatile SYS_TIME;        // 0x0c00
+    uint32_t volatile _unknown1[144];  // 0x0c04 - 0x0e40
+    uint32_t volatile HWRNG;           // 0xe44 HW RNG, see http://esp8266-re.foogod.com/wiki/Random_Number_Generator
+} __attribute__ (( packed ));
 
-#endif
+_Static_assert(sizeof(struct WDEV_REGS) == 0xe48, "WDEV_REGS is the wrong size");
+
+/* Extra paranoid check about the HWRNG address, as if this becomes
+   wrong there will be no obvious symptoms apart from a lack of
+   entropy.
+*/
+_Static_assert(&WDEV.HWRNG == (void*)0x3FF20E44, "HWRNG register is at wrong address");
+
+#endif /* _ESP_WDEV_REGS_H */
+

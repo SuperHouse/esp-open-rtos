@@ -116,6 +116,13 @@ endif
 ifeq ($(FLAVOR),debug)
     C_CXX_FLAGS += -g -O0
     LDFLAGS += -g -O0
+else ifeq ($(FLAVOR),sdklike)
+    # These are flags intended to produce object code as similar as possible to
+    # the output of the compiler used to build the SDK libs (for comparison of
+    # disassemblies when coding replacement routines).  It is not normally
+    # intended to be used otherwise.
+    CFLAGS += -O2 -Os -fno-inline -fno-ipa-cp -fno-toplevel-reorder
+    LDFLAGS += -O2
 else
     C_CXX_FLAGS += -g -O2
     LDFLAGS += -g -O2
@@ -306,25 +313,9 @@ $(BUILD_DIR)sdklib/%_stage1.a: $(ROOT)lib/%.a $(BUILD_DIR)sdklib/%.remove | $(BU
 	$(Q) cat $< > $@
 	$(Q) $(AR) d $@ @$(word 2,$^)
 
-# Generate a regex to match symbols we don't want to rename, listed in
-# symbols_norename.txt
-$(BUILD_DIR)sdklib/norename.match: $(ROOT)lib/symbols_norename.txt | $(BUILD_DIR)sdklib
-	cat $< | grep -v "^#" | sed ':begin;$!N;s/\n/\\|/;tbegin' > $@
-
-# Stage 2: Build a list of defined symbols per library, renamed with sdk_ prefix
-$(BUILD_DIR)sdklib/%.rename: $(BUILD_DIR)sdklib/%_stage1.a $(BUILD_DIR)sdklib/norename.match
-	@echo "SDK processing stage 2: Building symbol list for $< -> $@"
-	$(Q) $(OBJDUMP) -t $< | grep ' g ' \
-		| sed -r 's/^.+ ([^ ]+)$$/\1 sdk_\1/' \
-		| grep -v `cat $(BUILD_DIR)sdklib/norename.match` > $@
-
-# Build a master list of all SDK-defined symbols to rename across all libraries
-$(BUILD_DIR)sdklib/allsymbols.rename: $(patsubst %.a,%.rename,$(SDK_PROCESSED_LIBS))
-	cat $^ > $@
-
-# Stage 3: Redefine all SDK symbols as sdk_, weaken all symbols.
-$(BUILD_DIR)sdklib/%.a: $(BUILD_DIR)sdklib/%_stage1.a $(BUILD_DIR)sdklib/allsymbols.rename
-	@echo "SDK processing stage 3: Renaming symbols in SDK library $< -> $@"
+# Stage 2: Redefine all SDK symbols as sdk_, weaken all symbols.
+$(BUILD_DIR)sdklib/%.a: $(BUILD_DIR)sdklib/%_stage1.a $(ROOT)lib/allsymbols.rename
+	@echo "SDK processing stage 2: Renaming symbols in SDK library $< -> $@"
 	$(Q) $(OBJCOPY) --redefine-syms $(word 2,$^) --weaken $< $@
 
 # include "dummy component" for the 'program' object files, defined in the Makefile
