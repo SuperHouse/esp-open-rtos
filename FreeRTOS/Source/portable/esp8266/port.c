@@ -198,6 +198,8 @@ portBASE_TYPE xPortStartScheduler( void )
     }
 
     /* Initialize system tick timer interrupt and schedule the first tick. */
+    _xt_isr_attach(INUM_TICK, sdk__xt_timer_int);
+    _xt_isr_unmask(BIT(INUM_TICK));
     sdk__xt_tick_timer_init();
 
     vTaskSwitchContext();
