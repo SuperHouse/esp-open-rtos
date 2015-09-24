@@ -9,18 +9,13 @@
  * BSD Licensed as described in the file LICENSE
  */
 #include <mbedtls/entropy_poll.h>
-#include <esp/wdev_regs.h>
-#include <string.h>
+#include <esp/hwrand.h>
 
 int mbedtls_hardware_poll( void *data,
                            unsigned char *output, size_t len, size_t *olen )
 {
     (void)(data);
-    for(int i = 0; i < len; i+=4) {
-        uint32_t random = WDEV.HWRNG;
-        /* using memcpy here in case output is unaligned */
-        memcpy(output + i, &random, (i+4 <= len) ? 4 : (len % 4));
-    }
+    hwrand_fill(output, len);
     if(olen)
         *olen = len;
     return 0;
