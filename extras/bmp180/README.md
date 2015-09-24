@@ -34,12 +34,12 @@ As all data aqquired from the BMP180/BMP085 is provided to the `bmp180_informUse
 
 ```
 // Own BMP180 User Inform Implementation
-bool my_informUser(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperatue, bmp180_press_t pressure) {
+bool my_informUser(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure) {
 	my_event_t ev;
 
 	ev.event_type = MY_EVT_BMP180;
 	ev.bmp180_data.cmd = cmd;
-	ev.bmp180_data.temperatue = temperatue;
+	ev.bmp180_data.temperature = temperature;
 	ev.bmp180_data.pressure = pressure;
 
 	return (xQueueSend(*resultQueue, &ev, 0) == pdTRUE);
