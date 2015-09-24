@@ -207,7 +207,7 @@ void test_string(const char *string, char *label, bool evict_cache)
     run_test(string, test_l16si, "load as l16si", nullvalue, evict_cache);
 }
 
-static void test_doubleexception();
+static void test_isr();
 static void test_sign_extension();
 void sanity_tests(void);
 
@@ -225,7 +225,7 @@ void user_init(void)
     test_string(iromtest, "Cached flash", 0);
     test_string(iromtest, "'Uncached' flash", 1);
 
-    test_doubleexception();
+    test_isr();
     test_sign_extension();
 }
 
@@ -241,9 +241,9 @@ static void frc1_interrupt_handler(void)
     frc1_finished = true;
 }
 
-static void test_doubleexception()
+static void test_isr()
 {
-    printf("Testing DoubleException behaviour...\r\n");
+    printf("Testing behaviour inside ISRs...\r\n");
     timer_set_interrupts(FRC1, false);
     timer_set_run(FRC1, false);
     _xt_isr_attach(INUM_TIMER_FRC1, frc1_interrupt_handler);
