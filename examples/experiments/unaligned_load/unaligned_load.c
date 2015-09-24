@@ -209,6 +209,7 @@ void test_string(const char *string, char *label, bool evict_cache)
 
 static void test_isr();
 static void test_sign_extension();
+static void test_system_interaction();
 void sanity_tests(void);
 
 void user_init(void)
@@ -227,6 +228,9 @@ void user_init(void)
 
     test_isr();
     test_sign_extension();
+
+    xTaskHandle taskHandle;
+    xTaskCreate(test_system_interaction, (signed char *)"interactionTask", 256, &taskHandle, 2, NULL);
 }
 
 static volatile bool frc1_ran;
@@ -270,10 +274,38 @@ static void test_sign_extension()
     int16_t *shorts_p = (int16_t *)unsigned_shorts;
     if(shorts_p[0] == -3 && shorts_p[1] == -4 && shorts_p[2] == -5 && shorts_p[3] == -32767 && shorts_p[4] == 44)
     {
-        printf("l16si sign extension worked as expected.\r\n");
+        printf("l16si sign extension PASSED.\r\n");
     } else {
-        printf("l16si sign extension failed. Got values %d %d %d %d %d\r\n", shorts_p[0], shorts_p[1], shorts_p[2], shorts_p[3], shorts_p[4]);
+        printf("ERROR: l16si sign extension failed. Got values %d %d %d %d %d\r\n", shorts_p[0], shorts_p[1], shorts_p[2], shorts_p[3], shorts_p[4]);
     }
+}
+
+
+/* test that running unaligned loads in a running FreeRTOS system doesn't break things
+
+   The following tests run inside a FreeRTOS task, after everything else.
+*/
+static void test_system_interaction()
+{
+    uint32_t start = xTaskGetTickCount();
+    printf("Starting system/timer interaction test (takes approx 30 seconds)...\n");
+    for(int i = 0; i < 200*1000; i++) {
+        test_naive_strcpy_a0(iromtest);
+        test_naive_strcpy_a2(iromtest);
+        test_naive_strcpy_a3(iromtest);
+        test_naive_strcpy_a4(iromtest);
+        test_naive_strcpy_a5(iromtest);
+        test_naive_strcpy_a6(iromtest);
+        /*
+        const volatile char *string = iromtest;
+        volatile char *to = dest;
+        while((*to++ = *string++))
+            ;
+        */
+    }
+    uint32_t ticks = xTaskGetTickCount() - start;
+    printf("Timer interaction test PASSED after %dms.\n", ticks*portTICK_RATE_MS);
+    while(1) {}
 }
 
 /* The following "sanity tests" are designed to try to execute every code path
