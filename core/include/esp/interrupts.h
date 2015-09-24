@@ -20,7 +20,7 @@ typedef enum {
     INUM_SPI = 2,
     INUM_GPIO = 4,
     INUM_UART = 5,
-    INUM_MAX = 6, /* in some places this is documented as timer0 CCOMPARE0 interrupt */
+    INUM_TICK = 6, /* RTOS timer tick, possibly xtensa CPU CCOMPARE0(?) */
     INUM_SOFT = 7,
     INUM_WDT = 8,
     INUM_TIMER_FRC1 = 9,
@@ -35,6 +35,7 @@ typedef enum {
 void sdk__xt_int_exit (void);
 void _xt_user_exit (void);
 void sdk__xt_tick_timer_init (void);
+void sdk__xt_timer_int(void);
 void sdk__xt_timer_int1(void);
 
 INLINED uint32_t _xt_get_intlevel(void)

@@ -469,7 +469,6 @@ CallNMIExceptionHandler:
  * LoadStoreCause. */
 
         .literal_position
-
         .balign  4
 UserExceptionHandler:
         .type   UserExceptionHandler, @function
@@ -490,46 +489,28 @@ UserExceptionHandler:
         wsr     a0, ps
         rsync
         rsr     a2, exccause
-        beqi    a2, CAUSE_LVL1INT, UserHandleInterrupt
-        /* Any UserException cause other than level 1 interrupt should panic */
-UserFailOtherExceptionCause:
-        break   1, 1
-        call0   sdk_user_fatal_exception_handler
-UserHandleInterrupt:
+        /* Any UserException cause other than a level 1 interrupt is fatal */
+        bnei    a2, CAUSE_LVL1INT, .UserFailOtherExceptionCause
+.UserHandleInterrupt:
         rsil    a0, 1
         rsr     a2, intenable
         rsr     a3, interrupt
         movi    a4, 0x3fff
         and     a2, a2, a3
-        and     a2, a2, a4      # a2 = 0x3FFF & INTENABLE & INTERRUPT
-UserHandleTimer:
-        movi    a3, 0xffbf
-        and     a3, a2, a3      # a3 = a2 with bit 6 cleared
-        bnez    a3, UserTimerDone   # If any non-timer interrupt bits set
-        movi    a3, 0x40
-        sub     a12, a2, a3     # a12 = a2 - 0x40 -- Will be zero if bit 6 set
-        call0   sdk__xt_timer_int  # tick timer interrupt
-        mov     a2, a12         # restore a2 from a12, ie zero
-        beqz    a2, UserIntDone
-UserTimerDone:
+        and     a2, a2, a4       # a2 = 0x3FFF & INTENABLE & INTERRUPT
         call0   _xt_isr_handler
-        bnez    a2, UserHandleTimer
-UserIntDone:
-        beqz    a2, UserIntExit
-        /* FIXME: this code will never be reached */
+        j       sdk__xt_int_exit # once finished, jumps to _xt_user_exit via stack
+
+        .literal_position
+.UserFailOtherExceptionCause:
         break   1, 1
         call0   sdk_user_fatal_exception_handler
-UserIntExit:
-        call0   sdk__xt_int_exit  # jumps to _xt_user_exit. Never returns here
 
-        .section .text
-
-/* _xt_user_exit is used to exit interrupt context. */
-/* TODO: Find a better place for this to live. */
+/* _xt_user_exit is pushed onto the stack as part of the user exception handler,
+   restores same set registers which were saved there and returns from exception */
 _xt_user_exit:
         .global _xt_user_exit
         .type _xt_user_exit, @function
-
         l32i    a0, sp, 0x8
         wsr     a0, ps
         l32i    a0, sp, 0x4
