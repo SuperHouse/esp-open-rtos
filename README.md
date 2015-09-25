@@ -10,6 +10,8 @@ Originally based on, but substantially different from, the [Espressif IOT RTOS S
 
 Email discussion list: https://groups.google.com/d/forum/esp-open-rtos
 
+IRC channel: #esp-open-rtos on Freenode ([Web Chat Link](http://webchat.freenode.net/?channels=%23esp-open-rtos&uio=d4)).
+
 Github issues list/bugtracker: http://github.com/superhouse/esp-open-rtos/issues
 
 Please note that this project is released with a [Contributor Code of Conduct](https://github.com/SuperHouse/esp-open-rtos/blob/master/code_of_conduct.md). By participating in this project you agree to abide by its terms.
