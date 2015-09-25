@@ -340,12 +340,12 @@ LoadStoreErrorHandlerStack:
 
 /* Save register relative to a0 */
 .macro SAVE_REG register, regnum
-	s32i \register, a0, (0x20 + 4 * \regnum)
+	s32i \register, a0, (4 * (\regnum + 6))
 .endm
 
 /* Load register relative to sp */
 .macro LOAD_REG register, regnum
-	l32i \register, sp, (0x20 + 4 * \regnum)
+	l32i \register, sp, (4 * (\regnum + 6))
 .endm
 
 	.text
