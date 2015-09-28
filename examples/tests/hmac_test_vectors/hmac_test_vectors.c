@@ -10,7 +10,7 @@
 #include "espressif/esp_common.h"
 #include "espressif/sdk_private.h"
 #include "FreeRTOS.h"
-#include "ssl.h"
+#include "mbedtls/md.h"
 
 #include <string.h>
 
@@ -31,9 +31,7 @@ static const uint8_t aa_80_times[] = {0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0x
 				      0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,
 				      0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa};
 
-/* NOTE: Vectors 6 & 7 currently cause a fault as the axTLS
-   routines don't support keys longer than the block size. */
-const uint8_t NUM_MD5_VECTORS = 5;
+const uint8_t NUM_MD5_VECTORS = 7;
 
 static const struct test_vector md5_vectors[] = {
     { /* vector 1*/
@@ -88,15 +86,30 @@ static const struct test_vector md5_vectors[] = {
     },
 };
 
+static void print_blob(const char *label, const uint8_t *data, const uint32_t len)
+{
+    printf("%s:", label);
+    for(int i = 0; i < len; i++) {
+        if(i % 16 == 0)
+            printf("\n%02x:", i);
+        printf(" %02x", data[i]);
+    }
+}
+
 static void test_md5(void)
 {
     printf("\r\nTesting MD5 vectors...\r\n");
-    uint8_t test_digest[16];
+
+    const mbedtls_md_info_t *md5_hmac = mbedtls_md_info_from_type(MBEDTLS_MD_MD5);
+
     for(int i = 0; i < NUM_MD5_VECTORS; i++) {
 	const struct test_vector *vector = &md5_vectors[i];
 	printf("Test case %d: ", i+1);
-	hmac_md5(vector->data, vector->data_len, vector->key, vector->key_len, test_digest);
-	if(memcmp(test_digest, vector->digest, 16)) {
+
+        uint8_t test_digest[16];
+        mbedtls_md_hmac(md5_hmac, vector->key, vector->key_len, vector->data, vector->data_len, test_digest);
+
+	if(memcmp(vector->digest, test_digest, 16)) {
 	    uint8_t first = 0;
 	    for(first = 0; first < 16; first++) {
 		if(test_digest[first] != vector->digest[first]) {
