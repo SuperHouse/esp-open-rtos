@@ -4,6 +4,8 @@
  *
  * To have this work from initial reset, without needing an iomux call
  * first, choose a pin where iomux defaults to GPIO (ie 0,2,4,5)
+ *
+ * Current sets on=LOW, as the GPIO2 pin is active low
  */
 LED_GPIO=2
 GPIO_DIR_SET = 0x6000030c
@@ -19,11 +21,11 @@ GPIO_OUT_CLEAR = 0x60000308
 .endm
 
 // Turn LED on. rega, regb will be clobbered
-.macro led_on rega, regb
+.macro led_off rega, regb
 	led_op \rega, \regb, GPIO_OUT_SET
 .endm
 
-// Turn LED off. rega, regb will be clobbered
-.macro led_off rega, regb
+// Turn LED on. rega, regb will be clobbered
+.macro led_on rega, regb
 	led_op \rega, \regb, GPIO_OUT_CLEAR
 .endm

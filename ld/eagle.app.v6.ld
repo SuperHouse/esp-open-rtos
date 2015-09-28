@@ -32,7 +32,7 @@ ets_printf = printf;
 */
 #ifndef OTA
 
-#define IROM0_START 0x40240000
+#define IROM0_START 0x40220000
 
 /* Non-OTA sizes */
 #if FLASH_SIZE == 2 /* 256kB */
@@ -136,6 +136,68 @@ SECTIONS
     _dport0_data_end = ABSOLUTE(.);
   } >dport0_0_seg :dport0_0_phdr
 
+  .text : ALIGN(4) /* IRAM */
+  {
+    _stext = .;
+    _text_start = ABSOLUTE(.);
+    . = ALIGN (16);
+    *(.vecbase.text)
+    *(.entry.text)
+    *(.init.literal)
+    *(.init)
+    /* esp-open-rtos compiled source files use the .iram1.* section names for IRAM
+       functions, etc. */
+    *(.iram1.*)
+    /* SDK libraries expect their .text sections to link to iram, not irom */
+    *sdklib*:*(.literal .text .literal.* .text.*)
+    /* libgcc integer functions also need to be in .text, as some are called before
+       flash is mapped (also performance)
+    */
+    *libgcc.a:*i3.o(.literal .text .literal.* .text.*)
+
+    /* libc also in IRAM */
+    *libc.a:*malloc.o(.literal .text .literal.* .text.*)
+    *libc.a:*mallocr.o(.literal .text .literal.* .text.*)
+    *libc.a:*freer.o(.literal .text .literal.* .text.*)
+    *libc.a:*memcpy.o(.literal .text .literal.* .text.*)
+    *libc.a:*memset.o(.literal .text .literal.* .text.*)
+    *libc.a:*memcmp.o(.literal .text .literal.* .text.*)
+    *libc.a:*memmove.o(.literal .text .literal.* .text.*)
+    *libc.a:*rand.o(.literal .text .literal.* .text.*)
+    *libc.a:*bzero.o(.literal .text .literal.* .text.*)
+    *libc.a:*lock.o(.literal .text .literal.* .text.*)
+
+    *libc.a:*printf.o(.literal .text .literal.* .text.*)
+    *libc.a:*findfp.o(.literal .text .literal.* .text.*)
+    *libc.a:*fputwc.o(.literal .text .literal.* .text.*)
+
+    /* xthal_set_intset() called from PendSV in NMI context */
+    *libhal.a:*set_intset.o(.literal .text .literal.* .text.*)
+
+    *(.stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
+    *(.fini.literal)
+    *(.fini)
+    *(.gnu.version)
+    _text_end = ABSOLUTE(.);
+    _etext = .;
+  } >iram1_0_seg :iram1_0_phdr
+
+  .irom0.text : ALIGN(4)
+  {
+    _irom0_text_start = ABSOLUTE(.);
+    /* esp-open-rtos compiled code goes into IROM by default
+       (except for libgcc which is matched above.)
+    */
+    *(.literal .text .literal.* .text.*)
+    /* mbedtls rodata */
+    *mbedtls.a:*.o(.rodata.* .rodata)
+    /* actual certificate in example (TEMPORARY HACK) */
+    *:cert.o(.rodata.* .rodata)
+    /* Anything explicitly marked as "irom" or "irom0" should go here */
+    *(.irom.* .irom.*.* .irom0.*)
+    _irom0_text_end = ABSOLUTE(.);
+  } >irom0_0_seg :irom0_0_phdr
+
   .data : ALIGN(4)
   {
     _data_start = ABSOLUTE(.);
@@ -218,62 +280,6 @@ SECTIONS
   } >dram0_0_seg :dram0_0_bss_phdr
 /* __stack = 0x3ffc8000; */
 
-  .text : ALIGN(4) /* IRAM */
-  {
-    _stext = .;
-    _text_start = ABSOLUTE(.);
-    . = ALIGN (16);
-    *(.vecbase.text)
-    *(.entry.text)
-    *(.init.literal)
-    *(.init)
-    /* esp-open-rtos compiled source files use the .iram1.* section names for IRAM
-       functions, etc. */
-    *(.iram1.*)
-    /* SDK libraries expect their .text sections to link to iram, not irom */
-    *sdklib*:*(.literal .text .literal.* .text.*)
-    /* libgcc integer functions also need to be in .text, as some are called before
-       flash is mapped (also performance)
-    */
-    *libgcc.a:*i3.o(.literal .text .literal.* .text.*)
-
-    /* libc also in IRAM */
-    *libc.a:*malloc.o(.literal .text .literal.* .text.*)
-    *libc.a:*mallocr.o(.literal .text .literal.* .text.*)
-    *libc.a:*freer.o(.literal .text .literal.* .text.*)
-    *libc.a:*memcpy.o(.literal .text .literal.* .text.*)
-    *libc.a:*memset.o(.literal .text .literal.* .text.*)
-    *libc.a:*memcmp.o(.literal .text .literal.* .text.*)
-    *libc.a:*rand.o(.literal .text .literal.* .text.*)
-    *libc.a:*bzero.o(.literal .text .literal.* .text.*)
-    *libc.a:*lock.o(.literal .text .literal.* .text.*)
-
-    *libc.a:*printf.o(.literal .text .literal.* .text.*)
-    *libc.a:*findfp.o(.literal .text .literal.* .text.*)
-    *libc.a:*fputwc.o(.literal .text .literal.* .text.*)
-
-    /* xthal_set_intset() called from PendSV in NMI context */
-    *libhal.a:*set_intset.o(.literal .text .literal.* .text.*)
-
-    *(.stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
-    *(.fini.literal)
-    *(.fini)
-    *(.gnu.version)
-    _text_end = ABSOLUTE(.);
-    _etext = .;
-  } >iram1_0_seg :iram1_0_phdr
-
-  .irom0.text : ALIGN(4)
-  {
-    _irom0_text_start = ABSOLUTE(.);
-    /* esp-open-rtos compiled code goes into IROM by default
-       (except for libgcc which is matched above.)
-    */
-    *(.literal .text .literal.* .text.*)
-    /* Anything explicitly marked as "irom" or "irom0" should go here */
-    *(.irom.* .irom.*.* .irom0.*)
-    _irom0_text_end = ABSOLUTE(.);
-  } >irom0_0_seg :irom0_0_phdr
 
   .lit4 : ALIGN(4)
   {
