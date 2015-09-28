@@ -71,14 +71,13 @@ Current status is alpha quality, actively developed. AP STATION mode (ie wifi cl
    - rboot-ota - OTA support (over-the-air updates) including a TFTP server for receiving updates ([for rboot by @raburton](http://richard.burtons.org/2015/05/18/rboot-a-new-boot-loader-for-esp8266/))
    - bmp180 driver for digital pressure sensor ([upstream project](https://github.com/Angus71/esp-open-rtos-driver-bmp180))
 * `FreeRTOS` contains FreeRTOS implementation, subdirectory structure is the standard FreeRTOS structure. `FreeRTOS/source/portable/esp8266/` contains the ESP8266 port.
-* `lwip` and `axtls` contain the lwIP TCP/IP library and the axTLS TLS library ('libssl' in the esp8266 SDKs), respectively. See [Third Party Libraries](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries) wiki page for details.
+* `lwip` contains the lwIP TCP/IP library. See [Third Party Libraries](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries) wiki page for details.
 * `libc` contains the newlib libc. [Libc details here](https://github.com/SuperHouse/esp-open-rtos/wiki/libc-configuration).
 
 ## Open Source Components
 
 * [FreeRTOS](http://freertos.org) V7.5.2
 * [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki) v1.4.1, modified via the [esp-lwip project](https://github.com/kadamski/esp-lwip) by @kadamski.
-* [axTLS](http://axtls.sourceforge.net/) compiled from development version v1.5.3, plus modifications for low memory devices.
 * [newlib](https://github.com/projectgus/newlib-xtensa) v2.2.0, with patches for xtensa support and locking stubs for thread-safe operation on FreeRTOS.
 
 For details of how third party libraries are integrated, [see the wiki page](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries).
@@ -96,7 +95,7 @@ Some binary libraries appear to contain unattributed open source code:
 
 ## Licensing
 
-* BSD license (as described in LICENSE) applies to original source files, [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki), and [axTLS](http://axtls.sourceforge.net/). lwIP is Copyright (C) Swedish Institute of Computer Science. axTLS is Copyright (C) Cameron Rich.
+* BSD license (as described in LICENSE) applies to original source files, [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki). lwIP is Copyright (C) Swedish Institute of Computer Science.
 
 * FreeRTOS is provided under the GPL with the FreeRTOS linking exception, allowing non-GPL firmwares to be produced using FreeRTOS as the RTOS core. License details in files under FreeRTOS dir. FreeRTOS is Copyright (C) Real Time Engineers Ltd.
 

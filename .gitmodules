@@ -1,10 +1,6 @@
 [submodule "lwip/lwip"]
 	path = lwip/lwip
 	url = https://github.com/SuperHouse/esp-lwip.git
-[submodule "axtls/axtls"]
-	path = axtls/axtls
-	url = https://github.com/SuperHouse/axtls.git
-
 [submodule "extras/mbedtls/mbedtls"]
 	path = extras/mbedtls/mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
