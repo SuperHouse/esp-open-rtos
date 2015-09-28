@@ -31,7 +31,7 @@
 
 /* Optional reentrant struct support.  Used mostly on platforms with
    very restricted storage.  */
-/* #undef _WANT_REENT_SMALL */
+#define _WANT_REENT_SMALL 1
 
 /* Multibyte supported */
 /* #undef _MB_CAPABLE */
