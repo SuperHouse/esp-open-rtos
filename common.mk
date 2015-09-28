@@ -80,7 +80,7 @@ OBJDUMP = $(CROSS)objdump
 
 # Source components to compile and link. Each of these are subdirectories
 # of the root, with a 'component.mk' file.
-COMPONENTS     ?= $(EXTRA_COMPONENTS) FreeRTOS lwip axtls core
+COMPONENTS     ?= $(EXTRA_COMPONENTS) FreeRTOS lwip core
 
 # binary esp-iot-rtos SDK libraries to link. These are pre-processed prior to linking.
 SDK_LIBS		?= main net80211 phy pp wpa
@@ -94,13 +94,24 @@ OWN_LIBC ?= 1
 # Note: you will need a recent esp
 ENTRY_SYMBOL ?= call_user_start
 
+# Set this to zero if you don't want individual function & data sections
+# (some code may be slightly slower, linking will be slighty slower,
+# but compiled code size will come down a small amount.)
+SPLIT_SECTIONS ?= 1
+
 # Common flags for both C & C++_
 C_CXX_FLAGS     = -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals $(CPPFLAGS)
 # Flags for C only
 CFLAGS		= $(C_CXX_FLAGS) -std=gnu99
 # Flags for C++ only
 CXXFLAGS	= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti
+
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(EXTRA_LDFLAGS)
+
+ifeq ($(SPLIT_SECTIONS),1)
+  C_CXX_FLAGS += -ffunction-sections -fdata-sections
+  LDFLAGS += -Wl,-gc-sections
+endif
 
 ifeq ($(FLAVOR),debug)
     C_CXX_FLAGS += -g -O0
@@ -159,7 +170,7 @@ ifeq ($(OTA),0)
 # for non-OTA, we create two different files for uploading into the flash
 # these are the names and options to generate them
 FW_ADDR_1	= 0x00000
-FW_ADDR_2	= 0x40000
+FW_ADDR_2	= 0x20000
 FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_ADDR_1).bin)
 FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_ADDR_2).bin)
 else
@@ -263,6 +274,7 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 	$(vecho) "AS $$<"
 	$(Q) mkdir -p $$(dir $$@)
 	$$($(1)_CC_ARGS) -c $$< -o $$@
+	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 # the component is shown to depend on both obj and source files so we get a meaningful error message
 # for missing explicitly named source files
