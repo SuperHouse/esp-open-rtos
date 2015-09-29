@@ -27,9 +27,7 @@
 
 NMIHandlerStack:                # stack space for NMI handler
         .skip   4*0x100
-.LNMIHandlerStackTop:
-NMIRegisterSaved:               # register space for saving NMI registers
-        .skip   4*(16 + 6)
+.NMIHandlerStackTop:
 
 LoadStoreErrorHandlerStack:
         .word   0       # a0
@@ -67,10 +65,7 @@ DebugExceptionVector:
         .org    VecBase + 0x20
 NMIExceptionVector:
         .type   NMIExceptionVector, @function
-
-        wsr     a0, excsave3
-        call0   CallNMIExceptionHandler
-        rfi     3  # Should never be reached
+        j   NMIExceptionHandler
 
         .org    VecBase + 0x30
 KernelExceptionVector:
@@ -373,92 +368,80 @@ call_user_start:
 
         .section .vecbase.text, "x"
 
-/* Save register relative to a0 */
-.macro SAVE_REG register, regnum
-        s32i \register, a0, (4 * (\regnum + 6))
-.endm
-
-/* Load register relative to sp */
-.macro LOAD_REG register, regnum
-        l32i \register, sp, (4 * (\regnum + 6))
-.endm
-
         .literal_position
-
         .balign  16
-CallNMIExceptionHandler:
-        .type   CallNMIExceptionHandler, @function
+NMIExceptionHandler:
+        .type   NMIExceptionHandler, @function
 
-        movi    a0, NMIRegisterSaved
-        SAVE_REG a2, 2
-        SAVE_REG sp, 1
-        SAVE_REG a3, 3
-        rsr     a2, excsave3    # a2 is now former a0
-        SAVE_REG a4, 4
-        SAVE_REG a2, 0
-        rsr     a3, epc1
-        rsr     a4, exccause
-        SAVE_REG a3, -5
-        SAVE_REG a4, -4
-        rsr     a3, excvaddr
-        SAVE_REG a3, -3
-        rsr     a3, excsave1
-        SAVE_REG a3, -2
-        SAVE_REG a5, 5
-        SAVE_REG a6, 6
-        SAVE_REG a7, 7
-        SAVE_REG a8, 8
-        SAVE_REG a9, 9
-        SAVE_REG a10, 10
-        SAVE_REG a11, 11
-        SAVE_REG a12, 12
-        SAVE_REG a13, 13
-        SAVE_REG a14, 14
-        SAVE_REG a15, 15
-        movi    sp, .LNMIHandlerStackTop
-        movi    a0, 0
-        movi    a2, 0x23        # argument for handler
-        wsr     a2, ps
+        wsr     sp, excsave3	# excsave3 holds user stack
+	movi	sp, .NMIHandlerStackTop - 0x54
+        s32i    a0, sp, 0x00
+        s32i    a2, sp, 0x08
+        s32i    a3, sp, 0x0c
+        s32i    a4, sp, 0x10
+        s32i    a5, sp, 0x14
+        s32i    a6, sp, 0x18
+        s32i    a7, sp, 0x1c
+        s32i    a8, sp, 0x20
+        s32i    a9, sp, 0x24
+        s32i    a10, sp, 0x28
+        s32i    a11, sp, 0x2c
+        s32i    a12, sp, 0x30
+        s32i    a13, sp, 0x34
+        s32i    a14, sp, 0x38
+        s32i    a15, sp, 0x3c
+        rsr     a0, epc1
+        s32i    a0, sp, 0x40
+        rsr     a0, exccause
+        s32i    a0, sp, 0x44
+        rsr     a0, excsave1
+        s32i    a0, sp, 0x48
+        rsr     a0, excvaddr
+        s32i    a0, sp, 0x4c
+        rsr     a0, sar
+        s32i    a0, sp, 0x50
+        movi    a0, 0x23        # Override PS for NMI handler
+        wsr     a0, ps
         rsync
-        rsr     a14, sar
-        s32i    a14, sp, 0      # this is also NMIRegisterSaved+0
         call0   sdk_wDev_ProcessFiq
-        l32i    a15, sp, 0
-        wsr     a15, sar
-        movi    a2, 0x33
-        wsr     a2, ps
+
+	l32i 	a0, sp, 0x50
+	wsr	a0, sar
+	l32i	a0, sp, 0x4c
+	wsr	a0, excvaddr
+	l32i	a0, sp, 0x48
+	wsr	a0, excsave1
+	l32i	a0, sp, 0x44
+	wsr	a0, exccause
+	l32i	a0, sp, 0x40
+	wsr	a0, epc1
+	l32i	a15, sp, 0x3c
+	l32i	a14, sp, 0x38
+	l32i	a13, sp, 0x34
+	l32i	a12, sp, 0x30
+	l32i	a11, sp, 0x2c
+	l32i 	a10, sp, 0x28
+	l32i	a9, sp, 0x24
+	l32i	a8, sp, 0x20
+	l32i	a7, sp, 0x1c
+	l32i 	a6, sp, 0x18
+	l32i	a5, sp, 0x14
+	l32i	a4, sp, 0x10
+	l32i	a3, sp, 0x0c
+        movi    a0, 0x33    	  # Reset PS
+        wsr     a0, ps
         rsync
-        LOAD_REG a4, 4
-        LOAD_REG a5, 5
-        LOAD_REG a6, 6
-        LOAD_REG a7, 7
-        LOAD_REG a8, 8
-        LOAD_REG a9, 9
-        LOAD_REG a10, 10
-        LOAD_REG a11, 11
-        LOAD_REG a12, 12
-        LOAD_REG a13, 13
-        LOAD_REG a14, 14
-        LOAD_REG a15, 15
-        LOAD_REG a2, -5
-        LOAD_REG a3, -4
-        wsr     a2, epc1
-        wsr     a3, exccause
-        LOAD_REG a2, -3
-        LOAD_REG a3, -2
-        wsr     a2, excvaddr
-        wsr     a3, excsave1
-        LOAD_REG a0, 0
-        /* set dport nmi status bit 0 (wDev_ProcessFiq clears & verifies this
-         * bit stays cleared, see
+        /* set dport nmi status to 1 (wDev_ProcessFiq clears bit 0 and verifies it
+         * stays cleared, see
          * http://esp8266-re.foogod.com/wiki/WDev_ProcessFiq_%28IoT_RTOS_SDK_0.9.9%29)
          */
-        movi    a2, 0x3ff00000
-        movi    a3, 0x1
-        s32i    a3, a2, 0
-        LOAD_REG a2, 2
-        LOAD_REG a3, 3
-        LOAD_REG a1, 1
+        movi    a0, 0x3ff00000
+        movi    a2, 0x1
+        s32i    a2, a0, 0
+	l32i	a2, sp, 0x08
+	l32i	a0, sp, 0x00
+	movi	a1, 0x0
+	xsr	a1, excsave3       # Load stack back from excsave3, clear excsave3
         rfi     3
 
 /*********************** General UserException Handler ***********************/
@@ -519,4 +502,3 @@ _xt_user_exit:
         l32i    sp, sp, 0x10
         rsync
         rfe
-
