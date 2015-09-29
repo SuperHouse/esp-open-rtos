@@ -25,9 +25,16 @@
 
         .section .bss
 
+/* Stack space for NMI handler
+
+   NMI handler stack high water mark measured at 0x134 bytes. Any use
+   of the NMI timer callback will add stack overhead as well.
+
+   The NMI handler does a basic check for stack overflow
+*/
         .balign 16
-NMIHandlerStack:                # stack space for NMI handler
-        .skip   4*0x100
+NMIHandlerStack:
+        .skip 0x200
 .NMIHandlerStackTop:
 
         .balign 16
@@ -368,6 +375,8 @@ call_user_start:
 
 /*************************** NMI Exception Handler ***************************/
 
+#define NMI_STACK_CANARY 0xABBABABA
+
         .section .vecbase.text, "x"
 
         .literal_position
@@ -401,7 +410,19 @@ NMIExceptionHandler:
         movi    a0, 0x23        # Override PS for NMI handler
         wsr     a0, ps
         rsync
+
+        /* mark the stack overflow point before we call the actual NMI handler */
+        movi    a0, NMIHandlerStack
+        movi    a2, NMI_STACK_CANARY
+        s32i    a2, a0, 0x00
+
         call0   sdk_wDev_ProcessFiq
+
+        /* verify we didn't overflow */
+        movi    a0, NMIHandlerStack
+        l32i    a3, a0, 0
+        movi    a2, NMI_STACK_CANARY
+        bne    a3, a2, .NMIFatalStackOverflow
 
 	l32i 	a0, sp, 0x3c
 	wsr	a0, sar
@@ -437,6 +458,19 @@ NMIExceptionHandler:
 	movi	a1, 0x0
 	xsr	a1, excsave3       # Load stack back from excsave3, clear excsave3
         rfi     3
+
+        .section .rodata
+
+.NMIStackOverflowErrorMsg:
+        .string "\nFATAL: NMI Stack Overflow\n"
+
+        .section .vecbase.text, "x"
+
+.NMIFatalStackOverflow:
+        movi a2, .NMIStackOverflowErrorMsg
+        call0 printf
+.NMIInfiniteLoop:
+        j .NMIInfiniteLoop /* TODO: replace with call to abort() */
 
 /*********************** General UserException Handler ***********************/
 
