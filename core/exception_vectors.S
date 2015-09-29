@@ -25,10 +25,12 @@
 
         .section .bss
 
+        .balign 16
 NMIHandlerStack:                # stack space for NMI handler
         .skip   4*0x100
 .NMIHandlerStackTop:
 
+        .balign 16
 LoadStoreErrorHandlerStack:
         .word   0       # a0
         .word   0       # (unused)
@@ -374,60 +376,52 @@ NMIExceptionHandler:
         .type   NMIExceptionHandler, @function
 
         wsr     sp, excsave3	# excsave3 holds user stack
-	movi	sp, .NMIHandlerStackTop - 0x54
+        movi    sp, .NMIHandlerStackTop - 0x40
         s32i    a0, sp, 0x00
-        s32i    a2, sp, 0x08
-        s32i    a3, sp, 0x0c
-        s32i    a4, sp, 0x10
-        s32i    a5, sp, 0x14
-        s32i    a6, sp, 0x18
-        s32i    a7, sp, 0x1c
-        s32i    a8, sp, 0x20
-        s32i    a9, sp, 0x24
-        s32i    a10, sp, 0x28
-        s32i    a11, sp, 0x2c
-        s32i    a12, sp, 0x30
-        s32i    a13, sp, 0x34
-        s32i    a14, sp, 0x38
-        s32i    a15, sp, 0x3c
+        s32i    a2, sp, 0x04
+        s32i    a3, sp, 0x08
+        s32i    a4, sp, 0x0c
+        s32i    a5, sp, 0x10
+        s32i    a6, sp, 0x14
+        s32i    a7, sp, 0x18
+        s32i    a8, sp, 0x1c
+        s32i    a9, sp, 0x20
+        s32i    a10, sp, 0x24
+        s32i    a11, sp, 0x28
         rsr     a0, epc1
-        s32i    a0, sp, 0x40
+        s32i    a0, sp, 0x2c
         rsr     a0, exccause
-        s32i    a0, sp, 0x44
+        s32i    a0, sp, 0x30
         rsr     a0, excsave1
-        s32i    a0, sp, 0x48
+        s32i    a0, sp, 0x34
         rsr     a0, excvaddr
-        s32i    a0, sp, 0x4c
+        s32i    a0, sp, 0x38
         rsr     a0, sar
-        s32i    a0, sp, 0x50
+        s32i    a0, sp, 0x3c
         movi    a0, 0x23        # Override PS for NMI handler
         wsr     a0, ps
         rsync
         call0   sdk_wDev_ProcessFiq
 
-	l32i 	a0, sp, 0x50
+	l32i 	a0, sp, 0x3c
 	wsr	a0, sar
-	l32i	a0, sp, 0x4c
+	l32i	a0, sp, 0x38
 	wsr	a0, excvaddr
-	l32i	a0, sp, 0x48
+	l32i	a0, sp, 0x34
 	wsr	a0, excsave1
-	l32i	a0, sp, 0x44
+	l32i	a0, sp, 0x30
 	wsr	a0, exccause
-	l32i	a0, sp, 0x40
+	l32i	a0, sp, 0x2c
 	wsr	a0, epc1
-	l32i	a15, sp, 0x3c
-	l32i	a14, sp, 0x38
-	l32i	a13, sp, 0x34
-	l32i	a12, sp, 0x30
-	l32i	a11, sp, 0x2c
-	l32i 	a10, sp, 0x28
-	l32i	a9, sp, 0x24
-	l32i	a8, sp, 0x20
-	l32i	a7, sp, 0x1c
-	l32i 	a6, sp, 0x18
-	l32i	a5, sp, 0x14
-	l32i	a4, sp, 0x10
-	l32i	a3, sp, 0x0c
+	l32i	a11, sp, 0x28
+	l32i 	a10, sp, 0x24
+	l32i	a9, sp, 0x20
+	l32i	a8, sp, 0x1c
+	l32i	a7, sp, 0x18
+	l32i 	a6, sp, 0x14
+	l32i	a5, sp, 0x10
+	l32i	a4, sp, 0x0c
+	l32i	a3, sp, 0x08
         movi    a0, 0x33    	  # Reset PS
         wsr     a0, ps
         rsync
@@ -438,7 +432,7 @@ NMIExceptionHandler:
         movi    a0, 0x3ff00000
         movi    a2, 0x1
         s32i    a2, a0, 0
-	l32i	a2, sp, 0x08
+	l32i	a2, sp, 0x04
 	l32i	a0, sp, 0x00
 	movi	a1, 0x0
 	xsr	a1, excsave3       # Load stack back from excsave3, clear excsave3
