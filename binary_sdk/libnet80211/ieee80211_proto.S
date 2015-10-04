@@ -15,6 +15,7 @@ sdk_ieee80211_addr_bcast:
 # Function @ .irom0.text+0xc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_proto_attach
             .type        sdk_ieee80211_proto_attach, @function
 sdk_ieee80211_proto_attach:
@@ -37,6 +38,7 @@ sdk_ieee80211_proto_attach:
 
             .balign      4
 # Function @ .irom0.text+0x34
+            .balign      4
             .global      sdk_ieee80211_set_shortslottime
             .type        sdk_ieee80211_set_shortslottime, @function
 sdk_ieee80211_set_shortslottime:
@@ -52,6 +54,7 @@ sdk_ieee80211_set_shortslottime:
             .literal_position                                  #   4c: 00000000
 
 # Function @ .irom0.text+0x50
+            .balign      4
             .global      sdk_ieee80211_iserp_rateset
             .type        sdk_ieee80211_iserp_rateset, @function
 sdk_ieee80211_iserp_rateset:
@@ -82,6 +85,7 @@ sdk_ieee80211_iserp_rateset:
 # Function @ .irom0.text+0x88
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #   88: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   8b: 0901
             l8ui         a0, a2, 0 /* [arg0] */                #   8d: 020200
@@ -122,6 +126,7 @@ sdk_ieee80211_iserp_rateset:
 # Function @ .irom0.text+0xe4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_setbasicrates
             .type        sdk_ieee80211_setbasicrates, @function
 sdk_ieee80211_setbasicrates:
@@ -137,6 +142,7 @@ sdk_ieee80211_setbasicrates:
 # Function @ .irom0.text+0xf8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_addbasicrates
             .type        sdk_ieee80211_addbasicrates, @function
 sdk_ieee80211_addbasicrates:
@@ -150,6 +156,7 @@ sdk_ieee80211_addbasicrates:
 
             .balign      4
 # Function @ .irom0.text+0x10c
+            .balign      4
             .global      sdk_ieee80211_wme_initparams
             .type        sdk_ieee80211_wme_initparams, @function
 sdk_ieee80211_wme_initparams:
@@ -157,6 +164,7 @@ sdk_ieee80211_wme_initparams:
 
             .balign      4
 # Function @ .irom0.text+0x110
+            .balign      4
             .global      sdk_ieee80211_wme_updateparams
             .type        sdk_ieee80211_wme_updateparams, @function
 sdk_ieee80211_wme_updateparams:
@@ -173,6 +181,7 @@ sdk_ieee80211_wme_updateparams:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_mlme_connect_bss
             .type        sdk_ieee80211_mlme_connect_bss, @function
 sdk_ieee80211_mlme_connect_bss:

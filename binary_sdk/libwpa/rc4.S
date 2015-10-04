@@ -8,6 +8,8 @@
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
+            .literal_position
             .global      sdk_rc4_skip
             .type        sdk_rc4_skip, @function
 sdk_rc4_skip:

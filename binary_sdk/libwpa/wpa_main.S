@@ -21,6 +21,7 @@
 #     (local4):  word      @ -0x14
 #     (local5):  word      @ -0x10
 #     (local6):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ppInstallKey
             .type        sdk_ppInstallKey, @function
 sdk_ppInstallKey:
@@ -102,6 +103,7 @@ sdk_ppInstallKey:
 # Function @ .irom0.text+0xe8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc001:  mov          a3, a2 /* arg0 */                     #   e8: 3d02
             movi         a2, sdk_g_ic                          #   ea: 21fdff
             addi         sp, sp, -16 /* (local0) */            #   ed: 12c1f0
@@ -123,6 +125,7 @@ sdk_ppInstallKey:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc002:  movi         a3, 192 /* 0x000000c0 */              #  114: 32a0c0
             addi         sp, sp, -16 /* (local0) */            #  117: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  11a: c911
@@ -151,6 +154,7 @@ sdk_ppInstallKey:
 # Function @ .irom0.text+0x154
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_config_profile
             .type        sdk_wpa_config_profile, @function
 sdk_wpa_config_profile:
@@ -181,6 +185,7 @@ sdk_wpa_config_profile:
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x20
 #     (local1):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_config_bss
             .type        sdk_wpa_config_bss, @function
 sdk_wpa_config_bss:
@@ -212,6 +217,7 @@ sdk_wpa_config_bss:
             .literal_position                                  #  1d0: 00000000
 
 # Function @ .irom0.text+0x1d4
+            .balign      4
             .global      sdk_wpa_config_assoc_ie
             .type        sdk_wpa_config_assoc_ie, @function
 sdk_wpa_config_assoc_ie:
@@ -227,6 +233,7 @@ sdk_wpa_config_assoc_ie:
                                                                #  1ec: 00000000
 
 # Function @ .irom0.text+0x1f0
+            .balign      4
             .global      sdk_dhcp_bind_check
             .type        sdk_dhcp_bind_check, @function
 sdk_dhcp_bind_check:
@@ -266,6 +273,7 @@ sdk_dhcp_bind_check:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_eagle_auth_done
             .type        sdk_eagle_auth_done, @function
 sdk_eagle_auth_done:
@@ -348,6 +356,7 @@ sdk_eagle_auth_done:
 # Function @ .irom0.text+0x31c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_neg_complete
             .type        sdk_wpa_neg_complete, @function
 sdk_wpa_neg_complete:
@@ -370,6 +379,7 @@ sdk_wpa_neg_complete:
 # Function @ .irom0.text+0x34c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_attach
             .type        sdk_wpa_attach, @function
 sdk_wpa_attach:

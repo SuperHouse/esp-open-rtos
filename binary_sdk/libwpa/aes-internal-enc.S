@@ -16,6 +16,7 @@
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
             .global      sdk_rijndaelEncrypt
             .type        sdk_rijndaelEncrypt, @function
 sdk_rijndaelEncrypt:
@@ -405,6 +406,7 @@ sdk_rijndaelEncrypt:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_aes_encrypt_init
             .type        sdk_aes_encrypt_init, @function
 sdk_aes_encrypt_init:
@@ -431,6 +433,7 @@ sdk_aes_encrypt_init:
 # Function @ .irom0.text+0x460
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_aes_encrypt
             .type        sdk_aes_encrypt, @function
 sdk_aes_encrypt:
@@ -448,6 +451,7 @@ sdk_aes_encrypt:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_aes_encrypt_deinit
             .type        sdk_aes_encrypt_deinit, @function
 sdk_aes_encrypt_deinit:

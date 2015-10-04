@@ -2,6 +2,8 @@
             .section     .text, "ax", @progbits
 
 # Function @ .text+0x0
+            .balign      4
+            .literal_position
             .global      sdk__xt_context_save
             .type        sdk__xt_context_save, @function
 sdk__xt_context_save:
@@ -20,6 +22,7 @@ sdk__xt_context_save:
             ret           /* arg0 */                           #   1a: 0df0
 
 # Function @ .text+0x1c
+            .balign      4
             .global      sdk__xt_context_restore
             .type        sdk__xt_context_restore, @function
 sdk__xt_context_restore:

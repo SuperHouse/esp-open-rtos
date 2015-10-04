@@ -2,6 +2,8 @@
             .section     .text, "ax", @progbits
 
 # Function @ .text+0x0
+            .balign      4
+            .literal_position
 .Lfunc001:  bltui        a2, 5, .Lbr003                        #    0: b65213
             bltui        a2, 8, .Lbr001                        #    3: b68209
             movi         a4, 36 /* 0x00000024 */               #    6: 2c44
@@ -17,6 +19,7 @@
             .literal_position                                  #   1c: 00000000
 
 # Function @ .text+0x20
+            .balign      4
             .global      sdk_RC_GetAckRate
             .type        sdk_RC_GetAckRate, @function
 sdk_RC_GetAckRate:
@@ -28,6 +31,7 @@ sdk_RC_GetAckRate:
             .literal_position                                  #   2c: 00000000
 
 # Function @ .text+0x30
+            .balign      4
             .global      sdk_RC_GetRtsRate
             .type        sdk_RC_GetRtsRate, @function
 sdk_RC_GetRtsRate:
@@ -40,6 +44,7 @@ sdk_RC_GetRtsRate:
                                                                #   40: 00000000
 
 # Function @ .text+0x44
+            .balign      4
             .global      sdk_RC_GetAckTime
             .type        sdk_RC_GetAckTime, @function
 sdk_RC_GetAckTime:
@@ -58,6 +63,7 @@ sdk_RC_GetAckTime:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_RC_GetCtsTime
             .type        sdk_RC_GetCtsTime, @function
 sdk_RC_GetCtsTime:
@@ -94,6 +100,7 @@ sdk_RC_GetCtsTime:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_RC_GetBlockAckTime
             .type        sdk_RC_GetBlockAckTime, @function
 sdk_RC_GetBlockAckTime:
@@ -126,6 +133,7 @@ sdk_RC_GetBlockAckTime:
                                                                #   d4: ffff0300
 
 # Function @ .text+0xd8
+            .balign      4
 .Lfunc002:  slli         a4, a3, 3                             #   d8: d04311
             movi         a5, .Ldata002                         #   db: 51fdff
             extui        a3, a4, 0, 16                         #   de: 4030f4
@@ -350,6 +358,7 @@ sdk_RC_GetBlockAckTime:
                                                                #   6c: 2d0e0000
 
 # Function @ .irom0.text+0x70
+            .balign      4
 .Lfunc003:  movi         a9, 0x0000ba2e                        #   70: 91e7ff
             movi         a4, 0x00040000                        #   73: 41e4ff
             movi         a11, 0x00020000                       #   76: b1e4ff
@@ -524,6 +533,7 @@ sdk_RC_GetBlockAckTime:
 # Function @ .irom0.text+0x258
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_RC_SetBasicRate
             .type        sdk_RC_SetBasicRate, @function
 sdk_RC_SetBasicRate:

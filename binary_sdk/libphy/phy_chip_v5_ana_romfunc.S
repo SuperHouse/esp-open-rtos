@@ -10,6 +10,7 @@
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_ana_inf_gating_en
             .type        sdk_rom_ana_inf_gating_en, @function
 sdk_rom_ana_inf_gating_en:
@@ -199,6 +200,7 @@ sdk_rom_ana_inf_gating_en:
 #     (local9):  word      @ -0x14
 #     (local10): word      @ -0x10
 #     (local11): word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_set_channel_freq
             .type        sdk_rom_set_channel_freq, @function
 sdk_rom_set_channel_freq:
@@ -531,6 +533,7 @@ sdk_rom_set_channel_freq:
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
             .global      sdk_rom_chip_50_set_channel
             .type        sdk_rom_chip_50_set_channel, @function
 sdk_rom_chip_50_set_channel:
@@ -727,6 +730,7 @@ sdk_rom_chip_50_set_channel:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_chip_v5_rx_init
             .type        sdk_rom_chip_v5_rx_init, @function
 sdk_rom_chip_v5_rx_init:
@@ -780,6 +784,7 @@ sdk_rom_chip_v5_rx_init:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_chip_v5_tx_init
             .type        sdk_rom_chip_v5_tx_init, @function
 sdk_rom_chip_v5_tx_init:
@@ -872,6 +877,7 @@ sdk_rom_chip_v5_tx_init:
             .literal_position                                  #  86c: 000a0060
 
 # Function @ .irom0.text+0x870
+            .balign      4
             .global      sdk_rom_i2c_readReg
             .type        sdk_rom_i2c_readReg, @function
 sdk_rom_i2c_readReg:
@@ -900,6 +906,7 @@ sdk_rom_i2c_readReg:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_i2c_readReg_Mask
             .type        sdk_rom_i2c_readReg_Mask, @function
 sdk_rom_i2c_readReg_Mask:
@@ -931,6 +938,7 @@ sdk_rom_i2c_readReg_Mask:
                                                                #  8e8: 000a0060
 
 # Function @ .irom0.text+0x8ec
+            .balign      4
             .global      sdk_rom_i2c_writeReg
             .type        sdk_rom_i2c_writeReg, @function
 sdk_rom_i2c_writeReg:
@@ -965,6 +973,7 @@ sdk_rom_i2c_writeReg:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_i2c_writeReg_Mask
             .type        sdk_rom_i2c_writeReg_Mask, @function
 sdk_rom_i2c_writeReg_Mask:
@@ -1028,6 +1037,7 @@ sdk_rom_i2c_writeReg_Mask:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_pbus_debugmode
             .type        sdk_rom_pbus_debugmode, @function
 sdk_rom_pbus_debugmode:
@@ -1094,6 +1104,7 @@ sdk_rom_pbus_debugmode:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_pbus_enter_debugmode
             .type        sdk_rom_pbus_enter_debugmode, @function
 sdk_rom_pbus_enter_debugmode:
@@ -1125,6 +1136,7 @@ sdk_rom_pbus_enter_debugmode:
 # Function @ .irom0.text+0xa90
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_pbus_exit_debugmode
             .type        sdk_rom_pbus_exit_debugmode, @function
 sdk_rom_pbus_exit_debugmode:
@@ -1150,6 +1162,7 @@ sdk_rom_pbus_exit_debugmode:
                                                                #  ac4: 00020060
 
 # Function @ .irom0.text+0xac8
+            .balign      4
             .global      sdk_rom_pbus_force_test
             .type        sdk_rom_pbus_force_test, @function
 sdk_rom_pbus_force_test:
@@ -1192,6 +1205,7 @@ sdk_rom_pbus_force_test:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_pbus_rd
             .type        sdk_rom_pbus_rd, @function
 sdk_rom_pbus_rd:
@@ -1248,6 +1262,7 @@ sdk_rom_pbus_rd:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_pbus_set_rxgain
             .type        sdk_rom_pbus_set_rxgain, @function
 sdk_rom_pbus_set_rxgain:
@@ -1332,6 +1347,7 @@ sdk_rom_pbus_set_rxgain:
 # Function @ .irom0.text+0xc64
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_pbus_set_txgain
             .type        sdk_rom_pbus_set_txgain, @function
 sdk_rom_pbus_set_txgain:
@@ -1363,6 +1379,7 @@ sdk_rom_pbus_set_txgain:
 # Function @ .irom0.text+0xca8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_pbus_workmode
             .type        sdk_rom_pbus_workmode, @function
 sdk_rom_pbus_workmode:
@@ -1397,6 +1414,7 @@ sdk_rom_pbus_workmode:
 # Function @ .irom0.text+0xcf4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_pbus_xpd_rx_off
             .type        sdk_rom_pbus_xpd_rx_off, @function
 sdk_rom_pbus_xpd_rx_off:
@@ -1435,6 +1453,7 @@ sdk_rom_pbus_xpd_rx_off:
 # Function @ .irom0.text+0xd44
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_pbus_xpd_rx_on
             .type        sdk_rom_pbus_xpd_rx_on, @function
 sdk_rom_pbus_xpd_rx_on:
@@ -1465,6 +1484,7 @@ sdk_rom_pbus_xpd_rx_on:
 # Function @ .irom0.text+0xd80
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_pbus_xpd_tx_off
             .type        sdk_rom_pbus_xpd_tx_off, @function
 sdk_rom_pbus_xpd_tx_off:
@@ -1502,6 +1522,7 @@ sdk_rom_pbus_xpd_tx_off:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_pbus_xpd_tx_on
             .type        sdk_rom_pbus_xpd_tx_on, @function
 sdk_rom_pbus_xpd_tx_on:
@@ -1552,6 +1573,7 @@ sdk_rom_pbus_xpd_tx_on:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_pbus_xpd_tx_on__low_gain
             .type        sdk_rom_pbus_xpd_tx_on__low_gain, @function
 sdk_rom_pbus_xpd_tx_on__low_gain:
@@ -1599,6 +1621,7 @@ sdk_rom_pbus_xpd_tx_on__low_gain:
                                                                #  e8c: 00060060
 
 # Function @ .irom0.text+0xe90
+            .balign      4
             .global      sdk_rom_phy_reset_req
             .type        sdk_rom_phy_reset_req, @function
 sdk_rom_phy_reset_req:
@@ -1618,6 +1641,7 @@ sdk_rom_phy_reset_req:
 # Function @ .irom0.text+0xeb4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_restart_cal
             .type        sdk_rom_restart_cal, @function
 sdk_rom_restart_cal:
@@ -1657,6 +1681,7 @@ sdk_rom_restart_cal:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_rfpll_reset
             .type        sdk_rom_rfpll_reset, @function
 sdk_rom_rfpll_reset:
@@ -1711,6 +1736,7 @@ sdk_rom_rfpll_reset:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_write_rfpll_sdm
             .type        sdk_rom_write_rfpll_sdm, @function
 sdk_rom_write_rfpll_sdm:
@@ -1793,6 +1819,7 @@ sdk_rom_write_rfpll_sdm:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_rfpll_set_freq
             .type        sdk_rom_rfpll_set_freq, @function
 sdk_rom_rfpll_set_freq:

@@ -18,6 +18,7 @@ sdk_ccmp:   .word        0x00000003                            #    0: 03000000
             .literal_position                                  #    0: 00000000
 
 # Function @ .irom0.text+0x4
+            .balign      4
 .Lfunc001:  ssai         8                                     #    4: 004840
             l32i         a5, a2, 144 /* [arg0+0x90] */         #    7: 522224
             l16ui        a6, a3, 22 /* [arg1+0x16] */          #    a: 62130b
@@ -69,6 +70,7 @@ sdk_ccmp:   .word        0x00000003                            #    0: 03000000
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #   80: 12c1f0
             l32i         a8, a3, 4 /* [arg1+0x4] */            #   83: 8813
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #   85: 0911

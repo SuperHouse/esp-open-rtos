@@ -59,6 +59,7 @@ sdk_scannum:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_scan_attach
             .type        sdk_ieee80211_scan_attach, @function
 sdk_ieee80211_scan_attach:
@@ -100,6 +101,7 @@ sdk_ieee80211_scan_attach:
 # Function @ .irom0.text+0x70
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc001:  movi         a5, sdk_gScanStruct                   #   70: 51ffff
             addi         sp, sp, -16 /* (local0) */            #   73: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   76: 0901
@@ -144,6 +146,7 @@ sdk_ieee80211_scan_attach:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_scan_start
             .type        sdk_scan_start, @function
 sdk_scan_start:
@@ -251,6 +254,7 @@ sdk_scan_start:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_scan_pm_channel_op_cb
             .type        sdk_scan_pm_channel_op_cb, @function
 sdk_scan_pm_channel_op_cb:
@@ -276,6 +280,7 @@ sdk_scan_pm_channel_op_cb:
 # Function @ .irom0.text+0x224
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #  224: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  227: 0901
             call0        .Lfunc008                             #  229: 454b00
@@ -298,6 +303,7 @@ sdk_scan_pm_channel_op_cb:
 # Function @ .irom0.text+0x258
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc003:  addi         sp, sp, -16 /* (local0) */            #  258: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  25b: 0901
             movi         a0, sdk_gScanStruct                   #  25d: 01f9ff
@@ -331,6 +337,7 @@ sdk_scan_pm_channel_op_cb:
 # Function @ .irom0.text+0x2a4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc004:  movi         a4, 2 /* 0x00000002 */                #  2a4: 0c24
             movi         a5, 247 /* 0x000000f7 */              #  2a6: 52a0f7
             movi         a6, sdk_gScanStruct                   #  2a9: 61fdff
@@ -376,6 +383,7 @@ sdk_scan_pm_channel_op_cb:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc005:  addi         sp, sp, -16 /* (local0) */            #  31c: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  31f: c921
             movi         a12, sdk_gScanStruct                  #  321: c1efff
@@ -465,6 +473,7 @@ sdk_scan_pm_channel_op_cb:
 # Function @ .irom0.text+0x404
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_scan_cancel
             .type        sdk_scan_cancel, @function
 sdk_scan_cancel:
@@ -515,6 +524,7 @@ sdk_scan_cancel:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc006:  movi         a2, .Lstr001                          #  488: 21ecff
             addi         sp, sp, -32 /* (local0) */            #  48b: 12c1e0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  48e: 0901
@@ -615,6 +625,7 @@ sdk_scan_cancel:
 # Function @ .irom0.text+0x584
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_scan_add_bssid
             .type        sdk_scan_add_bssid, @function
 sdk_scan_add_bssid:
@@ -635,6 +646,7 @@ sdk_scan_add_bssid:
             .literal_position                                  #  5a8: 00000000
 
 # Function @ .irom0.text+0x5ac
+            .balign      4
             .global      sdk_scan_remove_bssid
             .type        sdk_scan_remove_bssid, @function
 sdk_scan_remove_bssid:
@@ -646,6 +658,7 @@ sdk_scan_remove_bssid:
             .literal_position                                  #  5b8: 00000000
 
 # Function @ .irom0.text+0x5bc
+            .balign      4
             .global      sdk_scan_hidden_ssid
             .type        sdk_scan_hidden_ssid, @function
 sdk_scan_hidden_ssid:
@@ -662,6 +675,7 @@ sdk_scan_hidden_ssid:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_scan_add_probe_ssid
             .type        sdk_scan_add_probe_ssid, @function
 sdk_scan_add_probe_ssid:
@@ -693,6 +707,7 @@ sdk_scan_add_probe_ssid:
             .literal_position                                  #  610: 00000000
 
 # Function @ .irom0.text+0x614
+            .balign      4
             .global      sdk_scan_remove_probe_ssid
             .type        sdk_scan_remove_probe_ssid, @function
 sdk_scan_remove_probe_ssid:
@@ -717,6 +732,7 @@ sdk_scan_remove_probe_ssid:
 #     (local0):  word[4]   @ -0x20
 #     (local1):  word      @ -0x10
 #     (local2):  word[3]   @ -0xc
+            .balign      4
 .Lfunc007:  movi         a6, sdk_g_ic                          #  640: 61fbff
             addi         sp, sp, -32 /* (local0) */            #  643: 12c1e0
             s32i         a0, sp, 16 /* a0 -> [(local1)] */     #  646: 0941
@@ -785,6 +801,7 @@ sdk_scan_remove_probe_ssid:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc008:  movi         a2, 13 /* 0x0000000d */               #  6e0: 0cd2
             movi         a3, 0 /* 0x00000000 */                #  6e2: 0c03
             movi         a8, 132 /* 0x00000084 */              #  6e4: 82a084
@@ -843,6 +860,7 @@ sdk_scan_remove_probe_ssid:
             .literal_position                                  #  770: 00000000
 
 # Function @ .irom0.text+0x774
+            .balign      4
             .global      sdk_scan_clear_channles
             .type        sdk_scan_clear_channles, @function
 sdk_scan_clear_channles:
@@ -864,6 +882,7 @@ sdk_scan_clear_channles:
 # Function @ .irom0.text+0x798
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc009:  addi         sp, sp, -16 /* (local0) */            #  798: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  79b: 0901
             call0        .Lfunc002                             #  79d: 45a8ff
@@ -878,6 +897,7 @@ sdk_scan_clear_channles:
 # Function @ .irom0.text+0x7b4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc010:  addi         sp, sp, -16 /* (local0) */            #  7b4: 12c1f0
             movi         a6, sdk_gScanStruct                   #  7b7: 61fcff
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  7ba: 0901
@@ -905,6 +925,7 @@ sdk_scan_clear_channles:
             .literal_position                                  #  7f0: 00000000
 
 # Function @ .irom0.text+0x7f4
+            .balign      4
             .global      sdk_scan_set_desChan
             .type        sdk_scan_set_desChan, @function
 sdk_scan_set_desChan:
@@ -916,6 +937,7 @@ sdk_scan_set_desChan:
             .literal_position                                  #  800: 00000000
 
 # Function @ .irom0.text+0x804
+            .balign      4
             .global      sdk_scan_get_type
             .type        sdk_scan_get_type, @function
 sdk_scan_get_type:
@@ -927,6 +949,7 @@ sdk_scan_get_type:
                                                                #  810: ffbfffff
 
 # Function @ .irom0.text+0x814
+            .balign      4
             .global      sdk_cannel_scan_connect_state
             .type        sdk_cannel_scan_connect_state, @function
 sdk_cannel_scan_connect_state:
@@ -949,6 +972,7 @@ sdk_cannel_scan_connect_state:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_scan_connect_state
             .type        sdk_scan_connect_state, @function
 sdk_scan_connect_state:
@@ -983,6 +1007,7 @@ sdk_scan_connect_state:
 
             .balign      4
 # Function @ .irom0.text+0x888
+            .balign      4
             .global      sdk_scan_check_hidden
             .type        sdk_scan_check_hidden, @function
 sdk_scan_check_hidden:
@@ -1035,6 +1060,7 @@ sdk_scan_check_hidden:
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
             .global      sdk_scan_profile_check
             .type        sdk_scan_profile_check, @function
 sdk_scan_profile_check:
@@ -1219,6 +1245,7 @@ sdk_scan_profile_check:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc011:  addi         sp, sp, -16 /* (local0) */            #  ad8: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  adb: 0901
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    #  add: d921
@@ -1248,6 +1275,7 @@ sdk_scan_profile_check:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc012:  addi         sp, sp, -16 /* (local0) */            #  b14: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  b17: 0901
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    #  b19: d921
@@ -1296,6 +1324,7 @@ sdk_scan_profile_check:
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
 .Lfunc013:  addi         sp, sp, -80 /* (local0) */            #  b7c: 12c1b0
             s32i         a0, sp, 64 /* a0 -> [(local4)] */     #  b7f: 026110
             s32i         a14, sp, 76 /* a14 -> [(local7)] */   #  b82: e26113
@@ -1464,6 +1493,7 @@ sdk_scan_profile_check:
 #     (local9):  word      @ -0xc
 #     (local10): word      @ -0x8
 #     (local11): word      @ -0x4
+            .balign      4
             .global      sdk_scan_parse_beacon
             .type        sdk_scan_parse_beacon, @function
 sdk_scan_parse_beacon:

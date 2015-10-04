@@ -20,6 +20,7 @@
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_os_timer_setfn
             .type        sdk_os_timer_setfn, @function
 sdk_os_timer_setfn:
@@ -107,6 +108,7 @@ sdk_os_timer_setfn:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_os_timer_arm
             .type        sdk_os_timer_arm, @function
 sdk_os_timer_arm:
@@ -187,6 +189,7 @@ sdk_os_timer_arm:
 # Function @ .irom0.text+0x180
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_os_timer_disarm
             .type        sdk_os_timer_disarm, @function
 sdk_os_timer_disarm:

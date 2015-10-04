@@ -10,6 +10,7 @@
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #    8: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #    b: c921
             l32i         a8, a2, 0x210 /* [arg0+0x210] */      #    d: 822284
@@ -69,6 +70,7 @@
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wpa_sm_alloc_eapol
             .type        sdk_wpa_sm_alloc_eapol, @function
 sdk_wpa_sm_alloc_eapol:
@@ -102,6 +104,7 @@ sdk_wpa_sm_alloc_eapol:
 # Function @ .irom0.text+0xbc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_sm_deauthenticate
             .type        sdk_wpa_sm_deauthenticate, @function
 sdk_wpa_sm_deauthenticate:
@@ -118,6 +121,7 @@ sdk_wpa_sm_deauthenticate:
 
             .balign      4
 # Function @ .irom0.text+0xd8
+            .balign      4
             .global      sdk_wpa_sm_mlme_setprotection
             .type        sdk_wpa_sm_mlme_setprotection, @function
 sdk_wpa_sm_mlme_setprotection:
@@ -125,6 +129,7 @@ sdk_wpa_sm_mlme_setprotection:
             ret           /* 0x00000000 */                     #   da: 0df0
 
 # Function @ .irom0.text+0xdc
+            .balign      4
             .global      sdk_wpa_sm_get_beacon_ie
             .type        sdk_wpa_sm_get_beacon_ie, @function
 sdk_wpa_sm_get_beacon_ie:
@@ -132,6 +137,7 @@ sdk_wpa_sm_get_beacon_ie:
             ret           /* 0x00000000 */                     #   de: 0df0
 
 # Function @ .irom0.text+0xe0
+            .balign      4
             .global      sdk_wpa_sm_disassociate
             .type        sdk_wpa_sm_disassociate, @function
 sdk_wpa_sm_disassociate:

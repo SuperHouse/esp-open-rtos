@@ -2,6 +2,8 @@
             .section     .text, "ax", @progbits
 
 # Function @ .text+0x0
+            .balign      4
+            .literal_position
 .Lfunc001:  movi         a4, 1 /* 0x00000001 */                #    0: 0c14
             beqi         a2, 2, .Lbr001                        #    2: 262207
             beqi         a2, 64, .Lbr001                       #    5: 26d204
@@ -40,6 +42,7 @@
 #     (local7):  word      @ -0x18
 #     (local8):  word      @ -0x14
 #     (local9):  word[4]   @ -0x10
+            .balign      4
 .Lfunc002:  addi         sp, sp, -96 /* (local0) */            #   3c: 12c1a0
             s32i         a15, sp, 76 /* a15 -> [(local8)] */   #   3f: f26113
             s32i         a7, sp, 56 /* arg5 -> [(local3)] */   #   42: 79e1
@@ -158,6 +161,7 @@
 
             .balign      4
 # Function @ .irom0.text+0x170
+            .balign      4
             .global      sdk_wpa_auth_for_each_sta
             .type        sdk_wpa_auth_for_each_sta, @function
 sdk_wpa_auth_for_each_sta:
@@ -165,10 +169,12 @@ sdk_wpa_auth_for_each_sta:
             ret           /* 0x00000000 */                     #  172: 0df0
 
 # Function @ .irom0.text+0x174
+            .balign      4
 .Lfunc003:  ret           /* arg0 */                           #  174: 0df0
 
             .balign      4
 # Function @ .irom0.text+0x178
+            .balign      4
 .Lfunc004:  movi         a2, 0 /* 0x00000000 */                #  178: 0c02
             ret           /* 0x00000000 */                     #  17a: 0df0
 
@@ -182,6 +188,7 @@ sdk_wpa_auth_for_each_sta:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc005:  addi         sp, sp, -32 /* (local0) */            #  184: 12c1e0
             s32i         a14, sp, 12 /* a14 -> [(local3)] */   #  187: e931
             s32i         a15, sp, 16 /* a15 -> [(local4)] */   #  189: f941
@@ -222,6 +229,7 @@ sdk_wpa_auth_for_each_sta:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc006:  mov          a2, a3 /* arg1 */                     #  1d4: 2d03
             addi         sp, sp, -16 /* (local0) */            #  1d6: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  1d9: c911
@@ -250,6 +258,7 @@ sdk_wpa_auth_for_each_sta:
 #     (local2):  word      @ -0x1c
 #     (local3):  word[3]   @ -0x18
 #     (local4):  word[3]   @ -0xc
+            .balign      4
 .Lfunc007:  addi         sp, sp, -112 /* (local0) */           #  20c: 12c190
             s32i         a0, sp, 84 /* a0 -> [(local2)] */     #  20f: 026115
             s32i         a12, sp, 88 /* a12 -> [(local3)] */   #  212: c26116
@@ -310,6 +319,7 @@ sdk_wpa_auth_for_each_sta:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc008:  addi         sp, sp, -16 /* (local0) */            #  2a0: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  2a3: c921
             s32i         a4, sp, 0 /* arg2 -> [(local0)] */    #  2a5: 4901
@@ -370,6 +380,7 @@ sdk_wpa_auth_for_each_sta:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wpa_init
             .type        sdk_wpa_init, @function
 sdk_wpa_init:
@@ -430,6 +441,7 @@ sdk_wpa_init:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wpa_auth_sta_init
             .type        sdk_wpa_auth_sta_init, @function
 sdk_wpa_auth_sta_init:
@@ -469,6 +481,7 @@ sdk_wpa_auth_sta_init:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpa_auth_sta_associated
             .type        sdk_wpa_auth_sta_associated, @function
 sdk_wpa_auth_sta_associated:
@@ -524,6 +537,7 @@ sdk_wpa_auth_sta_associated:
 
             .balign      4
 # Function @ .irom0.text+0x46c
+            .balign      4
             .global      sdk_wpa_auth_sta_no_wpa
             .type        sdk_wpa_auth_sta_no_wpa, @function
 sdk_wpa_auth_sta_no_wpa:
@@ -540,6 +554,7 @@ sdk_wpa_auth_sta_no_wpa:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc009:  addi         sp, sp, -16 /* (local0) */            #  484: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  487: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  489: 0901
@@ -570,6 +585,7 @@ sdk_wpa_auth_sta_no_wpa:
 # Function @ .irom0.text+0x4c4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_auth_sta_deinit
             .type        sdk_wpa_auth_sta_deinit, @function
 sdk_wpa_auth_sta_deinit:
@@ -593,6 +609,7 @@ sdk_wpa_auth_sta_deinit:
 
             .balign      4
 # Function @ .irom0.text+0x4f4
+            .balign      4
 .Lfunc010:  beqz         a2, .Lbr038                           #  4f4: 8c82
             movi         a3, 0 /* 0x00000000 */                #  4f6: 0c03
             movi         a4, 1 /* 0x00000001 */                #  4f8: 0c14
@@ -608,6 +625,7 @@ sdk_wpa_auth_sta_deinit:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc011:  addi         sp, sp, -16 /* (local0) */            #  508: 12c1f0
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #  50b: 0911
             s32i         a13, sp, 12 /* a13 -> [(local3)] */   #  50d: d931
@@ -644,6 +662,7 @@ sdk_wpa_auth_sta_deinit:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc012:  addi         sp, sp, -16 /* (local0) */            #  54c: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  54f: 0901
             s32i         a14, sp, 12 /* a14 -> [(local3)] */   #  551: e931
@@ -677,6 +696,7 @@ sdk_wpa_auth_sta_deinit:
 # Function @ .irom0.text+0x58c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc013:  mov          a2, a3 /* arg1 */                     #  58c: 2d03
             addi         sp, sp, -16 /* (local0) */            #  58e: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  591: 0901
@@ -728,6 +748,7 @@ sdk_wpa_auth_sta_deinit:
 #     (local15): word      @ -0x14
 #     (local16): word      @ -0x10
 #     (local17): word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpa_receive
             .type        sdk_wpa_receive, @function
 sdk_wpa_receive:
@@ -1119,6 +1140,7 @@ sdk_wpa_receive:
 #     (local5):  word      @ -0x10
 #     (local6):  word      @ -0xc
 #     (local7):  word[2]   @ -0x8
+            .balign      4
 .Lfunc014:  addi         sp, sp, -112 /* (local0) */           #  9e4: 12c190
             s32i         a5, sp, 88 /* arg3 -> [(local3)] */   #  9e7: 526116
             s32i         a6, sp, 92 /* arg4 -> [(local4)] */   #  9ea: 626117
@@ -1169,6 +1191,7 @@ sdk_wpa_receive:
 # Function @ .irom0.text+0xa60
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc015:  mov          a2, a3 /* arg1 */                     #  a60: 2d03
             addi         sp, sp, -16 /* (local0) */            #  a62: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  a65: 0901
@@ -1242,6 +1265,7 @@ sdk_wpa_receive:
 #     (local20): word      @ -0x10
 #     (local21): word      @ -0xc
 #     (local22): word[2]   @ -0x8
+            .balign      4
             .global      sdk___wpa_send_eapol
             .type        sdk___wpa_send_eapol, @function
 sdk___wpa_send_eapol:
@@ -1622,6 +1646,7 @@ sdk___wpa_send_eapol:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
 .Lfunc016:  addi         sp, sp, -48 /* (local0) */            #  ee4: 12c1d0
             s32i         a15, sp, 32 /* a15 -> [(local8)] */   #  ee7: f981
             s32i         a0, sp, 16 /* a0 -> [(local4)] */     #  ee9: 0941
@@ -1705,6 +1730,7 @@ sdk___wpa_send_eapol:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
 .Lfunc017:  addi         sp, sp, -48 /* (FP)-0x30 */           #  f9c: 12c1d0
             s32i         a12, sp, 28 /* a12 -> [(local3)] */   #  f9f: c971
             s32i         a2, sp, 20 /* arg0 -> [(local1)] */   #  fa1: 2951
@@ -1770,6 +1796,7 @@ sdk___wpa_send_eapol:
 #     (local0):  word[4]   @ -0x20
 #     (local1):  word      @ -0x10
 #     (local2):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpa_remove_ptk
             .type        sdk_wpa_remove_ptk, @function
 sdk_wpa_remove_ptk:
@@ -1813,6 +1840,7 @@ sdk_wpa_remove_ptk:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wpa_auth_sm_event
             .type        sdk_wpa_auth_sm_event, @function
 sdk_wpa_auth_sm_event:
@@ -1892,6 +1920,7 @@ sdk_wpa_auth_sm_event:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc018:  movi         a5, 180 /* 0x000000b4 */              # 112c: 52a0b4
             addi         sp, sp, -16 /* (local0) */            # 112f: 12c1f0
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    # 1132: d921
@@ -1947,6 +1976,7 @@ sdk_wpa_auth_sm_event:
 # Function @ .irom0.text+0x11a8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc019:  addi         sp, sp, -16 /* (local0) */            # 11a8: 12c1f0
             mov          a5, a2 /* arg0 */                     # 11ab: 5d02
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 11ad: 0901
@@ -1972,6 +2002,7 @@ sdk_wpa_auth_sm_event:
             ret                                                # 11de: 0df0
 
 # Function @ .irom0.text+0x11e0
+            .balign      4
 .Lfunc020:  movi         a7, 2 /* 0x00000002 */                # 11e0: 0c27
             beqz         a3, .Lbr136                           # 11e2: 8c33
             l32i         a3, a2, 16 /* [arg0+0x10] */          # 11e4: 3842
@@ -1995,6 +2026,7 @@ sdk_wpa_auth_sm_event:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc021:  addi         sp, sp, -16 /* (local0) */            # 120c: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 120f: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1211: 0901
@@ -2032,6 +2064,7 @@ sdk_wpa_auth_sm_event:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc022:  addi         sp, sp, -16 /* (local0) */            # 1258: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 125b: c911
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    # 125d: d921
@@ -2065,6 +2098,7 @@ sdk_wpa_auth_sm_event:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc023:  addi         sp, sp, -16 /* (local0) */            # 1298: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 129b: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 129d: 0901
@@ -2104,6 +2138,7 @@ sdk_wpa_auth_sm_event:
 
             .balign      4
 # Function @ .irom0.text+0x12f0
+            .balign      4
 .Lfunc024:  movi         a7, 5 /* 0x00000005 */                # 12f0: 0c57
             beqz         a3, .Lbr145                           # 12f2: 8c33
             l32i         a3, a2, 16 /* [arg0+0x10] */          # 12f4: 3842
@@ -2129,6 +2164,7 @@ sdk_wpa_auth_sm_event:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc025:  addi         sp, sp, -16 /* (local0) */            # 1324: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 1327: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1329: 0901
@@ -2184,6 +2220,7 @@ sdk_wpa_auth_sm_event:
 #     (local8):  byte[27]  @ -0x2b
 #     (local9):  word      @ -0x10
 #     (local10): word[3]   @ -0xc
+            .balign      4
 .Lfunc026:  movi         a5, 7 /* 0x00000007 */                # 138c: 0c75
             addi         sp, sp, -64 /* (local0) */            # 138e: 12c1c0
             s32i         a12, sp, 52 /* a12 -> [(local10)] */  # 1391: c9d1
@@ -2268,6 +2305,7 @@ sdk_wpa_auth_sm_event:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc027:  mov          a7, a2 /* arg0 */                     # 144c: 7d02
             addi         sp, sp, -32 /* (local0) */            # 144e: 12c1e0
             s32i         a0, sp, 16 /* a0 -> [(local4)] */     # 1451: 0941
@@ -2317,6 +2355,7 @@ sdk_wpa_auth_sm_event:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc028:  movi         a7, 191 /* 0x000000bf */              # 14bc: 72a0bf
             movi         a8, 8 /* 0x00000008 */                # 14bf: 0c88
             addi         sp, sp, -96 /* (FP)-0x60 */           # 14c1: 12c1a0
@@ -2416,6 +2455,7 @@ sdk_wpa_auth_sm_event:
 
             .balign      4
 # Function @ .irom0.text+0x15b8
+            .balign      4
 .Lfunc029:  movi         a6, 9 /* 0x00000009 */                # 15b8: 0c96
             beqz         a3, .Lbr167                           # 15ba: 8c33
             l32i         a3, a2, 16 /* [arg0+0x10] */          # 15bc: 3842
@@ -2435,10 +2475,12 @@ sdk_wpa_auth_sm_event:
 
             .balign      4
 # Function @ .irom0.text+0x15e0
+            .balign      4
 .Lfunc030:  movi         a2, 0 /* 0x00000000 */                # 15e0: 0c02
             ret           /* 0x00000000 */                     # 15e2: 0df0
 
 # Function @ .irom0.text+0x15e4
+            .balign      4
 .Lfunc031:  mov          a2, a3 /* arg1 */                     # 15e4: 2d03
             ret           /* arg1 */                           # 15e6: 0df0
 
@@ -2469,6 +2511,7 @@ sdk_wpa_auth_sm_event:
 #     (local14): word      @ -0x18
 #     (local15): word      @ -0x14
 #     (local16): word[4]   @ -0x10
+            .balign      4
 .Lfunc032:  movi         a4, 1 /* 0x00000001 */                # 1604: 0c14
             movi         a8, 10 /* 0x0000000a */               # 1606: 0ca8
             addi         sp, sp, -128 /* (local0) */           # 1608: 12c180
@@ -2639,6 +2682,7 @@ sdk_wpa_auth_sm_event:
 #     (local3):  word      @ -0x18
 #     (local4):  word      @ -0x14
 #     (local5):  word[4]   @ -0x10
+            .balign      4
 .Lfunc033:  addi         sp, sp, -48 /* (local0) */            # 17b0: 12c1d0
             s32i         a13, sp, 32 /* a13 -> [(local5)] */   # 17b3: d981
             s32i         a12, sp, 28 /* a12 -> [(local4)] */   # 17b5: c971
@@ -2730,6 +2774,7 @@ sdk_wpa_auth_sm_event:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc034:  addi         sp, sp, -16 /* (local0) */            # 188c: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 188f: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1891: 0901
@@ -2781,6 +2826,7 @@ sdk_wpa_auth_sm_event:
             jx           a7                                    # 18fe: a00700
 
 # Function @ .irom0.text+0x1901
+            .balign      4
 .Lfunc035:  j            .Lbr186                               # 1901: 46e6ff
 
 # NOTE: The following is apparently unreferenced code/data
@@ -2795,6 +2841,7 @@ sdk_wpa_auth_sm_event:
             .byte        0xff                                  # 1924: ff
 
 # Function @ .irom0.text+0x1925
+            .balign      4
             add          a9, a12, a4                           # 1925: 4a9c
             l8ui         a9, a9, 128                           # 1927: 920980
             extui        a9, a9, 6, 1                          # 192a: 909604
@@ -2919,6 +2966,7 @@ sdk_wpa_auth_sm_event:
 
             .balign      4
 # Function @ .irom0.text+0x1a58
+            .balign      4
 .Lfunc036:  movi         a7, 254 /* 0x000000fe */              # 1a58: 72a0fe
             movi         a6, 244 /* 0x000000f4 */              # 1a5b: 62a0f4
             beqz         a3, .Lbr201                           # 1a5e: 8c23
@@ -2960,6 +3008,7 @@ sdk_wpa_auth_sm_event:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
 .Lfunc037:  addi         sp, sp, -96 /* (local0) */            # 1aa4: 12c1a0
             s32i         a14, sp, 84 /* a14 -> [(local9)] */   # 1aa7: e26115
             s32i         a13, sp, 80 /* a13 -> [(local8)] */   # 1aaa: d26114
@@ -3069,6 +3118,7 @@ sdk_wpa_auth_sm_event:
 
             .balign      4
 # Function @ .irom0.text+0x1bb8
+            .balign      4
 .Lfunc038:  movi         a5, 1 /* 0x00000001 */                # 1bb8: 0c15
             movi         a8, 2 /* 0x00000002 */                # 1bba: 0c28
             beqz         a3, .Lbr212                           # 1bbc: 8c33
@@ -3096,6 +3146,7 @@ sdk_wpa_auth_sm_event:
             ret           /* arg0 */                           # 1bf2: 0df0
 
 # Function @ .irom0.text+0x1bf4
+            .balign      4
 .Lfunc039:  movi         a5, 1 /* 0x00000001 */                # 1bf4: 0c15
             movi         a8, 3 /* 0x00000003 */                # 1bf6: 0c38
             beqz         a3, .Lbr215                           # 1bf8: 8c33
@@ -3125,6 +3176,7 @@ sdk_wpa_auth_sm_event:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc040:  addi         sp, sp, -16 /* (local0) */            # 1c2c: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 1c2f: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1c31: 0901
@@ -3202,6 +3254,7 @@ sdk_wpa_auth_sm_event:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc041:  movi         a4, 32 /* 0x00000020 */               # 1cd8: 2c04
             addi         sp, sp, -32 /* (local0) */            # 1cda: 12c1e0
             s32i         a0, sp, 12 /* a0 -> [(local3)] */     # 1cdd: 0931
@@ -3247,6 +3300,7 @@ sdk_wpa_auth_sm_event:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc042:  movi         a4, 64 /* 0x00000040 */               # 1d38: 4c04
             addi         sp, sp, -16 /* (local0) */            # 1d3a: 12c1f0
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      # 1d3d: 0911
@@ -3275,6 +3329,7 @@ sdk_wpa_auth_sm_event:
 # Function @ .irom0.text+0x1d70
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc043:  addi         sp, sp, -16 /* (local0) */            # 1d70: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1d73: 0901
             beqz         a3, .Lbr226                           # 1d75: 8c33
@@ -3310,6 +3365,7 @@ sdk_wpa_auth_sm_event:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc044:  movi         a4, 1 /* 0x00000001 */                # 1db8: 0c14
             addi         sp, sp, -16 /* (local0) */            # 1dba: 12c1f0
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    # 1dbd: d921
@@ -3351,6 +3407,7 @@ sdk_wpa_auth_sm_event:
 #     (local1):  word      @ -0x10
 #     (local2):  word      @ -0xc
 #     (local3):  word[2]   @ -0x8
+            .balign      4
 .Lfunc045:  addi         sp, sp, -32 /* (local0) */            # 1e08: 12c1e0
             s32i         a3, sp, 16 /* arg1 -> [(local1)] */   # 1e0b: 3941
             s32i         a12, sp, 24 /* a12 -> [(local3)] */   # 1e0d: c961
@@ -3385,6 +3442,7 @@ sdk_wpa_auth_sm_event:
 # Function @ .irom0.text+0x1e4c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc046:  movi         a4, 1 /* 0x00000001 */                # 1e4c: 0c14
             addi         sp, sp, -16 /* (local0) */            # 1e4e: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1e51: 0901
@@ -3404,6 +3462,7 @@ sdk_wpa_auth_sm_event:
 # Function @ .irom0.text+0x1e70
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc047:  addi         sp, sp, -16 /* (local0) */            # 1e70: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1e73: 0901
             l32i         a0, a3, 8 /* [arg1+0x8] */            # 1e75: 0823
@@ -3439,6 +3498,7 @@ sdk_wpa_auth_sm_event:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc048:  addi         sp, sp, -16 /* (local0) */            # 1eb8: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1ebb: 0901
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 1ebd: c911

@@ -16,6 +16,7 @@ sdk_if_ctrl:
             .literal_position                                  #    0: 10000000
 
 # Function @ .irom0.text+0x4
+            .balign      4
             .global      sdk_ic_get_addr
             .type        sdk_ic_get_addr, @function
 sdk_ic_get_addr:
@@ -27,6 +28,7 @@ sdk_ic_get_addr:
             .literal_position                                  #   10: 10000000
 
 # Function @ .irom0.text+0x14
+            .balign      4
             .global      sdk_ic_set_opmode
             .type        sdk_ic_set_opmode, @function
 sdk_ic_set_opmode:
@@ -48,6 +50,7 @@ sdk_ic_set_opmode:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_ic_enable_interface
             .type        sdk_ic_enable_interface, @function
 sdk_ic_enable_interface:
@@ -86,6 +89,7 @@ sdk_ic_enable_interface:
             .literal_position                                  #   84: 00000000
 
 # Function @ .irom0.text+0x88
+            .balign      4
             .global      sdk_ic_interface_enabled
             .type        sdk_ic_interface_enabled, @function
 sdk_ic_interface_enabled:
@@ -105,6 +109,7 @@ sdk_ic_interface_enabled:
 # Function @ .irom0.text+0xb0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ic_disable_interface
             .type        sdk_ic_disable_interface, @function
 sdk_ic_disable_interface:
@@ -138,6 +143,7 @@ sdk_ic_disable_interface:
             .literal_position                                  #   f8: 10000000
 
 # Function @ .irom0.text+0xfc
+            .balign      4
             .global      sdk_ic_is_pure_sta
             .type        sdk_ic_is_pure_sta, @function
 sdk_ic_is_pure_sta:
@@ -156,6 +162,7 @@ sdk_ic_is_pure_sta:
             .literal_position                                  #  118: 10000000
 
 # Function @ .irom0.text+0x11c
+            .balign      4
             .global      sdk_ic_get_ptk_alg
             .type        sdk_ic_get_ptk_alg, @function
 sdk_ic_get_ptk_alg:
@@ -168,6 +175,7 @@ sdk_ic_get_ptk_alg:
             .literal_position                                  #  12c: 10000000
 
 # Function @ .irom0.text+0x130
+            .balign      4
             .global      sdk_ic_get_gtk_alg
             .type        sdk_ic_get_gtk_alg, @function
 sdk_ic_get_gtk_alg:
@@ -180,6 +188,7 @@ sdk_ic_get_gtk_alg:
             .literal_position                                  #  140: 10000000
 
 # Function @ .irom0.text+0x144
+            .balign      4
             .global      sdk_ic_set_ptk_alg
             .type        sdk_ic_set_ptk_alg, @function
 sdk_ic_set_ptk_alg:
@@ -192,6 +201,7 @@ sdk_ic_set_ptk_alg:
             .literal_position                                  #  154: 10000000
 
 # Function @ .irom0.text+0x158
+            .balign      4
             .global      sdk_ic_set_gtk_alg
             .type        sdk_ic_set_gtk_alg, @function
 sdk_ic_set_gtk_alg:
@@ -204,6 +214,7 @@ sdk_ic_set_gtk_alg:
             .literal_position                                  #  168: 10000000
 
 # Function @ .irom0.text+0x16c
+            .balign      4
             .global      sdk_ic_interface_is_p2p
             .type        sdk_ic_interface_is_p2p, @function
 sdk_ic_interface_is_p2p:
@@ -220,6 +231,7 @@ sdk_ic_interface_is_p2p:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc001:  movi         a3, 0 /* 0x00000000 */                #  184: 0c03
             addi         sp, sp, -16 /* (local0) */            #  186: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  189: c911
@@ -252,6 +264,7 @@ sdk_ic_interface_is_p2p:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #  1cc: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  1cf: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  1d1: 0901
@@ -291,6 +304,7 @@ sdk_ic_interface_is_p2p:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ic_set_vif
             .type        sdk_ic_set_vif, @function
 sdk_ic_set_vif:
@@ -358,6 +372,7 @@ sdk_ic_set_vif:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ic_set_sta
             .type        sdk_ic_set_sta, @function
 sdk_ic_set_sta:
@@ -445,6 +460,7 @@ sdk_ic_set_sta:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ic_bss_info_update
             .type        sdk_ic_bss_info_update, @function
 sdk_ic_bss_info_update:
@@ -496,6 +512,7 @@ sdk_ic_bss_info_update:
 #     (local5):  word      @ -0x10
 #     (local6):  word      @ -0xc
 #     (local7):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ic_set_key
             .type        sdk_ic_set_key, @function
 sdk_ic_set_key:
@@ -546,6 +563,7 @@ sdk_ic_set_key:
 # Function @ .irom0.text+0x454
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ic_remove_key
             .type        sdk_ic_remove_key, @function
 sdk_ic_remove_key:

@@ -7,6 +7,7 @@
 # Function @ .irom0.text+0x8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_parse_wpa_ie
             .type        sdk_wpa_parse_wpa_ie, @function
 sdk_wpa_parse_wpa_ie:
@@ -31,6 +32,7 @@ sdk_wpa_parse_wpa_ie:
                                                                #   3c: 03ac0f00
 
 # Function @ .irom0.text+0x40
+            .balign      4
 .Lfunc001:  l8ui         a7, a2, 1 /* [arg0+0x1] */            #   40: 720201
             l8ui         a5, a2, 5 /* [arg0+0x5] */            #   43: 520205
             bnez         a7, .Lbr003                           #   46: cc27
@@ -117,6 +119,7 @@ sdk_wpa_parse_wpa_ie:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wpa_supplicant_parse_ies
             .type        sdk_wpa_supplicant_parse_ies, @function
 sdk_wpa_supplicant_parse_ies:
@@ -188,6 +191,7 @@ sdk_wpa_supplicant_parse_ies:
 
             .balign      4
 # Function @ .irom0.text+0x1ac
+            .balign      4
 .Lfunc002:  movi         a7, 23 /* 0x00000017 */               #  1ac: 1c77
             bgeu         a7, a3, .Lbr023                       #  1ae: 37b774
             movi         a9, 4 /* 0x00000004 */                #  1b1: 0c49
@@ -258,6 +262,7 @@ sdk_wpa_supplicant_parse_ies:
 
             .balign      4
 # Function @ .irom0.text+0x264
+            .balign      4
 .Lfunc003:  movi         a7, 21 /* 0x00000015 */               #  264: 1c57
             bgeu         a7, a3, .Lbr035                       #  266: 37b771
             movi         a10, -84 /* 0xffffffac */             #  269: a2afac
@@ -326,6 +331,7 @@ sdk_wpa_supplicant_parse_ies:
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x20
 #     (local1):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_gen_wpa_ie
             .type        sdk_wpa_gen_wpa_ie, @function
 sdk_wpa_gen_wpa_ie:

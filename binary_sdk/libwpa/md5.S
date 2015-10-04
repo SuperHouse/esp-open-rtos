@@ -23,6 +23,7 @@
 #     (local9):  word[3]   @ -0x2c
 #     (local10): word      @ -0x20
 #     (local11): word[7]   @ -0x1c
+            .balign      4
             .global      sdk_hmac_md5_vector
             .type        sdk_hmac_md5_vector, @function
 sdk_hmac_md5_vector:
@@ -146,6 +147,7 @@ sdk_hmac_md5_vector:
 #     (local0):  word[6]   @ -0x30
 #     (local1):  word      @ -0x18
 #     (local2):  word[5]   @ -0x14
+            .balign      4
             .global      sdk_hmac_md5
             .type        sdk_hmac_md5, @function
 sdk_hmac_md5:

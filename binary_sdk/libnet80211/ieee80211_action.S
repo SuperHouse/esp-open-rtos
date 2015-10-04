@@ -12,6 +12,8 @@
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
+            .literal_position
 .Lfunc001:  movi         a2, -1 /* 0xffffffff */               #    0: 7cf2
             ret           /* 0xffffffff */                     #    2: 0df0
 
@@ -20,6 +22,7 @@
                                                                #    c: 08000000
 
 # Function @ .irom0.text+0x10
+            .balign      4
             .global      sdk_ieee80211_send_action_register
             .type        sdk_ieee80211_send_action_register, @function
 sdk_ieee80211_send_action_register:
@@ -47,6 +50,7 @@ sdk_ieee80211_send_action_register:
 # Function @ .irom0.text+0x44
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_send_action_unregister
             .type        sdk_ieee80211_send_action_unregister, @function
 sdk_ieee80211_send_action_unregister:
@@ -66,6 +70,7 @@ sdk_ieee80211_send_action_unregister:
 # Function @ .irom0.text+0x68
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_send_action
             .type        sdk_ieee80211_send_action, @function
 sdk_ieee80211_send_action:
@@ -103,6 +108,7 @@ sdk_ieee80211_send_action:
 
             .balign      4
 # Function @ .irom0.text+0xbc
+            .balign      4
 .Lfunc002:  movi         a2, -1 /* 0xffffffff */               #   bc: 7cf2
             ret           /* 0xffffffff */                     #   be: 0df0
 
@@ -111,6 +117,7 @@ sdk_ieee80211_send_action:
                                                                #   c8: 14000000
 
 # Function @ .irom0.text+0xcc
+            .balign      4
             .global      sdk_ieee80211_recv_action_register
             .type        sdk_ieee80211_recv_action_register, @function
 sdk_ieee80211_recv_action_register:
@@ -138,6 +145,7 @@ sdk_ieee80211_recv_action_register:
 # Function @ .irom0.text+0x100
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_recv_action_unregister
             .type        sdk_ieee80211_recv_action_unregister, @function
 sdk_ieee80211_recv_action_unregister:
@@ -157,6 +165,7 @@ sdk_ieee80211_recv_action_unregister:
 # Function @ .irom0.text+0x124
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_recv_action
             .type        sdk_ieee80211_recv_action, @function
 sdk_ieee80211_recv_action:

@@ -8,6 +8,7 @@
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_getmgtframe
             .type        sdk_ieee80211_getmgtframe, @function
 sdk_ieee80211_getmgtframe:

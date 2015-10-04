@@ -2,6 +2,8 @@
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
+            .literal_position
             .global      sdk_os_get_time
             .type        sdk_os_get_time, @function
 sdk_os_get_time:
@@ -13,6 +15,7 @@ sdk_os_get_time:
 # Function @ .irom0.text+0x8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      os_random
             .type        os_random, @function
 os_random:  addi         sp, sp, -16 /* (local0) */            #    8: 12c1f0
@@ -33,6 +36,7 @@ os_random:  addi         sp, sp, -16 /* (local0) */            #    8: 12c1f0
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      os_get_random
             .type        os_get_random, @function
 os_get_random:

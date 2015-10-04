@@ -66,6 +66,8 @@
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
+            .literal_position
 .Lfunc001:  ret           /* arg0 */                           #    0: 0df0
 
             .literal_position                                  #    4: 00000000
@@ -87,6 +89,7 @@
 #     (local6):  word      @ -0xc
 #     (local7):  word      @ -0x8
 #     (local8):  word      @ -0x4
+            .balign      4
 .Lfunc002:  addi         sp, sp, -48 /* (FP)-0x30 */           #   20: 12c1d0
             s32i         a14, sp, 44 /* a14 -> [(local8)] */   #   23: e9b1
             s32i         a6, sp, 28 /* arg4 -> [(local4)] */   #   25: 6971
@@ -213,6 +216,7 @@
 #     (local9):  word      @ -0xc
 #     (local10): word      @ -0x8
 #     (local11): word      @ -0x4
+            .balign      4
 .Lfunc003:  movi         a6, 1 /* 0x00000001 */                #  140: 0c16
             addi         sp, sp, -64 /* (local0) */            #  142: 12c1c0
             s32i         a13, sp, 60 /* a13 -> [(local11)] */  #  145: d9f1
@@ -326,6 +330,7 @@
 
             .balign      4
 # Function @ .irom0.text+0x254
+            .balign      4
 .Lfunc004:  movi         a3, 1 /* 0x00000001 */                #  254: 0c13
             l32i         a4, a2, 32 /* [arg0+0x20] */          #  256: 4882
             movi         a2, 0 /* 0x00000000 */                #  258: 0c02
@@ -354,6 +359,7 @@
 #     (local10): word      @ -0x10
 #     (local11): word      @ -0xc
 #     (local12): word[2]   @ -0x8
+            .balign      4
 .Lfunc005:  addi         sp, sp, -64 /* (local0) */            #  278: 12c1c0
             s32i         a0, sp, 44 /* a0 -> [(local9)] */     #  27b: 09b1
             s32i         a3, sp, 40 /* arg1 -> [(local8)] */   #  27d: 39a1
@@ -466,6 +472,7 @@
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc006:  addi         sp, sp, -32 /* (local0) */            #  378: 12c1e0
             s32i         a0, sp, 16 /* a0 -> [(local4)] */     #  37b: 0941
             l32i         a6, a2, 0x11c /* [arg0+0x11c] */      #  37d: 622247
@@ -515,6 +522,7 @@
 #     (local6):  word      @ -0xc
 #     (local7):  word      @ -0x8
 #     (local8):  word      @ -0x4
+            .balign      4
 .Lfunc007:  addi         sp, sp, -80 /* (local0) */            #  3d8: 12c1b0
             s32i         a3, sp, 56 /* arg1 -> [(local3)] */   #  3db: 39e1
             s32i         a5, sp, 60 /* arg3 -> [(local4)] */   #  3dd: 59f1
@@ -601,6 +609,7 @@
 # Function @ .irom0.text+0x4ac
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc008:  movi         a3, 0 /* 0x00000000 */                #  4ac: 0c03
             movi         a4, 1 /* 0x00000001 */                #  4ae: 0c14
             addi         sp, sp, -16 /* (local0) */            #  4b0: 12c1f0
@@ -623,6 +632,7 @@
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
 .Lfunc009:  addi         sp, sp, -32 /* (local0) */            #  4d0: 12c1e0
             s32i         a12, sp, 20 /* a12 -> [(local5)] */   #  4d3: c951
             s32i         a0, sp, 16 /* a0 -> [(local4)] */     #  4d5: 0941
@@ -678,6 +688,7 @@
 
             .balign      4
 # Function @ .irom0.text+0x550
+            .balign      4
 .Lfunc010:  movi         a8, 6 /* 0x00000006 */                #  550: 0c68
             beqi         a2, 2, .Lbr029                        #  552: 26221c
             beqi         a2, 8, .Lbr030                        #  555: 268226
@@ -723,6 +734,7 @@
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc011:  addi         sp, sp, -16 /* (local0) */            #  5ac: 12c1f0
             s32i         a3, sp, 0 /* arg1 -> [(local0)] */    #  5af: 3901
             s32i         a4, sp, 4 /* arg2 -> [(local1)] */    #  5b1: 4911
@@ -769,6 +781,7 @@
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc012:  addi         sp, sp, -64 /* (local0) */            #  608: 12c1c0
             s32i         a0, sp, 48 /* a0 -> [(local4)] */     #  60b: 09c1
             s32i         a13, sp, 56 /* a13 -> [(local6)] */   #  60d: d9e1
@@ -835,6 +848,7 @@
 
             .balign      4
 # Function @ .irom0.text+0x6a4
+            .balign      4
 .Lfunc013:  mov          a5, a2 /* arg0 */                     #  6a4: 5d02
             mov          a2, a3 /* arg1 */                     #  6a6: 2d03
             beqz         a3, .Lbr042                           #  6a8: 8c63
@@ -853,6 +867,7 @@
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc014:  addi         sp, sp, -32 /* (local0) */            #  6bc: 12c1e0
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #  6bf: 0911
             s32i         a13, sp, 12 /* a13 -> [(local3)] */   #  6c1: d931
@@ -910,6 +925,7 @@
 # Function @ .irom0.text+0x740
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc015:  movi         a3, 17 /* 0x00000011 */               #  740: 1c13
             addi         sp, sp, -16 /* (local0) */            #  742: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  745: 0901
@@ -920,6 +936,7 @@
             ret                                                #  752: 0df0
 
 # Function @ .irom0.text+0x754
+            .balign      4
 .Lfunc016:  movi         a2, 0 /* 0x00000000 */                #  754: 0c02
             ret           /* 0x00000000 */                     #  756: 0df0
 
@@ -936,6 +953,7 @@
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc017:  addi         sp, sp, -32 /* (local0) */            #  764: 12c1e0
             s32i         a14, sp, 20 /* a14 -> [(local5)] */   #  767: e951
             s32i         a15, sp, 24 /* a15 -> [(local6)] */   #  769: f961
@@ -1053,6 +1071,7 @@
 #     (local10): word      @ -0x10
 #     (local11): word      @ -0xc
 #     (local12): word[2]   @ -0x8
+            .balign      4
 .Lfunc018:  addi         sp, sp, -64 /* (local0) */            #  85c: 12c1c0
             s32i         a0, sp, 36 /* a0 -> [(local7)] */     #  85f: 0991
             s32i         a15, sp, 52 /* a15 -> [(local11)] */  #  861: f9d1
@@ -1159,6 +1178,7 @@
 #     (local1):  word      @ -0x14
 #     (local2):  word      @ -0x10
 #     (local3):  word[3]   @ -0xc
+            .balign      4
 .Lfunc019:  addi         sp, sp, -32 /* (FP)-0x20 */           #  950: 12c1e0
             s32i         a0, sp, 16 /* a0 -> [(local2)] */     #  953: 0941
             s32i         a4, sp, 8 /* arg2 -> [(local0)] */    #  955: 4921
@@ -1206,6 +1226,7 @@
 #     (local8):  word      @ -0xc
 #     (local9):  word      @ -0x8
 #     (local10): word      @ -0x4
+            .balign      4
 .Lfunc020:  addi         sp, sp, -80 /* (local0) */            #  9a4: 12c1b0
             s32i         a14, sp, 76 /* a14 -> [(local10)] */  #  9a7: e26113
             s32i         a4, sp, 56 /* arg2 -> [(local5)] */   #  9aa: 49e1
@@ -1319,6 +1340,7 @@
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc021:  addi         sp, sp, -16 /* (local0) */            #  ab8: 12c1f0
             s32i         a12, sp, 12 /* a12 -> [(local3)] */   #  abb: c931
             s32i         a0, sp, 8 /* a0 -> [(local2)] */      #  abd: 0921
@@ -1378,6 +1400,7 @@
 #     (local3):  word      @ -0x18
 #     (local4):  word      @ -0x14
 #     (local5):  word[4]   @ -0x10
+            .balign      4
 .Lfunc022:  addi         sp, sp, -64 /* (FP)-0x40 */           #  b34: 12c1c0
             s32i         a5, sp, 36 /* arg3 -> [(local2)] */   #  b37: 5991
             s32i         a0, sp, 40 /* a0 -> [(local3)] */     #  b39: 09a1
@@ -1450,6 +1473,7 @@
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
 .Lfunc023:  addi         sp, sp, -64 /* (FP)-0x40 */           #  bcc: 12c1c0
             s32i         a0, sp, 44 /* a0 -> [(local3)] */     #  bcf: 09b1
             s32i         a15, sp, 60 /* a15 -> [(local7)] */   #  bd1: f9f1
@@ -1563,6 +1587,7 @@
 #     (local7):  word      @ -0xc
 #     (local8):  word      @ -0x8
 #     (local9):  word      @ -0x4
+            .balign      4
 .Lfunc024:  addi         sp, sp, -48 /* (local0) */            #  ccc: 12c1d0
             addi         a6, sp, 16 /* (local2) */             #  ccf: 62c110
             addi         a7, sp, 20 /* (local3) */             #  cd2: 72c114
@@ -1662,6 +1687,7 @@
 #     (local6):  word      @ -0xc
 #     (local7):  word      @ -0x8
 #     (local8):  word      @ -0x4
+            .balign      4
 .Lfunc025:  movi         a3, 0 /* 0x00000000 */                #  da4: 0c03
             addi         sp, sp, -48 /* (local0) */            #  da6: 12c1d0
             s32i         a14, sp, 40 /* a14 -> [(local7)] */   #  da9: e9a1
@@ -1745,6 +1771,7 @@
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc026:  movi         a3, 1 /* 0x00000001 */                #  e58: 0c13
             addi         sp, sp, -16 /* (local0) */            #  e5a: 12c1f0
             s32i         a12, sp, 12 /* a12 -> [(local3)] */   #  e5d: c931
@@ -1807,6 +1834,7 @@
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
 .Lfunc027:  addi         sp, sp, -48 /* (FP)-0x30 */           #  ee4: 12c1d0
             s32i         a5, sp, 40 /* arg3 -> [(local6)] */   #  ee7: 59a1
             s32i         a6, sp, 44 /* arg4 -> [(local7)] */   #  ee9: 69b1
@@ -1921,6 +1949,7 @@
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc028:  addi         sp, sp, -64 /* (FP)-0x40 */           #  fe4: 12c1c0
             s32i         a0, sp, 48 /* a0 -> [(local4)] */     #  fe7: 09c1
             s32i         a13, sp, 56 /* a13 -> [(local6)] */   #  fe9: d9e1
@@ -1992,6 +2021,7 @@
 
             .balign      4
 # Function @ .irom0.text+0x1098
+            .balign      4
 .Lfunc029:  ret           /* arg0 */                           # 1098: 0df0
 
             .literal_position                                  # 109c: 00000000
@@ -2010,6 +2040,7 @@
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_sm_rx_eapol
             .type        sdk_wpa_sm_rx_eapol, @function
 sdk_wpa_sm_rx_eapol:
@@ -2156,6 +2187,7 @@ sdk_wpa_sm_rx_eapol:
 # Function @ .irom0.text+0x1210
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_register
             .type        sdk_wpa_register, @function
 sdk_wpa_register:
@@ -2179,6 +2211,7 @@ sdk_wpa_register:
             .literal_position                                  # 123c: 00000000
 
 # Function @ .irom0.text+0x1240
+            .balign      4
             .global      sdk_wpa_set_profile
             .type        sdk_wpa_set_profile, @function
 sdk_wpa_set_profile:
@@ -2195,6 +2228,7 @@ sdk_wpa_set_profile:
 # Function @ .irom0.text+0x125c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_set_pmk
             .type        sdk_wpa_set_pmk, @function
 sdk_wpa_set_pmk:
@@ -2233,6 +2267,7 @@ sdk_wpa_set_pmk:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_set_bss
             .type        sdk_wpa_set_bss, @function
 sdk_wpa_set_bss:
@@ -2307,6 +2342,7 @@ sdk_wpa_set_bss:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc030:  addi         sp, sp, -16 /* (local0) */            # 1368: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    # 136b: c921
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      # 136d: 0911
@@ -2357,6 +2393,7 @@ sdk_wpa_set_bss:
 # Function @ .irom0.text+0x13e0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc031:  mov          a3, a2 /* arg0 */                     # 13e0: 3d02
             addi         sp, sp, -16 /* (local0) */            # 13e2: 12c1f0
             movi         a6, .Ldata001                         # 13e5: 61fdff
@@ -2396,6 +2433,7 @@ sdk_wpa_set_bss:
 #     (local9):  word      @ -0x18
 #     (local10): word      @ -0x14
 #     (local11): word[4]   @ -0x10
+            .balign      4
 .Lfunc032:  addi         sp, sp, -64 /* (local0) */            # 1420: 12c1c0
             s32i         a4, sp, 40 /* arg2 -> [(local9)] */   # 1423: 49a1
             s32i         a5, sp, 44 /* arg3 -> [(local10)] */  # 1425: 59b1
@@ -2455,6 +2493,7 @@ sdk_wpa_set_bss:
             .literal_position                                  # 14a0: 00000000
 
 # Function @ .irom0.text+0x14a4
+            .balign      4
 .Lfunc033:  movi         a3, .Ldata001                         # 14a4: 31ffff
             movi         a2, 0 /* 0x00000000 */                # 14a7: 0c02
             s32i         a2, a3, 0x17c /* 0x00000000 -> [.Ldata015] */ # 14a9: 22635f
@@ -2466,6 +2505,7 @@ sdk_wpa_set_bss:
 # Function @ .irom0.text+0x14b8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc034:  addi         sp, sp, -16 /* (local0) */            # 14b8: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 14bb: 0901
             movi         a0, .Ldata001                         # 14bd: 01fdff
@@ -2503,6 +2543,7 @@ sdk_wpa_set_bss:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pp_michael_mic_failure
             .type        sdk_pp_michael_mic_failure, @function
 sdk_pp_michael_mic_failure:
@@ -2577,6 +2618,7 @@ sdk_pp_michael_mic_failure:
 # Function @ .irom0.text+0x15d8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_eapol_txcb
             .type        sdk_eapol_txcb, @function
 sdk_eapol_txcb:
@@ -2620,6 +2662,7 @@ sdk_eapol_txcb:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpa_sm_set_state
             .type        sdk_wpa_sm_set_state, @function
 sdk_wpa_sm_set_state:

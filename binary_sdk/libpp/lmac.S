@@ -4,6 +4,7 @@
             .literal_position                                  #    0: 00000000
 
 # Function @ .text+0x4
+            .balign      4
             .global      sdk_lmacIsActive
             .type        sdk_lmacIsActive, @function
 sdk_lmacIsActive:
@@ -17,6 +18,7 @@ sdk_lmacIsActive:
             .literal_position                                  #   14: 30000000
 
 # Function @ .text+0x18
+            .balign      4
             .global      sdk_lmacIsIdle
             .type        sdk_lmacIsIdle, @function
 sdk_lmacIsIdle:
@@ -40,6 +42,7 @@ sdk_lmacIsIdle:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #   48: 12c1f0
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #   4b: 0911
             movi         a0, .Ldata001                         #   4d: 01f8ff
@@ -75,6 +78,7 @@ sdk_lmacIsIdle:
 # Function @ .text+0xa0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #   a0: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   a3: 0901
             movi         a0, .Ldata001                         #   a5: 01f8ff
@@ -102,6 +106,7 @@ sdk_lmacIsIdle:
 # Function @ .text+0xdc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc003:  addi         sp, sp, -16 /* (local0) */            #   dc: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   df: 0901
             call0        .Lfunc004                             #   e1: c50400
@@ -141,6 +146,7 @@ sdk_lmacIsIdle:
 #     (local9):  word      @ -0xc
 #     (local10): word      @ -0x8
 #     (local11): word      @ -0x4
+            .balign      4
 .Lfunc004:  movi         a8, 0 /* 0x00000000 */                #  130: 0c08
             movi         a10, 128 /* 0x00000080 */             #  132: a2a080
             movi         a11, .Ldata001                        #  135: b1edff
@@ -503,6 +509,7 @@ sdk_lmacIsIdle:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_lmacSetAcParam
             .type        sdk_lmacSetAcParam, @function
 sdk_lmacSetAcParam:
@@ -584,6 +591,7 @@ sdk_lmacSetAcParam:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_lmacProcessTXStartData
             .type        sdk_lmacProcessTXStartData, @function
 sdk_lmacProcessTXStartData:
@@ -663,6 +671,7 @@ sdk_lmacProcessTXStartData:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc005:  addi         sp, sp, -16 /* (local0) */            #  678: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  67b: c921
             mov          a12, a2 /* arg0 */                    #  67d: cd02
@@ -785,6 +794,7 @@ sdk_lmacProcessTXStartData:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_lmacProcessTxSuccess
             .type        sdk_lmacProcessTxSuccess, @function
 sdk_lmacProcessTxSuccess:
@@ -879,6 +889,7 @@ sdk_lmacProcessTxSuccess:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
 .Lfunc006:  addi         sp, sp, -32 /* (local0) */            #  89c: 12c1e0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  89f: 0901
             s32i         a5, sp, 20 /* arg3 -> [(local5)] */   #  8a1: 5951
@@ -926,6 +937,7 @@ sdk_lmacProcessTxSuccess:
             .literal_position                                  #  904: 30000000
 
 # Function @ .text+0x908
+            .balign      4
             .global      sdk_GetAccess
             .type        sdk_GetAccess, @function
 sdk_GetAccess:
@@ -938,6 +950,7 @@ sdk_GetAccess:
 # Function @ .text+0x914
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_lmacDiscardAgedMSDU
             .type        sdk_lmacDiscardAgedMSDU, @function
 sdk_lmacDiscardAgedMSDU:
@@ -954,6 +967,7 @@ sdk_lmacDiscardAgedMSDU:
 # Function @ .text+0x928
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_lmacRecycleMPDU
             .type        sdk_lmacRecycleMPDU, @function
 sdk_lmacRecycleMPDU:
@@ -984,6 +998,7 @@ sdk_lmacRecycleMPDU:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc007:  addi         sp, sp, -16 /* (local0) */            #  964: 12c1f0
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #  967: 0911
             l8ui         a3, a2, 17 /* [arg0+0x11] */          #  969: 320211
@@ -1038,6 +1053,7 @@ sdk_lmacRecycleMPDU:
             ret                                                #  9ea: 0df0
 
 # Function @ .text+0x9ec
+            .balign      4
 .Lfunc008:  l8ui         a4, a2, 13 /* [arg0+0xd] */           #  9ec: 42020d
             movi         a5, 0 /* 0x00000000 */                #  9ef: 0c05
             beqz         a4, .Lbr101                           #  9f1: 8c44
@@ -1052,6 +1068,7 @@ sdk_lmacRecycleMPDU:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc009:  addi         sp, sp, -16 /* (local0) */            #  a04: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  a07: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  a09: 0901
@@ -1098,6 +1115,7 @@ sdk_lmacRecycleMPDU:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc010:  addi         sp, sp, -16 /* (local0) */            #  a68: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  a6b: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  a6d: 0901
@@ -1126,6 +1144,7 @@ sdk_lmacRecycleMPDU:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc011:  movi         a3, 1 /* 0x00000001 */                #  aa0: 0c13
             addi         sp, sp, -16 /* (local0) */            #  aa2: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  aa5: 0901
@@ -1189,6 +1208,7 @@ sdk_lmacRecycleMPDU:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
 .Lfunc012:  movi         a4, 3 /* 0x00000003 */                #  b4c: 0c34
             movi         a5, 148 /* 0x00000094 */              #  b4e: 52a094
             addi         sp, sp, -48 /* (FP)-0x30 */           #  b51: 12c1d0
@@ -1551,6 +1571,7 @@ sdk_lmacRecycleMPDU:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_lmacProcessCollisions
             .type        sdk_lmacProcessCollisions, @function
 sdk_lmacProcessCollisions:
@@ -1609,6 +1630,7 @@ sdk_lmacProcessCollisions:
 # Function @ .text+0xf70
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_lmacProcessCollision
             .type        sdk_lmacProcessCollision, @function
 sdk_lmacProcessCollision:
@@ -1661,6 +1683,7 @@ sdk_lmacProcessCollision:
             j            .Lbr162                               #  ff1: 06fcff
 
 # Function @ .text+0xff4
+            .balign      4
             .global      sdk_lmacMSDUAged
             .type        sdk_lmacMSDUAged, @function
 sdk_lmacMSDUAged:
@@ -1686,6 +1709,7 @@ sdk_lmacMSDUAged:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc013:  addi         sp, sp, -16 /* (local0) */            # 102c: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 102f: 0901
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 1031: c911
@@ -1831,6 +1855,7 @@ sdk_lmacMSDUAged:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc014:  addi         sp, sp, -16 /* (local0) */            # 11b0: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    # 11b3: c921
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      # 11b5: 0911
@@ -1934,6 +1959,7 @@ sdk_lmacMSDUAged:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc015:  addi         sp, sp, -16 /* (local0) */            # 12b4: 12c1f0
             l8ui         a5, a2, 10 /* [arg0+0xa] */           # 12b7: 52020a
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 12ba: 0901
@@ -2067,6 +2093,7 @@ sdk_lmacMSDUAged:
 # Function @ .text+0x1418
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_lmacProcessCtsTimeout
             .type        sdk_lmacProcessCtsTimeout, @function
 sdk_lmacProcessCtsTimeout:
@@ -2105,6 +2132,7 @@ sdk_lmacProcessCtsTimeout:
 # Function @ .text+0x1470
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_lmacProcessAckTimeout
             .type        sdk_lmacProcessAckTimeout, @function
 sdk_lmacProcessAckTimeout:
@@ -2143,6 +2171,7 @@ sdk_lmacProcessAckTimeout:
             .literal_position                                  # 14c4: 00000000
 
 # Function @ .text+0x14c8
+            .balign      4
             .global      sdk_lmacProcessRtsStart
             .type        sdk_lmacProcessRtsStart, @function
 sdk_lmacProcessRtsStart:
@@ -2169,6 +2198,7 @@ sdk_lmacProcessRtsStart:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_lmacProcessTxRtsError
             .type        sdk_lmacProcessTxRtsError, @function
 sdk_lmacProcessTxRtsError:
@@ -2242,6 +2272,7 @@ sdk_lmacProcessTxRtsError:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_lmacProcessTxError
             .type        sdk_lmacProcessTxError, @function
 sdk_lmacProcessTxError:
@@ -2314,6 +2345,7 @@ sdk_lmacProcessTxError:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_lmacTxFrame
             .type        sdk_lmacTxFrame, @function
 sdk_lmacTxFrame:
@@ -2437,6 +2469,7 @@ sdk_lmacTxFrame:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc016:  movi         a3, 0 /* 0x00000000 */                # 17c4: 0c03
             addi         sp, sp, -16 /* (local0) */            # 17c6: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 17c9: c911
@@ -2465,6 +2498,7 @@ sdk_lmacTxFrame:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc017:  addi         sp, sp, -16 /* (local0) */            # 1800: 12c1f0
             s32i         a3, sp, 0 /* arg1 -> [(local0)] */    # 1803: 3901
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    # 1805: c921
@@ -2506,6 +2540,7 @@ sdk_lmacTxFrame:
 # Function @ .text+0x1860
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_lmacRxDone
             .type        sdk_lmacRxDone, @function
 sdk_lmacRxDone:
@@ -2557,6 +2592,7 @@ sdk_lmacConfMib:
             .literal_position                                  #    0: 30000000
 
 # Function @ .irom0.text+0x4
+            .balign      4
             .global      sdk_lmacInitAc
             .type        sdk_lmacInitAc, @function
 sdk_lmacInitAc:
@@ -2585,6 +2621,7 @@ sdk_lmacInitAc:
 # Function @ .irom0.text+0x40
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_lmacInit
             .type        sdk_lmacInit, @function
 sdk_lmacInit:
@@ -2645,6 +2682,7 @@ sdk_lmacInit:
                                                                #   c0: ff0f0000
 
 # Function @ .irom0.text+0xc4
+            .balign      4
 .Lfunc018:  movi         a2, 0x00000fff                        #   c4: 21ffff
             movi         a4, 351 /* 0x0000015f */              #   c7: 42a15f
             movi         a5, 9 /* 0x00000009 */                #   ca: 0c95

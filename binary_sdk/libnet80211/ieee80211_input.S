@@ -10,6 +10,7 @@
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_deliver_data
             .type        sdk_ieee80211_deliver_data, @function
 sdk_ieee80211_deliver_data:
@@ -63,6 +64,7 @@ sdk_ieee80211_deliver_data:
 #     (local1):  word      @ -0x10
 #     (local2):  word      @ -0xc
 #     (local3):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_decap
             .type        sdk_ieee80211_decap, @function
 sdk_ieee80211_decap:
@@ -180,6 +182,7 @@ sdk_ieee80211_decap:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_ieee80211_setup_rates
             .type        sdk_ieee80211_setup_rates, @function
 sdk_ieee80211_setup_rates:
@@ -233,6 +236,7 @@ sdk_ieee80211_setup_rates:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_alloc_challenge
             .type        sdk_ieee80211_alloc_challenge, @function
 sdk_ieee80211_alloc_challenge:
@@ -268,6 +272,7 @@ sdk_ieee80211_alloc_challenge:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_parse_beacon
             .type        sdk_ieee80211_parse_beacon, @function
 sdk_ieee80211_parse_beacon:
@@ -563,6 +568,7 @@ sdk_ieee80211_parse_beacon:
                                                                #  55c: 0050f205
 
 # Function @ .irom0.text+0x560
+            .balign      4
 .Lfunc001:  movi         a4, 0x00f25000                        #  560: 41fbff
             l8ui         a7, a2, 3 /* [arg0+0x3] */            #  563: 720203
             l8ui         a6, a2, 1 /* [arg0+0x1] */            #  566: 620201
@@ -606,6 +612,7 @@ sdk_ieee80211_parse_beacon:
                                                                #  5cc: 0050f202
 
 # Function @ .irom0.text+0x5d0
+            .balign      4
 .Lfunc002:  movi         a3, 0x00f25000                        #  5d0: 31fdff
             l8ui         a6, a2, 3 /* [arg0+0x3] */            #  5d3: 620203
             l8ui         a5, a2, 1 /* [arg0+0x1] */            #  5d6: 520201
@@ -637,6 +644,7 @@ sdk_ieee80211_parse_beacon:
                                                                #  620: 000fac05
 
 # Function @ .irom0.text+0x624
+            .balign      4
 .Lfunc003:  movi         a4, 0x00ac0f00                        #  624: 41faff
             l8ui         a7, a2, 3 /* [arg0+0x3] */            #  627: 720203
             l8ui         a6, a2, 1 /* [arg0+0x1] */            #  62a: 620201
@@ -684,6 +692,7 @@ sdk_ieee80211_parse_beacon:
                                                                #  698: 000fac02
 
 # Function @ .irom0.text+0x69c
+            .balign      4
 .Lfunc004:  movi         a3, 0x00ac0f00                        #  69c: 31fdff
             l8ui         a6, a2, 3 /* [arg0+0x3] */            #  69f: 620203
             l8ui         a5, a2, 1 /* [arg0+0x1] */            #  6a2: 520201
@@ -719,6 +728,7 @@ sdk_ieee80211_parse_beacon:
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
             .global      sdk_ieee80211_parse_wpa
             .type        sdk_ieee80211_parse_wpa, @function
 sdk_ieee80211_parse_wpa:
@@ -845,6 +855,7 @@ sdk_ieee80211_parse_wpa:
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
             .global      sdk_ieee80211_parse_rsn
             .type        sdk_ieee80211_parse_rsn, @function
 sdk_ieee80211_parse_rsn:
@@ -948,6 +959,7 @@ sdk_ieee80211_parse_rsn:
             j            .Lbr091                               #  8f1: 46d0ff
 
 # Function @ .irom0.text+0x8f4
+            .balign      4
             .global      sdk_ieee80211_parse_action
             .type        sdk_ieee80211_parse_action, @function
 sdk_ieee80211_parse_action:
@@ -986,6 +998,7 @@ sdk_ieee80211_parse_action:
 
             .balign      4
 # Function @ .irom0.text+0x94c
+            .balign      4
             .global      sdk_ieee80211_setup_rateset
             .type        sdk_ieee80211_setup_rateset, @function
 sdk_ieee80211_setup_rateset:

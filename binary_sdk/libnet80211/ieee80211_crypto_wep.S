@@ -18,6 +18,7 @@ sdk_wep:    .word        0x00000001                            #    0: 01000000
             .literal_position                                  #    0: 00000000
 
 # Function @ .irom0.text+0x4
+            .balign      4
 .Lfunc001:  bnez         a3, .Lbr001                           #    4: cc33
             movi         a3, 0 /* 0x00000000 */                #    6: 0c03
             j            .Lbr003                               #    8: 461300
@@ -55,6 +56,7 @@ sdk_wep:    .word        0x00000001                            #    0: 01000000
 
             .balign      4
 # Function @ .irom0.text+0x60
+            .balign      4
 .Lfunc002:  l32i         a5, a2, 152 /* [arg0+0x98] */         #   60: 522226
             l32i         a8, a3, 4 /* [arg1+0x4] */            #   63: 8813
             l16ui        a2, a3, 22 /* [arg1+0x16] */          #   65: 22130b

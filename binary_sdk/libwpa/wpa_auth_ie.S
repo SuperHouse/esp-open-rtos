@@ -9,6 +9,7 @@
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc001:  movi         a4, -35 /* 0xffffffdd */              #    8: 42afdd
             movi         a5, 0 /* 0x00000000 */                #    b: 0c05
             addi         sp, sp, -16 /* (local0) */            #    d: 12c1f0
@@ -97,6 +98,7 @@
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_write_rsn_ie
             .type        sdk_wpa_write_rsn_ie, @function
 sdk_wpa_write_rsn_ie:
@@ -214,6 +216,7 @@ sdk_wpa_write_rsn_ie:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wpa_auth_gen_wpa_ie
             .type        sdk_wpa_auth_gen_wpa_ie, @function
 sdk_wpa_auth_gen_wpa_ie:
@@ -279,6 +282,7 @@ sdk_wpa_auth_gen_wpa_ie:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpa_add_kde
             .type        sdk_wpa_add_kde, @function
 sdk_wpa_add_kde:
@@ -352,6 +356,7 @@ sdk_wpa_add_kde:
 #     (local8):  word      @ -0xc
 #     (local9):  word      @ -0x8
 #     (local10): word      @ -0x4
+            .balign      4
             .global      sdk_wpa_validate_wpa_ie
             .type        sdk_wpa_validate_wpa_ie, @function
 sdk_wpa_validate_wpa_ie:
@@ -489,6 +494,7 @@ sdk_wpa_validate_wpa_ie:
                                                                #  454: 03ac0f00
 
 # Function @ .irom0.text+0x458
+            .balign      4
 .Lfunc002:  l8ui         a7, a2, 1 /* [arg0+0x1] */            #  458: 720201
             l8ui         a5, a2, 5 /* [arg0+0x5] */            #  45b: 520205
             bnez         a7, .Lbr035                           #  45e: cc27
@@ -575,6 +581,7 @@ sdk_wpa_validate_wpa_ie:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wpa_parse_kde_ies
             .type        sdk_wpa_parse_kde_ies, @function
 sdk_wpa_parse_kde_ies:
@@ -646,6 +653,7 @@ sdk_wpa_parse_kde_ies:
 
             .balign      4
 # Function @ .irom0.text+0x5c4
+            .balign      4
             .global      sdk_wpa_auth_uses_mfp
             .type        sdk_wpa_auth_uses_mfp, @function
 sdk_wpa_auth_uses_mfp:

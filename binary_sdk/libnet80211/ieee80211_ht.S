@@ -11,6 +11,7 @@
 # Function @ .irom0.text+0x18
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_ht_attach
             .type        sdk_ieee80211_ht_attach, @function
 sdk_ieee80211_ht_attach:
@@ -51,6 +52,7 @@ sdk_ieee80211_ht_attach:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_ht_node_init
             .type        sdk_ieee80211_ht_node_init, @function
 sdk_ieee80211_ht_node_init:
@@ -82,6 +84,7 @@ sdk_ieee80211_ht_node_init:
 
             .balign      4
 # Function @ .irom0.text+0xb0
+            .balign      4
             .global      sdk_ieee80211_ht_node_cleanup
             .type        sdk_ieee80211_ht_node_cleanup, @function
 sdk_ieee80211_ht_node_cleanup:
@@ -99,6 +102,7 @@ sdk_ieee80211_ht_node_cleanup:
 # Function @ .irom0.text+0xcc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #   cc: 12c1f0
             movi         a5, 0xfff8ffff                        #   cf: 51fdff
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   d2: 0901
@@ -113,6 +117,7 @@ sdk_ieee80211_ht_node_cleanup:
             ret                                                #   ea: 0df0
 
 # Function @ .irom0.text+0xec
+            .balign      4
             .global      sdk_ieee80211_parse_htcap
             .type        sdk_ieee80211_parse_htcap, @function
 sdk_ieee80211_parse_htcap:
@@ -139,6 +144,7 @@ sdk_ieee80211_parse_htcap:
 
             .balign      4
 # Function @ .irom0.text+0x128
+            .balign      4
 .Lfunc002:  l8ui         a7, a3, 2 /* [arg1+0x2] */            #  128: 720302
             s8i          a7, a2, 195 /* [arg1+0x2] -> [arg0+0xc3] */ #  12b: 7242c3
             l8ui         a6, a3, 3 /* [arg1+0x3] */            #  12e: 620303
@@ -165,6 +171,7 @@ sdk_ieee80211_parse_htcap:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc003:  movi         a4, 0xfff8ffff                        #  164: 41faff
             addi         sp, sp, -16 /* (local0) */            #  167: 12c1f0
             s32i         a14, sp, 12 /* a14 -> [(local3)] */   #  16a: e931
@@ -229,6 +236,7 @@ sdk_ieee80211_parse_htcap:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_ht_updateparams
             .type        sdk_ieee80211_ht_updateparams, @function
 sdk_ieee80211_ht_updateparams:
@@ -349,6 +357,7 @@ sdk_ieee80211_ht_updateparams:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_setup_htrates
             .type        sdk_ieee80211_setup_htrates, @function
 sdk_ieee80211_setup_htrates:
@@ -447,6 +456,7 @@ sdk_ieee80211_setup_htrates:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_setup_basic_htrates
             .type        sdk_ieee80211_setup_basic_htrates, @function
 sdk_ieee80211_setup_basic_htrates:
@@ -516,6 +526,7 @@ sdk_ieee80211_setup_basic_htrates:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc004:  movi         a7, 1174 /* 0x00000496 */             #  494: 72a496
             movi         a5, 332 /* 0x0000014c */              #  497: 52a14c
             addi         sp, sp, -32 /* (local0) */            #  49a: 12c1e0
@@ -689,6 +700,7 @@ sdk_ieee80211_setup_basic_htrates:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
 .Lfunc005:  addi         sp, sp, -48 /* (local0) */            #  644: 12c1d0
             s32i         a0, sp, 16 /* a0 -> [(local4)] */     #  647: 0941
             s32i         a14, sp, 28 /* a14 -> [(local7)] */   #  649: e971
@@ -824,6 +836,7 @@ sdk_ieee80211_setup_basic_htrates:
 # Function @ .irom0.text+0x7a0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_add_htcap
             .type        sdk_ieee80211_add_htcap, @function
 sdk_ieee80211_add_htcap:
@@ -843,6 +856,7 @@ sdk_ieee80211_add_htcap:
 # Function @ .irom0.text+0x7bc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_add_htcap_vendor
             .type        sdk_ieee80211_add_htcap_vendor, @function
 sdk_ieee80211_add_htcap_vendor:
@@ -876,6 +890,7 @@ sdk_ieee80211_add_htcap_vendor:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
 .Lfunc006:  addi         sp, sp, -32 /* (local0) */            #  7f4: 12c1e0
             s32i         a15, sp, 20 /* a15 -> [(local5)] */   #  7f7: f951
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #  7f9: 0911
@@ -927,6 +942,7 @@ sdk_ieee80211_add_htcap_vendor:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc007:  movi         a4, 22 /* 0x00000016 */               #  868: 1c64
             addi         sp, sp, -16 /* (local0) */            #  86a: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  86d: 0901
@@ -983,6 +999,7 @@ sdk_ieee80211_add_htcap_vendor:
 # Function @ .irom0.text+0x8ec
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_add_htinfo
             .type        sdk_ieee80211_add_htinfo, @function
 sdk_ieee80211_add_htinfo:
@@ -1002,6 +1019,7 @@ sdk_ieee80211_add_htinfo:
 # Function @ .irom0.text+0x908
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_add_htinfo_vendor
             .type        sdk_ieee80211_add_htinfo_vendor, @function
 sdk_ieee80211_add_htinfo_vendor:
@@ -1037,6 +1055,7 @@ sdk_ieee80211_add_htinfo_vendor:
 #     (local3):  hword     @ -0x1a
 #     (local4):  hword[4]  @ -0x18
 #     (local5):  word[4]   @ -0x10
+            .balign      4
 .Lfunc008:  addi         sp, sp, -32 /* (local0) */            #  948: 12c1e0
             l8ui         a5, a4, 2 /* [arg2+0x2] */            #  94b: 520402
             s32i         a0, sp, 16 /* a0 -> [(local5)] */     #  94e: 0941
@@ -1096,6 +1115,7 @@ sdk_ieee80211_add_htinfo_vendor:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc009:  mov          a7, a2 /* arg0 */                     #  9d4: 7d02
             mov          a8, a3 /* arg1 */                     #  9d6: 8d03
             addi         sp, sp, -32 /* (local0) */            #  9d8: 12c1e0

@@ -9,9 +9,10 @@
 #     (local3):  word      @ -0x18
 #     (local4):  word      @ -0x14
 #     (local5):  word[4]   @ -0x10
+            .balign      4
+            .literal_position
             .global      sdk_sha1_vector
             .type        sdk_sha1_vector, @function
-            .literal_position
 sdk_sha1_vector:
             addi         sp, sp, -128 /* (FP)-0x80 */          #    0: 12c180
             s32i         a3, sp, 92 /* arg1 -> [(local0)] */   #    3: 326117
@@ -151,6 +152,7 @@ sdk_sha1_vector:
 #     (local70): word      @ -0x18
 #     (local71): word      @ -0x14
 #     (local72): word[4]   @ -0x10
+            .balign      4
             .global      sdk_SHA1Transform
             .type        sdk_SHA1Transform, @function
 sdk_SHA1Transform:
@@ -1915,6 +1917,7 @@ sdk_SHA1Transform:
                                                                # 13c0: f0e1d2c3
 
 # Function @ .irom0.text+0x13c4
+            .balign      4
             .global      sdk_SHA1Init
             .type        sdk_SHA1Init, @function
 sdk_SHA1Init:
@@ -1945,6 +1948,7 @@ sdk_SHA1Init:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_SHA1Update
             .type        sdk_SHA1Update, @function
 sdk_SHA1Update:
@@ -2024,6 +2028,7 @@ sdk_SHA1Update:
 #     (local2):  word      @ -0x10
 #     (local3):  word      @ -0xc
 #     (local4):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_SHA1Final
             .type        sdk_SHA1Final, @function
 sdk_SHA1Final:

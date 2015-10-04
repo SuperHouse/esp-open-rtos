@@ -4,6 +4,7 @@
             .literal_position                                  #    0: 00000000
 
 # Function @ .text+0x4
+            .balign      4
 .Lfunc001:  movi         a5, .Ldata001                         #    4: 51ffff
             l8ui         a2, a5, 0 /* [.Ldata001] */           #    7: 220500
             addi         a3, a5, 32 /* .bss+0x20 */            #    a: 32c520
@@ -37,6 +38,7 @@
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #   54: 12c1f0
             s32i         a0, sp, 8 /* a0 -> [(local2)] */      #   57: 0921
             call0        .Lfunc001                             #   59: 85faff
@@ -94,6 +96,7 @@ sdk_debug_timerfn:
 # Function @ .irom0.text+0xc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc003:  addi         sp, sp, -16 /* (local0) */            #    c: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #    f: 0901
             call0        vPortEnterCritical                    #   11: 01fcffc0
@@ -111,6 +114,7 @@ sdk_debug_timerfn:
             .literal_position                                  #   30: 00060060
 
 # Function @ .irom0.text+0x34
+            .balign      4
 .Lfunc004:  movi         a3, 0x60000600                        #   34: 31ffff
             memw                                               #   37: c02000
             s32i         a2, a3, 48 /* arg0 -> [0x60000630] */ #   3a: 29c3
@@ -121,6 +125,7 @@ sdk_debug_timerfn:
 # Function @ .irom0.text+0x44
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc005:  addi         sp, sp, -16 /* (local0) */            #   44: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   47: 0901
             movi         a4, 0x60000600                        #   49: 41fdff
@@ -143,6 +148,7 @@ sdk_debug_timerfn:
 
             .balign      4
 # Function @ .irom0.text+0x7c
+            .balign      4
             .global      sdk_ets_timer_setfn
             .type        sdk_ets_timer_setfn, @function
 sdk_ets_timer_setfn:
@@ -164,6 +170,7 @@ sdk_ets_timer_setfn:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc006:  addi         sp, sp, -16 /* (local0) */            #   9c: 12c1f0
             movi         a6, .Ldata001                         #   9f: 61fbff
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #   a2: 0911
@@ -215,6 +222,7 @@ sdk_ets_timer_setfn:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_ets_timer_arm_ms_us
             .type        sdk_ets_timer_arm_ms_us, @function
 sdk_ets_timer_arm_ms_us:
@@ -276,6 +284,7 @@ sdk_ets_timer_arm_ms_us:
 # Function @ .irom0.text+0x1a0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ets_timer_arm_us
             .type        sdk_ets_timer_arm_us, @function
 sdk_ets_timer_arm_us:
@@ -291,6 +300,7 @@ sdk_ets_timer_arm_us:
 # Function @ .irom0.text+0x1b4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ets_timer_arm
             .type        sdk_ets_timer_arm, @function
 sdk_ets_timer_arm:
@@ -310,6 +320,7 @@ sdk_ets_timer_arm:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ets_timer_disarm
             .type        sdk_ets_timer_disarm, @function
 sdk_ets_timer_disarm:
@@ -353,6 +364,7 @@ sdk_ets_timer_disarm:
 # Function @ .irom0.text+0x22c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ets_timer_done
             .type        sdk_ets_timer_done, @function
 sdk_ets_timer_done:
@@ -387,6 +399,7 @@ sdk_ets_timer_done:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ets_timer_handler_isr
             .type        sdk_ets_timer_handler_isr, @function
 sdk_ets_timer_handler_isr:
@@ -450,6 +463,7 @@ sdk_ets_timer_handler_isr:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc007:  addi         sp, sp, -16 /* (local0) */            #  304: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  307: c921
             movi         a12, .Ldata001                        #  309: c1fcff
@@ -489,6 +503,7 @@ sdk_ets_timer_handler_isr:
 #     (local1):  word[3]   @ -0x1c
 #     (local2):  word      @ -0x10
 #     (local3):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ets_timer_init
             .type        sdk_ets_timer_init, @function
 sdk_ets_timer_init:

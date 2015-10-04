@@ -14,6 +14,7 @@
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_pm_rtc_clock_cali
             .type        sdk_pm_rtc_clock_cali, @function
 sdk_pm_rtc_clock_cali:
@@ -87,6 +88,7 @@ sdk_pm_rtc_clock_cali:
             .literal_position                                  #   d4: 00feef3f
 
 # Function @ .text+0xd8
+            .balign      4
             .global      sdk_clockgate_watchdog
             .type        sdk_clockgate_watchdog, @function
 sdk_clockgate_watchdog:
@@ -143,6 +145,7 @@ sdk_hardware_reject:
 # Function @ .irom0.text+0x10
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_usec2rtc
             .type        sdk_pm_usec2rtc, @function
 sdk_pm_usec2rtc:
@@ -167,6 +170,7 @@ sdk_pm_usec2rtc:
             ret                                                #   42: 0df0
 
 # Function @ .irom0.text+0x44
+            .balign      4
             .global      sdk_pm_rtc2usec
             .type        sdk_pm_rtc2usec, @function
 sdk_pm_rtc2usec:
@@ -179,6 +183,7 @@ sdk_pm_rtc2usec:
                                                                #   54: 88130000
 
 # Function @ .irom0.text+0x58
+            .balign      4
             .global      sdk_pm_set_sleep_cycles
             .type        sdk_pm_set_sleep_cycles, @function
 sdk_pm_set_sleep_cycles:
@@ -214,6 +219,7 @@ sdk_pm_set_sleep_cycles:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pm_sleep_opt
             .type        sdk_pm_sleep_opt, @function
 sdk_pm_sleep_opt:
@@ -310,6 +316,7 @@ sdk_pm_sleep_opt:
             .literal_position                                  #  1a0: 00060060
 
 # Function @ .irom0.text+0x1a4
+            .balign      4
             .global      sdk_pm_wakeup_opt
             .type        sdk_pm_wakeup_opt, @function
 sdk_pm_wakeup_opt:
@@ -336,6 +343,7 @@ sdk_pm_wakeup_opt:
                                                                #  1e0: 00feef3f
 
 # Function @ .irom0.text+0x1e4
+            .balign      4
             .global      sdk_get_chip_version
             .type        sdk_get_chip_version, @function
 sdk_get_chip_version:
@@ -368,6 +376,7 @@ sdk_get_chip_version:
 # Function @ .irom0.text+0x230
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_sleep_opt_bb_off
             .type        sdk_pm_sleep_opt_bb_off, @function
 sdk_pm_sleep_opt_bb_off:
@@ -404,6 +413,7 @@ sdk_pm_sleep_opt_bb_off:
 # Function @ .irom0.text+0x280
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_sleep_opt_bb_on
             .type        sdk_pm_sleep_opt_bb_on, @function
 sdk_pm_sleep_opt_bb_on:
@@ -441,6 +451,7 @@ sdk_pm_sleep_opt_bb_on:
 # Function @ .irom0.text+0x2d4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_set_pll_xtal_wait_time
             .type        sdk_pm_set_pll_xtal_wait_time, @function
 sdk_pm_set_pll_xtal_wait_time:
@@ -474,6 +485,7 @@ sdk_pm_set_pll_xtal_wait_time:
                                                                #  320: 00060060
 
 # Function @ .irom0.text+0x324
+            .balign      4
             .global      sdk_pm_prepare_to_sleep
             .type        sdk_pm_prepare_to_sleep, @function
 sdk_pm_prepare_to_sleep:
@@ -496,6 +508,7 @@ sdk_pm_prepare_to_sleep:
                                                                #  354: 000a0060
 
 # Function @ .irom0.text+0x358
+            .balign      4
             .global      sdk_pm_sdio_nidle
             .type        sdk_pm_sdio_nidle, @function
 sdk_pm_sdio_nidle:
@@ -550,6 +563,7 @@ sdk_pm_sdio_nidle:
 # Function @ .irom0.text+0x3e4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_goto_sleep
             .type        sdk_pm_goto_sleep, @function
 sdk_pm_goto_sleep:
@@ -602,6 +616,7 @@ sdk_pm_goto_sleep:
                                                                #  464: 00060060
 
 # Function @ .irom0.text+0x468
+            .balign      4
             .global      sdk_pm_wait4wakeup
             .type        sdk_pm_wait4wakeup, @function
 sdk_pm_wait4wakeup:
@@ -633,6 +648,7 @@ sdk_pm_wait4wakeup:
                                                                #  4b0: fffffcff
 
 # Function @ .irom0.text+0x4b4
+            .balign      4
             .global      sdk_pm_open_rf
             .type        sdk_pm_open_rf, @function
 sdk_pm_open_rf:
@@ -669,6 +685,7 @@ sdk_pm_open_rf:
                                                                #  514: ffffff7f
 
 # Function @ .irom0.text+0x518
+            .balign      4
             .global      sdk_pm_sleep_set_mac
             .type        sdk_pm_sleep_set_mac, @function
 sdk_pm_sleep_set_mac:
@@ -730,6 +747,7 @@ sdk_pm_sleep_set_mac:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pm_set_wakeup_mac
             .type        sdk_pm_set_wakeup_mac, @function
 sdk_pm_set_wakeup_mac:
@@ -798,6 +816,7 @@ sdk_pm_set_wakeup_mac:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_check_mac_idle
             .type        sdk_pm_check_mac_idle, @function
 sdk_pm_check_mac_idle:
@@ -847,6 +866,7 @@ sdk_pm_check_mac_idle:
 # Function @ .irom0.text+0x6d4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_set_sleep_btco
             .type        sdk_pm_set_sleep_btco, @function
 sdk_pm_set_sleep_btco:
@@ -925,6 +945,7 @@ sdk_pm_set_sleep_btco:
 # Function @ .irom0.text+0x79c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_set_wakeup_btco
             .type        sdk_pm_set_wakeup_btco, @function
 sdk_pm_set_wakeup_btco:
@@ -1049,6 +1070,7 @@ sdk_pm_set_wakeup_btco:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pm_set_sleep_mode
             .type        sdk_pm_set_sleep_mode, @function
 sdk_pm_set_sleep_mode:
@@ -1128,6 +1150,7 @@ sdk_pm_set_sleep_mode:
                                                                #  9b0: 30330040
 
 # Function @ .irom0.text+0x9b4
+            .balign      4
             .global      sdk_pm_unmask_bt
             .type        sdk_pm_unmask_bt, @function
 sdk_pm_unmask_bt:
@@ -1202,6 +1225,7 @@ sdk_pm_unmask_bt:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_pm_wakeup_init
             .type        sdk_pm_wakeup_init, @function
 sdk_pm_wakeup_init:
@@ -1393,6 +1417,7 @@ sdk_pm_wakeup_init:
             .literal_position                                  #  c88: 00060060
 
 # Function @ .irom0.text+0xc8c
+            .balign      4
             .global      sdk_sleep_opt_8266
             .type        sdk_sleep_opt_8266, @function
 sdk_sleep_opt_8266:
@@ -1414,6 +1439,7 @@ sdk_sleep_opt_8266:
 # Function @ .irom0.text+0xcb4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_sleep_opt_bb_on_8266
             .type        sdk_sleep_opt_bb_on_8266, @function
 sdk_sleep_opt_bb_on_8266:
@@ -1447,6 +1473,7 @@ sdk_sleep_opt_bb_on_8266:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_sleep_reset_analog_rtcreg_8266
             .type        sdk_sleep_reset_analog_rtcreg_8266, @function
 sdk_sleep_reset_analog_rtcreg_8266:

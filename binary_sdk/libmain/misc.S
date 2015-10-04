@@ -4,6 +4,7 @@
             .literal_position                                  #    0: 00000000
 
 # Function @ .text+0x4
+            .balign      4
             .global      sdk_os_get_cpu_frequency
             .type        sdk_os_get_cpu_frequency, @function
 sdk_os_get_cpu_frequency:
@@ -32,6 +33,7 @@ sdk__putc1: .word        0x00000000                            #    0: 00000000
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ets_delay_us
             .type        sdk_ets_delay_us, @function
 sdk_ets_delay_us:
@@ -62,6 +64,7 @@ sdk_os_delay_us:
             .literal_position                                  #   40: 00000000
 
 # Function @ .irom0.text+0x44
+            .balign      4
             .global      sdk_ets_update_cpu_frequency
             .type        sdk_ets_update_cpu_frequency, @function
 sdk_ets_update_cpu_frequency:
@@ -75,6 +78,7 @@ sdk_os_update_cpu_frequency:
             .literal_position                                  #   4c: 00000000
 
 # Function @ .irom0.text+0x50
+            .balign      4
             .global      sdk_os_install_putc1
             .type        sdk_os_install_putc1, @function
 sdk_os_install_putc1:
@@ -87,6 +91,7 @@ sdk_os_install_putc1:
 # Function @ .irom0.text+0x5c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_os_putc
             .type        sdk_os_putc, @function
 sdk_os_putc:
@@ -102,6 +107,7 @@ sdk_os_putc:
             .literal_position                                  #   70: 00020060
 
 # Function @ .irom0.text+0x74
+            .balign      4
             .global      sdk_gpio_output_set
             .type        sdk_gpio_output_set, @function
 sdk_gpio_output_set:
@@ -120,6 +126,7 @@ sdk_gpio_output_set:
                                                                #   98: ffffdfff
 
 # Function @ .irom0.text+0x9c
+            .balign      4
             .global      sdk_rtc_get_reset_reason
             .type        sdk_rtc_get_reset_reason, @function
 sdk_rtc_get_reset_reason:

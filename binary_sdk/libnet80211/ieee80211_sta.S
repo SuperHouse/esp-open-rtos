@@ -6,6 +6,7 @@
 # Function @ .irom0.text+0x4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #    4: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #    7: 0901
             beqz         a3, .Lbr002                           #    9: 8ca3
@@ -24,6 +25,7 @@
             .literal_position                                  #   2c: 00000000
 
 # Function @ .irom0.text+0x30
+            .balign      4
             .global      sdk_sta_status_set
             .type        sdk_sta_status_set, @function
 sdk_sta_status_set:
@@ -80,6 +82,7 @@ sdk_sta_status_set:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_sta_new_state
             .type        sdk_ieee80211_sta_new_state, @function
 sdk_ieee80211_sta_new_state:
@@ -297,6 +300,7 @@ sdk_ieee80211_sta_new_state:
 #     (local10): word      @ -0x18
 #     (local11): word      @ -0x14
 #     (local12): word[4]   @ -0x10
+            .balign      4
             .global      sdk_sta_input
             .type        sdk_sta_input, @function
 sdk_sta_input:
@@ -531,6 +535,7 @@ sdk_sta_input:
 # Function @ .irom0.text+0x540
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #  540: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  543: 0901
             l32i         a0, a2, 60 /* [arg0+0x3c] */          #  545: 08f2
@@ -577,6 +582,7 @@ sdk_sta_input:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc003:  addi         sp, sp, -32 /* (local0) */            #  5ac: 12c1e0
             l16ui        a7, sp, 36 /* [(FP)+0x4] */           #  5af: 721112
             s32i         a0, sp, 8 /* a0 -> [(local2)] */      #  5b2: 0921
@@ -667,6 +673,7 @@ sdk_sta_input:
 
             .balign      4
 # Function @ .irom0.text+0x690
+            .balign      4
             .global      sdk_ieee80211_parse_wmeparams
             .type        sdk_ieee80211_parse_wmeparams, @function
 sdk_ieee80211_parse_wmeparams:
@@ -732,6 +739,7 @@ sdk_ieee80211_parse_wmeparams:
 #     (local8):  word      @ -0x10
 #     (local9):  word      @ -0xc
 #     (local10): word[2]   @ -0x8
+            .balign      4
 .Lfunc004:  addi         sp, sp, -128 /* (local0) */           #  720: 12c180
             s32i         a14, sp, 112 /* a14 -> [(local8)] */  #  723: e2611c
             s32i         a15, sp, 116 /* a15 -> [(local9)] */  #  726: f2611d
@@ -949,6 +957,7 @@ sdk_ieee80211_parse_wmeparams:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
 .Lfunc005:  addi         sp, sp, -48 /* (local0) */            #  96c: 12c1d0
             s32i         a14, sp, 24 /* a14 -> [(local6)] */   #  96f: e961
             s32i         a15, sp, 28 /* a15 -> [(local7)] */   #  971: f971
@@ -1224,6 +1233,7 @@ sdk_ieee80211_parse_wmeparams:
 #     (local1):  word      @ -0x10
 #     (local2):  word      @ -0xc
 #     (local3):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wifi_station_start
             .type        sdk_wifi_station_start, @function
 sdk_wifi_station_start:
@@ -1291,6 +1301,7 @@ sdk_wifi_station_start:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_station_stop
             .type        sdk_wifi_station_stop, @function
 sdk_wifi_station_stop:

@@ -26,6 +26,7 @@
 #     (local14): word      @ -0x18
 #     (local15): word      @ -0x14
 #     (local16): word[4]   @ -0x10
+            .balign      4
 .Lfunc001:  movi         a8, 144 /* 0x00000090 */              #   14: 82a090
             sub          sp, sp, a8 /* (local0) */             #   17: 8011c0
             s32i         a5, sp, 124 /* arg3 -> [(local15)] */ #   1a: 52611f
@@ -126,6 +127,7 @@
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pbkdf2_sha1
             .type        sdk_pbkdf2_sha1, @function
 sdk_pbkdf2_sha1:

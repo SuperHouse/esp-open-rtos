@@ -2,6 +2,8 @@
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
+            .literal_position
             .global      sdk_ieee80211_crypto_attach
             .type        sdk_ieee80211_crypto_attach, @function
 sdk_ieee80211_crypto_attach:
@@ -9,6 +11,7 @@ sdk_ieee80211_crypto_attach:
 
             .balign      4
 # Function @ .irom0.text+0x4
+            .balign      4
             .global      sdk_ieee80211_crypto_available
             .type        sdk_ieee80211_crypto_available, @function
 sdk_ieee80211_crypto_available:
@@ -16,6 +19,7 @@ sdk_ieee80211_crypto_available:
             ret           /* 0x00000000 */                     #    6: 0df0
 
 # Function @ .irom0.text+0x8
+            .balign      4
             .global      sdk_ieee80211_crypto_setkey
             .type        sdk_ieee80211_crypto_setkey, @function
 sdk_ieee80211_crypto_setkey:
@@ -28,6 +32,7 @@ sdk_ieee80211_crypto_setkey:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_crypto_encap
             .type        sdk_ieee80211_crypto_encap, @function
 sdk_ieee80211_crypto_encap:
@@ -69,6 +74,7 @@ sdk_ieee80211_crypto_encap:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_crypto_decap
             .type        sdk_ieee80211_crypto_decap, @function
 sdk_ieee80211_crypto_decap:

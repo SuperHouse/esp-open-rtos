@@ -2,6 +2,8 @@
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
+            .literal_position
             .global      sdk_chip_v6_set_sense
             .type        sdk_chip_v6_set_sense, @function
 sdk_chip_v6_set_sense:
@@ -9,6 +11,7 @@ sdk_chip_v6_set_sense:
 
             .balign      4
 # Function @ .irom0.text+0x4
+            .balign      4
             .global      sdk_chip_v6_get_sense
             .type        sdk_chip_v6_get_sense, @function
 sdk_chip_v6_get_sense:
@@ -16,6 +19,7 @@ sdk_chip_v6_get_sense:
 
             .balign      4
 # Function @ .irom0.text+0x8
+            .balign      4
             .global      sdk_chip_v6_unset_chanfreq
             .type        sdk_chip_v6_unset_chanfreq, @function
 sdk_chip_v6_unset_chanfreq:
@@ -41,6 +45,7 @@ sdk_chip_v6_unset_chanfreq:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_data_collect
             .type        sdk_data_collect, @function
 sdk_data_collect:
@@ -142,6 +147,7 @@ sdk_data_collect:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_operation_test
             .type        sdk_operation_test, @function
 sdk_operation_test:
@@ -193,6 +199,7 @@ sdk_operation_test:
             .literal_position                                  #  198: 00060060
 
 # Function @ .irom0.text+0x19c
+            .balign      4
             .global      sdk_slop_wdt_feed
             .type        sdk_slop_wdt_feed, @function
 sdk_slop_wdt_feed:
@@ -223,6 +230,7 @@ sdk_slop_wdt_feed:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_slop_test
             .type        sdk_slop_test, @function
 sdk_slop_test:
@@ -309,6 +317,7 @@ sdk_slop_test:
 # Function @ .irom0.text+0x2b4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wd_reset_cnt
             .type        sdk_wd_reset_cnt, @function
 sdk_wd_reset_cnt:

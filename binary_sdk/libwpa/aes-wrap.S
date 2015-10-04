@@ -25,6 +25,7 @@
 #     (local9):  word      @ -0xc
 #     (local10): word      @ -0x8
 #     (local11): word      @ -0x4
+            .balign      4
             .global      sdk_aes_wrap
             .type        sdk_aes_wrap, @function
 sdk_aes_wrap:

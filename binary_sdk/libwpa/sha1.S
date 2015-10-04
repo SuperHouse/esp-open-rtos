@@ -23,6 +23,7 @@
 #     (local9):  word[3]   @ -0x2c
 #     (local10): word      @ -0x20
 #     (local11): word[7]   @ -0x1c
+            .balign      4
             .global      sdk_hmac_sha1_vector
             .type        sdk_hmac_sha1_vector, @function
 sdk_hmac_sha1_vector:
@@ -148,6 +149,7 @@ sdk_hmac_sha1_vector:
 #     (local0):  word[6]   @ -0x30
 #     (local1):  word      @ -0x18
 #     (local2):  word[5]   @ -0x14
+            .balign      4
             .global      sdk_hmac_sha1
             .type        sdk_hmac_sha1, @function
 sdk_hmac_sha1:
@@ -186,6 +188,7 @@ sdk_hmac_sha1:
 #     (local13): word      @ -0x18
 #     (local14): word      @ -0x14
 #     (local15): word[4]   @ -0x10
+            .balign      4
             .global      sdk_sha1_prf
             .type        sdk_sha1_prf, @function
 sdk_sha1_prf:

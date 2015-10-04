@@ -13,6 +13,7 @@
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rijndaelKeySetupDec
             .type        sdk_rijndaelKeySetupDec, @function
 sdk_rijndaelKeySetupDec:
@@ -106,6 +107,7 @@ sdk_rijndaelKeySetupDec:
 # Function @ .irom0.text+0xe4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_aes_decrypt_init
             .type        sdk_aes_decrypt_init, @function
 sdk_aes_decrypt_init:
@@ -142,6 +144,7 @@ sdk_aes_decrypt_init:
 #     (local9):  word      @ -0x1c
 #     (local10): word[4]   @ -0x18
 #     (local11): word[2]   @ -0x8
+            .balign      4
 .Lfunc001:  movi         a11, sdk_Td0                          #  118: b1fbff
             mov          a5, a12                               #  11b: 5d0c
             addi         sp, sp, -64 /* (local0) */            #  11d: 12c1c0
@@ -537,6 +540,7 @@ sdk_aes_decrypt_init:
 # Function @ .irom0.text+0x548
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_aes_decrypt
             .type        sdk_aes_decrypt, @function
 sdk_aes_decrypt:
@@ -552,6 +556,7 @@ sdk_aes_decrypt:
 # Function @ .irom0.text+0x55c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_aes_decrypt_deinit
             .type        sdk_aes_decrypt_deinit, @function
 sdk_aes_decrypt_deinit:

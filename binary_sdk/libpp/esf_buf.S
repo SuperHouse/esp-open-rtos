@@ -15,6 +15,7 @@
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_esf_rx_buf_alloc
             .type        sdk_esf_rx_buf_alloc, @function
 sdk_esf_rx_buf_alloc:
@@ -134,6 +135,7 @@ sdk_esf_rx_buf_alloc:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_esf_buf_alloc
             .type        sdk_esf_buf_alloc, @function
 sdk_esf_buf_alloc:
@@ -400,6 +402,7 @@ sdk_esf_buf_alloc:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_esf_buf_recycle
             .type        sdk_esf_buf_recycle, @function
 sdk_esf_buf_recycle:
@@ -636,6 +639,7 @@ sdk_esf_buf_recycle:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_esf_buf_setup
             .type        sdk_esf_buf_setup, @function
 sdk_esf_buf_setup:

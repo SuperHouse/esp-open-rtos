@@ -10,6 +10,7 @@
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_ieee802_1x_receive
             .type        sdk_ieee802_1x_receive, @function
 sdk_ieee802_1x_receive:

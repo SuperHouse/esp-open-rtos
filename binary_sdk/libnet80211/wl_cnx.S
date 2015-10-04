@@ -50,6 +50,7 @@ sdk_g_cnx_probe_rc_list_cb:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_cnx_attach
             .type        sdk_cnx_attach, @function
 sdk_cnx_attach:
@@ -86,6 +87,7 @@ sdk_cnx_attach:
 # Function @ .irom0.text+0x64
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_cnx_sta_connect_led_timer_cb
             .type        sdk_cnx_sta_connect_led_timer_cb, @function
 sdk_cnx_sta_connect_led_timer_cb:
@@ -139,6 +141,7 @@ sdk_cnx_sta_connect_led_timer_cb:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_cnx_sta_connect_cmd
             .type        sdk_cnx_sta_connect_cmd, @function
 sdk_cnx_sta_connect_cmd:
@@ -241,6 +244,7 @@ sdk_cnx_sta_connect_cmd:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_cnx_sta_scan_cmd
             .type        sdk_cnx_sta_scan_cmd, @function
 sdk_cnx_sta_scan_cmd:
@@ -349,6 +353,7 @@ sdk_cnx_sta_scan_cmd:
 # Function @ .irom0.text+0x2fc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #  2fc: 12c1f0
             movi         a5, sdk_g_ic                          #  2ff: 51faff
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  302: 0901
@@ -389,6 +394,7 @@ sdk_cnx_sta_scan_cmd:
 # Function @ .irom0.text+0x35c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc002:  movi         a3, .Lfunc005                         #  35c: 31faff
             movi         a4, 0 /* 0x00000000 */                #  35f: 0c04
             addi         sp, sp, -16 /* (local0) */            #  361: 12c1f0
@@ -431,6 +437,7 @@ sdk_cnx_sta_scan_cmd:
 #     (local1):  word      @ -0x10
 #     (local2):  word      @ -0xc
 #     (local3):  word[2]   @ -0x8
+            .balign      4
 .Lfunc003:  addi         sp, sp, -32 /* (local0) */            #  3bc: 12c1e0
             s32i         a0, sp, 20 /* a0 -> [(local2)] */     #  3bf: 0951
             movi         a0, sdk_g_ic                          #  3c1: 01f8ff
@@ -473,6 +480,7 @@ sdk_cnx_sta_scan_cmd:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc004:  addi         sp, sp, -16 /* (local0) */            #  418: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  41b: c911
             mov          a12, a2 /* arg0 */                    #  41d: cd02
@@ -513,6 +521,7 @@ sdk_cnx_sta_scan_cmd:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc005:  addi         sp, sp, -16 /* (local0) */            #  470: 12c1f0
             s32i         a3, sp, 0 /* arg1 -> [(local0)] */    #  473: 3901
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  475: c921
@@ -548,6 +557,7 @@ sdk_cnx_sta_scan_cmd:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_cnx_connect_timeout
             .type        sdk_cnx_connect_timeout, @function
 sdk_cnx_connect_timeout:
@@ -594,6 +604,7 @@ sdk_cnx_connect_timeout:
 # Function @ .irom0.text+0x52c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_cnx_start_handoff_cb
             .type        sdk_cnx_start_handoff_cb, @function
 sdk_cnx_start_handoff_cb:
@@ -630,6 +641,7 @@ sdk_cnx_start_handoff_cb:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc006:  movi         a3, 16 /* 0x00000010 */               #  58c: 1c03
             movi         a2, .Ldata001                         #  58e: 21ecff
             addi         sp, sp, -16 /* (local0) */            #  591: 12c1f0
@@ -731,6 +743,7 @@ sdk_cnx_start_handoff_cb:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc007:  addi         sp, sp, -16 /* (local0) */            #  69c: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  69f: 0901
             movi         a0, .Ldata006                         #  6a1: 01edff
@@ -854,6 +867,7 @@ sdk_cnx_start_handoff_cb:
 #     (local4):  word      @ -0x14
 #     (local5):  word      @ -0x10
 #     (local6):  word[3]   @ -0xc
+            .balign      4
 .Lfunc008:  movi         a4, 8 /* 0x00000008 */                #  7e8: 0c84
             addi         sp, sp, -48 /* (local0) */            #  7ea: 12c1d0
             s32i         a0, sp, 32 /* a0 -> [(local5)] */     #  7ed: 0981
@@ -1010,6 +1024,7 @@ sdk_cnx_start_handoff_cb:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc009:  addi         sp, sp, -32 /* (local0) */            #  95c: 12c1e0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  95f: c911
             s32i         a15, sp, 16 /* a15 -> [(local4)] */   #  961: f941
@@ -1074,6 +1089,7 @@ sdk_cnx_start_handoff_cb:
             .literal_position                                  #  9f4: 88060000
 
 # Function @ .irom0.text+0x9f8
+            .balign      4
 .Lfunc010:  movi         a5, .Ldata003                         #  9f8: 51ffff
             l8ui         a5, a5, 0 /* [.Ldata003] */           #  9fb: 520500
             bbci         a5, 0, .Lbr068                        #  9fe: 07651a
@@ -1116,6 +1132,7 @@ sdk_cnx_start_handoff_cb:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_cnx_bss_alloc
             .type        sdk_cnx_bss_alloc, @function
 sdk_cnx_bss_alloc:
@@ -1200,6 +1217,7 @@ sdk_cnx_bss_alloc:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_cnx_rc_search
             .type        sdk_cnx_rc_search, @function
 sdk_cnx_rc_search:
@@ -1252,6 +1270,7 @@ sdk_cnx_rc_search:
                                                                #  b8c: 8a060000
 
 # Function @ .irom0.text+0xb90
+            .balign      4
 .Lfunc011:  movi         a6, .Ldata005                         #  b90: 61fdff
             l8ui         a5, a6, 0 /* [.Ldata005] */           #  b93: 520600
             addi         a6, a6, -1 /* .Ldata004 */            #  b96: 0b66
@@ -1287,6 +1306,7 @@ sdk_cnx_rc_search:
                                                                #  bec: 89060000
 
 # Function @ .irom0.text+0xbf0
+            .balign      4
             .global      sdk_cnx_add_rc
             .type        sdk_cnx_add_rc, @function
 sdk_cnx_add_rc:
@@ -1385,6 +1405,7 @@ sdk_cnx_add_rc:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_cnx_remove_rc
             .type        sdk_cnx_remove_rc, @function
 sdk_cnx_remove_rc:
@@ -1469,6 +1490,7 @@ sdk_cnx_remove_rc:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_cnx_rc_update_rssi
             .type        sdk_cnx_rc_update_rssi, @function
 sdk_cnx_rc_update_rssi:
@@ -1528,6 +1550,7 @@ sdk_cnx_rc_update_rssi:
 # Function @ .irom0.text+0xe50
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_cnx_rc_update_state_metric
             .type        sdk_cnx_rc_update_state_metric, @function
 sdk_cnx_rc_update_state_metric:
@@ -1576,6 +1599,7 @@ sdk_cnx_rc_update_state_metric:
 # Function @ .irom0.text+0xebc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_cnx_rc_update_age
             .type        sdk_cnx_rc_update_age, @function
 sdk_cnx_rc_update_age:
@@ -1602,6 +1626,7 @@ sdk_cnx_rc_update_age:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_cnx_update_bss
             .type        sdk_cnx_update_bss, @function
 sdk_cnx_update_bss:
@@ -1653,6 +1678,7 @@ sdk_cnx_update_bss:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_cnx_update_bss_more
             .type        sdk_cnx_update_bss_more, @function
 sdk_cnx_update_bss_more:
@@ -1813,6 +1839,7 @@ sdk_cnx_update_bss_more:
 
             .balign      4
 # Function @ .irom0.text+0x1100
+            .balign      4
 .Lfunc012:  ret           /* arg0 */                           # 1100: 0df0
 
             .literal_position                                  # 1104: 00000000
@@ -1838,6 +1865,7 @@ sdk_cnx_update_bss_more:
 #     (local3):  word      @ -0xc
 #     (local4):  word      @ -0x8
 #     (local5):  word      @ -0x4
+            .balign      4
             .global      sdk_cnx_sta_leave
             .type        sdk_cnx_sta_leave, @function
 sdk_cnx_sta_leave:
@@ -1943,6 +1971,7 @@ sdk_cnx_sta_leave:
 # Function @ .irom0.text+0x123c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc013:  movi         a2, .Lstr003                          # 123c: 21fbff
             addi         sp, sp, -16 /* (local0) */            # 123f: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1242: 0901
@@ -1984,6 +2013,7 @@ sdk_cnx_sta_leave:
 #     (local3):  word      @ -0xc
 #     (local4):  word      @ -0x8
 #     (local5):  word      @ -0x4
+            .balign      4
             .global      sdk_cnx_sta_associated
             .type        sdk_cnx_sta_associated, @function
 sdk_cnx_sta_associated:
@@ -2031,6 +2061,7 @@ sdk_cnx_sta_associated:
 
             .balign      4
 # Function @ .irom0.text+0x1300
+            .balign      4
 .Lfunc014:  ret           /* arg0 */                           # 1300: 0df0
 
             .literal_position                                  # 1304: 00000000
@@ -2044,6 +2075,7 @@ sdk_cnx_sta_associated:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_cnx_node_alloc
             .type        sdk_cnx_node_alloc, @function
 sdk_cnx_node_alloc:
@@ -2099,6 +2131,7 @@ sdk_cnx_node_alloc:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_cnx_node_remove
             .type        sdk_cnx_node_remove, @function
 sdk_cnx_node_remove:
@@ -2158,6 +2191,7 @@ sdk_cnx_node_remove:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_cnx_node_search
             .type        sdk_cnx_node_search, @function
 sdk_cnx_node_search:
@@ -2216,6 +2250,7 @@ sdk_cnx_node_search:
 #     (local3):  word      @ -0x10
 #     (local4):  word      @ -0xc
 #     (local5):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_cnx_node_leave
             .type        sdk_cnx_node_leave, @function
 sdk_cnx_node_leave:
@@ -2323,6 +2358,7 @@ sdk_cnx_node_leave:
 #     (local5):  word      @ -0x18
 #     (local6):  word      @ -0x14
 #     (local7):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_cnx_node_join
             .type        sdk_cnx_node_join, @function
 sdk_cnx_node_join:

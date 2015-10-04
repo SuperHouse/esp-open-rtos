@@ -52,6 +52,8 @@ sdk_rxiq_cover_fail_num:
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
+            .literal_position
             .global      sdk_txbbgain2dcoindex
             .type        sdk_txbbgain2dcoindex, @function
 sdk_txbbgain2dcoindex:
@@ -71,6 +73,7 @@ sdk_txbbgain2dcoindex:
             ret           /* 0x00000002 */                     #   1e: 0df0
 
 # Function @ .irom0.text+0x20
+            .balign      4
             .global      sdk_dcoindex2txbbgain
             .type        sdk_dcoindex2txbbgain, @function
 sdk_dcoindex2txbbgain:
@@ -103,6 +106,7 @@ sdk_dcoindex2txbbgain:
 #     (local4):  word      @ -0x14
 #     (local5):  word      @ -0x10
 #     (local6):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_init_cal_dcoffset
             .type        sdk_init_cal_dcoffset, @function
 sdk_init_cal_dcoffset:
@@ -190,6 +194,7 @@ sdk_init_cal_dcoffset:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_set_rfanagain_dc_reg
             .type        sdk_set_rfanagain_dc_reg, @function
 sdk_set_rfanagain_dc_reg:
@@ -258,6 +263,7 @@ sdk_set_rfanagain_dc_reg:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_set_txdc_pbus
             .type        sdk_set_txdc_pbus, @function
 sdk_set_txdc_pbus:
@@ -304,6 +310,7 @@ sdk_set_txdc_pbus:
 
             .balign      4
 # Function @ .irom0.text+0x230
+            .balign      4
             .global      sdk_get_rf_gain_qdb
             .type        sdk_get_rf_gain_qdb, @function
 sdk_get_rf_gain_qdb:
@@ -333,6 +340,7 @@ sdk_get_rf_gain_qdb:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_correct_rf_ana_gain
             .type        sdk_correct_rf_ana_gain, @function
 sdk_correct_rf_ana_gain:
@@ -449,6 +457,7 @@ sdk_correct_rf_ana_gain:
 #     (local8):  word      @ -0xc
 #     (local9):  word      @ -0x8
 #     (local10): word      @ -0x4
+            .balign      4
             .global      sdk_get_sar_dout
             .type        sdk_get_sar_dout, @function
 sdk_get_sar_dout:
@@ -524,6 +533,7 @@ sdk_get_sar_dout:
 #     (local2):  byte[2]   @ -0xe
 #     (local3):  word      @ -0xc
 #     (local4):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_cal_rf_ana_gain
             .type        sdk_cal_rf_ana_gain, @function
 sdk_cal_rf_ana_gain:
@@ -620,6 +630,7 @@ sdk_cal_rf_ana_gain:
 #     (local4):  word      @ -0xc
 #     (local5):  word      @ -0x8
 #     (local6):  word      @ -0x4
+            .balign      4
             .global      sdk_meas_tone_pwr_db
             .type        sdk_meas_tone_pwr_db, @function
 sdk_meas_tone_pwr_db:
@@ -689,6 +700,7 @@ sdk_meas_tone_pwr_db:
 #     (local11): word      @ -0xc
 #     (local12): word      @ -0x8
 #     (local13): word      @ -0x4
+            .balign      4
             .global      sdk_tx_pwr_backoff
             .type        sdk_tx_pwr_backoff, @function
 sdk_tx_pwr_backoff:
@@ -825,6 +837,7 @@ sdk_tx_pwr_backoff:
                                                                #  6bc: 00000000
 
 # Function @ .irom0.text+0x6c0
+            .balign      4
             .global      sdk_get_fcc_1m2m_pwr_offset
             .type        sdk_get_fcc_1m2m_pwr_offset, @function
 sdk_get_fcc_1m2m_pwr_offset:
@@ -863,6 +876,7 @@ sdk_get_fcc_1m2m_pwr_offset:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ram_set_txbb_atten
             .type        sdk_ram_set_txbb_atten, @function
 sdk_ram_set_txbb_atten:
@@ -935,6 +949,7 @@ sdk_ram_set_txbb_atten:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_txiq_get_mis_pwr
             .type        sdk_txiq_get_mis_pwr, @function
 sdk_txiq_get_mis_pwr:
@@ -1030,6 +1045,7 @@ sdk_txiq_get_mis_pwr:
 #     (local15): word      @ -0x18
 #     (local16): word      @ -0x14
 #     (local17): word[4]   @ -0x10
+            .balign      4
             .global      sdk_txiq_cover
             .type        sdk_txiq_cover, @function
 sdk_txiq_cover:
@@ -1268,6 +1284,7 @@ sdk_txiq_cover:
 #     (local12): word      @ -0x14
 #     (local13): word      @ -0x10
 #     (local14): word[3]   @ -0xc
+            .balign      4
             .global      sdk_ram_rfcal_txiq
             .type        sdk_ram_rfcal_txiq, @function
 sdk_ram_rfcal_txiq:
@@ -1535,6 +1552,7 @@ sdk_ram_rfcal_txiq:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_rc_cal
             .type        sdk_rc_cal, @function
 sdk_rc_cal: addi         sp, sp, -16 /* (local0) */            #  d3c: 12c1f0
@@ -1726,6 +1744,7 @@ sdk_rc_cal: addi         sp, sp, -16 /* (local0) */            #  d3c: 12c1f0
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_get_target_power_offset
             .type        sdk_get_target_power_offset, @function
 sdk_get_target_power_offset:
@@ -1819,6 +1838,7 @@ sdk_get_target_power_offset:
 
             .balign      4
 # Function @ .irom0.text+0xff8
+            .balign      4
             .global      sdk_get_pwctrl_correct
             .type        sdk_get_pwctrl_correct, @function
 sdk_get_pwctrl_correct:
@@ -1899,6 +1919,7 @@ sdk_get_pwctrl_correct:
 #     (local20): word      @ -0x10
 #     (local21): word      @ -0xc
 #     (local22): word[2]   @ -0x8
+            .balign      4
             .global      sdk_tx_pwctrl_cal
             .type        sdk_tx_pwctrl_cal, @function
 sdk_tx_pwctrl_cal:
@@ -2213,6 +2234,7 @@ sdk_tx_pwctrl_cal:
                                                                # 13ec: ffff7fff
 
 # Function @ .irom0.text+0x13f0
+            .balign      4
             .global      sdk_tx_pwctrl_bg_init
             .type        sdk_tx_pwctrl_bg_init, @function
 sdk_tx_pwctrl_bg_init:
@@ -2285,6 +2307,7 @@ sdk_tx_pwctrl_bg_init:
 #     (local3):  word      @ -0xc
 #     (local4):  word      @ -0x8
 #     (local5):  word      @ -0x4
+            .balign      4
             .global      sdk_tx_pwctrl_background
             .type        sdk_tx_pwctrl_background, @function
 sdk_tx_pwctrl_background:
@@ -2408,6 +2431,7 @@ sdk_tx_pwctrl_background:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_read_sar_dout
             .type        sdk_read_sar_dout, @function
 sdk_read_sar_dout:
@@ -2465,6 +2489,7 @@ sdk_read_sar_dout:
 #     (local7):  word      @ -0x10
 #     (local8):  word      @ -0xc
 #     (local9):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ram_get_fm_sar_dout
             .type        sdk_ram_get_fm_sar_dout, @function
 sdk_ram_get_fm_sar_dout:
@@ -2552,6 +2577,7 @@ sdk_ram_get_fm_sar_dout:
 #     (local11): word      @ -0x14
 #     (local12): word      @ -0x10
 #     (local13): word[3]   @ -0xc
+            .balign      4
             .global      sdk_ram_cal_tos_v60
             .type        sdk_ram_cal_tos_v60, @function
 sdk_ram_cal_tos_v60:
@@ -2748,6 +2774,7 @@ sdk_ram_cal_tos_v60:
 
             .balign      4
 # Function @ .irom0.text+0x18fc
+            .balign      4
             .global      sdk_ram_get_bb_atten
             .type        sdk_ram_get_bb_atten, @function
 sdk_ram_get_bb_atten:
@@ -2799,6 +2826,7 @@ sdk_ram_get_bb_atten:
 #     (local13): word      @ -0x18
 #     (local14): word      @ -0x14
 #     (local15): word[4]   @ -0x10
+            .balign      4
             .global      sdk_ram_rfcal_txcap
             .type        sdk_ram_rfcal_txcap, @function
 sdk_ram_rfcal_txcap:
@@ -3021,6 +3049,7 @@ sdk_ram_rfcal_txcap:
 #     (local18): word      @ -0x14
 #     (local19): word      @ -0x10
 #     (local20): word[3]   @ -0xc
+            .balign      4
             .global      sdk_ram_rfcal_pwrctrl
             .type        sdk_ram_rfcal_pwrctrl, @function
 sdk_ram_rfcal_pwrctrl:
@@ -3268,6 +3297,7 @@ sdk_ram_rfcal_pwrctrl:
 #     (local19): word      @ -0x14
 #     (local20): word      @ -0x10
 #     (local21): word[3]   @ -0xc
+            .balign      4
             .global      sdk_ram_rxiq_get_mis
             .type        sdk_ram_rxiq_get_mis, @function
 sdk_ram_rxiq_get_mis:
@@ -3478,6 +3508,7 @@ sdk_ram_rxiq_get_mis:
 #     (local17): word      @ -0xc
 #     (local18): word      @ -0x8
 #     (local19): word      @ -0x4
+            .balign      4
             .global      sdk_ram_rxiq_cover_mg_mp
             .type        sdk_ram_rxiq_cover_mg_mp, @function
 sdk_ram_rxiq_cover_mg_mp:
@@ -3672,6 +3703,7 @@ sdk_ram_rxiq_cover_mg_mp:
 #     (local19): word      @ -0xc
 #     (local20): word      @ -0x8
 #     (local21): word      @ -0x4
+            .balign      4
             .global      sdk_ram_rfcal_rxiq
             .type        sdk_ram_rfcal_rxiq, @function
 sdk_ram_rfcal_rxiq:
@@ -3901,6 +3933,7 @@ sdk_ram_rfcal_rxiq:
 # Function @ .irom0.text+0x2320
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_dpd_scale_set
             .type        sdk_dpd_scale_set, @function
 sdk_dpd_scale_set:
@@ -3938,6 +3971,7 @@ sdk_dpd_scale_set:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_dpd_mem_write
             .type        sdk_dpd_mem_write, @function
 sdk_dpd_mem_write:
@@ -4036,6 +4070,7 @@ sdk_dpd_mem_write:
 #     (local19): word      @ -0x10
 #     (local20): word      @ -0xc
 #     (local21): word[2]   @ -0x8
+            .balign      4
             .global      sdk_dpd_init
             .type        sdk_dpd_init, @function
 sdk_dpd_init:

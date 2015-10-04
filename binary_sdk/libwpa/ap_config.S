@@ -5,6 +5,7 @@
                                                                #    4: ffff0000
 
 # Function @ .irom0.text+0x8
+            .balign      4
             .global      sdk_hostapd_config_defaults_bss
             .type        sdk_hostapd_config_defaults_bss, @function
 sdk_hostapd_config_defaults_bss:
@@ -46,6 +47,7 @@ sdk_hostapd_config_defaults_bss:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_hostapd_config_defaults
             .type        sdk_hostapd_config_defaults, @function
 sdk_hostapd_config_defaults:
@@ -99,6 +101,7 @@ sdk_hostapd_config_defaults:
 # Function @ .irom0.text+0xd0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_hostapd_mac_comp
             .type        sdk_hostapd_mac_comp, @function
 sdk_hostapd_mac_comp:
@@ -119,6 +122,7 @@ sdk_hostapd_mac_comp:
 # Local variables/stack:
 #     (local0):  word      @ -0x8
 #     (local1):  word      @ -0x4
+            .balign      4
             .global      sdk_hostapd_mac_comp_empty
             .type        sdk_hostapd_mac_comp_empty, @function
 sdk_hostapd_mac_comp_empty:
@@ -147,6 +151,7 @@ sdk_hostapd_mac_comp_empty:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #  124: 12c1f0
             s32i         a2, sp, 0 /* arg0 -> [(local0)] */    #  127: 2901
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #  129: 0911
@@ -172,6 +177,7 @@ sdk_hostapd_mac_comp_empty:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_hostapd_setup_wpa_psk
             .type        sdk_hostapd_setup_wpa_psk, @function
 sdk_hostapd_setup_wpa_psk:
@@ -204,6 +210,7 @@ sdk_hostapd_setup_wpa_psk:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_hostapd_wep_key_cmp
             .type        sdk_hostapd_wep_key_cmp, @function
 sdk_hostapd_wep_key_cmp:
@@ -255,6 +262,7 @@ sdk_hostapd_wep_key_cmp:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_hostapd_maclist_found
             .type        sdk_hostapd_maclist_found, @function
 sdk_hostapd_maclist_found:
@@ -307,6 +315,7 @@ sdk_hostapd_maclist_found:
 
             .balign      4
 # Function @ .irom0.text+0x248
+            .balign      4
             .global      sdk_hostapd_rate_found
             .type        sdk_hostapd_rate_found, @function
 sdk_hostapd_rate_found:
@@ -331,6 +340,7 @@ sdk_hostapd_rate_found:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_hostapd_get_psk
             .type        sdk_hostapd_get_psk, @function
 sdk_hostapd_get_psk:

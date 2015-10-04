@@ -2,6 +2,8 @@
             .section     .text, "ax", @progbits
 
 # Function @ .text+0x0
+            .balign      4
+            .literal_position
 .Lfunc001:  movi         a4, 136 /* 0x00000088 */              #    0: 42a088
             movi         a6, 24 /* 0x00000018 */               #    3: 1c86
             movi         a5, 30 /* 0x0000001e */               #    5: 1ce5
@@ -64,6 +66,7 @@ sdk_PendFreeBcnEb:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc002:  addi         sp, sp, -32 /* (local0) */            #   4c: 12c1e0
             s32i         a0, sp, 8 /* a0 -> [(local2)] */      #   4f: 0921
             s32i         a14, sp, 20 /* a14 -> [(local5)] */   #   51: e951
@@ -190,6 +193,7 @@ sdk_PendFreeBcnEb:
 # Function @ .irom0.text+0x190
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc003:  movi         a4, 254 /* 0x000000fe */              #  190: 42a0fe
             addi         sp, sp, -16 /* (local0) */            #  193: 12c1f0
             movi         a2, .Ldata001                         #  196: 21f8ff
@@ -246,6 +250,7 @@ sdk_PendFreeBcnEb:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc004:  movi         a2, 28 /* 0x0000001c */               #  224: 1cc2
             addi         sp, sp, -32 /* (local0) */            #  226: 12c1e0
             s32i         a13, sp, 12 /* a13 -> [(local3)] */   #  229: d931
@@ -368,6 +373,7 @@ sdk_PendFreeBcnEb:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc005:  addi         sp, sp, -16 /* (local0) */            #  358: 12c1f0
             movi         a5, -17 /* 0xffffffef */              #  35b: 6cf5
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  35d: c911
@@ -450,6 +456,7 @@ sdk_PendFreeBcnEb:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_hostap_attach
             .type        sdk_ieee80211_hostap_attach, @function
 sdk_ieee80211_hostap_attach:
@@ -517,6 +524,7 @@ sdk_ieee80211_hostap_attach:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc006:  addi         sp, sp, -16 /* (local0) */            #  4b8: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  4bb: c921
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #  4bd: 0911
@@ -559,6 +567,7 @@ sdk_ieee80211_hostap_attach:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_hostap_handle_timer
             .type        sdk_hostap_handle_timer, @function
 sdk_hostap_handle_timer:
@@ -655,6 +664,7 @@ sdk_hostap_handle_timer:
 #     (local12): word      @ -0x10
 #     (local13): word      @ -0xc
 #     (local14): word[2]   @ -0x8
+            .balign      4
             .global      sdk_hostap_input
             .type        sdk_hostap_input, @function
 sdk_hostap_input:
@@ -994,6 +1004,7 @@ sdk_hostap_input:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
 .Lfunc007:  addi         sp, sp, -32 /* (local0) */            #  964: 12c1e0
             s32i         a12, sp, 20 /* a12 -> [(local5)] */   #  967: c951
             s32i         a0, sp, 12 /* a0 -> [(local3)] */     #  969: 0931
@@ -1078,6 +1089,7 @@ sdk_hostap_input:
             .literal_position                                  #  a30: 00000000
 
 # Function @ .irom0.text+0xa34
+            .balign      4
 .Lfunc008:  bnez         a3, .Lbr063                           #  a34: ec43
             beqz         a2, .Lbr063                           #  a36: ac22
             l8ui         a3, a2, 1 /* [arg0+0x1] */            #  a38: 320201
@@ -1133,6 +1145,7 @@ sdk_hostap_input:
 #     (local12): word      @ -0x18
 #     (local13): word      @ -0x14
 #     (local14): word[4]   @ -0x10
+            .balign      4
 .Lfunc009:  movi         a10, sdk_g_ic                         #  aa8: a1eeff
             movi         a11, 50 /* 0x00000032 */              #  aab: 3c2b
             movi         a7, 144 /* 0x00000090 */              #  aad: 72a090
@@ -1501,6 +1514,7 @@ sdk_hostap_input:
 # Function @ .irom0.text+0xe88
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc010:  addi         sp, sp, -16 /* (local0) */            #  e88: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  e8b: 0901
             beqi         a4, 128, .Lbr114                      #  e8d: 26e408
@@ -1527,6 +1541,7 @@ sdk_hostap_input:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc011:  addi         sp, sp, -16 /* (local0) */            #  ec4: 12c1f0
             l32i         a6, a2, 136 /* [arg0+0x88] */         #  ec7: 622222
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #  eca: 0911
@@ -1644,6 +1659,7 @@ sdk_hostap_input:
 #     (local3):  word      @ -0x18
 #     (local4):  word      @ -0x14
 #     (local5):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_softap_start
             .type        sdk_wifi_softap_start, @function
 sdk_wifi_softap_start:
@@ -1799,6 +1815,7 @@ sdk_wifi_softap_start:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_softap_stop
             .type        sdk_wifi_softap_stop, @function
 sdk_wifi_softap_stop:

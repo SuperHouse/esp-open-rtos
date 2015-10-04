@@ -9,9 +9,10 @@
 #     (local3):  word      @ -0xc
 #     (local4):  word      @ -0x8
 #     (local5):  word      @ -0x4
+            .balign      4
+            .literal_position
             .global      sdk_md5_vector
             .type        sdk_md5_vector, @function
-            .literal_position
 sdk_md5_vector:
             addi         sp, sp, -112 /* (FP)-0x70 */          #    0: 12c190
             s32i         a3, sp, 88 /* arg1 -> [(local0)] */   #    3: 326116
@@ -52,6 +53,7 @@ sdk_md5_vector:
                                                                #   60: 76543210
 
 # Function @ .irom0.text+0x64
+            .balign      4
             .global      sdk_MD5Init
             .type        sdk_MD5Init, @function
 sdk_MD5Init:
@@ -85,6 +87,7 @@ sdk_MD5Init:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_MD5Update
             .type        sdk_MD5Update, @function
 sdk_MD5Update:
@@ -180,6 +183,7 @@ sdk_MD5Update:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_MD5Final
             .type        sdk_MD5Final, @function
 sdk_MD5Final:
@@ -315,6 +319,7 @@ sdk_MD5Final:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc001:  addi         sp, sp, -32 /* (local0) */            #  2f8: 12c1e0
             ssai         25                                    #  2fb: 104940
             l32i         a6, a3, 28 /* [arg1+0x1c] */          #  2fe: 6873

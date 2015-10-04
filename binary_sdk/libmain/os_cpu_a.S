@@ -14,6 +14,7 @@
 #     (local2):  word      @ -0x48
 #     (local3):  word      @ -0x44
 #     (local4):  word[16]  @ -0x40
+            .balign      4
             .global      vPortYield
             .type        vPortYield, @function
 vPortYield: wsr          a0, excsave1                          #   14: 00d113
@@ -49,6 +50,7 @@ vPortYield: wsr          a0, excsave1                          #   14: 00d113
                                                                #   70: 00350c00
 
 # Function @ .text+0x74
+            .balign      4
             .global      sdk__xt_int_enter
             .type        sdk__xt_int_enter, @function
 sdk__xt_int_enter:
@@ -64,6 +66,7 @@ sdk__xt_int_enter:
             ret                                                #   8a: 0df0
 
 # Function @ .text+0x8c
+            .balign      4
             .global      sdk__xt_int_exit
             .type        sdk__xt_int_exit, @function
 sdk__xt_int_exit:
@@ -89,6 +92,7 @@ sdk__xt_int_exit:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk__xt_timer_int
             .type        sdk__xt_timer_int, @function
 sdk__xt_timer_int:
@@ -118,6 +122,7 @@ sdk__xt_timer_int:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk__xt_timer_int1
             .type        sdk__xt_timer_int1, @function
 sdk__xt_timer_int1:
@@ -137,6 +142,7 @@ sdk__xt_timer_int1:
 # Function @ .text+0x104
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk__xt_tick_timer_init
             .type        sdk__xt_tick_timer_init, @function
 sdk__xt_tick_timer_init:
@@ -158,6 +164,7 @@ sdk__xt_tick_timer_init:
 # Function @ .text+0x128
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk__xt_isr_unmask
             .type        sdk__xt_isr_unmask, @function
 sdk__xt_isr_unmask:
@@ -175,6 +182,7 @@ sdk__xt_isr_unmask:
 # Function @ .text+0x140
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk__xt_isr_mask
             .type        sdk__xt_isr_mask, @function
 sdk__xt_isr_mask:
@@ -192,6 +200,7 @@ sdk__xt_isr_mask:
 # Function @ .text+0x158
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk__xt_read_ints
             .type        sdk__xt_read_ints, @function
 sdk__xt_read_ints:
@@ -206,6 +215,7 @@ sdk__xt_read_ints:
 # Function @ .text+0x168
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk__xt_clear_ints
             .type        sdk__xt_clear_ints, @function
 sdk__xt_clear_ints:

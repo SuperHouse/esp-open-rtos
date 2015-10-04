@@ -7,6 +7,7 @@
                                                                #    c: 000af23f
 
 # Function @ .text+0x10
+            .balign      4
 .Lfunc001:  movi         a5, .Lrel143                          #   10: 51fcff
             l32i         a5, a5, 0 /* [.Lrel143] */            #   13: 5805
             l16ui        a4, a5, 0 /* [[.Lrel143]] */          #   15: 421500
@@ -76,6 +77,7 @@
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
 .Lfunc002:  mov          a8, a2 /* arg0 */                     #   b0: 8d02
             addi         sp, sp, -32 /* (local0) */            #   b2: 12c1e0
             s32i         a12, sp, 12 /* a12 -> [(local3)] */   #   b5: c931
@@ -136,6 +138,7 @@
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc003:  addi         sp, sp, -16 /* (local0) */            #  12c: 12c1f0
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #  12f: 0911
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  131: c921
@@ -164,6 +167,7 @@
 # Function @ .text+0x164
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc004:  mov          a6, a2 /* arg0 */                     #  164: 6d02
             movi         a7, sdk_wDevCtrl                      #  166: 71fdff
             mov          a4, a3 /* arg1 */                     #  169: 4d03
@@ -208,6 +212,7 @@
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc005:  addi         sp, sp, -32 /* (local0) */            #  1c8: 12c1e0
             s32i         a4, sp, 4 /* arg2 -> [(local1)] */    #  1cb: 4911
             s32i         a14, sp, 20 /* a14 -> [(local5)] */   #  1cd: e951
@@ -392,6 +397,7 @@
                                                                #  3a8: 00000000
 
 # Function @ .text+0x3ac
+            .balign      4
             .global      sdk_wDev_MacTimSetFunc
             .type        sdk_wDev_MacTimSetFunc, @function
 sdk_wDev_MacTimSetFunc:
@@ -419,6 +425,7 @@ sdk_wDev_MacTimSetFunc:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wDev_MacTimArm
             .type        sdk_wDev_MacTimArm, @function
 sdk_wDev_MacTimArm:
@@ -497,6 +504,7 @@ sdk_wDev_MacTimArm:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wDev_MacTim1Arm
             .type        sdk_wDev_MacTim1Arm, @function
 sdk_wDev_MacTim1Arm:
@@ -567,6 +575,7 @@ sdk_wDev_MacTim1Arm:
 # Function @ .text+0x554
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc006:  addi         sp, sp, -16 /* (local0) */            #  554: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  557: 0901
             movi         a0, .Ldata002                         #  559: 01fdff
@@ -665,6 +674,7 @@ sdk_wDev_MacTim1Arm:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wDev_ProcessFiq
             .type        sdk_wDev_ProcessFiq, @function
 sdk_wDev_ProcessFiq:
@@ -1012,6 +1022,7 @@ sdk_wDev_ProcessFiq:
                                                                #  a50: 40000000
 
 # Function @ .text+0xa54
+            .balign      4
             .global      sdk_wDev_EnableTransmit
             .type        sdk_wDev_EnableTransmit, @function
 sdk_wDev_EnableTransmit:
@@ -1043,6 +1054,7 @@ sdk_wDev_EnableTransmit:
                                                                #  a98: ffffff3f
 
 # Function @ .text+0xa9c
+            .balign      4
             .global      sdk_wDev_DisableTransmit
             .type        sdk_wDev_DisableTransmit, @function
 sdk_wDev_DisableTransmit:
@@ -1062,6 +1074,7 @@ sdk_wDev_DisableTransmit:
                                                                #  ac0: ffffff3f
 
 # Function @ .text+0xac4
+            .balign      4
             .global      sdk_Tx_Copy2Queue
             .type        sdk_Tx_Copy2Queue, @function
 sdk_Tx_Copy2Queue:
@@ -1096,6 +1109,7 @@ sdk_Tx_Copy2Queue:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wDev_ProcessCollision
             .type        sdk_wDev_ProcessCollision, @function
 sdk_wDev_ProcessCollision:
@@ -1117,6 +1131,7 @@ sdk_wDev_ProcessCollision:
             .literal_position                                  #  b34: 000af23f
 
 # Function @ .text+0xb38
+            .balign      4
             .global      sdk_wDev_GetTxqCollisions
             .type        sdk_wDev_GetTxqCollisions, @function
 sdk_wDev_GetTxqCollisions:
@@ -1130,6 +1145,7 @@ sdk_wDev_GetTxqCollisions:
                                                                #  b4c: 000af23f
 
 # Function @ .text+0xb50
+            .balign      4
             .global      sdk_wDev_ClearTxqCollisions
             .type        sdk_wDev_ClearTxqCollisions, @function
 sdk_wDev_ClearTxqCollisions:
@@ -1147,6 +1163,7 @@ sdk_wDev_ClearTxqCollisions:
                                                                #  b70: 00000040
 
 # Function @ .text+0xb74
+            .balign      4
             .global      sdk_wDev_SetWaitingQueue
             .type        sdk_wDev_SetWaitingQueue, @function
 sdk_wDev_SetWaitingQueue:
@@ -1180,6 +1197,7 @@ sdk_wDev_SetWaitingQueue:
                                                                #  bc0: ffffffbf
 
 # Function @ .text+0xbc4
+            .balign      4
             .global      sdk_wDev_ClearWaitingQueue
             .type        sdk_wDev_ClearWaitingQueue, @function
 sdk_wDev_ClearWaitingQueue:
@@ -1198,6 +1216,7 @@ sdk_wDev_ClearWaitingQueue:
             .literal_position                                  #  be4: 0000f23f
 
 # Function @ .text+0xbe8
+            .balign      4
             .global      sdk_wDev_SetFrameAckType
             .type        sdk_wDev_SetFrameAckType, @function
 sdk_wDev_SetFrameAckType:
@@ -1257,6 +1276,7 @@ sdk_wDev_SetFrameAckType:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wDev_AppendRxBlocks
             .type        sdk_wDev_AppendRxBlocks, @function
 sdk_wDev_AppendRxBlocks:
@@ -1434,6 +1454,7 @@ sdk_wDev_AppendRxBlocks:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wDev_AppendRxAmpduLensBlocks
             .type        sdk_wDev_AppendRxAmpduLensBlocks, @function
 sdk_wDev_AppendRxAmpduLensBlocks:
@@ -1554,6 +1575,7 @@ sdk_wDev_AppendRxAmpduLensBlocks:
             .literal_position                                  #  f94: 00fef13f
 
 # Function @ .text+0xf98
+            .balign      4
             .global      sdk_wDev_GetBAInfo
             .type        sdk_wDev_GetBAInfo, @function
 sdk_wDev_GetBAInfo:
@@ -1577,6 +1599,7 @@ sdk_wDev_GetBAInfo:
             .literal_position                                  #  fc8: efbeadde
 
 # Function @ .text+0xfcc
+            .balign      4
 .Lfunc007:  l32i         a6, a2, 4 /* [arg0+0x4] */            #  fcc: 6812
             movi         a3, 0xdeadbeef                        #  fce: 31feff
             s32i         a3, a6, 0 /* 0xdeadbeef -> [[arg0+0x4]] */ #  fd1: 3906
@@ -1604,6 +1627,7 @@ sdk_wDev_GetBAInfo:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc008:  addi         sp, sp, -16 /* (local0) */            # 1010: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 1013: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1015: 0901
@@ -1700,6 +1724,7 @@ sdk_wDev_GetBAInfo:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc009:  movi         a3, 29 /* 0x0000001d */               # 1114: 1cd3
             addi         sp, sp, -16 /* (local0) */            # 1116: 12c1f0
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    # 1119: d921
@@ -1840,6 +1865,7 @@ sdk_wDev_GetBAInfo:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
 .Lfunc010:  addi         sp, sp, -48 /* (local0) */            # 1288: 12c1d0
             s32i         a13, sp, 24 /* a13 -> [(local6)] */   # 128b: d961
             s32i         a0, sp, 16 /* a0 -> [(local4)] */     # 128d: 0941
@@ -2117,6 +2143,7 @@ sdk_WdevTimOffSet:
                                                                #   1c: 00000040
 
 # Function @ .irom0.text+0x20
+            .balign      4
             .global      sdk_wDev_Option_Init
             .type        sdk_wDev_Option_Init, @function
 sdk_wDev_Option_Init:
@@ -2194,6 +2221,7 @@ sdk_wDev_Option_Init:
                                                                #   f0: 000ef23f
 
 # Function @ .irom0.text+0xf4
+            .balign      4
             .global      sdk_wDev_Enable_Beacon_Tsf
             .type        sdk_wDev_Enable_Beacon_Tsf, @function
 sdk_wDev_Enable_Beacon_Tsf:
@@ -2210,6 +2238,7 @@ sdk_wDev_Enable_Beacon_Tsf:
                                                                #  110: 000ef23f
 
 # Function @ .irom0.text+0x114
+            .balign      4
             .global      sdk_wDev_Disable_Beacon_Tsf
             .type        sdk_wDev_Disable_Beacon_Tsf, @function
 sdk_wDev_Disable_Beacon_Tsf:
@@ -2225,6 +2254,7 @@ sdk_wDev_Disable_Beacon_Tsf:
             .literal_position                                  #  12c: 00000000
 
 # Function @ .irom0.text+0x130
+            .balign      4
             .global      sdk_wDev_Set_Beacon_Int
             .type        sdk_wDev_Set_Beacon_Int, @function
 sdk_wDev_Set_Beacon_Int:
@@ -2239,6 +2269,7 @@ sdk_wDev_Set_Beacon_Int:
 # Function @ .irom0.text+0x144
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wDev_Reset_TBTT
             .type        sdk_wDev_Reset_TBTT, @function
 sdk_wDev_Reset_TBTT:
@@ -2268,6 +2299,7 @@ sdk_wDev_Reset_TBTT:
 # Function @ .irom0.text+0x184
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wDev_Get_Next_TBTT
             .type        sdk_wDev_Get_Next_TBTT, @function
 sdk_wDev_Get_Next_TBTT:
@@ -2318,6 +2350,7 @@ sdk_wDev_Get_Next_TBTT:
 #     (local4):  word      @ -0x18
 #     (local5):  word      @ -0x14
 #     (local6):  word[4]   @ -0x10
+            .balign      4
 .Lfunc011:  movi         a3, 60 /* 0x0000003c */               #  1fc: 3cc3
             movi         a5, 0x00001f54                        #  1fe: 51eeff
             movi         a6, 1604 /* 0x00000644 */             #  201: 62a644
@@ -2486,6 +2519,7 @@ sdk_wDev_Get_Next_TBTT:
                                                                #  3c0: 0002f23f
 
 # Function @ .irom0.text+0x3c4
+            .balign      4
 .Lfunc012:  movi         a4, 0x76503210                        #  3c4: 41fdff
             movi         a2, 0xbbbbbbbb                        #  3c7: 21fdff
             movi         a3, 0x3ff20200                        #  3ca: 31fdff
@@ -2503,6 +2537,7 @@ sdk_wDev_Get_Next_TBTT:
 # Function @ .irom0.text+0x3ec
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc013:  addi         sp, sp, -16 /* (local0) */            #  3ec: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  3ef: 0901
             movi         a7, 1799 /* 0x00000707 */             #  3f1: 72a707
@@ -2541,6 +2576,7 @@ sdk_wDev_Get_Next_TBTT:
                                                                #  44c: 00000000
 
 # Function @ .irom0.text+0x450
+            .balign      4
             .global      sdk_wDev_MacTim1SetFunc
             .type        sdk_wDev_MacTim1SetFunc, @function
 sdk_wDev_MacTim1SetFunc:
@@ -2564,6 +2600,7 @@ sdk_wDev_MacTim1SetFunc:
 # Function @ .irom0.text+0x480
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wDev_Initialize
             .type        sdk_wDev_Initialize, @function
 sdk_wDev_Initialize:
@@ -2607,6 +2644,7 @@ sdk_wDev_Initialize:
                                                                #  4e8: 070c0700
 
 # Function @ .irom0.text+0x4ec
+            .balign      4
             .global      sdk_wDevForceAck6M
             .type        sdk_wDevForceAck6M, @function
 sdk_wDevForceAck6M:
@@ -2626,6 +2664,7 @@ sdk_wDevForceAck6M:
                                                                #  510: 000af23f
 
 # Function @ .irom0.text+0x514
+            .balign      4
             .global      sdk_wDev_SetMacAddress
             .type        sdk_wDev_SetMacAddress, @function
 sdk_wDev_SetMacAddress:
@@ -2688,6 +2727,7 @@ sdk_wDev_SetMacAddress:
 # Function @ .irom0.text+0x5b8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wDev_SetRxPolicy
             .type        sdk_wDev_SetRxPolicy, @function
 sdk_wDev_SetRxPolicy:
@@ -2729,6 +2769,7 @@ sdk_wDev_SetRxPolicy:
                                                                #  618: fffffeff
 
 # Function @ .irom0.text+0x61c
+            .balign      4
             .global      sdk_wDev_SetBssid
             .type        sdk_wDev_SetBssid, @function
 sdk_wDev_SetBssid:
@@ -2809,6 +2850,7 @@ sdk_wDev_SetBssid:
                                                                #  6f8: fffffeff
 
 # Function @ .irom0.text+0x6fc
+            .balign      4
             .global      sdk_wDev_ClearBssid
             .type        sdk_wDev_ClearBssid, @function
 sdk_wDev_ClearBssid:
@@ -2839,6 +2881,7 @@ sdk_wDev_ClearBssid:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wDev_Insert_KeyEntry
             .type        sdk_wDev_Insert_KeyEntry, @function
 sdk_wDev_Insert_KeyEntry:
@@ -2927,6 +2970,7 @@ sdk_wDev_Insert_KeyEntry:
                                                                #  814: ffff1fff
 
 # Function @ .irom0.text+0x818
+            .balign      4
             .global      sdk_wDev_remove_KeyEntry
             .type        sdk_wDev_remove_KeyEntry, @function
 sdk_wDev_remove_KeyEntry:
@@ -2957,6 +3001,7 @@ sdk_wDev_remove_KeyEntry:
                                                                #  85c: 00000010
 
 # Function @ .irom0.text+0x860
+            .balign      4
             .global      sdk_wDev_Crypto_Conf
             .type        sdk_wDev_Crypto_Conf, @function
 sdk_wDev_Crypto_Conf:
@@ -2995,6 +3040,7 @@ sdk_wDev_Crypto_Conf:
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x20
 #     (local1):  word[4]   @ -0x10
+            .balign      4
 .Lfunc014:  addi         sp, sp, -32 /* (local0) */            #  8bc: 12c1e0
             s32i         a0, sp, 16 /* a0 -> [(local1)] */     #  8bf: 0941
             movi         a2, 0x00030000                        #  8c1: 21f9ff
@@ -3034,6 +3080,7 @@ sdk_wDev_Crypto_Conf:
                                                                #  918: 00000300
 
 # Function @ .irom0.text+0x91c
+            .balign      4
             .global      sdk_wDev_Crypto_Disable
             .type        sdk_wDev_Crypto_Disable, @function
 sdk_wDev_Crypto_Disable:
@@ -3062,6 +3109,7 @@ sdk_wDev_Crypto_Disable:
                                                                #  958: 00fef13f
 
 # Function @ .irom0.text+0x95c
+            .balign      4
             .global      sdk_wDevDisableRx
             .type        sdk_wDevDisableRx, @function
 sdk_wDevDisableRx:
@@ -3078,6 +3126,7 @@ sdk_wDevDisableRx:
                                                                #  978: 00fef13f
 
 # Function @ .irom0.text+0x97c
+            .balign      4
             .global      sdk_wDevEnableRx
             .type        sdk_wDevEnableRx, @function
 sdk_wDevEnableRx:
@@ -3106,6 +3155,7 @@ sdk_wDevEnableRx:
 # Function @ .irom0.text+0x9c4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wdev_go_sniffer
             .type        sdk_wdev_go_sniffer, @function
 sdk_wdev_go_sniffer:
@@ -3194,6 +3244,7 @@ sdk_wdev_go_sniffer:
                                                                #  ab8: fffffbff
 
 # Function @ .irom0.text+0xabc
+            .balign      4
             .global      sdk_wdev_exit_sniffer
             .type        sdk_wdev_exit_sniffer, @function
 sdk_wdev_exit_sniffer:

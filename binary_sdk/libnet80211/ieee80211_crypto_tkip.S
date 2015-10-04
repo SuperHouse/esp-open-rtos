@@ -24,6 +24,7 @@ sdk_tkip:   .word        0x00000002                            #    0: 02000000
                                                                #    4: 00000000
 
 # Function @ .irom0.text+0x8
+            .balign      4
 .Lfunc001:  movi         a5, sdk_g_ic                          #    8: 51feff
             ssai         8                                     #    b: 004840
             l32i         a5, a5, 28 /* [sdk_g_ic+0x1c] */      #    e: 5875
@@ -85,6 +86,7 @@ sdk_tkip:   .word        0x00000002                            #    0: 02000000
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #   a0: 12c1f0
             l32i         a8, a3, 4 /* [arg1+0x4] */            #   a3: 8813
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #   a5: 0911

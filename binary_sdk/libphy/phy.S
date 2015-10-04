@@ -7,6 +7,7 @@
 # Function @ .text+0x8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_register_phy_ops
             .type        sdk_register_phy_ops, @function
 sdk_register_phy_ops:
@@ -28,6 +29,7 @@ sdk_register_phy_ops:
 # Function @ .text+0x2c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_phy_change_channel
             .type        sdk_phy_change_channel, @function
 sdk_phy_change_channel:
@@ -45,6 +47,7 @@ sdk_phy_change_channel:
             .literal_position                                  #   44: 000af23f
 
 # Function @ .text+0x48
+            .balign      4
             .global      sdk_phy_get_mactime
             .type        sdk_phy_get_mactime, @function
 sdk_phy_get_mactime:
@@ -64,6 +67,7 @@ sdk_phy_get_mactime:
 # Function @ .irom0.text+0x4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rf_init
             .type        sdk_rf_init, @function
 sdk_rf_init:
@@ -84,6 +88,7 @@ sdk_rf_init:
 # Function @ .irom0.text+0x24
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_bb_init
             .type        sdk_bb_init, @function
 sdk_bb_init:
@@ -104,6 +109,7 @@ sdk_bb_init:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_phy_init
             .type        sdk_phy_init, @function
 sdk_phy_init:
@@ -133,6 +139,7 @@ sdk_phy_init:
 # Function @ .irom0.text+0x78
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_RFChannelSel
             .type        sdk_RFChannelSel, @function
 sdk_RFChannelSel:
@@ -153,6 +160,7 @@ sdk_RFChannelSel:
 # Function @ .irom0.text+0x98
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_phy_delete_channel
             .type        sdk_phy_delete_channel, @function
 sdk_phy_delete_channel:
@@ -171,6 +179,7 @@ sdk_phy_delete_channel:
 # Function @ .irom0.text+0xb4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_phy_enable_agc
             .type        sdk_phy_enable_agc, @function
 sdk_phy_enable_agc:
@@ -189,6 +198,7 @@ sdk_phy_enable_agc:
 # Function @ .irom0.text+0xd0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_phy_disable_agc
             .type        sdk_phy_disable_agc, @function
 sdk_phy_disable_agc:
@@ -207,6 +217,7 @@ sdk_phy_disable_agc:
 # Function @ .irom0.text+0xec
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_phy_initialize_bb
             .type        sdk_phy_initialize_bb, @function
 sdk_phy_initialize_bb:
@@ -225,6 +236,7 @@ sdk_phy_initialize_bb:
 # Function @ .irom0.text+0x108
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_phy_set_sense
             .type        sdk_phy_set_sense, @function
 sdk_phy_set_sense:

@@ -2,6 +2,8 @@
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
+            .literal_position
             .global      sdk_inc_byte_array
             .type        sdk_inc_byte_array, @function
 sdk_inc_byte_array:
@@ -20,6 +22,7 @@ sdk_inc_byte_array:
 
             .balign      4
 # Function @ .irom0.text+0x20
+            .balign      4
 .Lfunc001:  movi         a3, 47 /* 0x0000002f */               #   20: 2cf3
             bgeu         a3, a2, .Lbr003                       #   22: 27b309
             movi         a4, 57 /* 0x00000039 */               #   25: 3c94
@@ -47,9 +50,9 @@ sdk_inc_byte_array:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_hex2byte
             .type        sdk_hex2byte, @function
-            .literal_position
 sdk_hex2byte:
             addi         sp, sp, -16 /* (local0) */            #   54: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #   57: c921
@@ -81,6 +84,7 @@ sdk_hex2byte:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_hexstr2bin
             .type        sdk_hexstr2bin, @function
 sdk_hexstr2bin:
@@ -131,6 +135,7 @@ sdk_hexstr2bin:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpa_get_ntp_timestamp
             .type        sdk_wpa_get_ntp_timestamp, @function
 sdk_wpa_get_ntp_timestamp:
@@ -208,6 +213,7 @@ sdk_wpa_get_ntp_timestamp:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_config_parse_string
             .type        sdk_wpa_config_parse_string, @function
 sdk_wpa_config_parse_string:

@@ -2,6 +2,8 @@
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
+            .literal_position
             .global      sdk_uart_buff_switch
             .type        sdk_uart_buff_switch, @function
 sdk_uart_buff_switch:
@@ -13,6 +15,7 @@ sdk_uart_buff_switch:
                                                                #   10: fffff9ff
 
 # Function @ .irom0.text+0x14
+            .balign      4
             .global      sdk_uart_div_modify
             .type        sdk_uart_div_modify, @function
 sdk_uart_div_modify:
@@ -38,6 +41,7 @@ sdk_uart_div_modify:
 
             .balign      4
 # Function @ .irom0.text+0x4c
+            .balign      4
             .global      sdk_Uart_Init
             .type        sdk_Uart_Init, @function
 sdk_Uart_Init:

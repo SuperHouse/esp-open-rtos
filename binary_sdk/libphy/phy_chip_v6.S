@@ -2,6 +2,8 @@
             .section     .text, "ax", @progbits
 
 # Function @ .text+0x0
+            .balign      4
+            .literal_position
             .global      sdk_ram_tx_mac_disable
             .type        sdk_ram_tx_mac_disable, @function
 sdk_ram_tx_mac_disable:
@@ -288,6 +290,7 @@ sdk_tx_pwctrl_atten_init:
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
             .global      sdk_ram_tx_mac_enable
             .type        sdk_ram_tx_mac_enable, @function
 sdk_ram_tx_mac_enable:
@@ -296,6 +299,7 @@ sdk_ram_tx_mac_enable:
             .literal_position                                  #    4: 000e0060
 
 # Function @ .irom0.text+0x8
+            .balign      4
             .global      sdk_rtc_mem_backup
             .type        sdk_rtc_mem_backup, @function
 sdk_rtc_mem_backup:
@@ -321,6 +325,7 @@ sdk_rtc_mem_backup:
             .literal_position                                  #   38: 000e0060
 
 # Function @ .irom0.text+0x3c
+            .balign      4
             .global      sdk_rtc_mem_recovery
             .type        sdk_rtc_mem_recovery, @function
 sdk_rtc_mem_recovery:
@@ -353,6 +358,7 @@ sdk_rtc_mem_recovery:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_set_cal_rxdc
             .type        sdk_set_cal_rxdc, @function
 sdk_set_cal_rxdc:
@@ -469,6 +475,7 @@ sdk_set_cal_rxdc:
 #     (local19): word      @ -0xc
 #     (local20): word      @ -0x8
 #     (local21): word      @ -0x4
+            .balign      4
             .global      sdk_set_rx_gain_cal_iq
             .type        sdk_set_rx_gain_cal_iq, @function
 sdk_set_rx_gain_cal_iq:
@@ -824,6 +831,7 @@ sdk_set_rx_gain_cal_iq:
 #     (local10): word      @ -0x18
 #     (local11): word      @ -0x14
 #     (local12): word[4]   @ -0x10
+            .balign      4
             .global      sdk_gen_rx_gain_table
             .type        sdk_gen_rx_gain_table, @function
 sdk_gen_rx_gain_table:
@@ -961,6 +969,7 @@ sdk_gen_rx_gain_table:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pbus_set_rxbbgain
             .type        sdk_pbus_set_rxbbgain, @function
 sdk_pbus_set_rxbbgain:
@@ -1045,6 +1054,7 @@ sdk_pbus_set_rxbbgain:
 #     (local17): word      @ -0x18
 #     (local18): word      @ -0x14
 #     (local19): word[4]   @ -0x10
+            .balign      4
             .global      sdk_set_rx_gain_testchip_50
             .type        sdk_set_rx_gain_testchip_50, @function
 sdk_set_rx_gain_testchip_50:
@@ -1374,6 +1384,7 @@ sdk_set_rx_gain_testchip_50:
 #     (local10): word      @ -0x18
 #     (local11): word      @ -0x14
 #     (local12): word[4]   @ -0x10
+            .balign      4
             .global      sdk_ram_get_corr_power
             .type        sdk_ram_get_corr_power, @function
 sdk_ram_get_corr_power:
@@ -1478,6 +1489,7 @@ sdk_ram_get_corr_power:
             .literal_position                                  #  ae0: 00000000
 
 # Function @ .irom0.text+0xae4
+            .balign      4
             .global      sdk_check_data_func
             .type        sdk_check_data_func, @function
 sdk_check_data_func:
@@ -1496,6 +1508,7 @@ sdk_check_data_func:
                                                                #  b04: fd7ffdff
 
 # Function @ .irom0.text+0xb08
+            .balign      4
             .global      sdk_do_noisefloor_lsleep_v50
             .type        sdk_do_noisefloor_lsleep_v50, @function
 sdk_do_noisefloor_lsleep_v50:
@@ -1531,6 +1544,7 @@ sdk_do_noisefloor_lsleep_v50:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_do_noisefloor
             .type        sdk_do_noisefloor, @function
 sdk_do_noisefloor:
@@ -1582,6 +1596,7 @@ sdk_do_noisefloor:
                                                                #  bc0: 009a0060
 
 # Function @ .irom0.text+0xbc4
+            .balign      4
             .global      sdk_start_dig_rx
             .type        sdk_start_dig_rx, @function
 sdk_start_dig_rx:
@@ -1613,6 +1628,7 @@ sdk_start_dig_rx:
                                                                #  c0c: fffff7ff
 
 # Function @ .irom0.text+0xc10
+            .balign      4
             .global      sdk_stop_dig_rx
             .type        sdk_stop_dig_rx, @function
 sdk_stop_dig_rx:
@@ -1639,6 +1655,7 @@ sdk_stop_dig_rx:
 # Function @ .irom0.text+0xc44
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_chip_v6_set_chanfreq
             .type        sdk_chip_v6_set_chanfreq, @function
 sdk_chip_v6_set_chanfreq:
@@ -1694,6 +1711,7 @@ sdk_chip_v6_set_chanfreq:
 #     (local9):  word      @ -0x14
 #     (local10): word      @ -0x10
 #     (local11): word[3]   @ -0xc
+            .balign      4
             .global      sdk_tx_cap_init
             .type        sdk_tx_cap_init, @function
 sdk_tx_cap_init:
@@ -1875,6 +1893,7 @@ sdk_tx_cap_init:
 
             .balign      4
 # Function @ .irom0.text+0xe88
+            .balign      4
             .global      sdk_target_power_add_backoff
             .type        sdk_target_power_add_backoff, @function
 sdk_target_power_add_backoff:
@@ -1931,6 +1950,7 @@ sdk_target_power_add_backoff:
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
             .global      sdk_tx_pwctrl_init_cal
             .type        sdk_tx_pwctrl_init_cal, @function
 sdk_tx_pwctrl_init_cal:
@@ -2111,6 +2131,7 @@ sdk_tx_pwctrl_init_cal:
 #     (local10): word      @ -0x18
 #     (local11): word      @ -0x14
 #     (local12): word[4]   @ -0x10
+            .balign      4
             .global      sdk_tx_atten_set_interp
             .type        sdk_tx_atten_set_interp, @function
 sdk_tx_atten_set_interp:
@@ -2367,6 +2388,7 @@ sdk_tx_atten_set_interp:
 #     (local4):  word      @ -0x14
 #     (local5):  word      @ -0x10
 #     (local6):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_tx_pwctrl_init
             .type        sdk_tx_pwctrl_init, @function
 sdk_tx_pwctrl_init:
@@ -2474,6 +2496,7 @@ sdk_tx_pwctrl_init:
             .literal_position                                  # 1474: 009a0060
 
 # Function @ .irom0.text+0x1478
+            .balign      4
             .global      sdk_ram_get_noisefloor
             .type        sdk_ram_get_noisefloor, @function
 sdk_ram_get_noisefloor:
@@ -2493,6 +2516,7 @@ sdk_ram_get_noisefloor:
 # Function @ .irom0.text+0x1498
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_get_noisefloor_sat
             .type        sdk_get_noisefloor_sat, @function
 sdk_get_noisefloor_sat:
@@ -2519,6 +2543,7 @@ sdk_get_noisefloor_sat:
                                                                # 14cc: fd7ffdff
 
 # Function @ .irom0.text+0x14d0
+            .balign      4
             .global      sdk_ram_set_noise_floor
             .type        sdk_ram_set_noise_floor, @function
 sdk_ram_set_noise_floor:
@@ -2557,6 +2582,7 @@ sdk_ram_set_noise_floor:
                                                                # 152c: 02800200
 
 # Function @ .irom0.text+0x1530
+            .balign      4
             .global      sdk_ram_start_noisefloor
             .type        sdk_ram_start_noisefloor, @function
 sdk_ram_start_noisefloor:
@@ -2587,6 +2613,7 @@ sdk_ram_start_noisefloor:
                                                                # 1578: 00960060
 
 # Function @ .irom0.text+0x157c
+            .balign      4
             .global      sdk_read_hw_noisefloor
             .type        sdk_read_hw_noisefloor, @function
 sdk_read_hw_noisefloor:
@@ -2620,6 +2647,7 @@ sdk_read_hw_noisefloor:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_noise_check_loop
             .type        sdk_noise_check_loop, @function
 sdk_noise_check_loop:
@@ -2790,6 +2818,7 @@ sdk_noise_check_loop:
 #     (local11): word      @ -0x14
 #     (local12): word      @ -0x10
 #     (local13): word[3]   @ -0xc
+            .balign      4
             .global      sdk_noise_init
             .type        sdk_noise_init, @function
 sdk_noise_init:
@@ -3000,6 +3029,7 @@ sdk_noise_init:
 # Local variables/stack:
 #     (local0):  word      @ -0x8
 #     (local1):  word      @ -0x4
+            .balign      4
             .global      sdk_target_power_backoff
             .type        sdk_target_power_backoff, @function
 sdk_target_power_backoff:
@@ -3048,6 +3078,7 @@ sdk_target_power_backoff:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_sdt_on_noise_start
             .type        sdk_sdt_on_noise_start, @function
 sdk_sdt_on_noise_start:
@@ -3121,6 +3152,7 @@ sdk_sdt_on_noise_start:
 #     (local5):  word      @ -0x14
 #     (local6):  word      @ -0x10
 #     (local7):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_chip_v6_set_chan_rx_cmp
             .type        sdk_chip_v6_set_chan_rx_cmp, @function
 sdk_chip_v6_set_chan_rx_cmp:
@@ -3283,6 +3315,7 @@ sdk_chip_v6_set_chan_rx_cmp:
 # Local variables/stack:
 #     (local0):  word      @ -0x8
 #     (local1):  word      @ -0x4
+            .balign      4
             .global      sdk_chip_v6_set_chan_misc
             .type        sdk_chip_v6_set_chan_misc, @function
 sdk_chip_v6_set_chan_misc:
@@ -3408,6 +3441,7 @@ sdk_chip_v6_set_chan_misc:
 #     (local17): word      @ -0xc
 #     (local18): word      @ -0x8
 #     (local19): word      @ -0x4
+            .balign      4
             .global      sdk_phy_dig_spur_set
             .type        sdk_phy_dig_spur_set, @function
 sdk_phy_dig_spur_set:
@@ -3756,6 +3790,7 @@ sdk_phy_dig_spur_set:
 #     (local1):  byte[3]   @ -0xf
 #     (local2):  word      @ -0xc
 #     (local3):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_phy_dig_spur_prot
             .type        sdk_phy_dig_spur_prot, @function
 sdk_phy_dig_spur_prot:
@@ -3974,6 +4009,7 @@ sdk_phy_dig_spur_prot:
 # Function @ .irom0.text+0x2358
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_chip_v6_rxmax_ext_dig
             .type        sdk_chip_v6_rxmax_ext_dig, @function
 sdk_chip_v6_rxmax_ext_dig:
@@ -4011,6 +4047,7 @@ sdk_chip_v6_rxmax_ext_dig:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_chip_v6_rxmax_ext
             .type        sdk_chip_v6_rxmax_ext, @function
 sdk_chip_v6_rxmax_ext:
@@ -4091,6 +4128,7 @@ sdk_chip_v6_rxmax_ext:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_phy_bb_rx_cfg
             .type        sdk_phy_bb_rx_cfg, @function
 sdk_phy_bb_rx_cfg:
@@ -4435,6 +4473,7 @@ sdk_phy_bb_rx_cfg:
 # Function @ .irom0.text+0x2860
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_uart_wait_idle
             .type        sdk_uart_wait_idle, @function
 sdk_uart_wait_idle:
@@ -4461,6 +4500,7 @@ sdk_uart_wait_idle:
                                                                # 28a0: ff00ffff
 
 # Function @ .irom0.text+0x28a4
+            .balign      4
             .global      sdk_phy_pbus_soc_cfg
             .type        sdk_phy_pbus_soc_cfg, @function
 sdk_phy_pbus_soc_cfg:
@@ -4549,6 +4589,7 @@ sdk_phy_pbus_soc_cfg:
 # Function @ .irom0.text+0x29ac
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_phy_gpio_cfg
             .type        sdk_phy_gpio_cfg, @function
 sdk_phy_gpio_cfg:
@@ -4859,6 +4900,7 @@ sdk_phy_gpio_cfg:
 # Function @ .irom0.text+0x2d10
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_tx_cont_en
             .type        sdk_tx_cont_en, @function
 sdk_tx_cont_en:
@@ -4931,6 +4973,7 @@ sdk_tx_cont_en:
 # Function @ .irom0.text+0x2dc8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_tx_cont_dis
             .type        sdk_tx_cont_dis, @function
 sdk_tx_cont_dis:
@@ -4969,6 +5012,7 @@ sdk_tx_cont_dis:
 # Function @ .irom0.text+0x2e1c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_tx_cont_cfg
             .type        sdk_tx_cont_cfg, @function
 sdk_tx_cont_cfg:
@@ -5014,6 +5058,7 @@ sdk_tx_cont_cfg:
 #     (local1):  word[3]   @ -0x1c
 #     (local2):  word      @ -0x10
 #     (local3):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_chip_v6_initialize_bb
             .type        sdk_chip_v6_initialize_bb, @function
 sdk_chip_v6_initialize_bb:
@@ -5205,6 +5250,7 @@ sdk_chip_v6_initialize_bb:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_periodic_cal
             .type        sdk_periodic_cal, @function
 sdk_periodic_cal:
@@ -5329,6 +5375,7 @@ sdk_periodic_cal:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_bbpll_cal
             .type        sdk_bbpll_cal, @function
 sdk_bbpll_cal:
@@ -5396,6 +5443,7 @@ sdk_bbpll_cal:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_periodic_cal_top
             .type        sdk_periodic_cal_top, @function
 sdk_periodic_cal_top:
@@ -5439,6 +5487,7 @@ sdk_periodic_cal_top:
                                                                # 32b8: ec010000
 
 # Function @ .irom0.text+0x32bc
+            .balign      4
             .global      sdk_register_chipv6_phy_init_param
             .type        sdk_register_chipv6_phy_init_param, @function
 sdk_register_chipv6_phy_init_param:
@@ -5686,6 +5735,7 @@ sdk_register_chipv6_phy_init_param:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_change_bbpll160_sleep
             .type        sdk_change_bbpll160_sleep, @function
 sdk_change_bbpll160_sleep:
@@ -5787,6 +5837,7 @@ sdk_change_bbpll160_sleep:
 # Function @ .irom0.text+0x3660
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_change_bbpll160
             .type        sdk_change_bbpll160, @function
 sdk_change_bbpll160:
@@ -5819,6 +5870,7 @@ sdk_change_bbpll160:
 # Function @ .irom0.text+0x36a8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_set_crystal_uart
             .type        sdk_set_crystal_uart, @function
 sdk_set_crystal_uart:
@@ -5866,6 +5918,7 @@ sdk_set_crystal_uart:
                                                                # 3724: 04040401
 
 # Function @ .irom0.text+0x3728
+            .balign      4
             .global      sdk_ant_switch_init
             .type        sdk_ant_switch_init, @function
 sdk_ant_switch_init:
@@ -5966,6 +6019,7 @@ sdk_ant_switch_init:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_register_chipv6_phy
             .type        sdk_register_chipv6_phy, @function
 sdk_register_chipv6_phy:

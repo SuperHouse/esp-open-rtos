@@ -30,6 +30,7 @@
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
             .global      sdk_ieee80211_output_pbuf
             .type        sdk_ieee80211_output_pbuf, @function
 sdk_ieee80211_output_pbuf:
@@ -308,6 +309,7 @@ sdk_ieee80211_output_pbuf:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_send_setup
             .type        sdk_ieee80211_send_setup, @function
 sdk_ieee80211_send_setup:
@@ -443,6 +445,7 @@ sdk_ieee80211_send_setup:
 #     (local1):  word      @ -0x10
 #     (local2):  word      @ -0xc
 #     (local3):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_mgmt_output
             .type        sdk_ieee80211_mgmt_output, @function
 sdk_ieee80211_mgmt_output:
@@ -541,6 +544,7 @@ sdk_ieee80211_mgmt_output:
 
             .balign      4
 # Function @ .irom0.text+0x540
+            .balign      4
             .global      sdk_ieee80211_tx_mgt_cb
             .type        sdk_ieee80211_tx_mgt_cb, @function
 sdk_ieee80211_tx_mgt_cb:
@@ -565,6 +569,7 @@ sdk_ieee80211_tx_mgt_cb:
 #     (local6):  word      @ -0xc
 #     (local7):  word      @ -0x8
 #     (local8):  word      @ -0x4
+            .balign      4
             .global      sdk_ieee80211_send_nulldata
             .type        sdk_ieee80211_send_nulldata, @function
 sdk_ieee80211_send_nulldata:
@@ -727,6 +732,7 @@ sdk_ieee80211_send_nulldata:
 #     (local9):  word      @ -0x14
 #     (local10): word      @ -0x10
 #     (local11): word[3]   @ -0xc
+            .balign      4
 .Lfunc001:  movi         a4, 14 /* 0x0000000e */               #  6dc: 0ce4
             addi         sp, sp, -64 /* (local0) */            #  6de: 12c1c0
             s32i         a2, sp, 52 /* arg0 -> [(local11)] */  #  6e1: 29d1
@@ -999,6 +1005,7 @@ sdk_ieee80211_send_nulldata:
                                                                #  980: 00000000
 
 # Function @ .irom0.text+0x984
+            .balign      4
 .Lfunc002:  l32i         a6, a3, 4 /* [arg1+0x4] */            #  984: 6813
             movi         a4, 0x00008e88                        #  986: 41fdff
             l8ui         a5, a6, 13 /* [[arg1+0x4]+0xd] */     #  989: 52060d
@@ -1045,6 +1052,7 @@ sdk_ieee80211_send_nulldata:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_add_rates
             .type        sdk_ieee80211_add_rates, @function
 sdk_ieee80211_add_rates:
@@ -1080,6 +1088,7 @@ sdk_ieee80211_add_rates:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_add_xrates
             .type        sdk_ieee80211_add_xrates, @function
 sdk_ieee80211_add_xrates:
@@ -1115,6 +1124,7 @@ sdk_ieee80211_add_xrates:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc003:  addi         sp, sp, -16 /* (local0) */            #  a6c: 12c1f0
             s8i          a4, a2, 1 /* arg2 -> [arg0+0x1] */    #  a6f: 424201
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  a72: 0901
@@ -1138,6 +1148,7 @@ sdk_ieee80211_add_xrates:
 
             .balign      4
 # Function @ .irom0.text+0xa9c
+            .balign      4
 .Lfunc004:  movi         a5, 1 /* 0x00000001 */                #  a9c: 0c15
             movi         a4, 42 /* 0x0000002a */               #  a9e: 2ca4
             s8i          a4, a2, 0 /* 0x2a -> [arg0] */        #  aa0: 424200
@@ -1180,6 +1191,7 @@ sdk_ieee80211_add_xrates:
 #     (local9):  word      @ -0x10
 #     (local10): word      @ -0xc
 #     (local11): word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_send_probereq
             .type        sdk_ieee80211_send_probereq, @function
 sdk_ieee80211_send_probereq:
@@ -1350,6 +1362,7 @@ sdk_ieee80211_send_probereq:
             .literal_position                                  #  c9c: 00000000
 
 # Function @ .irom0.text+0xca0
+            .balign      4
             .global      sdk_ieee80211_getcapinfo
             .type        sdk_ieee80211_getcapinfo, @function
 sdk_ieee80211_getcapinfo:
@@ -1439,6 +1452,7 @@ sdk_ieee80211_getcapinfo:
 #     (local19): word      @ -0x14
 #     (local20): word      @ -0x10
 #     (local21): word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_send_mgmt
             .type        sdk_ieee80211_send_mgmt, @function
 sdk_ieee80211_send_mgmt:
@@ -1973,6 +1987,7 @@ sdk_ieee80211_send_mgmt:
             j            .Lbr137                               # 12bd: 86eeff
 
 # Function @ .irom0.text+0x12c0
+            .balign      4
 .Lfunc005:  l8ui         a2, a2, 24 /* [arg0+0x18] */          # 12c0: 220218
             beqz         a2, .Lbr141                           # 12c3: 8c32
             bnei         a2, 1, .Lbr142                        # 12c5: 661205
@@ -2012,6 +2027,7 @@ sdk_ieee80211_send_mgmt:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_alloc_proberesp
             .type        sdk_ieee80211_alloc_proberesp, @function
 sdk_ieee80211_alloc_proberesp:
@@ -2234,6 +2250,7 @@ sdk_ieee80211_alloc_proberesp:
 #     (local3):  word      @ -0x18
 #     (local4):  word      @ -0x14
 #     (local5):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_send_proberesp
             .type        sdk_ieee80211_send_proberesp, @function
 sdk_ieee80211_send_proberesp:
@@ -2406,6 +2423,7 @@ sdk_ieee80211_send_proberesp:
 #     (local8):  word      @ -0x10
 #     (local9):  word      @ -0xc
 #     (local10): word[2]   @ -0x8
+            .balign      4
 .Lfunc006:  addi         sp, sp, -48 /* (local0) */            # 16ec: 12c1d0
             s32i         a15, sp, 32 /* a15 -> [(local8)] */   # 16ef: f981
             s32i         a12, sp, 20 /* a12 -> [(local5)] */   # 16f1: c951
@@ -2611,6 +2629,7 @@ sdk_ieee80211_send_proberesp:
 #     (local4):  word      @ -0x14
 #     (local5):  word      @ -0x10
 #     (local6):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_beacon_alloc
             .type        sdk_ieee80211_beacon_alloc, @function
 sdk_ieee80211_beacon_alloc:

@@ -2,6 +2,8 @@
             .section     .text, "ax", @progbits
 
 # Function @ .text+0x0
+            .balign      4
+            .literal_position
 .Lfunc001:  sub          a6, a2, a3                            #    0: 3062c0
             bltu         a2, a3, .Lbr001                       #    3: 373203
             mov          a2, a6                                #    6: 2d06
@@ -12,6 +14,7 @@
             .literal_position                                  #   10: 22000000
 
 # Function @ .text+0x14
+            .balign      4
 .Lfunc002:  bgeui        a2, 16, .Lbr002                       #   14: f6b23a
             movi         a4, .Lfunc003                         #   17: 41feff
             addx2        a3, a2, a2                            #   1a: 203290
@@ -60,6 +63,7 @@
 
             .balign      4
 # Function @ .text+0x84
+            .balign      4
 .Lfunc004:  beqz         a2, .Lbr017                           #   84: ac12
             beqi         a2, 1, .Lbr015                        #   86: 261217
             beqi         a2, 2, .Lbr016                        #   89: 262218
@@ -81,6 +85,7 @@
             .literal_position                                  #   b0: 20a10700
 
 # Function @ .text+0xb4
+            .balign      4
 .Lfunc005:  movi         a3, 0x0007a120                        #   b4: 31ffff
             l32i         a5, a2, 96 /* [arg0+0x60] */          #   b7: 522218
             movi         a4, 0 /* 0x00000000 */                #   ba: 0c04
@@ -101,6 +106,7 @@
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc006:  addi         sp, sp, -16 /* (local0) */            #   d8: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   db: 0901
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    #   dd: d921
@@ -133,6 +139,7 @@
 # Function @ .text+0x120
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc007:  movi         a6, 10 /* 0x0000000a */               #  120: 0ca6
             addi         sp, sp, -16 /* (local0) */            #  122: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  125: 0901
@@ -174,6 +181,7 @@
 # Function @ .text+0x17c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rcUpdateTxDone
             .type        sdk_rcUpdateTxDone, @function
 sdk_rcUpdateTxDone:
@@ -232,6 +240,7 @@ sdk_rcUpdateTxDone:
             j            .Lbr029                               #  20d: c6fbff
 
 # Function @ .text+0x210
+            .balign      4
             .global      sdk_rcUpdateRxDone
             .type        sdk_rcUpdateRxDone, @function
 sdk_rcUpdateRxDone:
@@ -270,6 +279,7 @@ sdk_rcUpdateRxDone:
 
             .balign      4
 # Function @ .text+0x26c
+            .balign      4
             .global      sdk_rcUpdateDataRxDone
             .type        sdk_rcUpdateDataRxDone, @function
 sdk_rcUpdateDataRxDone:
@@ -289,6 +299,7 @@ sdk_rcUpdateDataRxDone:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rcGetSched
             .type        sdk_rcGetSched, @function
 sdk_rcGetSched:
@@ -358,6 +369,7 @@ sdk_rcGetSched:
 
             .balign      4
 # Function @ .text+0x338
+            .balign      4
             .global      sdk_rcGetRate
             .type        sdk_rcGetRate, @function
 sdk_rcGetRate:
@@ -391,6 +403,7 @@ sdk_rcGetRate:
             .literal_position                                  #  380: 95030000
 
 # Function @ .text+0x384
+            .balign      4
 .Lfunc008:  movi         a6, 255 /* 0x000000ff */              #  384: 62a0ff
             bgeui        a3, 32, .Lbr052                       #  387: f6c37c
             movi         a5, .Lfunc009                         #  38a: 51fdff
@@ -581,6 +594,7 @@ sdk_rcGetRate:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc010:  addi         sp, sp, -32 /* (local0) */            #  594: 12c1e0
             s32i         a13, sp, 12 /* a13 -> [(local3)] */   #  597: d931
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #  599: 0911
@@ -749,6 +763,7 @@ sdk_rcGetRate:
 
             .balign      4
 # Function @ .text+0x750
+            .balign      4
             .global      sdk_rcReachRetryLimit
             .type        sdk_rcReachRetryLimit, @function
 sdk_rcReachRetryLimit:
@@ -764,6 +779,7 @@ sdk_rcReachRetryLimit:
             .literal_position                                  #  764: 00000000
 
 # Function @ .text+0x768
+            .balign      4
             .global      sdk_trc_NeedRTS
             .type        sdk_trc_NeedRTS, @function
 sdk_trc_NeedRTS:
@@ -929,6 +945,7 @@ sdk_trc_NeedRTS:
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
 .Lfunc011:  beqz         a3, .Lbr120                           #    0: 8cd3
             movi         a6, 0 /* 0x00000000 */                #    2: 0c06
 .Lbr119:    s8i          a6, a2, 10                            #    4: 62420a
@@ -949,6 +966,7 @@ sdk_trc_NeedRTS:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rcUpdatePhyMode
             .type        sdk_rcUpdatePhyMode, @function
 sdk_rcUpdatePhyMode:
@@ -1036,6 +1054,7 @@ sdk_rcUpdatePhyMode:
 # Function @ .irom0.text+0x10c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rcAttach
             .type        sdk_rcAttach, @function
 sdk_rcAttach:
@@ -1071,6 +1090,7 @@ sdk_rcAttach:
             .literal_position                                  #  154: 10000000
 
 # Function @ .irom0.text+0x158
+            .balign      4
             .global      sdk_rcGetTrc
             .type        sdk_rcGetTrc, @function
 sdk_rcGetTrc:
@@ -1079,6 +1099,7 @@ sdk_rcGetTrc:
 
             .balign      4
 # Function @ .irom0.text+0x160
+            .balign      4
             .global      sdk_trc_onDisconnect
             .type        sdk_trc_onDisconnect, @function
 sdk_trc_onDisconnect:
@@ -1086,6 +1107,7 @@ sdk_trc_onDisconnect:
 
             .balign      4
 # Function @ .irom0.text+0x164
+            .balign      4
             .global      sdk_trc_onScanStart
             .type        sdk_trc_onScanStart, @function
 sdk_trc_onScanStart:
@@ -1103,6 +1125,7 @@ sdk_trc_onScanStart:
 .Lbr130:    ret           /* arg0 */                           #  182: 0df0
 
 # Function @ .irom0.text+0x184
+            .balign      4
             .global      sdk_trc_onScanDone
             .type        sdk_trc_onScanDone, @function
 sdk_trc_onScanDone:
@@ -1136,6 +1159,7 @@ sdk_trc_onScanDone:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rc_enable_trc
             .type        sdk_rc_enable_trc, @function
 sdk_rc_enable_trc:
@@ -1220,6 +1244,7 @@ sdk_rc_enable_trc:
             .literal_position                                  #  288: 00000000
 
 # Function @ .irom0.text+0x28c
+            .balign      4
             .global      sdk_rc_get_mask
             .type        sdk_rc_get_mask, @function
 sdk_rc_get_mask:
@@ -1241,6 +1266,7 @@ sdk_rc_get_mask:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_rc_disable_trc
             .type        sdk_rc_disable_trc, @function
 sdk_rc_disable_trc:
@@ -1293,6 +1319,7 @@ sdk_rc_disable_trc:
             .literal_position                                  #  328: 00000000
 
 # Function @ .irom0.text+0x32c
+            .balign      4
             .global      sdk_rc_disable_trc_by_interface
             .type        sdk_rc_disable_trc_by_interface, @function
 sdk_rc_disable_trc_by_interface:
@@ -1315,6 +1342,7 @@ sdk_rc_disable_trc_by_interface:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rc_get_sta_trc
             .type        sdk_rc_get_sta_trc, @function
 sdk_rc_get_sta_trc:
@@ -1354,6 +1382,7 @@ sdk_rc_get_sta_trc:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rc_get_trc
             .type        sdk_rc_get_trc, @function
 sdk_rc_get_trc:
@@ -1405,6 +1434,7 @@ sdk_rc_get_trc:
             .literal_position                                  #  410: 00000000
 
 # Function @ .irom0.text+0x414
+            .balign      4
             .global      sdk_rc_get_trc_by_index
             .type        sdk_rc_get_trc_by_index, @function
 sdk_rc_get_trc_by_index:
@@ -1428,6 +1458,7 @@ sdk_rc_get_trc_by_index:
 # Function @ .irom0.text+0x440
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rc_only_sta_trc
             .type        sdk_rc_only_sta_trc, @function
 sdk_rc_only_sta_trc:

@@ -15,6 +15,7 @@
 #     (local0):  word[8]   @ -0x30
 #     (local1):  word      @ -0x10
 #     (local2):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_system_restart_in_nmi
             .type        sdk_system_restart_in_nmi, @function
 sdk_system_restart_in_nmi:
@@ -97,6 +98,7 @@ sdk_system_restart_in_nmi:
             .literal_position                                  #   ec: 000e0060
 
 # Function @ .text+0xf0
+            .balign      4
             .global      sdk_system_rtc_mem_write
             .type        sdk_system_rtc_mem_write, @function
 sdk_system_rtc_mem_write:
@@ -136,6 +138,7 @@ sdk_system_rtc_mem_write:
             .literal_position                                  #  144: 000e0060
 
 # Function @ .text+0x148
+            .balign      4
             .global      sdk_system_rtc_mem_read
             .type        sdk_system_rtc_mem_read, @function
 sdk_system_rtc_mem_read:
@@ -236,6 +239,7 @@ sdk_promiscuous_cb:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #   48: 12c1f0
             s32i         a2, sp, 0 /* arg0 -> [(local0)] */    #   4b: 2901
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      #   4d: 0911
@@ -323,6 +327,7 @@ sdk_promiscuous_cb:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #  128: 12c1f0
             s32i         a14, sp, 12 /* a14 -> [(local3)] */   #  12b: e931
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  12d: 0901
@@ -408,6 +413,7 @@ sdk_promiscuous_cb:
 # Function @ .irom0.text+0x204
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_pp_recycle_rx_pkt
             .type        sdk_system_pp_recycle_rx_pkt, @function
 sdk_system_pp_recycle_rx_pkt:
@@ -424,6 +430,7 @@ sdk_system_pp_recycle_rx_pkt:
 # Function @ .irom0.text+0x21c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_adc_read
             .type        sdk_system_adc_read, @function
 sdk_system_adc_read:
@@ -449,6 +456,7 @@ sdk_system_adc_read:
 # Function @ .irom0.text+0x254
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_restart
             .type        sdk_system_restart, @function
 sdk_system_restart:
@@ -494,6 +502,7 @@ sdk_system_restart:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_system_restore
             .type        sdk_system_restore, @function
 sdk_system_restore:
@@ -527,6 +536,7 @@ sdk_system_restore:
             .literal_position                                  #  308: 00000000
 
 # Function @ .irom0.text+0x30c
+            .balign      4
             .global      sdk_system_get_boot_version
             .type        sdk_system_get_boot_version, @function
 sdk_system_get_boot_version:
@@ -541,6 +551,7 @@ sdk_system_get_boot_version:
 # Function @ .irom0.text+0x320
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc003:  addi         sp, sp, -16 /* (local0) */            #  320: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  323: 0901
             call0        sdk_system_get_boot_version           #  325: 050000
@@ -562,6 +573,7 @@ sdk_system_get_boot_version:
 # Function @ .irom0.text+0x34c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_get_test_result
             .type        sdk_system_get_test_result, @function
 sdk_system_get_test_result:
@@ -588,6 +600,7 @@ sdk_system_get_test_result:
 #     (local0):  byte[5]   @ -0xd
 #     (local1):  hword[2]  @ -0x8
 #     (local2):  word      @ -0x4
+            .balign      4
             .global      sdk_system_get_userbin_addr
             .type        sdk_system_get_userbin_addr, @function
 sdk_system_get_userbin_addr:
@@ -642,6 +655,7 @@ sdk_system_get_userbin_addr:
             .literal_position                                  #  400: 00000000
 
 # Function @ .irom0.text+0x404
+            .balign      4
             .global      sdk_system_get_boot_mode
             .type        sdk_system_get_boot_mode, @function
 sdk_system_get_boot_mode:
@@ -674,6 +688,7 @@ sdk_system_get_boot_mode:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_system_restart_enhance
             .type        sdk_system_restart_enhance, @function
 sdk_system_restart_enhance:
@@ -760,6 +775,7 @@ sdk_system_restart_enhance:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_system_upgrade_userbin_set
             .type        sdk_system_upgrade_userbin_set, @function
 sdk_system_upgrade_userbin_set:
@@ -795,6 +811,7 @@ sdk_system_upgrade_userbin_set:
 # Function @ .irom0.text+0x574
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_upgrade_userbin_check
             .type        sdk_system_upgrade_userbin_check, @function
 sdk_system_upgrade_userbin_check:
@@ -824,6 +841,7 @@ sdk_system_upgrade_userbin_check:
             .literal_position                                  #  5b0: 00000000
 
 # Function @ .irom0.text+0x5b4
+            .balign      4
             .global      sdk_system_upgrade_flag_set
             .type        sdk_system_upgrade_flag_set, @function
 sdk_system_upgrade_flag_set:
@@ -839,6 +857,7 @@ sdk_system_upgrade_flag_set:
             .literal_position                                  #  5c8: 00000000
 
 # Function @ .irom0.text+0x5cc
+            .balign      4
             .global      sdk_system_upgrade_flag_check
             .type        sdk_system_upgrade_flag_check, @function
 sdk_system_upgrade_flag_check:
@@ -865,6 +884,7 @@ sdk_system_upgrade_flag_check:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_system_upgrade_reboot
             .type        sdk_system_upgrade_reboot, @function
 sdk_system_upgrade_reboot:
@@ -974,6 +994,7 @@ sdk_system_upgrade_reboot:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc004:  movi         a3, 0x000f4240                        #  734: 31ecff
             addi         sp, sp, -16 /* (local0) */            #  737: 12c1f0
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    #  73a: d921
@@ -1130,6 +1151,7 @@ sdk_system_upgrade_reboot:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_system_deep_sleep
             .type        sdk_system_deep_sleep, @function
 sdk_system_deep_sleep:
@@ -1169,6 +1191,7 @@ sdk_system_deep_sleep:
 # Function @ .irom0.text+0x944
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_update_cpu_freq
             .type        sdk_system_update_cpu_freq, @function
 sdk_system_update_cpu_freq:
@@ -1210,6 +1233,7 @@ sdk_system_update_cpu_freq:
 # Function @ .irom0.text+0x9a0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_get_cpu_freq
             .type        sdk_system_get_cpu_freq, @function
 sdk_system_get_cpu_freq:
@@ -1227,6 +1251,7 @@ sdk_system_get_cpu_freq:
 # Function @ .irom0.text+0x9bc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_overclock
             .type        sdk_system_overclock, @function
 sdk_system_overclock:
@@ -1252,6 +1277,7 @@ sdk_system_overclock:
 # Function @ .irom0.text+0x9ec
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_restoreclock
             .type        sdk_system_restoreclock, @function
 sdk_system_restoreclock:
@@ -1278,6 +1304,7 @@ sdk_system_restoreclock:
                                                                #  a20: 000af23f
 
 # Function @ .irom0.text+0xa24
+            .balign      4
             .global      sdk_system_get_time
             .type        sdk_system_get_time, @function
 sdk_system_get_time:
@@ -1292,6 +1319,7 @@ sdk_system_get_time:
             .literal_position                                  #  a38: 000af23f
 
 # Function @ .irom0.text+0xa3c
+            .balign      4
             .global      sdk_system_relative_time
             .type        sdk_system_relative_time, @function
 sdk_system_relative_time:
@@ -1322,6 +1350,7 @@ sdk_system_relative_time:
 #     (local5):  word      @ -0x1c
 #     (local6):  word[2]   @ -0x18
 #     (local7):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_station_got_ip_set
             .type        sdk_system_station_got_ip_set, @function
 sdk_system_station_got_ip_set:
@@ -1406,6 +1435,7 @@ sdk_system_station_got_ip_set:
 # Function @ .irom0.text+0xb5c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_print_meminfo
             .type        sdk_system_print_meminfo, @function
 sdk_system_print_meminfo:
@@ -1453,6 +1483,7 @@ sdk_system_print_meminfo:
 # Function @ .irom0.text+0xbcc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_get_free_heap_size
             .type        sdk_system_get_free_heap_size, @function
 sdk_system_get_free_heap_size:
@@ -1469,6 +1500,7 @@ sdk_system_get_free_heap_size:
                                                                #  be8: ffffff00
 
 # Function @ .irom0.text+0xbec
+            .balign      4
             .global      sdk_system_get_chip_id
             .type        sdk_system_get_chip_id, @function
 sdk_system_get_chip_id:
@@ -1490,6 +1522,7 @@ sdk_system_get_chip_id:
 # Function @ .irom0.text+0xc14
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_rtc_clock_cali_proc
             .type        sdk_system_rtc_clock_cali_proc, @function
 sdk_system_rtc_clock_cali_proc:
@@ -1504,6 +1537,7 @@ sdk_system_rtc_clock_cali_proc:
             .literal_position                                  #  c28: 00060060
 
 # Function @ .irom0.text+0xc2c
+            .balign      4
             .global      sdk_system_get_rtc_time
             .type        sdk_system_get_rtc_time, @function
 sdk_system_get_rtc_time:
@@ -1515,6 +1549,7 @@ sdk_system_get_rtc_time:
             .literal_position                                  #  c38: fc000000
 
 # Function @ .irom0.text+0xc3c
+            .balign      4
             .global      sdk_system_get_rst_info
             .type        sdk_system_get_rst_info, @function
 sdk_system_get_rst_info:
@@ -1524,6 +1559,7 @@ sdk_system_get_rst_info:
             .literal_position                                  #  c44: 00000000
 
 # Function @ .irom0.text+0xc48
+            .balign      4
 .Lfunc005:  bltui        a2, 2, .Lbr089                        #  c48: b62203
             movi         a2, 0 /* 0x00000000 */                #  c4b: 0c02
             ret           /* 0x00000000 */                     #  c4d: 0df0
@@ -1547,6 +1583,7 @@ sdk_system_get_rst_info:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_station_dhcpc_start
             .type        sdk_wifi_station_dhcpc_start, @function
 sdk_wifi_station_dhcpc_start:
@@ -1595,6 +1632,7 @@ sdk_wifi_station_dhcpc_start:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_station_dhcpc_stop
             .type        sdk_wifi_station_dhcpc_stop, @function
 sdk_wifi_station_dhcpc_stop:
@@ -1627,6 +1665,7 @@ sdk_wifi_station_dhcpc_stop:
             .literal_position                                  #  d20: 00000000
 
 # Function @ .irom0.text+0xd24
+            .balign      4
             .global      sdk_wifi_station_dhcpc_status
             .type        sdk_wifi_station_dhcpc_status, @function
 sdk_wifi_station_dhcpc_status:
@@ -1642,6 +1681,7 @@ sdk_wifi_station_dhcpc_status:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc006:  addi         sp, sp, -16 /* (local0) */            #  d34: 12c1f0
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    #  d37: d921
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  d39: c911
@@ -1668,6 +1708,7 @@ sdk_wifi_station_dhcpc_status:
 # Function @ .irom0.text+0xd6c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_get_opmode
             .type        sdk_wifi_get_opmode, @function
 sdk_wifi_get_opmode:
@@ -1683,6 +1724,7 @@ sdk_wifi_get_opmode:
 # Function @ .irom0.text+0xd80
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_get_opmode_default
             .type        sdk_wifi_get_opmode_default, @function
 sdk_wifi_get_opmode_default:
@@ -1707,6 +1749,7 @@ sdk_wifi_get_opmode_default:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc007:  addi         sp, sp, -16 /* (local0) */            #  db4: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  db7: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  db9: 0901
@@ -1763,6 +1806,7 @@ sdk_wifi_get_opmode_default:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wifi_set_opmode_local
             .type        sdk_wifi_set_opmode_local, @function
 sdk_wifi_set_opmode_local:
@@ -1804,6 +1848,7 @@ sdk_wifi_set_opmode_local:
 # Function @ .irom0.text+0xe90
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_set_opmode
             .type        sdk_wifi_set_opmode, @function
 sdk_wifi_set_opmode:
@@ -1819,6 +1864,7 @@ sdk_wifi_set_opmode:
 # Function @ .irom0.text+0xea4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_set_opmode_current
             .type        sdk_wifi_set_opmode_current, @function
 sdk_wifi_set_opmode_current:
@@ -1834,6 +1880,7 @@ sdk_wifi_set_opmode_current:
 # Function @ .irom0.text+0xeb8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_system_get_checksum
             .type        sdk_system_get_checksum, @function
 sdk_system_get_checksum:
@@ -1874,6 +1921,7 @@ sdk_system_get_checksum:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc008:  addi         sp, sp, -32 /* (local0) */            #  f08: 12c1e0
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    #  f0b: d921
             s32i         a15, sp, 16 /* a15 -> [(local4)] */   #  f0d: f941
@@ -1940,6 +1988,7 @@ sdk_system_get_checksum:
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
             .global      sdk_wifi_param_save_protect
             .type        sdk_wifi_param_save_protect, @function
 sdk_wifi_param_save_protect:
@@ -2018,6 +2067,7 @@ sdk_wifi_param_save_protect:
 #     (local2):  word      @ -0x10
 #     (local3):  word      @ -0xc
 #     (local4):  word[2]   @ -0x8
+            .balign      4
 .Lfunc009:  movi         a2, sdk_flashchip                     # 1038: 21fbff
             addi         sp, sp, -48 /* (local0) */            # 103b: 12c1d0
             s32i         a12, sp, 32 /* a12 -> [(local2)] */   # 103e: c981
@@ -2074,6 +2124,7 @@ sdk_wifi_param_save_protect:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc010:  addi         sp, sp, -32 /* (local0) */            # 10b8: 12c1e0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 10bb: c911
             s32i         a15, sp, 16 /* a15 -> [(local4)] */   # 10bd: f941
@@ -2140,6 +2191,7 @@ sdk_wifi_param_save_protect:
 # Function @ .irom0.text+0x1154
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_station_get_config
             .type        sdk_wifi_station_get_config, @function
 sdk_wifi_station_get_config:
@@ -2155,6 +2207,7 @@ sdk_wifi_station_get_config:
 # Function @ .irom0.text+0x1168
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_station_get_config_default
             .type        sdk_wifi_station_get_config_default, @function
 sdk_wifi_station_get_config_default:
@@ -2184,6 +2237,7 @@ sdk_wifi_station_get_config_default:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wifi_station_get_ap_info
             .type        sdk_wifi_station_get_ap_info, @function
 sdk_wifi_station_get_ap_info:
@@ -2267,6 +2321,7 @@ sdk_wifi_station_get_ap_info:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_station_ap_number_set
             .type        sdk_wifi_station_ap_number_set, @function
 sdk_wifi_station_ap_number_set:
@@ -2321,6 +2376,7 @@ sdk_wifi_station_ap_number_set:
 #     (local5):  word      @ -0xc
 #     (local6):  word      @ -0x8
 #     (local7):  word      @ -0x4
+            .balign      4
 .Lfunc011:  addi         sp, sp, -32 /* (local0) */            # 12dc: 12c1e0
             s32i         a13, sp, 16 /* a13 -> [(local4)] */   # 12df: d941
             s32i         a4, sp, 0 /* arg2 -> [(local0)] */    # 12e1: 4901
@@ -2440,6 +2496,7 @@ sdk_wifi_station_ap_number_set:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
 .Lfunc012:  addi         sp, sp, -48 /* (local0) */            # 1400: 12c1d0
             s32i         a13, sp, 24 /* a13 -> [(local6)] */   # 1403: d961
             s32i         a15, sp, 32 /* a15 -> [(local8)] */   # 1405: f981
@@ -2558,6 +2615,7 @@ sdk_wifi_station_ap_number_set:
 # Function @ .irom0.text+0x1520
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_station_set_config
             .type        sdk_wifi_station_set_config, @function
 sdk_wifi_station_set_config:
@@ -2573,6 +2631,7 @@ sdk_wifi_station_set_config:
 # Function @ .irom0.text+0x1534
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_station_set_config_current
             .type        sdk_wifi_station_set_config_current, @function
 sdk_wifi_station_set_config_current:
@@ -2587,6 +2646,7 @@ sdk_wifi_station_set_config_current:
             .literal_position                                  # 1548: 00000000
 
 # Function @ .irom0.text+0x154c
+            .balign      4
             .global      sdk_wifi_station_get_current_ap_id
             .type        sdk_wifi_station_get_current_ap_id, @function
 sdk_wifi_station_get_current_ap_id:
@@ -2601,6 +2661,7 @@ sdk_wifi_station_get_current_ap_id:
             .literal_position                                  # 1560: 00000000
 
 # Function @ .irom0.text+0x1564
+            .balign      4
             .global      sdk_wifi_station_ap_check
             .type        sdk_wifi_station_ap_check, @function
 sdk_wifi_station_ap_check:
@@ -2650,6 +2711,7 @@ sdk_wifi_station_ap_check:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_station_ap_change
             .type        sdk_wifi_station_ap_change, @function
 sdk_wifi_station_ap_change:
@@ -2750,6 +2812,7 @@ sdk_wifi_station_ap_change:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wifi_station_scan
             .type        sdk_wifi_station_scan, @function
 sdk_wifi_station_scan:
@@ -2782,6 +2845,7 @@ sdk_wifi_station_scan:
             .literal_position                                  # 1708: 00000000
 
 # Function @ .irom0.text+0x170c
+            .balign      4
             .global      sdk_wifi_station_get_auto_connect
             .type        sdk_wifi_station_get_auto_connect, @function
 sdk_wifi_station_get_auto_connect:
@@ -2800,6 +2864,7 @@ sdk_wifi_station_get_auto_connect:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_station_set_auto_connect
             .type        sdk_wifi_station_set_auto_connect, @function
 sdk_wifi_station_set_auto_connect:
@@ -2837,6 +2902,7 @@ sdk_wifi_station_set_auto_connect:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_station_connect
             .type        sdk_wifi_station_connect, @function
 sdk_wifi_station_connect:
@@ -2901,6 +2967,7 @@ sdk_wifi_station_connect:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_station_disconnect
             .type        sdk_wifi_station_disconnect, @function
 sdk_wifi_station_disconnect:
@@ -2951,6 +3018,7 @@ sdk_wifi_station_disconnect:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_station_get_connect_status
             .type        sdk_wifi_station_get_connect_status, @function
 sdk_wifi_station_get_connect_status:
@@ -2982,6 +3050,7 @@ sdk_wifi_station_get_connect_status:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_softap_cacl_mac
             .type        sdk_wifi_softap_cacl_mac, @function
 sdk_wifi_softap_cacl_mac:
@@ -3040,6 +3109,7 @@ sdk_wifi_softap_cacl_mac:
 #     (local1):  byte      @ -0xc
 #     (local2):  byte[3]   @ -0xb
 #     (local3):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wifi_softap_set_default_ssid
             .type        sdk_wifi_softap_set_default_ssid, @function
 sdk_wifi_softap_set_default_ssid:
@@ -3098,6 +3168,7 @@ sdk_wifi_softap_set_default_ssid:
 #     (local8):  word      @ -0x14
 #     (local9):  word      @ -0x10
 #     (local10): word[3]   @ -0xc
+            .balign      4
 .Lfunc013:  addi         sp, sp, -48 /* (FP)-0x30 */           # 19b4: 12c1d0
             s32i         a13, sp, 20 /* a13 -> [(local6)] */   # 19b7: d951
             s32i         a14, sp, 24 /* a14 -> [(local7)] */   # 19b9: e961
@@ -3220,6 +3291,7 @@ sdk_wifi_softap_set_default_ssid:
 # Function @ .irom0.text+0x1ae4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_softap_get_config
             .type        sdk_wifi_softap_get_config, @function
 sdk_wifi_softap_get_config:
@@ -3235,6 +3307,7 @@ sdk_wifi_softap_get_config:
 # Function @ .irom0.text+0x1af8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_softap_get_config_default
             .type        sdk_wifi_softap_get_config_default, @function
 sdk_wifi_softap_get_config_default:
@@ -3289,6 +3362,7 @@ sdk_wifi_softap_get_config_default:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
 .Lfunc014:  addi         sp, sp, -48 /* (local0) */            # 1b88: 12c1d0
             s32i         a14, sp, 24 /* a14 -> [(local6)] */   # 1b8b: e961
             s32i         a0, sp, 12 /* a0 -> [(local3)] */     # 1b8d: 0931
@@ -3502,6 +3576,7 @@ sdk_wifi_softap_get_config_default:
 # Function @ .irom0.text+0x1db4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_softap_set_config
             .type        sdk_wifi_softap_set_config, @function
 sdk_wifi_softap_set_config:
@@ -3517,6 +3592,7 @@ sdk_wifi_softap_set_config:
 # Function @ .irom0.text+0x1dc8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_softap_set_config_current
             .type        sdk_wifi_softap_set_config_current, @function
 sdk_wifi_softap_set_config_current:
@@ -3541,6 +3617,7 @@ sdk_wifi_softap_set_config_current:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wifi_softap_set_station_info
             .type        sdk_wifi_softap_set_station_info, @function
 sdk_wifi_softap_set_station_info:
@@ -3600,6 +3677,7 @@ sdk_wifi_softap_set_station_info:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_softap_get_station_info
             .type        sdk_wifi_softap_get_station_info, @function
 sdk_wifi_softap_get_station_info:
@@ -3670,6 +3748,7 @@ sdk_wifi_softap_get_station_info:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wifi_softap_free_station_info
             .type        sdk_wifi_softap_free_station_info, @function
 sdk_wifi_softap_free_station_info:
@@ -3712,6 +3791,7 @@ sdk_wifi_softap_free_station_info:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_softap_deauth
             .type        sdk_wifi_softap_deauth, @function
 sdk_wifi_softap_deauth:
@@ -3789,6 +3869,7 @@ sdk_wifi_softap_deauth:
             .literal_position                                  # 2008: 00000000
 
 # Function @ .irom0.text+0x200c
+            .balign      4
             .global      sdk_wifi_get_phy_mode
             .type        sdk_wifi_get_phy_mode, @function
 sdk_wifi_get_phy_mode:
@@ -3813,6 +3894,7 @@ sdk_wifi_get_phy_mode:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wifi_set_phy_mode
             .type        sdk_wifi_set_phy_mode, @function
 sdk_wifi_set_phy_mode:
@@ -3875,6 +3957,7 @@ sdk_wifi_set_phy_mode:
 # Function @ .irom0.text+0x20d8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_set_sleep_type
             .type        sdk_wifi_set_sleep_type, @function
 sdk_wifi_set_sleep_type:
@@ -3893,6 +3976,7 @@ sdk_wifi_set_sleep_type:
 
             .balign      4
 # Function @ .irom0.text+0x20f8
+            .balign      4
             .global      sdk_wifi_get_sleep_type
             .type        sdk_wifi_get_sleep_type, @function
 sdk_wifi_get_sleep_type:
@@ -3903,6 +3987,7 @@ sdk_wifi_get_sleep_type:
 # Function @ .irom0.text+0x2100
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_get_channel
             .type        sdk_wifi_get_channel, @function
 sdk_wifi_get_channel:
@@ -3921,6 +4006,7 @@ sdk_wifi_get_channel:
 # Function @ .irom0.text+0x2120
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_set_channel
             .type        sdk_wifi_set_channel, @function
 sdk_wifi_set_channel:
@@ -3947,6 +4033,7 @@ sdk_wifi_set_channel:
 # Function @ .irom0.text+0x2154
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wifi_promiscuous_set_mac
             .type        sdk_wifi_promiscuous_set_mac, @function
 sdk_wifi_promiscuous_set_mac:
@@ -3995,6 +4082,7 @@ sdk_wifi_promiscuous_set_mac:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_promiscuous_enable
             .type        sdk_wifi_promiscuous_enable, @function
 sdk_wifi_promiscuous_enable:
@@ -4070,6 +4158,7 @@ sdk_wifi_promiscuous_enable:
             .literal_position                                  # 228c: 00000000
 
 # Function @ .irom0.text+0x2290
+            .balign      4
             .global      sdk_wifi_set_promiscuous_rx_cb
             .type        sdk_wifi_set_promiscuous_rx_cb, @function
 sdk_wifi_set_promiscuous_rx_cb:
@@ -4087,6 +4176,7 @@ sdk_wifi_set_promiscuous_rx_cb:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wifi_get_ip_info
             .type        sdk_wifi_get_ip_info, @function
 sdk_wifi_get_ip_info:
@@ -4154,6 +4244,7 @@ sdk_wifi_get_ip_info:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wifi_set_ip_info
             .type        sdk_wifi_set_ip_info, @function
 sdk_wifi_set_ip_info:
@@ -4235,6 +4326,7 @@ sdk_wifi_set_ip_info:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wifi_get_macaddr
             .type        sdk_wifi_get_macaddr, @function
 sdk_wifi_get_macaddr:
@@ -4295,6 +4387,7 @@ sdk_wifi_get_macaddr:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wifi_set_macaddr
             .type        sdk_wifi_set_macaddr, @function
 sdk_wifi_set_macaddr:
@@ -4373,6 +4466,7 @@ sdk_wifi_set_macaddr:
             .literal_position                                  # 253c: 00000000
 
 # Function @ .irom0.text+0x2540
+            .balign      4
             .global      sdk_wifi_status_led_install
             .type        sdk_wifi_status_led_install, @function
 sdk_wifi_status_led_install:
@@ -4403,6 +4497,7 @@ sdk_wifi_status_led_install:
                                                                # 2584: 00060060
 
 # Function @ .irom0.text+0x2588
+            .balign      4
             .global      sdk_system_uart_swap
             .type        sdk_system_uart_swap, @function
 sdk_system_uart_swap:
@@ -4448,6 +4543,7 @@ sdk_system_uart_swap:
             .literal_position                                  # 25f8: 9c010000
 
 # Function @ .irom0.text+0x25fc
+            .balign      4
             .global      sdk_system_get_sdk_version
             .type        sdk_system_get_sdk_version, @function
 sdk_system_get_sdk_version:

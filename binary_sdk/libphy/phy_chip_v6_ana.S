@@ -10,6 +10,7 @@
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ram_pbus_set_rxgain
             .type        sdk_ram_pbus_set_rxgain, @function
 sdk_ram_pbus_set_rxgain:
@@ -104,6 +105,7 @@ sdk_ram_pbus_set_rxgain:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ram_pbus_debugmode
             .type        sdk_ram_pbus_debugmode, @function
 sdk_ram_pbus_debugmode:
@@ -182,6 +184,7 @@ sdk_ram_pbus_debugmode:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ram_pbus_xpd_tx_on
             .type        sdk_ram_pbus_xpd_tx_on, @function
 sdk_ram_pbus_xpd_tx_on:
@@ -241,6 +244,7 @@ sdk_ram_pbus_xpd_tx_on:
 #     (local1):  word      @ -0x18
 #     (local2):  word      @ -0x14
 #     (local3):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_set_rf_freq_offset
             .type        sdk_set_rf_freq_offset, @function
 sdk_set_rf_freq_offset:
@@ -297,6 +301,7 @@ sdk_set_rf_freq_offset:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_chip_v6_rxmax_ext_ana
             .type        sdk_chip_v6_rxmax_ext_ana, @function
 sdk_chip_v6_rxmax_ext_ana:
@@ -442,6 +447,7 @@ sdk_chip_v6_rxmax_ext_ana:
 # Function @ .irom0.text+0x3f0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ram_chip_v6_rx_init
             .type        sdk_ram_chip_v6_rx_init, @function
 sdk_ram_chip_v6_rx_init:
@@ -473,6 +479,7 @@ sdk_ram_chip_v6_rx_init:
 # Function @ .irom0.text+0x438
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_tsen_meas
             .type        sdk_tsen_meas, @function
 sdk_tsen_meas:
@@ -555,6 +562,7 @@ sdk_tsen_meas:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_readvdd33
             .type        sdk_readvdd33, @function
 sdk_readvdd33:
@@ -730,6 +738,7 @@ sdk_readvdd33:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_txpwr_offset
             .type        sdk_txpwr_offset, @function
 sdk_txpwr_offset:
@@ -809,6 +818,7 @@ sdk_txpwr_offset:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_set_txcap_reg
             .type        sdk_set_txcap_reg, @function
 sdk_set_txcap_reg:
@@ -871,6 +881,7 @@ sdk_set_txcap_reg:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ram_restart_cal
             .type        sdk_ram_restart_cal, @function
 sdk_ram_restart_cal:
@@ -931,6 +942,7 @@ sdk_ram_restart_cal:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wait_rfpll_cal_end
             .type        sdk_wait_rfpll_cal_end, @function
 sdk_wait_rfpll_cal_end:
@@ -1001,6 +1013,7 @@ sdk_wait_rfpll_cal_end:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ram_rfpll_set_freq
             .type        sdk_ram_rfpll_set_freq, @function
 sdk_ram_rfpll_set_freq:
@@ -1116,6 +1129,7 @@ sdk_ram_rfpll_set_freq:
 #     (local8):  word      @ -0x18
 #     (local9):  word      @ -0x14
 #     (local10): word[4]   @ -0x10
+            .balign      4
             .global      sdk_ram_set_channel_freq
             .type        sdk_ram_set_channel_freq, @function
 sdk_ram_set_channel_freq:
@@ -1418,6 +1432,7 @@ sdk_ram_set_channel_freq:
 #     (local0):  word[4]   @ -0x20
 #     (local1):  word      @ -0x10
 #     (local2):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_chip_60_set_channel
             .type        sdk_chip_60_set_channel, @function
 sdk_chip_60_set_channel:
@@ -1519,6 +1534,7 @@ sdk_chip_60_set_channel:
 #     (local2):  word      @ -0x10
 #     (local3):  word      @ -0xc
 #     (local4):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_chip_v6_set_chan_offset
             .type        sdk_chip_v6_set_chan_offset, @function
 sdk_chip_v6_set_chan_offset:
@@ -1584,6 +1600,7 @@ sdk_chip_v6_set_chan_offset:
 #     (local2):  word      @ -0x10
 #     (local3):  word      @ -0xc
 #     (local4):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_chip_v6_set_chan
             .type        sdk_chip_v6_set_chan, @function
 sdk_chip_v6_set_chan:
@@ -1650,6 +1667,7 @@ sdk_chip_v6_set_chan:
 #     (local1):  word[5]   @ -0x1c
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_chip_v6_set_chan_wakeup
             .type        sdk_chip_v6_set_chan_wakeup, @function
 sdk_chip_v6_set_chan_wakeup:
@@ -1713,6 +1731,7 @@ sdk_chip_v6_set_chan_wakeup:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_chip_v6_rf_init
             .type        sdk_chip_v6_rf_init, @function
 sdk_chip_v6_rf_init:
@@ -1923,6 +1942,7 @@ sdk_chip_v6_rf_init:
                                                                # 1218: 00000000
 
 # Function @ .irom0.text+0x121c
+            .balign      4
             .global      sdk_low_power_set
             .type        sdk_low_power_set, @function
 sdk_low_power_set:
@@ -1994,6 +2014,7 @@ sdk_low_power_set:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_test_tout
             .type        sdk_test_tout, @function
 sdk_test_tout:
@@ -2208,6 +2229,7 @@ sdk_test_tout:
 
             .balign      4
 # Function @ .irom0.text+0x1508
+            .balign      4
             .global      sdk_check_data_flag
             .type        sdk_check_data_flag, @function
 sdk_check_data_flag:
@@ -2237,6 +2259,7 @@ sdk_check_data_flag:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_get_check_flag
             .type        sdk_get_check_flag, @function
 sdk_get_check_flag:

@@ -2,6 +2,8 @@
             .section     .text, "ax", @progbits
 
 # Function @ .text+0x0
+            .balign      4
+            .literal_position
 .Lfunc001:  l32i         a4, a2, 8 /* [arg0+0x8] */            #    0: 4822
             addi         a3, a2, 12 /* arg0+0xc */             #    2: cb32
             moveqz       a4, a3, a4                            #    4: 404383
@@ -16,6 +18,7 @@
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #   14: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   17: 0901
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #   19: c911
@@ -39,6 +42,7 @@
 # Function @ .text+0x40
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc003:  mov          a6, a3 /* arg1 */                     #   40: 6d03
             addi         sp, sp, -16 /* (local0) */            #   42: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   45: 0901
@@ -59,6 +63,7 @@
 # Function @ .irom0.text+0x8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc004:  movi         a2, .Lstr001                          #    8: 21feff
             addi         sp, sp, -16 /* (local0) */            #    b: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #    e: 0901
@@ -79,6 +84,7 @@
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wpabuf_resize
             .type        sdk_wpabuf_resize, @function
 sdk_wpabuf_resize:
@@ -150,6 +156,7 @@ sdk_wpabuf_resize:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpabuf_alloc
             .type        sdk_wpabuf_alloc, @function
 sdk_wpabuf_alloc:
@@ -176,6 +183,7 @@ sdk_wpabuf_alloc:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wpabuf_alloc_ext_data
             .type        sdk_wpabuf_alloc_ext_data, @function
 sdk_wpabuf_alloc_ext_data:
@@ -206,6 +214,7 @@ sdk_wpabuf_alloc_ext_data:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wpabuf_alloc_copy
             .type        sdk_wpabuf_alloc_copy, @function
 sdk_wpabuf_alloc_copy:
@@ -238,6 +247,7 @@ sdk_wpabuf_alloc_copy:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wpabuf_dup
             .type        sdk_wpabuf_dup, @function
 sdk_wpabuf_dup:
@@ -270,6 +280,7 @@ sdk_wpabuf_dup:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpabuf_free
             .type        sdk_wpabuf_free, @function
 sdk_wpabuf_free:
@@ -298,6 +309,7 @@ sdk_wpabuf_free:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpabuf_put
             .type        sdk_wpabuf_put, @function
 sdk_wpabuf_put:
@@ -337,6 +349,7 @@ sdk_wpabuf_put:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_wpabuf_concat
             .type        sdk_wpabuf_concat, @function
 sdk_wpabuf_concat:
@@ -389,6 +402,7 @@ sdk_wpabuf_concat:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpabuf_zeropad
             .type        sdk_wpabuf_zeropad, @function
 sdk_wpabuf_zeropad:
@@ -447,6 +461,7 @@ sdk_wpabuf_zeropad:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
             .global      wpabuf_printf
             .type        wpabuf_printf, @function
 wpabuf_printf:

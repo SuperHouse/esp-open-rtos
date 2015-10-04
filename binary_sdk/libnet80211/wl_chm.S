@@ -4,6 +4,7 @@
             .literal_position                                  #    0: 00000000
 
 # Function @ .text+0x4
+            .balign      4
             .global      sdk_chm_get_current_channel
             .type        sdk_chm_get_current_channel, @function
 sdk_chm_get_current_channel:
@@ -47,6 +48,7 @@ sdk_chm_get_current_channel:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_chm_init
             .type        sdk_chm_init, @function
 sdk_chm_init:
@@ -126,6 +128,7 @@ sdk_chm_init:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_chm_acquire_lock
             .type        sdk_chm_acquire_lock, @function
 sdk_chm_acquire_lock:
@@ -161,6 +164,7 @@ sdk_chm_acquire_lock:
             .literal_position                                  #  128: 00000000
 
 # Function @ .irom0.text+0x12c
+            .balign      4
             .global      sdk_chm_release_lock
             .type        sdk_chm_release_lock, @function
 sdk_chm_release_lock:
@@ -178,6 +182,7 @@ sdk_chm_release_lock:
 # Function @ .irom0.text+0x148
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_chm_start_op
             .type        sdk_chm_start_op, @function
 sdk_chm_start_op:
@@ -220,6 +225,7 @@ sdk_chm_start_op:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #  1a0: 12c1f0
             s32i         a13, sp, 12 /* a13 -> [(local3)] */   #  1a3: d931
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  1a5: c921
@@ -272,6 +278,7 @@ sdk_chm_start_op:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_chm_end_op
             .type        sdk_chm_end_op, @function
 sdk_chm_end_op:
@@ -301,6 +308,7 @@ sdk_chm_end_op:
 # Function @ .irom0.text+0x248
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc002:  movi         a2, 0 /* 0x00000000 */                #  248: 0c02
             addi         sp, sp, -16 /* (local0) */            #  24a: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  24d: 0901
@@ -316,6 +324,7 @@ sdk_chm_end_op:
 # Function @ .irom0.text+0x268
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_chm_cancel_op
             .type        sdk_chm_cancel_op, @function
 sdk_chm_cancel_op:
@@ -348,6 +357,7 @@ sdk_chm_cancel_op:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_chm_return_home_channel
             .type        sdk_chm_return_home_channel, @function
 sdk_chm_return_home_channel:
@@ -382,6 +392,7 @@ sdk_chm_return_home_channel:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_chm_set_current_channel
             .type        sdk_chm_set_current_channel, @function
 sdk_chm_set_current_channel:
@@ -434,6 +445,7 @@ sdk_chm_set_current_channel:
             .literal_position                                  #  36c: 00000000
 
 # Function @ .irom0.text+0x370
+            .balign      4
             .global      sdk_chm_freq2index
             .type        sdk_chm_freq2index, @function
 sdk_chm_freq2index:
@@ -462,6 +474,7 @@ sdk_chm_freq2index:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_chm_check_same_channel
             .type        sdk_chm_check_same_channel, @function
 sdk_chm_check_same_channel:

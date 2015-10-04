@@ -91,6 +91,7 @@
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #    c: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #    f: 0901
             call0        vPortEnterCritical                    #   11: 01fcffc0
@@ -119,6 +120,7 @@
             .literal_position                                  #   4c: 00000000
 
 # Function @ .irom0.text+0x50
+            .balign      4
 .Lfunc002:  movi         a3, .Ldata002                         #   50: 31ffff
             l8ui         a2, a3, 1 /* [.Ldata003] */           #   53: 220301
             addi         a2, a2, -1 /* [.Ldata003]-0x1 */      #   56: 0b22
@@ -134,6 +136,7 @@
 # Function @ .irom0.text+0x74
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_rtc_clock_cali_proc
             .type        sdk_pm_rtc_clock_cali_proc, @function
 sdk_pm_rtc_clock_cali_proc:
@@ -166,6 +169,7 @@ sdk_pm_rtc_clock_cali_proc:
 # Function @ .irom0.text+0xb8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_set_sleep_time
             .type        sdk_pm_set_sleep_time, @function
 sdk_pm_set_sleep_time:
@@ -205,6 +209,7 @@ sdk_pm_set_sleep_time:
 # Function @ .irom0.text+0x128
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc003:  addi         sp, sp, -16 /* (local0) */            #  128: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  12b: 0901
             movi         a0, .Ldata001                         #  12d: 01eaff
@@ -291,6 +296,7 @@ sdk_pm_set_sleep_time:
                                                                #  20c: 000af23f
 
 # Function @ .irom0.text+0x210
+            .balign      4
 .Lfunc004:  movi         a6, .Ldata002                         #  210: 61feff
             l8ui         a2, a6, 54 /* [.Ldata018] */          #  213: 220636
             movi         a5, 0x3ff20a00                        #  216: 51fdff
@@ -314,6 +320,7 @@ sdk_pm_set_sleep_time:
             .literal_position                                  #  244: 00000000
 
 # Function @ .irom0.text+0x248
+            .balign      4
             .global      sdk_pm_rf_is_closed
             .type        sdk_pm_rf_is_closed, @function
 sdk_pm_rf_is_closed:
@@ -345,6 +352,7 @@ sdk_pm_rf_is_closed:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_pm_set_sleep_type_from_upper
             .type        sdk_pm_set_sleep_type_from_upper, @function
 sdk_pm_set_sleep_type_from_upper:
@@ -396,6 +404,7 @@ sdk_pm_set_sleep_type_from_upper:
             .literal_position                                  #  30c: 00000000
 
 # Function @ .irom0.text+0x310
+            .balign      4
             .global      sdk_pm_get_sleep_type
             .type        sdk_pm_get_sleep_type, @function
 sdk_pm_get_sleep_type:
@@ -432,6 +441,7 @@ sdk_pm_get_sleep_type:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc005:  addi         sp, sp, -16 /* (local0) */            #  370: 12c1f0
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    #  373: d921
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  375: c911
@@ -520,6 +530,7 @@ sdk_pm_get_sleep_type:
 # Function @ .irom0.text+0x458
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc006:  addi         sp, sp, -16 /* (local0) */            #  458: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  45b: 0901
             movi         a0, .Ldata001                         #  45d: 01fdff
@@ -533,6 +544,7 @@ sdk_pm_get_sleep_type:
 
             .balign      4
 # Function @ .irom0.text+0x474
+            .balign      4
             .global      sdk_uart_tx_flush
             .type        sdk_uart_tx_flush, @function
 sdk_uart_tx_flush:
@@ -540,6 +552,7 @@ sdk_uart_tx_flush:
 
             .balign      4
 # Function @ .irom0.text+0x478
+            .balign      4
             .global      sdk_pm_suspend
             .type        sdk_pm_suspend, @function
 sdk_pm_suspend:
@@ -554,6 +567,7 @@ sdk_pm_suspend:
 # Function @ .irom0.text+0x490
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc007:  addi         sp, sp, -16 /* (local0) */            #  490: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  493: 0901
             call0        vTaskSuspendAll                       #  495: 01fbffc0
@@ -605,6 +619,7 @@ sdk_pm_suspend:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc008:  addi         sp, sp, -32 /* (local0) */            #  524: 12c1e0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  527: c911
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    #  529: d921
@@ -729,6 +744,7 @@ sdk_pm_suspend:
 # Function @ .irom0.text+0x66c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc009:  addi         sp, sp, -16 /* (local0) */            #  66c: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  66f: 0901
             call0        vTaskSuspendAll                       #  671: 01f8ffc0
@@ -775,6 +791,7 @@ sdk_pm_suspend:
 # Function @ .irom0.text+0x6e8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc010:  addi         sp, sp, -16 /* (local0) */            #  6e8: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  6eb: 0901
             call0        vTaskSuspendAll                       #  6ed: 01f8ffc0
@@ -818,6 +835,7 @@ sdk_pm_suspend:
 # Function @ .irom0.text+0x758
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc011:  addi         sp, sp, -16 /* (local0) */            #  758: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  75b: 0901
             call0        vTaskSuspendAll                       #  75d: 01faffc0
@@ -848,6 +866,7 @@ sdk_pm_suspend:
 # Function @ .irom0.text+0x7a4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc012:  addi         sp, sp, -16 /* (local0) */            #  7a4: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  7a7: 0901
             call0        vTaskSuspendAll                       #  7a9: 01fbffc0
@@ -879,6 +898,7 @@ sdk_pm_suspend:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc013:  addi         sp, sp, -16 /* (local0) */            #  7f8: 12c1f0
             movi         a2, .Lstr021                          #  7fb: 21f7ff
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  7fe: c911
@@ -937,6 +957,7 @@ sdk_pm_suspend:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pm_shutdown
             .type        sdk_pm_shutdown, @function
 sdk_pm_shutdown:
@@ -1035,6 +1056,7 @@ sdk_pm_shutdown:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pm_reset_idle_sleep
             .type        sdk_pm_reset_idle_sleep, @function
 sdk_pm_reset_idle_sleep:
@@ -1064,6 +1086,7 @@ sdk_pm_reset_idle_sleep:
 
             .balign      4
 # Function @ .irom0.text+0x9e0
+            .balign      4
             .global      sdk_pm_idle_sleep
             .type        sdk_pm_idle_sleep, @function
 sdk_pm_idle_sleep:
@@ -1092,6 +1115,7 @@ sdk_pm_idle_sleep:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_pm_open
             .type        sdk_pm_open, @function
 sdk_pm_open:
@@ -1212,6 +1236,7 @@ sdk_pm_open:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pm_onBcnRx
             .type        sdk_pm_onBcnRx, @function
 sdk_pm_onBcnRx:
@@ -1486,6 +1511,7 @@ sdk_pm_onBcnRx:
 # Function @ .irom0.text+0xe34
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc014:  addi         sp, sp, -16 /* (local0) */            #  e34: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  e37: 0901
             movi         a0, .Ldata002                         #  e39: 01fbff
@@ -1519,6 +1545,7 @@ sdk_pm_onBcnRx:
 # Function @ .irom0.text+0xe90
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc015:  addi         sp, sp, -16 /* (local0) */            #  e90: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  e93: 0901
             movi         a0, .Ldata002                         #  e95: 01f3ff
@@ -1573,6 +1600,7 @@ sdk_pm_onBcnRx:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc016:  mov          a3, a2 /* arg0 */                     #  f24: 3d02
             addi         sp, sp, -16 /* (local0) */            #  f26: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  f29: c921
@@ -1684,6 +1712,7 @@ sdk_pm_onBcnRx:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc017:  mov          a4, a2 /* arg0 */                     # 105c: 4d02
             addi         sp, sp, -16 /* (local0) */            # 105e: 12c1f0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    # 1061: c921
@@ -1787,6 +1816,7 @@ sdk_pm_onBcnRx:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc018:  mov          a3, a2 /* arg0 */                     # 1170: 3d02
             addi         sp, sp, -16 /* (local0) */            # 1172: 12c1f0
             s32i         a13, sp, 12 /* a13 -> [(local3)] */   # 1175: d931
@@ -1861,6 +1891,7 @@ sdk_pm_onBcnRx:
 # Function @ .irom0.text+0x1234
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc019:  addi         sp, sp, -16 /* (local0) */            # 1234: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 1237: 0901
             call0        vTaskSuspendAll                       # 1239: 01faffc0
@@ -1907,6 +1938,7 @@ sdk_pm_onBcnRx:
 # Function @ .irom0.text+0x12b8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc020:  movi         a4, 191 /* 0x000000bf */              # 12b8: 42a0bf
             movi         a2, .Ldata002                         # 12bb: 21f5ff
             addi         sp, sp, -16 /* (local0) */            # 12be: 12c1f0
@@ -1959,6 +1991,7 @@ sdk_pm_onBcnRx:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc021:  movi         a2, .Lstr039                          # 1344: 21fbff
             addi         sp, sp, -16 /* (local0) */            # 1347: 12c1f0
             s32i         a0, sp, 4 /* a0 -> [(local1)] */      # 134a: 0911
@@ -1980,6 +2013,7 @@ sdk_pm_onBcnRx:
             .literal_position                                  # 1370: 00000000
 
 # Function @ .irom0.text+0x1374
+            .balign      4
             .global      sdk_pm_enable_gpio_wakeup
             .type        sdk_pm_enable_gpio_wakeup, @function
 sdk_pm_enable_gpio_wakeup:
@@ -2029,6 +2063,7 @@ sdk_pm_enable_gpio_wakeup:
 #     (local1):  word[3]   @ -0x1c
 #     (local2):  word      @ -0x10
 #     (local3):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pm_attach
             .type        sdk_pm_attach, @function
 sdk_pm_attach:
@@ -2168,6 +2203,7 @@ sdk_pm_attach:
 #     (local5):  word      @ -0x10
 #     (local6):  word      @ -0xc
 #     (local7):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_pm_send_nullfunc
             .type        sdk_pm_send_nullfunc, @function
 sdk_pm_send_nullfunc:
@@ -2353,6 +2389,7 @@ sdk_pm_send_nullfunc:
             .literal_position                                  # 1754: 00000000
 
 # Function @ .irom0.text+0x1758
+            .balign      4
             .global      sdk_pm_is_waked
             .type        sdk_pm_is_waked, @function
 sdk_pm_is_waked:
@@ -2369,6 +2406,7 @@ sdk_pm_is_waked:
             .literal_position                                  # 1770: 00000000
 
 # Function @ .irom0.text+0x1774
+            .balign      4
             .global      sdk_pm_is_open
             .type        sdk_pm_is_open, @function
 sdk_pm_is_open:
@@ -2389,6 +2427,7 @@ sdk_pm_is_open:
 # Function @ .irom0.text+0x1798
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_scan_lock
             .type        sdk_pm_scan_lock, @function
 sdk_pm_scan_lock:
@@ -2413,6 +2452,7 @@ sdk_pm_scan_lock:
 # Function @ .irom0.text+0x17c8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_try_scan_unlock
             .type        sdk_pm_try_scan_unlock, @function
 sdk_pm_try_scan_unlock:
@@ -2431,6 +2471,7 @@ sdk_pm_try_scan_unlock:
 # Function @ .irom0.text+0x17e8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_force_scan_unlock
             .type        sdk_pm_force_scan_unlock, @function
 sdk_pm_force_scan_unlock:
@@ -2462,6 +2503,7 @@ sdk_pm_force_scan_unlock:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc022:  addi         sp, sp, -16 /* (local0) */            # 1834: 12c1f0
             movi         a2, .Lstr045                          # 1837: 21f5ff
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    # 183a: c911
@@ -2519,6 +2561,7 @@ sdk_pm_force_scan_unlock:
             .literal_position                                  # 18cc: 00000000
 
 # Function @ .irom0.text+0x18d0
+            .balign      4
             .global      sdk_pm_scan_unlocked
             .type        sdk_pm_scan_unlocked, @function
 sdk_pm_scan_unlocked:
@@ -2533,6 +2576,7 @@ sdk_pm_scan_unlocked:
             .literal_position                                  # 18e4: 00000000
 
 # Function @ .irom0.text+0x18e8
+            .balign      4
             .global      sdk_pm_allow_tx
             .type        sdk_pm_allow_tx, @function
 sdk_pm_allow_tx:
@@ -2551,6 +2595,7 @@ sdk_pm_allow_tx:
             .literal_position                                  # 1908: 00000000
 
 # Function @ .irom0.text+0x190c
+            .balign      4
             .global      sdk_pm_assoc_parse
             .type        sdk_pm_assoc_parse, @function
 sdk_pm_assoc_parse:
@@ -2570,6 +2615,7 @@ sdk_pm_assoc_parse:
 # Function @ .irom0.text+0x192c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_set_addr
             .type        sdk_pm_set_addr, @function
 sdk_pm_set_addr:
@@ -2591,6 +2637,7 @@ sdk_pm_set_addr:
 # Function @ .irom0.text+0x1954
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_sleep_for
             .type        sdk_pm_sleep_for, @function
 sdk_pm_sleep_for:
@@ -2629,6 +2676,7 @@ sdk_pm_sleep_for:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_pm_post
             .type        sdk_pm_post, @function
 sdk_pm_post:
@@ -2712,6 +2760,7 @@ sdk_pm_post:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc023:  movi         a2, 8 /* 0x00000008 */                # 1a88: 0c82
             movi         a3, 4 /* 0x00000004 */                # 1a8a: 0c43
             movi         a4, 0 /* 0x00000000 */                # 1a8c: 0c04
@@ -2851,6 +2900,7 @@ sdk_pm_post:
 # Function @ .irom0.text+0x1bf8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pm_get_idle_wait_time
             .type        sdk_pm_get_idle_wait_time, @function
 sdk_pm_get_idle_wait_time:

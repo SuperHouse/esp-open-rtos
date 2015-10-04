@@ -33,6 +33,7 @@
 #     (local9):  word      @ -0xc
 #     (local10): word      @ -0x8
 #     (local11): word      @ -0x4
+            .balign      4
             .global      sdk_rom_cal_tos_v50
             .type        sdk_rom_cal_tos_v50, @function
 sdk_rom_cal_tos_v50:
@@ -237,6 +238,7 @@ sdk_rom_cal_tos_v50:
 #     (local25): word      @ -0x14
 #     (local26): word      @ -0x10
 #     (local27): word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_pbus_dco___SA2
             .type        sdk_rom_pbus_dco___SA2, @function
 sdk_rom_pbus_dco___SA2:
@@ -533,6 +535,7 @@ sdk_rom_pbus_dco___SA2:
 #     (local20): word      @ -0xc
 #     (local21): word      @ -0x8
 #     (local22): word      @ -0x4
+            .balign      4
             .global      sdk_rom_rfcal_pwrctrl
             .type        sdk_rom_rfcal_pwrctrl, @function
 sdk_rom_rfcal_pwrctrl:
@@ -718,6 +721,7 @@ sdk_rom_rfcal_pwrctrl:
 #     (local19): word      @ -0xc
 #     (local20): word      @ -0x8
 #     (local21): word      @ -0x4
+            .balign      4
             .global      sdk_rom_rfcal_rxiq
             .type        sdk_rom_rfcal_rxiq, @function
 sdk_rom_rfcal_rxiq:
@@ -954,6 +958,7 @@ sdk_rom_rfcal_rxiq:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_rfcal_rxiq_set_reg
             .type        sdk_rom_rfcal_rxiq_set_reg, @function
 sdk_rom_rfcal_rxiq_set_reg:
@@ -1100,6 +1105,7 @@ sdk_rom_rfcal_rxiq_set_reg:
 #     (local14): word      @ -0x14
 #     (local15): word      @ -0x10
 #     (local16): word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_rfcal_txcap
             .type        sdk_rom_rfcal_txcap, @function
 sdk_rom_rfcal_txcap:
@@ -1381,6 +1387,7 @@ sdk_rom_rfcal_txcap:
 #     (local14): word      @ -0xc
 #     (local15): word      @ -0x8
 #     (local16): word      @ -0x4
+            .balign      4
             .global      sdk_rom_rfcal_txiq
             .type        sdk_rom_rfcal_txiq, @function
 sdk_rom_rfcal_txiq:
@@ -1621,6 +1628,7 @@ sdk_rom_rfcal_txiq:
 
             .balign      4
 # Function @ .irom0.text+0xe88
+            .balign      4
             .global      sdk_rom_rfcal_txiq_cover
             .type        sdk_rom_rfcal_txiq_cover, @function
 sdk_rom_rfcal_txiq_cover:
@@ -1638,6 +1646,7 @@ sdk_rom_rfcal_txiq_cover:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_rfcal_txiq_set_reg
             .type        sdk_rom_rfcal_txiq_set_reg, @function
 sdk_rom_rfcal_txiq_set_reg:
@@ -1754,6 +1763,7 @@ sdk_rom_rfcal_txiq_set_reg:
 #     (local17): word      @ -0xc
 #     (local18): word      @ -0x8
 #     (local19): word      @ -0x4
+            .balign      4
             .global      sdk_rom_rxiq_cover_mg_mp
             .type        sdk_rom_rxiq_cover_mg_mp, @function
 sdk_rom_rxiq_cover_mg_mp:
@@ -1904,6 +1914,7 @@ sdk_rom_rxiq_cover_mg_mp:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_set_txbb_atten
             .type        sdk_rom_set_txbb_atten, @function
 sdk_rom_set_txbb_atten:
@@ -1996,6 +2007,7 @@ sdk_rom_set_txbb_atten:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_set_txiq_cal
             .type        sdk_rom_set_txiq_cal, @function
 sdk_rom_set_txiq_cal:

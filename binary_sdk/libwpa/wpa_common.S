@@ -8,6 +8,7 @@
                                                                #   10: 05ac0f00
 
 # Function @ .irom0.text+0x14
+            .balign      4
 .Lfunc001:  movi         a3, 0x000fac00                        #   14: 31fbff
             l8ui         a7, a2, 1 /* [arg0+0x1] */            #   17: 720201
             l8ui         a6, a2, 2 /* [arg0+0x2] */            #   1a: 620202
@@ -45,6 +46,7 @@
                                                                #   70: 02ac0f00
 
 # Function @ .irom0.text+0x74
+            .balign      4
 .Lfunc002:  movi         a3, 0x000fac01                        #   74: 31feff
             l8ui         a7, a2, 1 /* [arg0+0x1] */            #   77: 720201
             l8ui         a6, a2, 2 /* [arg0+0x2] */            #   7a: 620202
@@ -73,6 +75,7 @@
                                                                #   bc: 05f25000
 
 # Function @ .irom0.text+0xc0
+            .balign      4
 .Lfunc003:  movi         a3, 0x0050f200                        #   c0: 31fbff
             l8ui         a7, a2, 1 /* [arg0+0x1] */            #   c3: 720201
             l8ui         a6, a2, 2 /* [arg0+0x2] */            #   c6: 620202
@@ -111,6 +114,7 @@
                                                                #  120: 00f25000
 
 # Function @ .irom0.text+0x124
+            .balign      4
 .Lfunc004:  movi         a3, 0x0050f201                        #  124: 31fdff
             l8ui         a7, a2, 1 /* [arg0+0x1] */            #  127: 720201
             l8ui         a6, a2, 2 /* [arg0+0x2] */            #  12a: 620202
@@ -147,6 +151,7 @@
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_wpa_parse_wpa_ie_rsn
             .type        sdk_wpa_parse_wpa_ie_rsn, @function
 sdk_wpa_parse_wpa_ie_rsn:
@@ -322,6 +327,7 @@ sdk_wpa_parse_wpa_ie_rsn:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpa_parse_wpa_ie_wpa
             .type        sdk_wpa_parse_wpa_ie_wpa, @function
 sdk_wpa_parse_wpa_ie_wpa:
@@ -485,6 +491,7 @@ sdk_wpa_parse_wpa_ie_wpa:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wpa_eapol_key_mic
             .type        sdk_wpa_eapol_key_mic, @function
 sdk_wpa_eapol_key_mic:
@@ -519,6 +526,7 @@ sdk_wpa_eapol_key_mic:
 # Function @ .irom0.text+0x4dc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_wpa_compare_rsn_ie
             .type        sdk_wpa_compare_rsn_ie, @function
 sdk_wpa_compare_rsn_ie:
@@ -562,6 +570,7 @@ sdk_wpa_compare_rsn_ie:
 #     (local6):  word      @ -0xc
 #     (local7):  word      @ -0x8
 #     (local8):  word      @ -0x4
+            .balign      4
             .global      sdk_wpa_pmk_to_ptk
             .type        sdk_wpa_pmk_to_ptk, @function
 sdk_wpa_pmk_to_ptk:
@@ -665,6 +674,7 @@ sdk_wpa_pmk_to_ptk:
 #     (local2):  word[10]  @ -0x38
 #     (local3):  word      @ -0x10
 #     (local4):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rsn_pmkid
             .type        sdk_rsn_pmkid, @function
 sdk_rsn_pmkid:
@@ -691,6 +701,7 @@ sdk_rsn_pmkid:
             ret                                                #  656: 0df0
 
 # Function @ .irom0.text+0x658
+            .balign      4
             .global      sdk_wpa_cipher_key_len
             .type        sdk_wpa_cipher_key_len, @function
 sdk_wpa_cipher_key_len:
@@ -711,6 +722,7 @@ sdk_wpa_cipher_key_len:
             ret           /* 0x00000005 */                     #  67a: 0df0
 
 # Function @ .irom0.text+0x67c
+            .balign      4
             .global      sdk_wpa_cipher_to_alg
             .type        sdk_wpa_cipher_to_alg, @function
 sdk_wpa_cipher_to_alg:
@@ -743,6 +755,7 @@ sdk_wpa_cipher_to_alg:
                                                                #  6c8: 00ac0f00
 
 # Function @ .irom0.text+0x6cc
+            .balign      4
             .global      sdk_wpa_cipher_to_suite
             .type        sdk_wpa_cipher_to_suite, @function
 sdk_wpa_cipher_to_suite:
@@ -777,6 +790,7 @@ sdk_wpa_cipher_to_suite:
 
             .balign      4
 # Function @ .irom0.text+0x720
+            .balign      4
             .global      sdk_rsn_cipher_put_suites
             .type        sdk_rsn_cipher_put_suites, @function
 sdk_rsn_cipher_put_suites:
@@ -819,6 +833,7 @@ sdk_rsn_cipher_put_suites:
             ret                                                #  77e: 0df0
 
 # Function @ .irom0.text+0x780
+            .balign      4
             .global      sdk_wpa_cipher_put_suites
             .type        sdk_wpa_cipher_put_suites, @function
 sdk_wpa_cipher_put_suites:

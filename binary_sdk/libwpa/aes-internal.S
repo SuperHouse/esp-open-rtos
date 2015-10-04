@@ -11,6 +11,7 @@
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rijndaelKeySetupEnc
             .type        sdk_rijndaelKeySetupEnc, @function
 sdk_rijndaelKeySetupEnc:

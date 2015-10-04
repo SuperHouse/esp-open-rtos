@@ -2,6 +2,8 @@
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
+            .literal_position
             .global      sdk_ieee80211_psq_init
             .type        sdk_ieee80211_psq_init, @function
 sdk_ieee80211_psq_init:
@@ -19,6 +21,7 @@ sdk_ieee80211_psq_init:
 
             .balign      4
 # Function @ .irom0.text+0x18
+            .balign      4
             .global      sdk_ieee80211_psq_cleanup
             .type        sdk_ieee80211_psq_cleanup, @function
 sdk_ieee80211_psq_cleanup:
@@ -27,6 +30,7 @@ sdk_ieee80211_psq_cleanup:
             .literal_position                                  #   1c: 00000000
 
 # Function @ .irom0.text+0x20
+            .balign      4
             .global      sdk_ieee80211_set_tim
             .type        sdk_ieee80211_set_tim, @function
 sdk_ieee80211_set_tim:
@@ -60,6 +64,7 @@ sdk_ieee80211_set_tim:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_pwrsave
             .type        sdk_ieee80211_pwrsave, @function
 sdk_ieee80211_pwrsave:
@@ -116,6 +121,7 @@ sdk_ieee80211_pwrsave:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc001:  addi         sp, sp, -16 /* (local0) */            #   e0: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   e3: 0901
             s32i         a14, sp, 12 /* a14 -> [(local3)] */   #   e5: e931
@@ -162,6 +168,7 @@ sdk_ieee80211_pwrsave:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_node_pwrsave
             .type        sdk_ieee80211_node_pwrsave, @function
 sdk_ieee80211_node_pwrsave:

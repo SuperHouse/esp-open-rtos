@@ -31,6 +31,7 @@ sdk_xieee80211Queue:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc001:  movi         a5, 131 /* 0x00000083 */              #   10: 52a083
             movi         a6, 0x000009b4                        #   13: 61fcff
             addi         sp, sp, -32 /* (local0) */            #   16: 12c1e0
@@ -99,6 +100,7 @@ sdk_xieee80211Queue:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_ifattach
             .type        sdk_ieee80211_ifattach, @function
 sdk_ieee80211_ifattach:
@@ -145,6 +147,7 @@ sdk_ieee80211_ifattach:
 # Function @ .irom0.text+0x124
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ieee80211_mhz2ieee
             .type        sdk_ieee80211_mhz2ieee, @function
 sdk_ieee80211_mhz2ieee:
@@ -185,6 +188,7 @@ sdk_ieee80211_mhz2ieee:
             .literal_position                                  #  17c: ffff0000
 
 # Function @ .irom0.text+0x180
+            .balign      4
             .global      sdk_ieee80211_chan2ieee
             .type        sdk_ieee80211_chan2ieee, @function
 sdk_ieee80211_chan2ieee:
@@ -204,6 +208,7 @@ sdk_ieee80211_chan2ieee:
                                                                #  1a4: b4090000
 
 # Function @ .irom0.text+0x1a8
+            .balign      4
             .global      sdk_ieee80211_ieee2mhz
             .type        sdk_ieee80211_ieee2mhz, @function
 sdk_ieee80211_ieee2mhz:
@@ -230,6 +235,7 @@ sdk_ieee80211_ieee2mhz:
 
             .balign      4
 # Function @ .irom0.text+0x1e0
+            .balign      4
             .global      sdk_ieee80211_find_channel
             .type        sdk_ieee80211_find_channel, @function
 sdk_ieee80211_find_channel:
@@ -250,6 +256,7 @@ sdk_ieee80211_find_channel:
             ret           /* 0x00000000 */                     #  206: 0df0
 
 # Function @ .irom0.text+0x208
+            .balign      4
             .global      sdk_ieee80211_find_channel_byieee
             .type        sdk_ieee80211_find_channel_byieee, @function
 sdk_ieee80211_find_channel_byieee:
@@ -305,6 +312,7 @@ sdk_ieee80211_find_channel_byieee:
 #     (local0):  word[4]   @ -0x20
 #     (local1):  word      @ -0x10
 #     (local2):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_wifi_mode_set
             .type        sdk_wifi_mode_set, @function
 sdk_wifi_mode_set:

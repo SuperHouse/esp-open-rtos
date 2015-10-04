@@ -62,6 +62,7 @@
             .literal_position                                  #    0: 00000000
 
 # Function @ .irom0.text+0x4
+            .balign      4
             .global      sdk_ieee80211_get_11g_ratetable
             .type        sdk_ieee80211_get_11g_ratetable, @function
 sdk_ieee80211_get_11g_ratetable:
@@ -72,6 +73,7 @@ sdk_ieee80211_get_11g_ratetable:
                                                                #   10: 00000000
 
 # Function @ .irom0.text+0x14
+            .balign      4
             .global      sdk_ieee80211_get_ratetable
             .type        sdk_ieee80211_get_ratetable, @function
 sdk_ieee80211_get_ratetable:
@@ -91,6 +93,7 @@ sdk_ieee80211_get_ratetable:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ieee80211_phy_init
             .type        sdk_ieee80211_phy_init, @function
 sdk_ieee80211_phy_init:
@@ -118,6 +121,7 @@ sdk_ieee80211_phy_init:
             .literal_position                                  #   64: 00000000
 
 # Function @ .irom0.text+0x68
+            .balign      4
             .global      sdk_ieee80211_phy_type_get
             .type        sdk_ieee80211_phy_type_get, @function
 sdk_ieee80211_phy_type_get:
@@ -133,6 +137,7 @@ sdk_ieee80211_phy_type_get:
                                                                #   80: 00000000
 
 # Function @ .irom0.text+0x84
+            .balign      4
             .global      sdk_ieee80211_setup_ratetable
             .type        sdk_ieee80211_setup_ratetable, @function
 sdk_ieee80211_setup_ratetable:
@@ -165,6 +170,7 @@ sdk_ieee80211_setup_ratetable:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ieee80211_compute_duration
             .type        sdk_ieee80211_compute_duration, @function
 sdk_ieee80211_compute_duration:
@@ -221,6 +227,7 @@ sdk_ieee80211_compute_duration:
             .literal_position                                  #  144: 00000000
 
 # Function @ .irom0.text+0x148
+            .balign      4
             .global      sdk_ieee80211_dot11Rate_rix
             .type        sdk_ieee80211_dot11Rate_rix, @function
 sdk_ieee80211_dot11Rate_rix:

@@ -17,6 +17,7 @@
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_SPIReadModeCnfig
             .type        sdk_SPIReadModeCnfig, @function
 sdk_SPIReadModeCnfig:
@@ -92,6 +93,7 @@ sdk_SPIReadModeCnfig:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_SPIWrite
             .type        sdk_SPIWrite, @function
 sdk_SPIWrite:
@@ -187,6 +189,7 @@ sdk_SPIWrite:
 # Function @ .text+0x1b0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_SPIRead
             .type        sdk_SPIRead, @function
 sdk_SPIRead:
@@ -219,6 +222,7 @@ sdk_SPIRead:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_SPIEraseSector
             .type        sdk_SPIEraseSector, @function
 sdk_SPIEraseSector:
@@ -264,6 +268,7 @@ sdk_SPIEraseSector:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_spi_flash_get_id
             .type        sdk_spi_flash_get_id, @function
 sdk_spi_flash_get_id:
@@ -319,6 +324,7 @@ sdk_spi_flash_get_id:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_spi_flash_read_status
             .type        sdk_spi_flash_read_status, @function
 sdk_spi_flash_read_status:
@@ -359,6 +365,7 @@ sdk_spi_flash_read_status:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_spi_flash_write_status
             .type        sdk_spi_flash_write_status, @function
 sdk_spi_flash_write_status:
@@ -397,6 +404,7 @@ sdk_spi_flash_write_status:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_spi_flash_erase_sector
             .type        sdk_spi_flash_erase_sector, @function
 sdk_spi_flash_erase_sector:
@@ -434,6 +442,7 @@ sdk_spi_flash_erase_sector:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_spi_flash_write
             .type        sdk_spi_flash_write, @function
 sdk_spi_flash_write:
@@ -486,6 +495,7 @@ sdk_spi_flash_write:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_spi_flash_read
             .type        sdk_spi_flash_read, @function
 sdk_spi_flash_read:

@@ -4,6 +4,7 @@
             .literal_position                                  #    0: 00000000
 
 # Function @ .text+0x4
+            .balign      4
             .global      sdk_phy_get_romfuncs
             .type        sdk_phy_get_romfuncs, @function
 sdk_phy_get_romfuncs:
@@ -99,6 +100,7 @@ sdk_g_phyFuns_instance:
             .section     .irom0.text, "ax", @progbits
 
 # Function @ .irom0.text+0x0
+            .balign      4
             .global      sdk_rom_abs_temp
             .type        sdk_rom_abs_temp, @function
 sdk_rom_abs_temp:
@@ -111,6 +113,7 @@ sdk_rom_abs_temp:
                                                                #   10: 009a0060
 
 # Function @ .irom0.text+0x14
+            .balign      4
             .global      sdk_rom_chip_v5_disable_cca
             .type        sdk_rom_chip_v5_disable_cca, @function
 sdk_rom_chip_v5_disable_cca:
@@ -127,6 +130,7 @@ sdk_rom_chip_v5_disable_cca:
                                                                #   30: 009a0060
 
 # Function @ .irom0.text+0x34
+            .balign      4
             .global      sdk_rom_chip_v5_enable_cca
             .type        sdk_rom_chip_v5_enable_cca, @function
 sdk_rom_chip_v5_enable_cca:
@@ -144,6 +148,7 @@ sdk_rom_chip_v5_enable_cca:
                                                                #   54: 009a0060
 
 # Function @ .irom0.text+0x58
+            .balign      4
             .global      sdk_rom_chip_v5_sense_backoff
             .type        sdk_rom_chip_v5_sense_backoff, @function
 sdk_rom_chip_v5_sense_backoff:
@@ -185,6 +190,7 @@ sdk_rom_chip_v5_sense_backoff:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_dc_iq_est
             .type        sdk_rom_dc_iq_est, @function
 sdk_rom_dc_iq_est:
@@ -234,6 +240,7 @@ sdk_rom_dc_iq_est:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_en_pwdet
             .type        sdk_rom_en_pwdet, @function
 sdk_rom_en_pwdet:
@@ -280,6 +287,7 @@ sdk_rom_en_pwdet:
 
             .balign      4
 # Function @ .irom0.text+0x198
+            .balign      4
             .global      sdk_rom_get_bb_atten
             .type        sdk_rom_get_bb_atten, @function
 sdk_rom_get_bb_atten:
@@ -301,6 +309,7 @@ sdk_rom_get_bb_atten:
             .literal_position                                  #  1c0: 00020060
 
 # Function @ .irom0.text+0x1c4
+            .balign      4
             .global      sdk_rom_get_corr_power
             .type        sdk_rom_get_corr_power, @function
 sdk_rom_get_corr_power:
@@ -364,6 +373,7 @@ sdk_rom_get_corr_power:
 #     (local8):  word      @ -0xc
 #     (local9):  word      @ -0x8
 #     (local10): word      @ -0x4
+            .balign      4
             .global      sdk_rom_get_fm_sar_dout
             .type        sdk_rom_get_fm_sar_dout, @function
 sdk_rom_get_fm_sar_dout:
@@ -429,6 +439,7 @@ sdk_rom_get_fm_sar_dout:
             .literal_position                                  #  2e4: 009a0060
 
 # Function @ .irom0.text+0x2e8
+            .balign      4
             .global      sdk_rom_get_noisefloor
             .type        sdk_rom_get_noisefloor, @function
 sdk_rom_get_noisefloor:
@@ -453,6 +464,7 @@ sdk_rom_get_noisefloor:
 #     (local2):  word      @ -0xc
 #     (local3):  word      @ -0x8
 #     (local4):  word      @ -0x4
+            .balign      4
             .global      sdk_rom_get_power_db
             .type        sdk_rom_get_power_db, @function
 sdk_rom_get_power_db:
@@ -493,6 +505,7 @@ sdk_rom_get_power_db:
                                                                #  364: 00020060
 
 # Function @ .irom0.text+0x368
+            .balign      4
             .global      sdk_rom_iq_est_disable
             .type        sdk_rom_iq_est_disable, @function
 sdk_rom_iq_est_disable:
@@ -517,6 +530,7 @@ sdk_rom_iq_est_disable:
                                                                #  39c: 0100faff
 
 # Function @ .irom0.text+0x3a0
+            .balign      4
             .global      sdk_rom_iq_est_enable
             .type        sdk_rom_iq_est_enable, @function
 sdk_rom_iq_est_enable:
@@ -556,6 +570,7 @@ sdk_rom_iq_est_enable:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_linear_to_db
             .type        sdk_rom_linear_to_db, @function
 sdk_rom_linear_to_db:
@@ -613,6 +628,7 @@ sdk_rom_linear_to_db:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_set_txclk_en
             .type        sdk_rom_set_txclk_en, @function
 sdk_rom_set_txclk_en:
@@ -652,6 +668,7 @@ sdk_rom_set_txclk_en:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_set_rxclk_en
             .type        sdk_rom_set_rxclk_en, @function
 sdk_rom_set_rxclk_en:
@@ -695,6 +712,7 @@ sdk_rom_set_rxclk_en:
 # Function @ .irom0.text+0x524
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_mhz2ieee
             .type        sdk_rom_mhz2ieee, @function
 sdk_rom_mhz2ieee:
@@ -753,6 +771,7 @@ sdk_rom_mhz2ieee:
 #     (local8):  word      @ -0x10
 #     (local9):  word      @ -0xc
 #     (local10): word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_rxiq_get_mis
             .type        sdk_rom_rxiq_get_mis, @function
 sdk_rom_rxiq_get_mis:
@@ -880,6 +899,7 @@ sdk_rom_rxiq_get_mis:
 # Function @ .irom0.text+0x6d0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_sar_init
             .type        sdk_rom_sar_init, @function
 sdk_rom_sar_init:
@@ -922,6 +942,7 @@ sdk_rom_sar_init:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_set_ana_inf_tx_scale
             .type        sdk_rom_set_ana_inf_tx_scale, @function
 sdk_rom_set_ana_inf_tx_scale:
@@ -960,6 +981,7 @@ sdk_rom_set_ana_inf_tx_scale:
 #     (local3):  word      @ -0x14
 #     (local4):  word      @ -0x10
 #     (local5):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_rom_set_loopback_gain
             .type        sdk_rom_set_loopback_gain, @function
 sdk_rom_set_loopback_gain:
@@ -1010,6 +1032,7 @@ sdk_rom_set_loopback_gain:
                                                                #  7d0: fd7ffdff
 
 # Function @ .irom0.text+0x7d4
+            .balign      4
             .global      sdk_rom_set_noise_floor
             .type        sdk_rom_set_noise_floor, @function
 sdk_rom_set_noise_floor:
@@ -1039,6 +1062,7 @@ sdk_rom_set_noise_floor:
                                                                #  818: 02800200
 
 # Function @ .irom0.text+0x81c
+            .balign      4
             .global      sdk_rom_start_noisefloor
             .type        sdk_rom_start_noisefloor, @function
 sdk_rom_start_noisefloor:
@@ -1076,6 +1100,7 @@ sdk_rom_start_noisefloor:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_start_tx_tone
             .type        sdk_rom_start_tx_tone, @function
 sdk_rom_start_tx_tone:
@@ -1161,6 +1186,7 @@ sdk_rom_start_tx_tone:
 # Function @ .irom0.text+0x938
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_rom_stop_tx_tone
             .type        sdk_rom_stop_tx_tone, @function
 sdk_rom_stop_tx_tone:
@@ -1226,6 +1252,7 @@ sdk_rom_stop_tx_tone:
 #     (local5):  word      @ -0x10
 #     (local6):  word      @ -0xc
 #     (local7):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_rom_txtone_linear_pwr
             .type        sdk_rom_txtone_linear_pwr, @function
 sdk_rom_txtone_linear_pwr:
@@ -1277,6 +1304,7 @@ sdk_rom_txtone_linear_pwr:
                                                                #  a38: 0000807f
 
 # Function @ .irom0.text+0xa3c
+            .balign      4
             .global      sdk_rom_tx_mac_disable
             .type        sdk_rom_tx_mac_disable, @function
 sdk_rom_tx_mac_disable:
@@ -1305,6 +1333,7 @@ sdk_rom_tx_mac_disable:
                                                                #  a7c: 0000807f
 
 # Function @ .irom0.text+0xa80
+            .balign      4
             .global      sdk_rom_tx_mac_enable
             .type        sdk_rom_tx_mac_enable, @function
 sdk_rom_tx_mac_enable:

@@ -2,6 +2,8 @@
             .section     .text, "ax", @progbits
 
 # Function @ .text+0x0
+            .balign      4
+            .literal_position
 .Lfunc001:  movi         a4, 136 /* 0x00000088 */              #    0: 42a088
             movi         a6, 24 /* 0x00000018 */               #    3: 1c86
             movi         a5, 30 /* 0x0000001e */               #    5: 1ce5
@@ -38,6 +40,7 @@
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pp_soft_wdt_feed
             .type        sdk_pp_soft_wdt_feed, @function
 sdk_pp_soft_wdt_feed:
@@ -100,6 +103,7 @@ sdk_pp_soft_wdt_feed:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
 .Lfunc002:  addi         sp, sp, -16 /* (local0) */            #   dc: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #   df: c911
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   e1: 0901
@@ -136,6 +140,7 @@ sdk_pp_soft_wdt_feed:
             .literal_position                                  #  130: 00000000
 
 # Function @ .text+0x134
+            .balign      4
 .Lfunc003:  movi         a5, .Ldata003                         #  134: 51ffff
             l16ui        a2, a5, 6 /* [.Ldata006] */           #  137: 221503
             movi         a3, 8 /* 0x00000008 */                #  13a: 0c83
@@ -160,6 +165,7 @@ sdk_pp_soft_wdt_feed:
             .literal_position                                  #  168: 00000000
 
 # Function @ .text+0x16c
+            .balign      4
 .Lfunc004:  movi         a3, .Ldata003                         #  16c: 31ffff
             l16ui        a2, a3, 6 /* [.Ldata006] */           #  16f: 221303
             addi         a2, a2, -1 /* [.Ldata006]-0x1 */      #  172: 0b22
@@ -186,6 +192,7 @@ sdk_pp_soft_wdt_feed:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_ppProcessTxQ
             .type        sdk_ppProcessTxQ, @function
 sdk_ppProcessTxQ:
@@ -286,6 +293,7 @@ sdk_ppProcessTxQ:
             .literal_position                                  #  2a8: 00000000
 
 # Function @ .text+0x2ac
+            .balign      4
             .global      sdk_ppFetchTxQFirstAvail
             .type        sdk_ppFetchTxQFirstAvail, @function
 sdk_ppFetchTxQFirstAvail:
@@ -320,6 +328,7 @@ sdk_ppFetchTxQFirstAvail:
             .literal_position                                  #  2ec: 00000000
 
 # Function @ .text+0x2f0
+            .balign      4
             .global      sdk_ppDequeueTxQ
             .type        sdk_ppDequeueTxQ, @function
 sdk_ppDequeueTxQ:
@@ -344,6 +353,7 @@ sdk_ppDequeueTxQ:
             .literal_position                                  #  318: 00000000
 
 # Function @ .text+0x31c
+            .balign      4
             .global      sdk_ppRollBackTxQ
             .type        sdk_ppRollBackTxQ, @function
 sdk_ppRollBackTxQ:
@@ -366,6 +376,7 @@ sdk_ppRollBackTxQ:
             .literal_position                                  #  340: 00000000
 
 # Function @ .text+0x344
+            .balign      4
             .global      sdk_ppRecordBarRRC
             .type        sdk_ppRecordBarRRC, @function
 sdk_ppRecordBarRRC:
@@ -379,6 +390,7 @@ sdk_ppRecordBarRRC:
             .literal_position                                  #  354: 00000000
 
 # Function @ .text+0x358
+            .balign      4
             .global      sdk_ppTxqUpdateBitmap
             .type        sdk_ppTxqUpdateBitmap, @function
 sdk_ppTxqUpdateBitmap:
@@ -402,6 +414,7 @@ sdk_ppTxqUpdateBitmap:
 # Function @ .text+0x384
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ppEnqueueTxDone
             .type        sdk_ppEnqueueTxDone, @function
 sdk_ppEnqueueTxDone:
@@ -429,6 +442,7 @@ sdk_ppEnqueueTxDone:
             .literal_position                                  #  3b8: 00000000
 
 # Function @ .text+0x3bc
+            .balign      4
             .global      sdk_ppEnqueueRxq
             .type        sdk_ppEnqueueRxq, @function
 sdk_ppEnqueueRxq:
@@ -454,6 +468,7 @@ sdk_ppEnqueueRxq:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc005:  addi         sp, sp, -16 /* (local0) */            #  3e8: 12c1f0
             s32i         a13, sp, 12 /* a13 -> [(local3)] */   #  3eb: d931
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  3ed: c921
@@ -530,6 +545,7 @@ sdk_ppEnqueueRxq:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc006:  addi         sp, sp, -32 /* (local0) */            #  48c: 12c1e0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  48f: c921
             s32i         a14, sp, 16 /* a14 -> [(local4)] */   #  491: e941
@@ -635,6 +651,7 @@ sdk_ppEnqueueRxq:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc007:  movi         a9, 1 /* 0x00000001 */                #  58c: 0c19
             addi         sp, sp, -16 /* (local0) */            #  58e: 12c1f0
             movi         a3, sdk_NoiseTimerInterval            #  591: 31fcff
@@ -720,6 +737,7 @@ sdk_ppEnqueueRxq:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc008:  movi         a11, 1 /* 0x00000001 */               #  654: 0c1b
             movi         a8, 0 /* 0x00000000 */                #  656: 0c08
             movi         a10, sdk_NoiseTimerInterval           #  658: a1feff
@@ -878,6 +896,7 @@ sdk_ppEnqueueRxq:
 #     (local6):  word      @ -0x18
 #     (local7):  word      @ -0x14
 #     (local8):  word[4]   @ -0x10
+            .balign      4
 .Lfunc009:  addi         sp, sp, -80 /* (FP)-0x50 */           #  7f0: 12c1b0
             s32i         a15, sp, 52 /* a15 -> [(local5)] */   #  7f3: f9d1
             s32i         a13, sp, 44 /* a13 -> [(local3)] */   #  7f5: d9b1
@@ -1067,6 +1086,7 @@ sdk_ppEnqueueRxq:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc010:  addi         sp, sp, -32 /* (local0) */            #  9d0: 12c1e0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #  9d3: 0901
             s32i         a14, sp, 12 /* a14 -> [(local3)] */   #  9d5: e931
@@ -1128,6 +1148,7 @@ sdk_ppEnqueueRxq:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
 .Lfunc011:  addi         sp, sp, -32 /* (local0) */            #  a6c: 12c1e0
             s32i         a12, sp, 12 /* a12 -> [(local3)] */   #  a6f: c931
             s32i         a0, sp, 8 /* a0 -> [(local2)] */      #  a71: 0921
@@ -1300,6 +1321,7 @@ sdk_ppEnqueueRxq:
 # Function @ .text+0xc34
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ppDiscardMPDU
             .type        sdk_ppDiscardMPDU, @function
 sdk_ppDiscardMPDU:
@@ -1339,6 +1361,7 @@ sdk_ppDiscardMPDU:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_MacIsrSigPostDefHdl
             .type        sdk_MacIsrSigPostDefHdl, @function
 sdk_MacIsrSigPostDefHdl:
@@ -1452,6 +1475,7 @@ sdk_MacIsrSigPostDefHdl:
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pp_post
             .type        sdk_pp_post, @function
 sdk_pp_post:
@@ -1575,6 +1599,7 @@ sdk_pp_post:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_ppCalTxop
             .type        sdk_ppCalTxop, @function
 sdk_ppCalTxop:
@@ -1674,6 +1699,7 @@ sdk_ppCalTxop:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ppCalFrameTimes
             .type        sdk_ppCalFrameTimes, @function
 sdk_ppCalFrameTimes:
@@ -1788,6 +1814,7 @@ sdk_dbg_stop_hw_wdt:
 # Function @ .irom0.text+0xc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_PPWdtReset
             .type        sdk_PPWdtReset, @function
 sdk_PPWdtReset:
@@ -1812,6 +1839,7 @@ sdk_PPWdtReset:
 # Function @ .irom0.text+0x40
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pp_soft_wdt_init
             .type        sdk_pp_soft_wdt_init, @function
 sdk_pp_soft_wdt_init:
@@ -1830,6 +1858,7 @@ sdk_pp_soft_wdt_init:
             .literal_position                                  #   60: 00000000
 
 # Function @ .irom0.text+0x64
+            .balign      4
             .global      sdk_RxNodeNum
             .type        sdk_RxNodeNum, @function
 sdk_RxNodeNum:
@@ -1852,6 +1881,7 @@ sdk_RxNodeNum:
             .literal_position                                  #   88: 00000000
 
 # Function @ .irom0.text+0x8c
+            .balign      4
             .global      sdk_TxNodeNum
             .type        sdk_TxNodeNum, @function
 sdk_TxNodeNum:
@@ -1876,6 +1906,7 @@ sdk_TxNodeNum:
 # Function @ .irom0.text+0xb8
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc012:  addi         sp, sp, -16 /* (local0) */            #   b8: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      #   bb: 0901
             call0        vPortEnterCritical                    #   bd: 01fcffc0
@@ -1896,6 +1927,7 @@ sdk_TxNodeNum:
 # Function @ .irom0.text+0xe4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pp_disable_noise_timer
             .type        sdk_pp_disable_noise_timer, @function
 sdk_pp_disable_noise_timer:
@@ -1931,6 +1963,7 @@ sdk_pp_disable_noise_timer:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_pp_enable_noise_timer
             .type        sdk_pp_enable_noise_timer, @function
 sdk_pp_enable_noise_timer:
@@ -2017,6 +2050,7 @@ sdk_pp_enable_noise_timer:
 # Function @ .irom0.text+0x20c
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pp_noise_test
             .type        sdk_pp_noise_test, @function
 sdk_pp_noise_test:
@@ -2037,6 +2071,7 @@ sdk_pp_noise_test:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_reset_noise_timer
             .type        sdk_reset_noise_timer, @function
 sdk_reset_noise_timer:
@@ -2067,6 +2102,7 @@ sdk_reset_noise_timer:
 # Function @ .irom0.text+0x270
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pp_disable_idle_timer
             .type        sdk_pp_disable_idle_timer, @function
 sdk_pp_disable_idle_timer:
@@ -2091,6 +2127,7 @@ sdk_pp_disable_idle_timer:
 # Function @ .irom0.text+0x2a0
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pp_enable_idle_timer
             .type        sdk_pp_enable_idle_timer, @function
 sdk_pp_enable_idle_timer:
@@ -2116,6 +2153,7 @@ sdk_pp_enable_idle_timer:
 # Function @ .irom0.text+0x2d4
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_pp_try_enable_idle_timer
             .type        sdk_pp_try_enable_idle_timer, @function
 sdk_pp_try_enable_idle_timer:
@@ -2143,6 +2181,7 @@ sdk_pp_try_enable_idle_timer:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ppPeocessRxPktHdr
             .type        sdk_ppPeocessRxPktHdr, @function
 sdk_ppPeocessRxPktHdr:
@@ -2220,6 +2259,7 @@ sdk_ppPeocessRxPktHdr:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ppTask
             .type        sdk_ppTask, @function
 sdk_ppTask: movi         a2, 40 /* 0x00000028 */               #  3d8: 2c82
@@ -2481,6 +2521,7 @@ sdk_ppTask: movi         a2, 40 /* 0x00000028 */               #  3d8: 2c82
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc013:  movi         a4, 2 /* 0x00000002 */                #  698: 0c24
             movi         a9, 12 /* 0x0000000c */               #  69a: 0cc9
             addi         sp, sp, -16 /* (local0) */            #  69c: 12c1f0
@@ -2593,6 +2634,7 @@ sdk_ppTask: movi         a2, 40 /* 0x00000028 */               #  3d8: 2c82
 #     (local2):  word      @ -0x18
 #     (local3):  word      @ -0x14
 #     (local4):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ppTxPkt
             .type        sdk_ppTxPkt, @function
 sdk_ppTxPkt:
@@ -2779,6 +2821,7 @@ sdk_ppTxPkt:
 # Function @ .irom0.text+0x9ac
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_ppProcessWaitQ
             .type        sdk_ppProcessWaitQ, @function
 sdk_ppProcessWaitQ:
@@ -2793,6 +2836,7 @@ sdk_ppProcessWaitQ:
             .literal_position                                  #  9c0: 00000000
 
 # Function @ .irom0.text+0x9c4
+            .balign      4
             .global      sdk_ppRegisterTxCallback
             .type        sdk_ppRegisterTxCallback, @function
 sdk_ppRegisterTxCallback:
@@ -2825,6 +2869,7 @@ sdk_ppRegisterTxCallback:
 # Local variables/stack:
 #     (local0):  word      @ -0x10
 #     (local1):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_ppRecycleRxPkt
             .type        sdk_ppRecycleRxPkt, @function
 sdk_ppRecycleRxPkt:
@@ -2883,6 +2928,7 @@ sdk_ppRecycleRxPkt:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
             .global      sdk_ppCheckTxIdle
             .type        sdk_ppCheckTxIdle, @function
 sdk_ppCheckTxIdle:
@@ -3032,6 +3078,7 @@ sdk_ppCheckTxIdle:
 #     (local4):  word      @ -0x10
 #     (local5):  word      @ -0xc
 #     (local6):  word[2]   @ -0x8
+            .balign      4
 .Lfunc014:  movi         a9, 0 /* 0x00000000 */                #  c00: 0c09
             addi         sp, sp, -32 /* (local0) */            #  c02: 12c1e0
             s32i         a12, sp, 8 /* a12 -> [(local2)] */    #  c05: c921
@@ -3196,6 +3243,7 @@ sdk_ppCheckTxIdle:
 #     (local1):  word      @ -0xc
 #     (local2):  word      @ -0x8
 #     (local3):  word      @ -0x4
+            .balign      4
 .Lfunc015:  addi         sp, sp, -16 /* (local0) */            #  dac: 12c1f0
             s32i         a12, sp, 4 /* a12 -> [(local1)] */    #  daf: c911
             s32i         a13, sp, 8 /* a13 -> [(local2)] */    #  db1: d921
@@ -3300,6 +3348,7 @@ sdk_ppCheckTxIdle:
 #     (local7):  word      @ -0x14
 #     (local8):  word      @ -0x10
 #     (local9):  word[3]   @ -0xc
+            .balign      4
 .Lfunc016:  movi         a5, 240 /* 0x000000f0 */              #  eb8: 52a0f0
             addi         sp, sp, -48 /* (local0) */            #  ebb: 12c1d0
             s32i         a12, sp, 16 /* a12 -> [(local4)] */   #  ebe: c941
@@ -3490,6 +3539,7 @@ sdk_ppCheckTxIdle:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
             .global      sdk_ppGetTxQFirstAvail_Locked
             .type        sdk_ppGetTxQFirstAvail_Locked, @function
 sdk_ppGetTxQFirstAvail_Locked:
@@ -3563,6 +3613,7 @@ sdk_ppGetTxQFirstAvail_Locked:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc017:  movi         a4, -32 /* 0xffffffe0 */              # 1158: 6c04
             movi         a2, sdk_NMIIrqIsOn                    # 115a: 21f9ff
             addi         sp, sp, -16 /* (local0) */            # 115d: 12c1f0
@@ -3626,6 +3677,7 @@ sdk_ppGetTxQFirstAvail_Locked:
 #     (local0):  word      @ -0x10
 #     (local1):  word      @ -0xc
 #     (local2):  word[2]   @ -0x8
+            .balign      4
 .Lfunc018:  movi         a4, -32 /* 0xffffffe0 */              # 11f4: 6c04
             movi         a2, sdk_NMIIrqIsOn                    # 11f6: 21f9ff
             addi         sp, sp, -16 /* (local0) */            # 11f9: 12c1f0
@@ -3700,6 +3752,7 @@ sdk_ppGetTxQFirstAvail_Locked:
 #     (local1):  word[3]   @ -0x1c
 #     (local2):  word      @ -0x10
 #     (local3):  word[3]   @ -0xc
+            .balign      4
             .global      sdk_pp_attach
             .type        sdk_pp_attach, @function
 sdk_pp_attach:
@@ -3814,6 +3867,7 @@ sdk_pp_attach:
 # Function @ .irom0.text+0x13dc
 # Local variables/stack:
 #     (local0):  word[4]   @ -0x10
+            .balign      4
 .Lfunc019:  addi         sp, sp, -16 /* (local0) */            # 13dc: 12c1f0
             s32i         a0, sp, 0 /* a0 -> [(local0)] */      # 13df: 0901
             l32i         a0, a2, 32 /* [arg0+0x20] */          # 13e1: 0882

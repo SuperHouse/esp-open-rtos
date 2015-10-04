@@ -23,6 +23,7 @@
 #     (local7):  word      @ -0x18
 #     (local8):  word      @ -0x14
 #     (local9):  word[4]   @ -0x10
+            .balign      4
             .global      sdk_aes_unwrap
             .type        sdk_aes_unwrap, @function
 sdk_aes_unwrap:
