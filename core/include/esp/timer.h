@@ -14,6 +14,10 @@
 #include "esp/timer_regs.h"
 #include "esp/cpu.h"
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     FRC1 = 0,
     FRC2 = 1,
@@ -128,5 +132,9 @@ INLINED bool timer_set_frequency(const timer_frc_t frc, uint32_t freq);
 INLINED bool timer_set_timeout(const timer_frc_t frc, uint32_t us);
 
 #include "timer_private.h"
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

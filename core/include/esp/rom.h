@@ -5,8 +5,11 @@
  */
 #ifndef _ESP_ROM_H
 #define _ESP_ROM_H
-
 #include <stdint.h>
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
 void Cache_Read_Disable(void);
 
@@ -17,5 +20,9 @@ void Cache_Read_Disable(void);
    maps the correct flash page for OTA support.
  */
 void Cache_Read_Enable(uint32_t odd_even, uint32_t mb_count, uint32_t no_idea);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
