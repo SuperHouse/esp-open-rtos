@@ -7,6 +7,10 @@
 #ifndef _ESP_TIMER_PRIVATE_H
 #define _ESP_TIMER_PRIVATE_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -255,6 +259,8 @@ INLINED bool timer_set_timeout(const timer_frc_t frc, uint32_t us)
         return _timer_set_timeout_runtime(frc, us);
 }
 
-
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

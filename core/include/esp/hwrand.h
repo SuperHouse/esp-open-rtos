@@ -13,10 +13,18 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 /* Return a random 32-bit number */
 uint32_t hwrand(void);
 
 /* Fill a variable size buffer with data from the Hardware RNG */
 void hwrand_fill(uint8_t *buf, size_t len);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

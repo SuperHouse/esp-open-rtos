@@ -11,6 +11,10 @@
 #include "esp/types.h"
 #include "esp/iomux_regs.h"
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 /**
  * Convert a GPIO pin number to an iomux register index.
  *
@@ -63,5 +67,9 @@ inline static void iomux_set_gpio_function(const uint8_t gpio_number, const uint
 /* esp_iomux_private contains implementation parts of the inline functions
    declared above */
 #include "esp/iomux_private.h"
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
