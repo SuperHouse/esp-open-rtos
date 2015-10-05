@@ -27,9 +27,20 @@ struct WDT_REGS {
     uint32_t volatile REG2;        // 0x08
     uint32_t volatile _unused[2];  // 0x0c - 0x10
     uint32_t volatile FEED;        // 0x14
-} __attribute__ (( packed ));
+};
 
 _Static_assert(sizeof(struct WDT_REGS) == 0x18, "WDT_REGS is the wrong size");
+
+/* Details for CTRL register */
+
+/* Note: these are currently just guesses based on interpretation of the startup code */
+
+#define WDT_CTRL_ENABLE  BIT(0)
+#define WDT_CTRL_FIELD0_M  0x00000003
+#define WDT_CTRL_FIELD0_S  1
+#define WDT_CTRL_FLAG3  BIT(3)
+#define WDT_CTRL_FLAG4  BIT(4)
+#define WDT_CTRL_FLAG5  BIT(5)
 
 /* Writing WDT_FEED_MAGIC to WDT.FEED register "feeds the dog" and holds off
  * triggering for another cycle (unconfirmed) */

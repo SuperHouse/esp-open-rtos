@@ -36,7 +36,7 @@ struct TIMER_REGS {            // FRC1  FRC2
     uint32_t volatile CTRL;    // 0x08  0x28
     uint32_t volatile STATUS;  // 0x0c  0x2c
     uint32_t volatile ALARM;   //       0x30
-} __attribute__ (( packed ));
+};
 
 _Static_assert(sizeof(struct TIMER_REGS) == 0x14, "TIMER_REGS is the wrong size");
 

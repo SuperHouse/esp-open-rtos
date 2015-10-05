@@ -27,28 +27,26 @@ typedef enum {
 INLINED void gpio_enable(const uint8_t gpio_num, const gpio_direction_t direction)
 {
     uint32_t iomux_flags;
-    uint32_t ctrl_val;
 
     switch(direction) {
     case GPIO_INPUT:
         iomux_flags = 0;
-        ctrl_val = 0;
         break;
     case GPIO_OUTPUT:
         iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
-        ctrl_val = GPIO_CONF_PUSH_PULL;
         break;
     case GPIO_OUT_OPEN_DRAIN:
         iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
-        ctrl_val = 0;
         break;
     case GPIO_INPUT_PULLUP:
         iomux_flags = IOMUX_PIN_PULLUP;
-        ctrl_val = 0;
         break;
     }
     iomux_set_gpio_function(gpio_num, iomux_flags);
-    GPIO.CONF[gpio_num] = (GPIO.CONF[gpio_num] & FIELD_MASK(GPIO_CONF_INTTYPE)) | ctrl_val;
+    if(direction == GPIO_OUT_OPEN_DRAIN)
+        GPIO.CONF[gpio_num] |= GPIO_CONF_OPEN_DRAIN;
+    else
+        GPIO.CONF[gpio_num] &= ~GPIO_CONF_OPEN_DRAIN;
     if (iomux_flags & IOMUX_PIN_OUTPUT_ENABLE)
         GPIO.ENABLE_OUT_SET = BIT(gpio_num);
     else
@@ -124,7 +122,7 @@ INLINED void gpio_set_interrupt(const uint8_t gpio_num, const gpio_inttype_t int
 /* Return the interrupt type set for a pin */
 INLINED gpio_inttype_t gpio_get_interrupt(const uint8_t gpio_num)
 {
-    return FIELD2VAL(GPIO_CONF_INTTYPE, GPIO.CONF[gpio_num]);
+    return (gpio_inttype_t)FIELD2VAL(GPIO_CONF_INTTYPE, GPIO.CONF[gpio_num]);
 }
 
 #endif

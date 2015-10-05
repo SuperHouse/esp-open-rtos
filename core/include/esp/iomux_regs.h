@@ -20,7 +20,7 @@
 struct IOMUX_REGS {
     uint32_t volatile CONF;    // 0x00
     uint32_t volatile PIN[16]; // 0x04 - 0x40
-} __attribute__ (( packed ));
+};
 
 _Static_assert(sizeof(struct IOMUX_REGS) == 0x44, "IOMUX_REGS is the wrong size");
 
@@ -45,7 +45,7 @@ _Static_assert(sizeof(struct IOMUX_REGS) == 0x44, "IOMUX_REGS is the wrong size"
 #define IOMUX_PIN_FUNC_MASK            0x00001030
 
 /* WARNING: Macro evaluates argument twice */
-#define IOMUX_FUNC(val) (VAL2FIELD(IOMUX_PIN_FUNC_LOW, val) | VAL2FIELD(IOMUX_PIN_FUNC_HIGH, val))
+#define IOMUX_FUNC(val) (VAL2FIELD_M(IOMUX_PIN_FUNC_LOW, val) | VAL2FIELD_M(IOMUX_PIN_FUNC_HIGH, val))
 
 /* WARNING: Macro evaluates argument twice */
 #define IOMUX_FUNC_VALUE(regbits) (FIELD2VAL(IOMUX_PIN_FUNC_LOW, regbits) | FIELD2VAL(IOMUX_PIN_FUNC_HIGH, regbits))

@@ -10,6 +10,10 @@
 
 #include "queue.h"
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 struct sdk_station_config {
     uint8_t ssid[32];
     uint8_t password[64];
@@ -67,5 +71,9 @@ enum {
 };
 
 uint8_t sdk_wifi_station_get_connect_status(void);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

@@ -4,7 +4,17 @@ A community developed open source [FreeRTOS](http://www.freertos.org/)-based fra
 
 Originally based on, but substantially different from, the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk).
 
+## Resources
+
 [![Build Status](https://travis-ci.org/SuperHouse/esp-open-rtos.svg?branch=master)](https://travis-ci.org/SuperHouse/esp-open-rtos)
+
+Email discussion list: https://groups.google.com/d/forum/esp-open-rtos
+
+IRC channel: #esp-open-rtos on Freenode ([Web Chat Link](http://webchat.freenode.net/?channels=%23esp-open-rtos&uio=d4)).
+
+Github issues list/bugtracker: http://github.com/superhouse/esp-open-rtos/issues
+
+Please note that this project is released with a [Contributor Code of Conduct](https://github.com/SuperHouse/esp-open-rtos/blob/master/code_of_conduct.md). By participating in this project you agree to abide by its terms.
 
 ## Quick Start
 
@@ -14,7 +24,7 @@ Originally based on, but substantially different from, the [Espressif IOT RTOS S
 
 * Install [esptool.py](https://github.com/themadinventor/esptool) and make it available on your PATH. If you used esp-open-sdk then this is done already.
 
-* The esp-open-rtos build process uses `GNU Make`, and the utilities `sed` and `grep`. If you built esp-open-sdk then you probably have these already.
+* The esp-open-rtos build process uses `GNU Make`, and the utilities `sed` and `grep`. If you built esp-open-sdk then you have these already.
 
 * Use git to clone the esp-open-rtos project (note the `--recursive`):
 
@@ -30,7 +40,7 @@ cd esp-open-rtos
 #define WIFI_PASS "my secret password"
 ```
 
-Remove the `#warning` and follow the git ignore instructions to keep your credentials from being pushed to Github.
+Remove the `#warning` line and follow the git ignore instructions written in the header file to keep your credentials from being pushed to Github.
 
 * Build an example project (found in the 'examples' directory) and flash it to a serial port:
 
@@ -39,6 +49,8 @@ make flash -j4 -C examples/http_get ESPPORT=/dev/ttyUSB0
 ```
 
 Run `make help -C examples/http_get` for a summary of other Make targets.
+
+(Note: the `-C` option to make is the same as changing to that directory, then running make.)
 
 The [Build Process wiki page](https://github.com/SuperHouse/esp-open-rtos/wiki/Build-Process) has in-depth details of the build process.
 
@@ -49,13 +61,26 @@ The [Build Process wiki page](https://github.com/SuperHouse/esp-open-rtos/wiki/B
 * Leave upstream source clean, for easy interaction with upstream projects.
 * Flexible build and compilation settings.
 
-Current status is alpha quality, under development. AP STATION mode (ie wifi client mode) and UDP/TCP client modes are tested. Other functionality should work. Contributors and testers are welcome!
+Current status is alpha quality, actively developed. AP STATION mode (ie wifi client mode) and UDP/TCP client modes are tested. Other functionality should work. Contributors and testers are welcome!
+
+## Code Structure
+
+* `examples` contains a range of example projects (one per subdirectory). Check them out!
+* `include` contains header files from Espressif RTOS SDK, relating to the binary libraries & Xtensa core.
+* `core` contains source & headers for low-level ESP8266 functions & peripherals. `core/include/esp` contains useful headers for peripheral access, etc. Minimal to no FreeRTOS dependencies.
+* `extras` is a directory that contains optional components that can be added to your project. Most 'extras' components will have a corresponding example in the `examples` directory. Extras include:
+   - mbedtls - [mbedTLS](https://tls.mbed.org/) is a TLS/SSL library providing up to date secure connectivity and encryption support.
+   - i2c - software i2c driver ([upstream project](https://github.com/kanflo/esp-open-rtos-driver-i2c))
+   - rboot-ota - OTA support (over-the-air updates) including a TFTP server for receiving updates ([for rboot by @raburton](http://richard.burtons.org/2015/05/18/rboot-a-new-boot-loader-for-esp8266/))
+   - bmp180 driver for digital pressure sensor ([upstream project](https://github.com/Angus71/esp-open-rtos-driver-bmp180))
+* `FreeRTOS` contains FreeRTOS implementation, subdirectory structure is the standard FreeRTOS structure. `FreeRTOS/source/portable/esp8266/` contains the ESP8266 port.
+* `lwip` contains the lwIP TCP/IP library. See [Third Party Libraries](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries) wiki page for details.
+* `libc` contains the newlib libc. [Libc details here](https://github.com/SuperHouse/esp-open-rtos/wiki/libc-configuration).
 
 ## Open Source Components
 
 * [FreeRTOS](http://freertos.org) V7.5.2
 * [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki) v1.4.1, modified via the [esp-lwip project](https://github.com/kadamski/esp-lwip) by @kadamski.
-* [axTLS](http://axtls.sourceforge.net/) compiled from development version v1.5.3, plus modifications for low memory devices.
 * [newlib](https://github.com/projectgus/newlib-xtensa) v2.2.0, with patches for xtensa support and locking stubs for thread-safe operation on FreeRTOS.
 
 For details of how third party libraries are integrated, [see the wiki page](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries).
@@ -66,29 +91,26 @@ Binary libraries (inside the `lib` dir) are all supplied by Espressif as part of
 
 As part of the esp-open-rtos build process, all binary SDK symbols are prefixed with `sdk_`. This makes it easier to differentiate binary & open source code, and also prevents namespace conflicts.
 
+Espressif's RTOS SDK provided a "libssl" based on axTLS. This has been replaced with the more up to date mbedTLS library (see below).
+
 Some binary libraries appear to contain unattributed open source code:
 
 * libnet80211.a & libwpa.a appear to be based on FreeBSD net80211/wpa, or forks of them. ([See this issue](https://github.com/SuperHouse/esp-open-rtos/issues/4)).
 * libudhcp has been removed from esp-open-rtos. It was released with the Espressif RTOS SDK but udhcp is GPL licensed.
 
-## Code Structure
-
-* `examples` contains a range of example projects (one per subdirectory). Check them out!
-* `include` contains header files from Espressif RTOS SDK, relating to the binary libraries & Xtensa core.
-* `core` contains source & headers for low-level ESP8266 functions & peripherals. `core/include/esp` contains useful headers for peripheral access, etc. Still being fleshed out. Minimal to no FreeRTOS dependencies.
-* `FreeRTOS` contains FreeRTOS implementation, subdirectory structure is the standard FreeRTOS structure. `FreeRTOS/source/portable/esp8266/` contains the ESP8266 port.
-* `lwip` and `axtls` contain the lwIP TCP/IP library and the axTLS TLS library ('libssl' in the esp8266 SDKs), respectively. See [Third Party Libraries](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries) wiki page for details.
-
-
 ## Licensing
 
-* BSD license (as described in LICENSE) applies to original source files, [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki), and [axTLS](http://axtls.sourceforge.net/). lwIP is Copyright (C) Swedish Institute of Computer Science. axTLS is Copyright (C) Cameron Rich.
+* BSD license (as described in LICENSE) applies to original source files, [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki). lwIP is Copyright (C) Swedish Institute of Computer Science.
 
 * FreeRTOS is provided under the GPL with the FreeRTOS linking exception, allowing non-GPL firmwares to be produced using FreeRTOS as the RTOS core. License details in files under FreeRTOS dir. FreeRTOS is Copyright (C) Real Time Engineers Ltd.
 
 * Source & binary components from the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk) were released under the MIT license. Source code components are relicensed here under the BSD license. The original parts are Copyright (C) Espressif Systems.
 
 * Newlib is covered by several copyrights and licenses, as per the files in the `libc` directory.
+
+* [mbedTLS](https://tls.mbed.org/) is provided under the Apache 2.0 license as described in the file extras/mbedtls/mbedtls/apache-2.0.txt. mbedTLS is Copyright (C) ARM Limited.
+
+Components under `extras/` may contain different licenses, please see those directories for details.
 
 ## Contributions
 
