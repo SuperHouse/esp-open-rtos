@@ -41,6 +41,11 @@ long _write_r(struct _reent *r, int fd, const char *ptr, int len )
         return -1;
     }
     for(int i = 0; i < len; i++) {
+        /* Auto convert CR to CRLF, ignore other LFs (compatible with Espressif SDK behaviour) */
+        if(ptr[i] == '\r')
+            continue;
+        if(ptr[i] == '\n')
+            uart_putc(0, '\r');
         uart_putc(0, ptr[i]);
     }
     return len;
