@@ -11,6 +11,7 @@
 
 #include "esp/types.h"
 #include "esp/uart_regs.h"
+#include "esp/clocks.h"
 
 #define UART_FIFO_MAX 127
 
@@ -108,6 +109,19 @@ static inline void uart_flush_txfifo(int uart_num) {
  */
 static inline void uart_flush_rxfifo(int uart_num) {
     uart_clear_rxfifo(uart_num);
+}
+
+/* Set uart baud rate to the desired value */
+static inline void uart_set_baud(int uart_num, int bps)
+{
+    uint32_t divider = APB_CLK_FREQ / bps;
+    UART(uart_num).CLOCK_DIVIDER = divider;
+}
+
+/* Returns the current baud rate for the UART */
+static inline int uart_get_baud(int uart_num)
+{
+    return APB_CLK_FREQ / FIELD2VAL(UART_CLOCK_DIVIDER_VALUE, UART(uart_num).CLOCK_DIVIDER);
 }
 
 #endif /* _ESP_UART_H */

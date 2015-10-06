@@ -16,8 +16,8 @@
 #include "common_macros.h"
 #include "xtensa_ops.h"
 #include "esp/rom.h"
+#include "esp/uart.h"
 #include "esp/iomux_regs.h"
-#include "esp/uart_regs.h"
 #include "esp/spi_regs.h"
 #include "esp/dport_regs.h"
 #include "esp/wdev_regs.h"
@@ -30,7 +30,6 @@
 
 void user_init(void);
 
-#define UART_DIVISOR 1068  // 74906 bps (yeah, I don't understand it either)
 #define BOOT_INFO_SIZE 28
 //TODO: phy_info should probably be a struct (no idea about its organization, though)
 #define PHY_INFO_SIZE 128
@@ -293,8 +292,8 @@ static void init_networking(uint8_t *phy_info, uint8_t *mac_addr) {
         printf("FATAL: sdk_register_chipv6_phy failed");
         halt();
     }
-    sdk_uart_div_modify(0, UART_DIVISOR);
-    sdk_uart_div_modify(1, UART_DIVISOR);
+    uart_set_baud(0, 115200);
+    uart_set_baud(1, 115200);
     sdk_phy_disable_agc();
     sdk_ieee80211_phy_init(sdk_g_ic.s.phy_mode);
     sdk_lmacInit();

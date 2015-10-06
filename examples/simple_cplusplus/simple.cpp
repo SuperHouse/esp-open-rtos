@@ -3,7 +3,6 @@
    This sample code is in the public domain.
  */
 #include "espressif/esp_common.h"
-#include "espressif/sdk_private.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -58,7 +57,6 @@ void task1(void *pvParameters)
 
 extern "C" void user_init(void)
 {
-    sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
     xTaskCreate(task1, (signed char *)"tsk1", 256, NULL, 2, NULL);
 }

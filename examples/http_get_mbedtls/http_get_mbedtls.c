@@ -331,7 +331,6 @@ void http_get_task(void *pvParameters)
 
 void user_init(void)
 {
-    sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
     struct sdk_station_config config = {
