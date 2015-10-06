@@ -501,8 +501,8 @@ UserExceptionHandler:
         rsync
         rsr     a2, exccause
         /* Any UserException cause other than a level 1 interrupt is fatal */
-        bnei    a2, CAUSE_LVL1INT, .UserFailOtherExceptionCause
-.UserHandleInterrupt:
+        bnei    a2, CAUSE_LVL1INT, .LUserFailOtherExceptionCause
+.LUserHandleInterrupt:
         rsil    a0, 1
         rsr     a2, intenable
         rsr     a3, interrupt
@@ -513,7 +513,7 @@ UserExceptionHandler:
         j       sdk__xt_int_exit # once finished, jumps to _xt_user_exit via stack
 
         .literal_position
-.UserFailOtherExceptionCause:
+.LUserFailOtherExceptionCause:
         break   1, 1
         call0   sdk_user_fatal_exception_handler
 
