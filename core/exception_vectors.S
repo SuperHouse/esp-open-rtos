@@ -510,7 +510,7 @@ UserExceptionHandler:
         and     a2, a2, a3
         and     a2, a2, a4       # a2 = 0x3FFF & INTENABLE & INTERRUPT
         call0   _xt_isr_handler
-        j       sdk__xt_int_exit # once finished, jumps to _xt_user_exit via stack
+        call0   sdk__xt_int_exit # once finished, jumps to _xt_user_exit via stack
 
         .literal_position
 .LUserFailOtherExceptionCause:
