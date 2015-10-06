@@ -25,12 +25,19 @@
 
         .section .bss
 
-NMIHandlerStack:                # stack space for NMI handler
-        .skip   4*0x100
-.LNMIHandlerStackTop:
-NMIRegisterSaved:               # register space for saving NMI registers
-        .skip   4*(16 + 6)
+/* Stack space for NMI handler
 
+   NMI handler stack high water mark measured at 0x134 bytes. Any use
+   of the NMI timer callback will add stack overhead as well.
+
+   The NMI handler does a basic check for stack overflow
+*/
+        .balign 16
+NMIHandlerStack:
+        .skip 0x200
+.NMIHandlerStackTop:
+
+        .balign 16
 LoadStoreErrorHandlerStack:
         .word   0       # a0
         .word   0       # (unused)
@@ -67,10 +74,7 @@ DebugExceptionVector:
         .org    VecBase + 0x20
 NMIExceptionVector:
         .type   NMIExceptionVector, @function
-
-        wsr     a0, excsave3
-        call0   CallNMIExceptionHandler
-        rfi     3  # Should never be reached
+        j   NMIExceptionHandler
 
         .org    VecBase + 0x30
 KernelExceptionVector:
@@ -371,95 +375,102 @@ call_user_start:
 
 /*************************** NMI Exception Handler ***************************/
 
+#define NMI_STACK_CANARY 0xABBABABA
+
         .section .vecbase.text, "x"
 
-/* Save register relative to a0 */
-.macro SAVE_REG register, regnum
-        s32i \register, a0, (4 * (\regnum + 6))
-.endm
-
-/* Load register relative to sp */
-.macro LOAD_REG register, regnum
-        l32i \register, sp, (4 * (\regnum + 6))
-.endm
-
         .literal_position
-
         .balign  16
-CallNMIExceptionHandler:
-        .type   CallNMIExceptionHandler, @function
+NMIExceptionHandler:
+        .type   NMIExceptionHandler, @function
 
-        movi    a0, NMIRegisterSaved
-        SAVE_REG a2, 2
-        SAVE_REG sp, 1
-        SAVE_REG a3, 3
-        rsr     a2, excsave3    # a2 is now former a0
-        SAVE_REG a4, 4
-        SAVE_REG a2, 0
-        rsr     a3, epc1
-        rsr     a4, exccause
-        SAVE_REG a3, -5
-        SAVE_REG a4, -4
-        rsr     a3, excvaddr
-        SAVE_REG a3, -3
-        rsr     a3, excsave1
-        SAVE_REG a3, -2
-        SAVE_REG a5, 5
-        SAVE_REG a6, 6
-        SAVE_REG a7, 7
-        SAVE_REG a8, 8
-        SAVE_REG a9, 9
-        SAVE_REG a10, 10
-        SAVE_REG a11, 11
-        SAVE_REG a12, 12
-        SAVE_REG a13, 13
-        SAVE_REG a14, 14
-        SAVE_REG a15, 15
-        movi    sp, .LNMIHandlerStackTop
-        movi    a0, 0
-        movi    a2, 0x23        # argument for handler
-        wsr     a2, ps
+        wsr     sp, excsave3	# excsave3 holds user stack
+        movi    sp, .NMIHandlerStackTop - 0x40
+        s32i    a0, sp, 0x00
+        s32i    a2, sp, 0x04
+        s32i    a3, sp, 0x08
+        s32i    a4, sp, 0x0c
+        s32i    a5, sp, 0x10
+        s32i    a6, sp, 0x14
+        s32i    a7, sp, 0x18
+        s32i    a8, sp, 0x1c
+        s32i    a9, sp, 0x20
+        s32i    a10, sp, 0x24
+        s32i    a11, sp, 0x28
+        rsr     a0, epc1
+        s32i    a0, sp, 0x2c
+        rsr     a0, exccause
+        s32i    a0, sp, 0x30
+        rsr     a0, excsave1
+        s32i    a0, sp, 0x34
+        rsr     a0, excvaddr
+        s32i    a0, sp, 0x38
+        rsr     a0, sar
+        s32i    a0, sp, 0x3c
+        movi    a0, 0x23        # Override PS for NMI handler
+        wsr     a0, ps
         rsync
-        rsr     a14, sar
-        s32i    a14, sp, 0      # this is also NMIRegisterSaved+0
+
+        /* mark the stack overflow point before we call the actual NMI handler */
+        movi    a0, NMIHandlerStack
+        movi    a2, NMI_STACK_CANARY
+        s32i    a2, a0, 0x00
+
         call0   sdk_wDev_ProcessFiq
-        l32i    a15, sp, 0
-        wsr     a15, sar
-        movi    a2, 0x33
-        wsr     a2, ps
+
+        /* verify we didn't overflow */
+        movi    a0, NMIHandlerStack
+        l32i    a3, a0, 0
+        movi    a2, NMI_STACK_CANARY
+        bne    a3, a2, .NMIFatalStackOverflow
+
+	l32i 	a0, sp, 0x3c
+	wsr	a0, sar
+	l32i	a0, sp, 0x38
+	wsr	a0, excvaddr
+	l32i	a0, sp, 0x34
+	wsr	a0, excsave1
+	l32i	a0, sp, 0x30
+	wsr	a0, exccause
+	l32i	a0, sp, 0x2c
+	wsr	a0, epc1
+	l32i	a11, sp, 0x28
+	l32i 	a10, sp, 0x24
+	l32i	a9, sp, 0x20
+	l32i	a8, sp, 0x1c
+	l32i	a7, sp, 0x18
+	l32i 	a6, sp, 0x14
+	l32i	a5, sp, 0x10
+	l32i	a4, sp, 0x0c
+	l32i	a3, sp, 0x08
+        movi    a0, 0x33    	  # Reset PS
+        wsr     a0, ps
         rsync
-        LOAD_REG a4, 4
-        LOAD_REG a5, 5
-        LOAD_REG a6, 6
-        LOAD_REG a7, 7
-        LOAD_REG a8, 8
-        LOAD_REG a9, 9
-        LOAD_REG a10, 10
-        LOAD_REG a11, 11
-        LOAD_REG a12, 12
-        LOAD_REG a13, 13
-        LOAD_REG a14, 14
-        LOAD_REG a15, 15
-        LOAD_REG a2, -5
-        LOAD_REG a3, -4
-        wsr     a2, epc1
-        wsr     a3, exccause
-        LOAD_REG a2, -3
-        LOAD_REG a3, -2
-        wsr     a2, excvaddr
-        wsr     a3, excsave1
-        LOAD_REG a0, 0
-        /* set dport nmi status bit 0 (wDev_ProcessFiq clears & verifies this
-         * bit stays cleared, see
+        /* set dport nmi status to 1 (wDev_ProcessFiq clears bit 0 and verifies it
+         * stays cleared, see
          * http://esp8266-re.foogod.com/wiki/WDev_ProcessFiq_%28IoT_RTOS_SDK_0.9.9%29)
          */
-        movi    a2, 0x3ff00000
-        movi    a3, 0x1
-        s32i    a3, a2, 0
-        LOAD_REG a2, 2
-        LOAD_REG a3, 3
-        LOAD_REG a1, 1
+        movi    a0, 0x3ff00000
+        movi    a2, 0x1
+        s32i    a2, a0, 0
+	l32i	a2, sp, 0x04
+	l32i	a0, sp, 0x00
+	movi	a1, 0x0
+	xsr	a1, excsave3       # Load stack back from excsave3, clear excsave3
         rfi     3
+
+        .section .rodata
+
+.NMIStackOverflowErrorMsg:
+        .string "\nFATAL: NMI Stack Overflow\n"
+
+        .section .vecbase.text, "x"
+
+.NMIFatalStackOverflow:
+        movi a2, .NMIStackOverflowErrorMsg
+        call0 printf
+.NMIInfiniteLoop:
+        j .NMIInfiniteLoop /* TODO: replace with call to abort() */
 
 /*********************** General UserException Handler ***********************/
 
@@ -469,7 +480,6 @@ CallNMIExceptionHandler:
  * LoadStoreCause. */
 
         .literal_position
-
         .balign  4
 UserExceptionHandler:
         .type   UserExceptionHandler, @function
@@ -490,46 +500,28 @@ UserExceptionHandler:
         wsr     a0, ps
         rsync
         rsr     a2, exccause
-        beqi    a2, CAUSE_LVL1INT, UserHandleInterrupt
-        /* Any UserException cause other than level 1 interrupt should panic */
-UserFailOtherExceptionCause:
-        break   1, 1
-        call0   sdk_user_fatal_exception_handler
-UserHandleInterrupt:
+        /* Any UserException cause other than a level 1 interrupt is fatal */
+        bnei    a2, CAUSE_LVL1INT, .LUserFailOtherExceptionCause
+.LUserHandleInterrupt:
         rsil    a0, 1
         rsr     a2, intenable
         rsr     a3, interrupt
         movi    a4, 0x3fff
         and     a2, a2, a3
-        and     a2, a2, a4      # a2 = 0x3FFF & INTENABLE & INTERRUPT
-UserHandleTimer:
-        movi    a3, 0xffbf
-        and     a3, a2, a3      # a3 = a2 with bit 6 cleared
-        bnez    a3, UserTimerDone   # If any non-timer interrupt bits set
-        movi    a3, 0x40
-        sub     a12, a2, a3     # a12 = a2 - 0x40 -- Will be zero if bit 6 set
-        call0   sdk__xt_timer_int  # tick timer interrupt
-        mov     a2, a12         # restore a2 from a12, ie zero
-        beqz    a2, UserIntDone
-UserTimerDone:
+        and     a2, a2, a4       # a2 = 0x3FFF & INTENABLE & INTERRUPT
         call0   _xt_isr_handler
-        bnez    a2, UserHandleTimer
-UserIntDone:
-        beqz    a2, UserIntExit
-        /* FIXME: this code will never be reached */
+        call0   sdk__xt_int_exit # once finished, jumps to _xt_user_exit via stack
+
+        .literal_position
+.LUserFailOtherExceptionCause:
         break   1, 1
         call0   sdk_user_fatal_exception_handler
-UserIntExit:
-        call0   sdk__xt_int_exit  # jumps to _xt_user_exit. Never returns here
 
-        .section .text
-
-/* _xt_user_exit is used to exit interrupt context. */
-/* TODO: Find a better place for this to live. */
+/* _xt_user_exit is pushed onto the stack as part of the user exception handler,
+   restores same set registers which were saved there and returns from exception */
 _xt_user_exit:
         .global _xt_user_exit
         .type _xt_user_exit, @function
-
         l32i    a0, sp, 0x8
         wsr     a0, ps
         l32i    a0, sp, 0x4
@@ -538,4 +530,3 @@ _xt_user_exit:
         l32i    sp, sp, 0x10
         rsync
         rfe
-
