@@ -13,7 +13,7 @@
 
 #include "common_macros.h"
 #include "esp/registers.h"
-#include "esp/cpu.h"
+#include "esp/interrupts.h"
 #include "esp/iomux.h"
 #include "esp/gpio.h"
 #include "esp/timer.h"

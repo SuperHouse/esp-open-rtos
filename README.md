@@ -134,7 +134,17 @@ The best way to write suitable code is to first add documentation somewhere like
 
 ## Coding Style
 
-For new contributions, please use BSD style and indent using 4 spaces. If you're an emacs user then there is a .dir-locals.el file in the root which configures cc-mode.
+For new contributions in C, please use BSD style and indent using 4 spaces.
+
+For assembly, please use the following:
+* Instructions indented using 8 spaces.
+* Inline comments use `#` as a comment delimiter.
+* Comments on their own line(s) use `/*`..`*/`.
+* First operand of each instruction should be vertically aligned where possible.
+* For xtensa special registers, prefer `wsr aX, SR` over `wsr.SR aX`
+
+If you're an emacs user then there is a .dir-locals.el file in the root which configures cc-mode and asm-mode (you will need to approve some variable values as safe). See also
+the additional comments in .dir-locals.el, if you're editing assembly code.
 
 Upstream code is left with the indentation and style of the upstream project.
 

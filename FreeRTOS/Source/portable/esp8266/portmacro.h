@@ -73,8 +73,8 @@ extern "C" {
 #include "esp8266.h"
 #include "espressif/esp8266/ets_sys.h"
 #include <stdint.h>
-#include    "xtensa_rtos.h"
-#include "xtensa_interrupts.h"
+#include "xtensa_rtos.h"
+#include <esp/interrupts.h>
 
 /*-----------------------------------------------------------
  * Port specific definitions for ESP8266
