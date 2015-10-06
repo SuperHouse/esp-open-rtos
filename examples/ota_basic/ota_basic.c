@@ -7,6 +7,7 @@
  * NOT SUITABLE TO PUT ON THE INTERNET OR INTO A PRODUCTION ENVIRONMENT!!!!
  */
 #include "espressif/esp_common.h"
+#include "esp/uart.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "esp8266.h"
@@ -17,6 +18,8 @@
 
 void user_init(void)
 {
+    uart_set_baud(0, 115200);
+
     rboot_config_t conf = rboot_get_config();
     printf("\r\n\r\nOTA Basic demo.\r\nCurrently running on flash slot %d / %d.\r\n\r\n",
            conf.current_rom, conf.count);

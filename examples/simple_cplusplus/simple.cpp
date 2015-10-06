@@ -7,6 +7,8 @@
 #include "task.h"
 #include "queue.h"
 
+#include <esp/uart.h>
+
 class Counter
 {
 private:
@@ -57,6 +59,7 @@ void task1(void *pvParameters)
 
 extern "C" void user_init(void)
 {
+    uart_set_baud(0, 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
     xTaskCreate(task1, (signed char *)"tsk1", 256, NULL, 2, NULL);
 }

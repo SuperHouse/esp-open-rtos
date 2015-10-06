@@ -278,8 +278,8 @@ static void init_networking(uint8_t *phy_info, uint8_t *mac_addr) {
         printf("FATAL: sdk_register_chipv6_phy failed");
         halt();
     }
-    uart_set_baud(0, 115200);
-    uart_set_baud(1, 115200);
+    uart_set_baud(0, 74906);
+    uart_set_baud(1, 74906);
     sdk_phy_disable_agc();
     sdk_ieee80211_phy_init(sdk_g_ic.s.phy_mode);
     sdk_lmacInit();

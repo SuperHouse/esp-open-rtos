@@ -10,7 +10,7 @@
  * Additions Copyright (C) 2015 Angus Gratton, Apache 2.0 License.
  */
 #include "espressif/esp_common.h"
-#include "espressif/sdk_private.h"
+#include "esp/uart.h"
 
 #include <string.h>
 
@@ -331,6 +331,7 @@ void http_get_task(void *pvParameters)
 
 void user_init(void)
 {
+    uart_set_baud(0, 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
     struct sdk_station_config config = {

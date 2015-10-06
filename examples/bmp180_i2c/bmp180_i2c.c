@@ -3,6 +3,7 @@
  * This sample code is in the public domain.
  */
 #include "espressif/esp_common.h"
+#include "esp/uart.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -82,9 +83,22 @@ void bmp180_task(void *pvParameters)
     }
 }
 
+// Setup HW
+void user_setup(void)
+{
+    // Set UART Parameter
+    uart_set_baud(0, 115200);
+
+    // Give the UART some time to settle
+    sdk_os_delay_us(500);
+}
+
 void user_init(void)
 {
-    // Just some informations
+    // Setup HW
+    user_setup();
+
+    // Just some infomations
     printf("\n");
     printf("SDK version : %s\n", sdk_system_get_sdk_version());
     printf("GIT version : %s\n", GITSHORTREV);
