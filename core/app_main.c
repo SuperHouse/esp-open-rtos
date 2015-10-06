@@ -363,15 +363,6 @@ static void dump_excinfo(void) {
     sdk_system_rtc_mem_write(0, excinfo, 32);
 }
 
-// .irom0.text+0x368
-int sdk_uart_rx_one_char(char *buf) {
-    /* This functions returns 1 instead of -1 on error,
-       but is otherwise the same. Unsure if anyone checks the
-       result for a specific value though.
-    */
-    return uart_getc_nowait(0) ? 1 : 0;
-}
-
 // .irom0.text+0x398
 void sdk_wdt_init(void) {
     WDT.CTRL &= ~WDT_CTRL_ENABLE;
