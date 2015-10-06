@@ -7,6 +7,7 @@
  * This experimental reverse engineering code is in the public domain.
  */
 #include "espressif/esp_common.h"
+#include "esp/uart.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "esp8266.h"
@@ -117,6 +118,7 @@ void frc2_handler(void)
 
 void user_init(void)
 {
+    uart_set_baud(0, 115200);
     xTaskCreate(timerRegTask, (signed char *)"timerRegTask", 1024, NULL, 2, NULL);
 
     TIMER(0).CTRL = VAL2FIELD(TIMER_CTRL_CLKDIV, TIMER_CLKDIV_256) | TIMER_CTRL_RELOAD;
