@@ -81,8 +81,6 @@ xTaskHandle sdk_xWatchDogTaskHandle;
 
 static void IRAM get_otp_mac_address(uint8_t *buf);
 static void IRAM set_spi0_divisor(uint32_t divisor);
-static int IRAM default_putc(char c);
-static void IRAM default_putc1(char c);
 static void zero_bss(void);
 static void init_networking(uint8_t *phy_info, uint8_t *mac_addr);
 static void init_g_ic(void);
@@ -159,27 +157,15 @@ void IRAM sdk_user_fatal_exception_handler(void) {
     Cache_Read_Disable();
     Cache_Read_Enable(0, 0, 1);
     dump_excinfo();
-    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS)) {}
-    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(1).STATUS)) {}
+    uart_flush_txfifo(0);
+    uart_flush_txfifo(1);
     sdk_system_restart_in_nmi();
     halt();
 }
 
-// .Lfunc003 -- .text+0x1d0
-static int IRAM default_putc(char c) {
-    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS) > 125) {}
-    UART(0).FIFO = c;
-    return 0;
-}
 
-// .Lfunc004 -- .text+0x1f4
-static void IRAM default_putc1(char c) {
-    if (c == '\n') {
-        default_putc('\r');
-    } else if (c == '\r') {
-        return;
-    }
-    default_putc(c);
+static void IRAM default_putc(char c) {
+    uart_putc(0, c);
 }
 
 // .text+0x258
@@ -246,7 +232,7 @@ void IRAM sdk_user_start(void) {
     sdk_SPIRead(ic_flash_addr, buf32, sizeof(struct sdk_g_ic_saved_st));
     Cache_Read_Enable(0, 0, 1);
     zero_bss();
-    sdk_os_install_putc1(default_putc1);
+    sdk_os_install_putc1(default_putc);
     if (cksum_magic == 0xffffffff) {
         // No checksum required
     } else if ((cksum_magic == 0x55aa55aa) &&
@@ -379,11 +365,11 @@ static void dump_excinfo(void) {
 
 // .irom0.text+0x368
 int sdk_uart_rx_one_char(char *buf) {
-    if (FIELD2VAL(UART_STATUS_RXFIFO_COUNT, UART(0).STATUS)) {
-        *buf = UART(0).FIFO;
-        return 0;
-    }
-    return 1;
+    /* This functions returns 1 instead of -1 on error,
+       but is otherwise the same. Unsure if anyone checks the
+       result for a specific value though.
+    */
+    return uart_getc_nowait(0) ? 1 : 0;
 }
 
 // .irom0.text+0x398
@@ -455,8 +441,8 @@ static void user_start_phase2(void) {
     sdk_spi_flash_read(sdk_flashchip.chip_size - sdk_flashchip.sector_size * 4, (uint32_t *)phy_info, PHY_INFO_SIZE);
 
     // Wait for UARTs to finish sending anything in their queues.
-    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS) > 0) {}
-    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(1).STATUS) > 0) {}
+    uart_flush_txfifo(0);
+    uart_flush_txfifo(1);
 
     if (phy_info[0] != 5) {
         // Bad version byte.  Discard what we read and use default values
