@@ -9,6 +9,7 @@
 #include <sys/errno.h>
 #include <espressif/sdk_private.h>
 #include <common_macros.h>
+#include <esp/uart.h>
 #include <stdlib.h>
 
 IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
@@ -32,37 +33,35 @@ IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
     return (caddr_t) prev_heap_end;
 }
 
-/* syscall implementation for stdio write to UART
-
-   at the moment UART functionality is all still in the binary SDK
- */
+/* syscall implementation for stdio write to UART */
 long _write_r(struct _reent *r, int fd, const char *ptr, int len )
 {
     if(fd != r->_stdout->_file) {
         r->_errno = EBADF;
         return -1;
     }
-    for(int i = 0; i < len; i++)
-	sdk_os_putc(ptr[i]);
+    for(int i = 0; i < len; i++) {
+        uart_putc(0, ptr[i]);
+    }
     return len;
 }
 
-/* syscall implementation for stdio read from UART
-
-   at the moment UART functionality is all still in the binary SDK
- */
+/* syscall implementation for stdio read from UART */
 long _read_r( struct _reent *r, int fd, char *ptr, int len )
 {
+    int ch, i;
+
     if(fd != r->_stdin->_file) {
         r->_errno = EBADF;
         return -1;
     }
-    for(int i = 0; i < len; i++) {
-        char ch;
-        while (sdk_uart_rx_one_char(&ch)) ;
+    uart_rxfifo_wait(0, 1);
+    for(i = 0; i < len; i++) {
+        ch = uart_getc_nowait(0);
+        if (ch < 0) break;
         ptr[i] = ch;
     }
-    return len;
+    return i;
 }
 
 /* Stub syscall implementations follow, to allow compiling newlib functions that
