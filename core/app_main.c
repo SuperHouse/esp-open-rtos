@@ -431,6 +431,8 @@ static void user_start_phase2(void) {
     phy_info = malloc(PHY_INFO_SIZE);
     sdk_spi_flash_read(sdk_flashchip.chip_size - sdk_flashchip.sector_size * 4, (uint32_t *)phy_info, PHY_INFO_SIZE);
 
+    // Disable default buffering on stdout
+    setbuf(stdout, NULL);
     // Wait for UARTs to finish sending anything in their queues.
     uart_flush_txfifo(0);
     uart_flush_txfifo(1);
