@@ -1,0 +1,17 @@
+#include "espressif/sdk_private.h"
+#include "esp/uart_regs.h"
+
+void sdk_uart_buff_switch(void) {
+    /* No-Op */
+}
+
+void sdk_uart_div_modify(uint32_t uart_no, uint32_t new_divisor) {
+    UART(uart_no).CLOCK_DIVIDER = new_divisor;
+    UART(uart_no).CONF0 |= (UART_CONF0_TXFIFO_RESET | UART_CONF0_RXFIFO_RESET);
+    UART(uart_no).CONF0 &= ~(UART_CONF0_TXFIFO_RESET | UART_CONF0_RXFIFO_RESET);
+}
+
+void sdk_Uart_Init(void) {
+    /* No-Op */
+}
+

@@ -14,8 +14,15 @@
 // GCC macros for reading, writing, and exchanging Xtensa processor special
 // registers:
 
-#define RSR(var, reg) asm volatile ("rsr %0, " #reg : "=r" (var));
-#define WSR(var, reg) asm volatile ("wsr %0, " #reg : : "r" (var));
-#define XSR(var, reg) asm volatile ("xsr %0, " #reg : "+r" (var));
+#define RSR(var, reg) asm volatile ("rsr %0, " #reg : "=r" (var))
+#define WSR(var, reg) asm volatile ("wsr %0, " #reg : : "r" (var))
+#define XSR(var, reg) asm volatile ("xsr %0, " #reg : "+r" (var))
+
+// GCC macros for performing associated "*sync" opcodes
+
+#define ISYNC() asm volatile ( "isync" )
+#define RSYNC() asm volatile ( "rsync" )
+#define ESYNC() asm volatile ( "esync" )
+#define DSYNC() asm volatile ( "dsync" )
 
 #endif /* _XTENSA_OPS_H */

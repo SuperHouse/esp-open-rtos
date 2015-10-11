@@ -46,22 +46,7 @@ struct SPI_REGS {
     uint32_t volatile SLAVE1;       // 0x34
     uint32_t volatile SLAVE2;       // 0x38
     uint32_t volatile SLAVE3;       // 0x3c
-    uint32_t volatile W0;           // 0x40
-    uint32_t volatile W1;           // 0x44
-    uint32_t volatile W2;           // 0x48
-    uint32_t volatile W3;           // 0x4c
-    uint32_t volatile W4;           // 0x50
-    uint32_t volatile W5;           // 0x54
-    uint32_t volatile W6;           // 0x58
-    uint32_t volatile W7;           // 0x5c
-    uint32_t volatile W8;           // 0x60
-    uint32_t volatile W9;           // 0x64
-    uint32_t volatile W10;          // 0x68
-    uint32_t volatile W11;          // 0x6c
-    uint32_t volatile W12;          // 0x70
-    uint32_t volatile W13;          // 0x74
-    uint32_t volatile W14;          // 0x78
-    uint32_t volatile W15;          // 0x7c
+    uint32_t volatile W[16];        // 0x40 - 0x7c
     uint32_t volatile _unused[28];  // 0x80 - 0xec
     uint32_t volatile EXT0;         // 0xf0
     uint32_t volatile EXT1;         // 0xf4
@@ -73,6 +58,19 @@ _Static_assert(sizeof(struct SPI_REGS) == 0x100, "SPI_REGS is the wrong size");
 
 /* Details for CMD register */
 
+#define SPI_CMD_READ                       BIT(31)
+#define SPI_CMD_WRITE_ENABLE               BIT(30)
+#define SPI_CMD_WRITE_DISABLE              BIT(29)
+#define SPI_CMD_READ_ID                    BIT(28)
+#define SPI_CMD_READ_SR                    BIT(27)
+#define SPI_CMD_WRITE_SR                   BIT(26)
+#define SPI_CMD_PP                         BIT(25)
+#define SPI_CMD_SE                         BIT(24)
+#define SPI_CMD_BE                         BIT(23)
+#define SPI_CMD_CE                         BIT(22)
+#define SPI_CMD_DP                         BIT(21)
+#define SPI_CMD_RES                        BIT(20)
+#define SPI_CMD_HPM                        BIT(19)
 #define SPI_CMD_USR                        BIT(18)
 
 /* Details for CTRL0 register */
