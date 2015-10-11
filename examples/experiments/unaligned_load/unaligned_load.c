@@ -3,7 +3,7 @@
 #include "esp/rom.h"
 #include "esp/timer.h"
 #include "espressif/esp_common.h"
-#include "espressif/sdk_private.h"
+#include "esp/uart.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -214,7 +214,7 @@ void sanity_tests(void);
 
 void user_init(void)
 {
-    sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
+    uart_set_baud(0, 115200);
 
     gpio_enable(2, GPIO_OUTPUT); /* used for LED debug */
     gpio_write(2, 1); /* active low */

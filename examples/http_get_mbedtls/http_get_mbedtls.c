@@ -10,7 +10,7 @@
  * Additions Copyright (C) 2015 Angus Gratton, Apache 2.0 License.
  */
 #include "espressif/esp_common.h"
-#include "espressif/sdk_private.h"
+#include "esp/uart.h"
 
 #include <string.h>
 
@@ -80,7 +80,6 @@ static void my_debug(void *ctx, int level,
         file = file_sep+1;
 
     printf("%s:%04d: %s", file, line, str);
-    fflush(stdout);
 }
 #endif
 
@@ -107,7 +106,6 @@ void http_get_task(void *pvParameters)
     mbedtls_x509_crt_init(&cacert);
     mbedtls_ctr_drbg_init(&ctr_drbg);
     printf("\n  . Seeding the random number generator...");
-    fflush(stdout);
 
     mbedtls_ssl_config_init(&conf);
 
@@ -126,7 +124,6 @@ void http_get_task(void *pvParameters)
      * 0. Initialize certificates
      */
     printf("  . Loading the CA root certificate ...");
-    fflush(stdout);
 
     ret = mbedtls_x509_crt_parse(&cacert, (uint8_t*)server_root_cert, strlen(server_root_cert)+1);
     if(ret < 0)
@@ -148,7 +145,6 @@ void http_get_task(void *pvParameters)
      * 2. Setup stuff
      */
     printf("  . Setting up the SSL/TLS structure...");
-    fflush(stdout);
 
     if((ret = mbedtls_ssl_config_defaults(&conf,
                                           MBEDTLS_SSL_IS_CLIENT,
@@ -182,7 +178,6 @@ void http_get_task(void *pvParameters)
        our network is probably working...
     */
     printf("Waiting for server DNS to resolve... ");
-    fflush(stdout);
     err_t dns_err;
     ip_addr_t host_ip;
     do {
@@ -198,7 +193,6 @@ void http_get_task(void *pvParameters)
          * 1. Start the connection
          */
         printf("  . Connecting to %s:%s...", WEB_SERVER, WEB_PORT);
-        fflush(stdout);
 
         if((ret = mbedtls_net_connect(&server_fd, WEB_SERVER,
                                       WEB_PORT, MBEDTLS_NET_PROTO_TCP)) != 0)
@@ -215,7 +209,6 @@ void http_get_task(void *pvParameters)
          * 4. Handshake
          */
         printf("  . Performing the SSL/TLS handshake...");
-        fflush(stdout);
 
         while((ret = mbedtls_ssl_handshake(&ssl)) != 0)
         {
@@ -251,7 +244,6 @@ void http_get_task(void *pvParameters)
          * 3. Write the GET request
          */
         printf("  > Write to server:");
-        fflush(stdout);
 
         int len = sprintf((char *) buf, GET_REQUEST);
 
@@ -271,7 +263,6 @@ void http_get_task(void *pvParameters)
          * 7. Read the HTTP response
          */
         printf("  < Read from server:");
-        fflush(stdout);
 
         do
         {
@@ -322,7 +313,6 @@ void http_get_task(void *pvParameters)
         printf("\n\nsuccesses = %d failures = %d\n", successes, failures);
         for(int countdown = successes ? 10 : 5; countdown >= 0; countdown--) {
             printf("%d... ", countdown);
-            fflush(stdout);
             vTaskDelay(1000 / portTICK_RATE_MS);
         }
         printf("\nStarting again!\n");
@@ -331,7 +321,7 @@ void http_get_task(void *pvParameters)
 
 void user_init(void)
 {
-    sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
+    uart_set_baud(0, 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
     struct sdk_station_config config = {
