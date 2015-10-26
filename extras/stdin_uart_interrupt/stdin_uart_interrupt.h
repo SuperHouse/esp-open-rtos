@@ -22,12 +22,11 @@
  * THE SOFTWARE.
  */
 
-#ifndef __I2C_H__
-#define __I2C_H__
-#endif
+#ifndef __STDIN_UART_INTERRUPT_H__
+#define __STDIN_UART_INTERRUPT_H__
 
 #include <stdint.h>
-#include <stdbool.h>
 
 // Return number of characters waiting in UART0
 uint32_t uart0_num_char(void);
+#endif

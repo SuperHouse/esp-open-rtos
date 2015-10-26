@@ -23,8 +23,6 @@
  */
 
 #include <esp8266.h>
-#include <espressif/esp8266/esp8266.h>
-#include <espressif/esp8266/uart_register.h>
 #include <FreeRTOS.h>
 #include <semphr.h>
 
@@ -35,36 +33,36 @@
 // IRQ driven UART RX driver for ESP8266 written for use with esp-open-rtos
 // TODO: Handle UART1
 
-#define UART0_RX_SIZE  (81)
-
 #ifndef UART0
 #define UART0 (0)
 #endif
 
+#define UART0_RX_SIZE  (128) // ESP8266 UART HW FIFO size
+
 static xSemaphoreHandle uart0_sem = NULL;
-static char rx_buf[UART0_RX_SIZE];
-static uint8_t rd_pos = 0;
-static uint8_t wr_pos = 0;
 static bool inited = false;
-
 static void uart0_rx_init(void);
-
 
 IRAM void uart0_rx_handler(void)
 {
     // TODO: Handle UART1, see reg 0x3ff20020, bit2, bit0 represents uart1 and uart0 respectively
-    if (UART_RXFIFO_FULL_INT_ST != (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_FULL_INT_ST)) {
+    if (!UART(UART0).INT_STATUS & UART_INT_STATUS_RXFIFO_FULL) {
         return;
     }
-    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
-    while (READ_PERI_REG(UART_STATUS(UART0)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S)) {
-        char ch = READ_PERI_REG(UART_FIFO(UART0)) & 0xff;
-        uint8_t wr_next = (wr_pos+1) % UART0_RX_SIZE;
-        if (wr_next != rd_pos) {
-            rx_buf[wr_pos] = ch;
-            wr_pos = (wr_pos+1) % UART0_RX_SIZE;
-            xSemaphoreGiveFromISR(uart0_sem, NULL);
+//    printf(" [%08x (%d)]\n", READ_PERI_REG(UART_INT_ST(UART0)), READ_PERI_REG(UART_STATUS(UART0)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S));
+    if (UART(UART0).INT_STATUS & UART_INT_STATUS_RXFIFO_FULL) {
+        UART(UART0).INT_CLEAR = UART_INT_CLEAR_RXFIFO_FULL;
+        if (UART(UART0).STATUS & (UART_STATUS_RXFIFO_COUNT_M << UART_STATUS_RXFIFO_COUNT_S)) {
+            long int xHigherPriorityTaskWoken;
+            _xt_isr_mask(1 << INUM_UART);
+            _xt_clear_ints(1<<INUM_UART);
+            xSemaphoreGiveFromISR(uart0_sem, &xHigherPriorityTaskWoken);
+            if(xHigherPriorityTaskWoken) {
+                portYIELD();
+            }
         }
+    } else {
+        printf("Error: unexpected uart irq, INT_STATUS 0x%02x\n", UART(UART0).INT_STATUS);
     }
 }
 
@@ -72,26 +70,23 @@ uint32_t uart0_num_char(void)
 {
     uint32_t count;
     if (!inited) uart0_rx_init();
-    _xt_isr_mask(1 << INUM_UART);
-    if (rd_pos > wr_pos) count = rd_pos - wr_pos;
-    else count = wr_pos - rd_pos;
-    _xt_isr_unmask(1 << INUM_UART);
+    count = UART(UART0).STATUS & (UART_STATUS_RXFIFO_COUNT_M << UART_STATUS_RXFIFO_COUNT_S);
     return count;
 }
 
-// _read_r in core/newlib_syscalls.c will be skipped in favour of this function
+// _read_r in core/newlib_syscalls.c will be skipped by the linker in favour
+// of this function
 long _read_r(struct _reent *r, int fd, char *ptr, int len)
 {
     if (!inited) uart0_rx_init();
     for(int i = 0; i < len; i++) {
-        char ch;
-        if (xSemaphoreTake(uart0_sem, portMAX_DELAY)) {
-            _xt_isr_mask(1 << INUM_UART);
-            ch = rx_buf[rd_pos];
-            rd_pos = (rd_pos+1) % UART0_RX_SIZE;
+        if (!(UART(UART0).STATUS & (UART_STATUS_RXFIFO_COUNT_M << UART_STATUS_RXFIFO_COUNT_S))) {
             _xt_isr_unmask(1 << INUM_UART);
-            ptr[i] = ch;
+            if (!xSemaphoreTake(uart0_sem, portMAX_DELAY)) {
+                printf("\nFailed to get sem\n");
+            }
         }
+        ptr[i] = UART(UART0).FIFO & (UART_FIFO_DATA_M << UART_FIFO_DATA_S);
     }
     return len;
 }
@@ -104,16 +99,19 @@ static void uart0_rx_init(void)
     _xt_isr_attach(INUM_UART, uart0_rx_handler);
     _xt_isr_unmask(1 << INUM_UART);
 
-    //clear rx and tx fifo,not ready
-    SET_PERI_REG_MASK(UART_CONF0(UART0), UART_RXFIFO_RST | UART_TXFIFO_RST);
-    CLEAR_PERI_REG_MASK(UART_CONF0(UART0), UART_RXFIFO_RST | UART_TXFIFO_RST);
+    // clear rx and tx fifo,not ready
+    uint32_t conf = UART(UART0).CONF0;
+    UART(UART0).CONF0 = conf | UART_CONF0_RXFIFO_RESET | UART_CONF0_TXFIFO_RESET;
+    UART(UART0).CONF0 = conf & ~(UART_CONF0_RXFIFO_RESET | UART_CONF0_TXFIFO_RESET);
 
-    //set rx fifo trigger
-    WRITE_PERI_REG(UART_CONF1(UART0), (trig_lvl & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S);
+    // set rx fifo trigger
+    UART(UART0).CONF1 |= (trig_lvl & UART_CONF1_RXFIFO_FULL_THRESHOLD_M) << UART_CONF1_RXFIFO_FULL_THRESHOLD_S;
 
-    //clear all interrupt
-    WRITE_PERI_REG(UART_INT_CLR(UART0), 0xffff);
-    //enable rx_interrupt
-    SET_PERI_REG_MASK(UART_INT_ENA(UART0), UART_RXFIFO_FULL_INT_ENA);    
+    // clear all interrupts
+    UART(UART0).INT_CLEAR = 0x1ff;
+
+    // enable rx_interrupt
+    UART(UART0).INT_ENABLE = UART_INT_ENABLE_RXFIFO_FULL;
+
     inited = true;
 }
