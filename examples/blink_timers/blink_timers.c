@@ -3,7 +3,7 @@
  * This sample code is in the public domain.
  */
 #include "espressif/esp_common.h"
-#include "espressif/sdk_private.h"
+#include "esp/uart.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "esp8266.h"
@@ -33,7 +33,7 @@ void frc2_interrupt_handler(void)
 
 void user_init(void)
 {
-    sdk_uart_div_modify(0, UART_CLK_FREQ / 115200);
+    uart_set_baud(0, 115200);
 
     /* configure GPIOs */
     gpio_enable(gpio_frc1, GPIO_OUTPUT);

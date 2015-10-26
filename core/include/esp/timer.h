@@ -10,9 +10,8 @@
 #define _ESP_TIMER_H
 
 #include <stdbool.h>
-#include <xtensa_interrupts.h>
 #include "esp/timer_regs.h"
-#include "esp/cpu.h"
+#include "esp/interrupts.h"
 
 #ifdef	__cplusplus
 extern "C" {

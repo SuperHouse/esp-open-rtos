@@ -11,8 +11,7 @@
 #include <stdbool.h>
 #include "esp/gpio_regs.h"
 #include "esp/iomux.h"
-#include "esp/cpu.h"
-#include "xtensa_interrupts.h"
+#include "esp/interrupts.h"
 
 typedef enum {
     GPIO_INPUT,
