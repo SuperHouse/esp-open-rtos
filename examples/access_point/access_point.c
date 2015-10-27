@@ -89,10 +89,36 @@ static void telnetTask(void *pvParameters)
     netconn_write(client, buf, strlen(buf), NETCONN_COPY);
     snprintf(buf, sizeof(buf), "Free heap %d bytes\r\n", (int)xPortGetFreeHeapSize());
     netconn_write(client, buf, strlen(buf), NETCONN_COPY);
-    snprintf(buf, sizeof(buf), "Your address is %d.%d.%d.%d\r\n\r\n",
+    snprintf(buf, sizeof(buf), "Your address is %d.%d.%d.%d\n\n",
              ip4_addr1(&client_addr), ip4_addr2(&client_addr),
              ip4_addr3(&client_addr), ip4_addr4(&client_addr));
     netconn_write(client, buf, strlen(buf), NETCONN_COPY);
+
+    snprintf(buf, sizeof(buf), "Structures head %p tail %p \n",
+           sdk_g_ic.v.station_info_head, sdk_g_ic.v.station_info_tail);
+    netconn_write(client, buf, strlen(buf), NETCONN_COPY);
+
+    if(sdk_g_ic.v.station_info_tail) {
+        snprintf(buf, sizeof(buf), "Tail BSSID %02x:%02x:%02x IP %d NEXT %p\n",
+               sdk_g_ic.v.station_info_tail->bssid[0],
+               sdk_g_ic.v.station_info_tail->bssid[1],
+               sdk_g_ic.v.station_info_tail->bssid[2],
+               ip4_addr1(&sdk_g_ic.v.station_info_tail->ip),
+               STAILQ_NEXT(sdk_g_ic.v.station_info_tail, next));
+        netconn_write(client, buf, strlen(buf), NETCONN_COPY);
+    }
+
+    struct sdk_station_info *station = sdk_wifi_softap_get_station_info();
+    while(station) {
+        snprintf(buf, sizeof(buf), "Client %02x:%02x:%02x:%02x:%02x:%02x IP %d.%d.%d.%d\n",
+               station->bssid[0], station->bssid[1], station->bssid[2],
+               station->bssid[3], station->bssid[4], station->bssid[5],
+               ip4_addr1(&station->ip), ip4_addr2(&station->ip),
+               ip4_addr3(&station->ip), ip4_addr4(&station->ip));
+        netconn_write(client, buf, strlen(buf), NETCONN_COPY);
+        station = STAILQ_NEXT(station, next);
+    }
+
     netconn_delete(client);
   }
 }
