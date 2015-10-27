@@ -14,14 +14,6 @@ void user_init(void)
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
     printf("Going into echo mode...\n");
 
-    /* By default stdout is line-buffered, so you only see output
-       after a newline is sent. This is helpful in a multithreaded
-       environment so output doesn't get chopped up within a line.
-
-       Here we want to see the echo immediately, so disable buffering.
-    */
-    setbuf(stdout, NULL);
-
     while(1) {
         int c = getchar();
         if(c != EOF)
