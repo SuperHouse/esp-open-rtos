@@ -81,8 +81,8 @@ struct sdk_g_ic_volatile_st {
 
     void *_unknown180;
     void *_unknown184;
-    struct station_info *station_info_head;
-    struct station_info *station_info_tail;
+    struct sdk_station_info *station_info_head;
+    struct sdk_station_info *station_info_tail;
     uint32_t _unknown190;
     uint32_t _unknown194;
 

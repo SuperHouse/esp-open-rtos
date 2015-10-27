@@ -10,6 +10,7 @@
 
 #include <espressif/esp_common.h>
 #include <espressif/sdk_private.h>
+#include <sdk_internal.h>
 #include <FreeRTOS.h>
 #include <task.h>
 #include <queue.h>
