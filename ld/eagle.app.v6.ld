@@ -32,42 +32,29 @@ ets_printf = printf;
 */
 #ifndef OTA
 
-#define IROM0_START 0x40220000
-
-/* Non-OTA sizes */
-#if FLASH_SIZE == 2 /* 256kB */
-#define IROM0_LEN 0x3C000
-#elif FLASH_SIZE == 4 /* 512kB */
-#define IROM0_LEN 0x7C000
-#elif FLASH_SIZE == 8 /* 1MB */
-#define IROM0_LEN 0xFC000
-#elif FLASH_SIZE == 16 /* 2MB */
-#define IROM0_LEN 0x1FC000
-#elif FLASH_SIZE == 32 /* 4MB */
-#define IROM0_LEN 0x3FC000
-#else /*FLASH_SIZE*/
-#error "Unknown flash size for linker script. Check the FLASH_SIZE variable in your Makefile."
-#endif
+/* IROM0 section sits after other sections in the "v1" non-OTA bootloader image,
+   so need an 128kB offset to leave room
+*/
+#define IROM0_OFFSET 0x20000
 
 #else /* OTA */
 
-/* IROM0 becomes an actual "section" of the bootloader image, so we need to leave
-   space for the bootloader (0x2000 bytes) and space for the bootloader & section
-   headers (0x10 bytes)
-*/
-#define IROM0_START 0x40202010
+/* For OTA, IROM0 becomes an actual "section" of the bootloader image,
+   so we only need to leave space for the second stage bootloader
+   (0x2000 bytes) and space for the bootloader & section headers (0x10
+   bytes) */
+#define IROM0_OFFSET 0x2010
 
-/* OTA sizes */
 #if FLASH_SIZE < 16
-#error "OTA support currently requires 16 or 32 megabit flash"
-#elif FLASH_SIZE == 16 || FLASH_SIZE == 32
-/* 1MB irom0 section regardless, minus the space for the bootloader */
-#define IROM0_LEN (0x100000 - 0x2010)
-#else /*FLASH_SIZE*/
-#error "Unknown flash size for linker script. Check the FLASH_SIZE variable in your Makefile."
+#error "OTA support currently requires minimum 16 megabit flash"
 #endif
 
 #endif
+
+/* Full maximum length of IROM section is length of mappable flash (ie up to 1 megabyte),
+   minus anything mapped at start, minus single config SDK WiFi config sector at end
+*/
+#define IROM0_LEN   ((0x20000*MIN(FLASH_SIZE,8)) - IROM0_OFFSET - 0x1000)
 
 /* Linker Script for ld -N */
 MEMORY
@@ -75,7 +62,7 @@ MEMORY
   dport0_0_seg :                      	org = 0x3FF00000, len = 0x10
   dram0_0_seg :                       	org = 0x3FFE8000, len = 0x14000
   iram1_0_seg :                       	org = 0x40100000, len = 0x08000
-  irom0_0_seg :                       	org = IROM0_START, len = IROM0_LEN
+  irom0_0_seg :                       	org = 0x40200000+IROM0_OFFSET, len = IROM0_LEN
 }
 
 PHDRS
