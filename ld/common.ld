@@ -1,7 +1,7 @@
-/* This linker script generated from xt-genldscripts.tpp for LSP .
-
-   Modified for esp open RTOS, this linker script is no longer the same as the esp_iot_rtos_sdk one.
-*/
+/*
+ * Common (OTA and non-OTA) parts for the esp-open-rtos Linker Script
+ *
+ */
 
 /* FreeRTOS memory management functions
 
@@ -27,43 +27,6 @@ _lock_release_recursive = vPortExitCritical;
 
 /* SDK compatibility */
 ets_printf = printf;
-
-/* Evaluate FLASH_SIZE to calculate irom size, etc.
-*/
-#ifndef OTA
-
-/* IROM0 section sits after other sections in the "v1" non-OTA bootloader image,
-   so need an 128kB offset to leave room
-*/
-#define IROM0_OFFSET 0x20000
-
-#else /* OTA */
-
-/* For OTA, IROM0 becomes an actual "section" of the bootloader image,
-   so we only need to leave space for the second stage bootloader
-   (0x2000 bytes) and space for the bootloader & section headers (0x10
-   bytes) */
-#define IROM0_OFFSET 0x2010
-
-#if FLASH_SIZE < 16
-#error "OTA support currently requires minimum 16 megabit flash"
-#endif
-
-#endif
-
-/* Full maximum length of IROM section is length of mappable flash (ie up to 1 megabyte),
-   minus anything mapped at start, minus single config SDK WiFi config sector at end
-*/
-#define IROM0_LEN   ((0x20000*MIN(FLASH_SIZE,8)) - IROM0_OFFSET - 0x1000)
-
-/* Linker Script for ld -N */
-MEMORY
-{
-  dport0_0_seg :                      	org = 0x3FF00000, len = 0x10
-  dram0_0_seg :                       	org = 0x3FFE8000, len = 0x14000
-  iram1_0_seg :                       	org = 0x40100000, len = 0x08000
-  irom0_0_seg :                       	org = 0x40200000+IROM0_OFFSET, len = IROM0_LEN
-}
 
 PHDRS
 {

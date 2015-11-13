@@ -131,8 +131,12 @@ endif
 GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
 CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV) -DFLASH_SIZE=$(FLASH_SIZE)
 
-# Linker scripts, all found in $(ROOT)/ld
-LINKER_SCRIPTS  = eagle.app.v6.ld eagle.rom.addr.v6.ld
+ifeq ($(OTA),0)
+LINKER_SCRIPTS  = $(ROOT)ld/nonota.ld
+else
+LINKER_SCRIPTS = $(ROOT)ld/ota.ld
+endif
+LINKER_SCRIPTS += $(ROOT)ld/common.ld $(ROOT)ld/rom.ld
 
 ####
 #### no user configurable options below here
@@ -152,19 +156,11 @@ lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(s
 # assume the program dir is the directory the top-level makefile was run in
 PROGRAM_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 
-# linker scripts get run through the C preprocessor
-ifeq ($(OTA),1)
-LD_DIR = $(BUILD_DIR)ld-$(FLASH_SIZE)-ota/
-else
-LD_DIR = $(BUILD_DIR)ld-$(FLASH_SIZE)/
-endif
-LINKER_SCRIPTS_PROCESSED = $(addprefix $(LD_DIR),$(LINKER_SCRIPTS))
-
 # derive various parts of compiler/linker arguments
 SDK_LIB_ARGS  = $(addprefix -l,$(SDK_LIBS))
 LIB_ARGS      = $(addprefix -l,$(LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
-LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS_PROCESSED))
+LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS))
 
 ifeq ($(OTA),0)
 # for non-OTA, we create two different files for uploading into the flash
@@ -335,16 +331,12 @@ $(foreach component,$(COMPONENTS), 					\
 	)								\
 )
 
-## Run linker scripts via C preprocessor to evaluate macros
-$(LD_DIR)%.ld: $(ROOT)ld/%.ld | $(LD_DIR)
-	$(Q) $(CPP) $(CPPFLAGS) -E -C -P $< > $@
-
 # final linking step to produce .elf
-$(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS_PROCESSED)
+$(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
 	$(vecho) "LD $@"
 	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(COMPONENT_ARS) $(LIB_ARGS) $(SDK_LIB_ARGS) -Wl,--end-group -o $@
 
-$(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib $(LD_DIR):
+$(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib:
 	$(Q) mkdir -p $@
 
 $(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FW_BASE)
