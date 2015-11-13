@@ -129,7 +129,7 @@ else
 endif
 
 GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
-CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV) -DFLASH_SIZE=$(FLASH_SIZE)
+CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV)
 
 ifeq ($(OTA),0)
 LINKER_SCRIPTS  = $(ROOT)ld/nonota.ld
