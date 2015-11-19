@@ -26,8 +26,10 @@ struct I2S_REGS {
     uint32_t volatile FIFO_CONF;        // 0x20
     uint32_t volatile RX_EOF_NUM;       // 0x24
     uint32_t volatile CONF_SINGLE_DATA; // 0x28
-    uint32_t volatile CONF_CHANNELS;     // 0x2c
+    uint32_t volatile CONF_CHANNELS;    // 0x2c
 };
+
+_Static_assert(sizeof(struct I2S_REGS) == 0x30, "I2S_REGS is the wrong size");
 
 /* Details for CONF register */
 
@@ -120,9 +122,9 @@ struct I2S_REGS {
 #define I2S_FIFO_CONF_TX_FIFO_MOD_M      0x00000007
 #define I2S_FIFO_CONF_TX_FIFO_MOD_S      13
 #define I2S_FIFO_CONF_DESCRIPTOR_ENABLE  BIT(12)
-#define I2S_FIFO_CONF_TX_DATA_NUM_M      0x0000003F
+#define I2S_FIFO_CONF_TX_DATA_NUM_M      0x0000003f
 #define I2S_FIFO_CONF_TX_DATA_NUM_S      6
-#define I2S_FIFO_CONF_RX_DATA_NUM_M      0x0000003F
+#define I2S_FIFO_CONF_RX_DATA_NUM_M      0x0000003f
 #define I2S_FIFO_CONF_RX_DATA_NUM_S      0
 
 /* Details for CONF_CHANNEL register */
