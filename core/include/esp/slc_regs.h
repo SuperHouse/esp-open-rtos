@@ -65,6 +65,8 @@ struct SLC_REGS {
     uint32_t volatile HOST_CONF_W5;            // 0xbc
 };
 
+_Static_assert(sizeof(struct SLC_REGS) == 0xc0, "SLC_REGS is the wrong size");
+
 /* Details for CONF0 register */
 
 #define SLC_CONF0_MODE_M                   0x00000003
@@ -269,7 +271,7 @@ struct SLC_REGS {
 #define SLC_SDIO_STATUS_BUS_M      0x00000007
 #define SLC_SDIO_STATUS_BUS_S      12
 #define SLC_SDIO_STATUS_WAKEUP     BIT(8)
-#define SLC_SDIO_STATUS_FUNC_M     0x0000000F
+#define SLC_SDIO_STATUS_FUNC_M     0x0000000f
 #define SLC_SDIO_STATUS_FUNC_S     4
 #define SLC_SDIO_STATUS_COMMAND_M  0x00000007
 #define SLC_SDIO_STATUS_COMMAND_S  0
@@ -283,29 +285,5 @@ struct SLC_REGS {
 #define SLC_RX_DESCRIPTOR_CONF_TOKEN_NO_REPLACE  BIT(16)
 #define SLC_RX_DESCRIPTOR_CONF_POP_IDLE_COUNT_M  0x0000ffff
 #define SLC_RX_DESCRIPTOR_CONF_POP_IDLE_COUNT_S  0
-
-struct SLCDescriptor
-{
-	uint32_t flags;
-	uint32_t buf_ptr;
-	uint32_t next_link_ptr;
-};
-
-#define SLC_DESCRIPTOR_FLAGS_BLOCKSIZE_M 0x00000fff
-#define SLC_DESCRIPTOR_FLAGS_BLOCKSIZE_S 0
-#define SLC_DESCRIPTOR_FLAGS_DATA_LENGTH_M 0x00000fff
-#define SLC_DESCRIPTOR_FLAGS_DATA_LENGTH_S 12
-#define SLC_DESCRIPTOR_FLAGS_SUB_SOF BIT(29)
-#define SLC_DESCRIPTOR_FLAGS_EOF BIT(30)
-#define SLC_DESCRIPTOR_FLAGS_OWNER BIT(31)
-
-#define SLC_DESCRIPTOR_FLAGS(blocksize,datalen,sub_sof,eof,owner) ( \
-	(((blocksize)&SLC_DESCRIPTOR_FLAGS_BLOCKSIZE_M)<<SLC_DESCRIPTOR_FLAGS_BLOCKSIZE_S)| \
-	(((datalen)&SLC_DESCRIPTOR_FLAGS_DATA_LENGTH_M)<<SLC_DESCRIPTOR_FLAGS_DATA_LENGTH_S)| \
-	((sub_sof)?SLC_DESCRIPTOR_FLAGS_SUB_SOF:0)| \
-	((eof)?SLC_DESCRIPTOR_FLAGS_EOF:0)| \
-	((owner)?SLC_DESCRIPTOR_FLAGS_OWNER:0) \
-) 
-
 
 #endif /* _ESP_SLC_REGS_H */
