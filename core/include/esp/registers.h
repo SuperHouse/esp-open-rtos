@@ -16,14 +16,17 @@
 #include "common_macros.h"
 #include "esp/types.h"
 
-#include "esp/uart_regs.h"
-#include "esp/spi_regs.h"
-#include "esp/iomux_regs.h"
+#include "esp/dport_regs.h"
 #include "esp/gpio_regs.h"
+#include "esp/i2s_regs.h"
+#include "esp/iomux_regs.h"
+#include "esp/rtc_regs.h"
+#include "esp/rtcmem_regs.h"
+#include "esp/slc_regs.h"
+#include "esp/spi_regs.h"
 #include "esp/timer_regs.h"
 #include "esp/wdt_regs.h"
-#include "esp/rtcmem_regs.h"
-#include "esp/dport_regs.h"
+#include "esp/uart_regs.h"
 
 /* Register base addresses
 
@@ -44,7 +47,7 @@
 //#define SPI_BASE   (MMIO_BASE + 0x0200)
 //#define GPIO0_BASE (MMIO_BASE + 0x0300)
 //#define TIMER_BASE (MMIO_BASE + 0x0600)
-#define RTC_BASE   (MMIO_BASE + 0x0700)
+//#define RTC_BASE   (MMIO_BASE + 0x0700)
 //#define IOMUX_BASE (MMIO_BASE + 0x0800)
 //#define WDT_BASE   (MMIO_BASE + 0x0900)
 #define I2C_BASE   (MMIO_BASE + 0x0d00)
