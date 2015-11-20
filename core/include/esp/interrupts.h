@@ -17,6 +17,7 @@
 
 /* Interrupt numbers for level 1 exception handler. */
 typedef enum {
+    INUM_SLC = 1,
     INUM_SPI = 2,
     INUM_GPIO = 4,
     INUM_UART = 5,
