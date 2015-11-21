@@ -15,7 +15,6 @@
 #include "task.h"
 
 #define MAX_ARGC (10)
-#define BUFFER_SIZE (81)
 
 static void cmd_on(uint32_t argc, char *argv[])
 {
@@ -112,6 +111,5 @@ static void gpiomon()
 void user_init(void)
 {
     uart_set_baud(0, 115200);
-    setbuf(stdout, NULL);
     gpiomon();
 }
