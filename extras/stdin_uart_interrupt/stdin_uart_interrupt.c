@@ -99,10 +99,10 @@ static void uart0_rx_init(void)
     _xt_isr_attach(INUM_UART, uart0_rx_handler);
     _xt_isr_unmask(1 << INUM_UART);
 
-    // clear rx and tx fifo,not ready
+    // reset the rx fifo
     uint32_t conf = UART(UART0).CONF0;
-    UART(UART0).CONF0 = conf | UART_CONF0_RXFIFO_RESET | UART_CONF0_TXFIFO_RESET;
-    UART(UART0).CONF0 = conf & ~(UART_CONF0_RXFIFO_RESET | UART_CONF0_TXFIFO_RESET);
+    UART(UART0).CONF0 = conf | UART_CONF0_RXFIFO_RESET;
+    UART(UART0).CONF0 = conf & ~UART_CONF0_RXFIFO_RESET;
 
     // set rx fifo trigger
     UART(UART0).CONF1 |= (trig_lvl & UART_CONF1_RXFIFO_FULL_THRESHOLD_M) << UART_CONF1_RXFIFO_FULL_THRESHOLD_S;
