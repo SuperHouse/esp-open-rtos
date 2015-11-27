@@ -36,7 +36,7 @@ typedef struct pwmInfoDefinition
 
 static PWMInfo pwmInfo;
 
-void frc1_interrupt_handler(void)
+static void frc1_interrupt_handler(void)
 {
     uint8_t i = 0;
     bool out = true;
@@ -108,6 +108,7 @@ void pwm_set_freq(uint16_t freq)
     }
 
     timer_set_frequency(FRC1, freq);
+    pwmInfo._maxLoad = timer_get_load(FRC1);
 
     if (pwmInfo.running)
     {
@@ -132,7 +133,6 @@ void pwm_restart()
 
 void pwm_start()
 {
-    pwmInfo._maxLoad = timer_get_load(FRC1);
     pwmInfo._onLoad = pwmInfo.dutyCicle * pwmInfo._maxLoad / UINT16_MAX;
     pwmInfo._offLoad = pwmInfo._maxLoad - pwmInfo._onLoad;
     pwmInfo._step = PERIOD_ON;
