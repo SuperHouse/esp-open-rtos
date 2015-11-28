@@ -10,6 +10,7 @@
 #define _ESP_TIMER_H
 
 #include <stdbool.h>
+#include <errno.h>
 #include "esp/timer_regs.h"
 #include "esp/interrupts.h"
 
@@ -159,9 +160,9 @@ uint32_t timer_time_to_count(const timer_frc_t frc, uint32_t us, const timer_clk
    Does not start/stop the timer, you have to do this manually via
    timer_set_run.
 
-   Returns true on success, false if given frequency could not be set.
+   Returns 0 on success, or -EINVAL if given frequency could not be set.
 */
-bool timer_set_frequency(const timer_frc_t frc, uint32_t freq);
+int timer_set_frequency(const timer_frc_t frc, uint32_t freq);
 
 /* Sets the timer for a oneshot interrupt in 'us' microseconds.
 
@@ -176,9 +177,9 @@ bool timer_set_frequency(const timer_frc_t frc, uint32_t freq);
    also disable FRC1 in the timer interrupt handler by calling
    timer_set_run(TIMER_FRC1, false);
 
-   Returns true if the timeout was successfully set.
+   Returns 0 on success, or -EINVAL if the given timeout could not be set.
 */
-bool timer_set_timeout(const timer_frc_t frc, uint32_t us);
+int timer_set_timeout(const timer_frc_t frc, uint32_t us);
 
 #ifdef	__cplusplus
 }
