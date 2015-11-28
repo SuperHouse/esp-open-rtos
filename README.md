@@ -18,7 +18,7 @@ Please note that this project is released with a [Contributor Code of Conduct](h
 
 ## Quick Start
 
-* Install [esp-open-sdk](https://github.com/pfalcon/esp-open-sdk/), build it with `make STANDALONE=n`, then edit your PATH and add the generated toolchain `bin` directory. (Despite the similar name esp-open-sdk has different maintainers - but we think it's fantastic!)
+* Install [esp-open-sdk](https://github.com/pfalcon/esp-open-sdk/), build it with `make STANDALONE=n`, then edit your PATH and add the generated toolchain `bin` directory. The path will be something like `/path/to/esp-open-sdk/xtensa-lx106-elf/bin`. (Despite the similar name esp-open-sdk has different maintainers - but we think it's fantastic!)
 
     (Other toolchains may also work, as long as a gcc cross-compiler is available on the PATH and libhal (and libhal headers) are compiled and available to gcc. The proprietary Tensilica "xcc" compiler will probably not work.)
 
