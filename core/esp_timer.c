@@ -78,7 +78,7 @@ uint32_t timer_time_to_count(const timer_frc_t frc, uint32_t us, const timer_clk
     }
 }
 
-bool timer_set_frequency(const timer_frc_t frc, uint32_t freq)
+int timer_set_frequency(const timer_frc_t frc, uint32_t freq)
 {
     uint32_t counts = 0;
     timer_clkdiv_t div = timer_freq_to_div(freq);
@@ -86,8 +86,7 @@ bool timer_set_frequency(const timer_frc_t frc, uint32_t freq)
     counts = timer_freq_to_count(frc, freq, div);
     if(counts == 0)
     {
-        printf("ABORT: No counter for timer %u frequency %u\r\n", frc, freq);
-        abort();
+        return -EINVAL;
     }
 
     timer_set_divider(frc, div);
@@ -101,17 +100,17 @@ bool timer_set_frequency(const timer_frc_t frc, uint32_t freq)
         /* assume that if this overflows it'll wrap, so we'll get desired behaviour */
         TIMER(1).ALARM = counts + TIMER(1).COUNT;
     }
-    return true;
+    return 0;
 }
 
-bool timer_set_timeout(const timer_frc_t frc, uint32_t us)
+int _timer_set_timeout_impl(const timer_frc_t frc, uint32_t us)
 {
     uint32_t counts = 0;
     timer_clkdiv_t div = timer_time_to_div(us);
 
     counts = timer_time_to_count(frc, us, div);
     if(counts == 0)
-        return false; /* can't set frequency */
+        return -EINVAL; /* can't set frequency */
 
     timer_set_divider(frc, div);
     if(frc == FRC1)
@@ -123,5 +122,27 @@ bool timer_set_timeout(const timer_frc_t frc, uint32_t us)
         TIMER(1).ALARM = counts + TIMER(1).COUNT;
     }
 
-    return true;
+    return 0;
+}
+
+int timer_set_timeout(const timer_frc_t frc, uint32_t us)
+{
+    uint32_t counts = 0;
+    timer_clkdiv_t div = timer_time_to_div(us);
+
+    counts = timer_time_to_count(frc, us, div);
+    if(counts == 0)
+        return -EINVAL; /* can't set frequency */
+
+    timer_set_divider(frc, div);
+    if(frc == FRC1)
+    {
+        timer_set_load(frc, counts);
+    }
+    else /* FRC2 */
+    {
+        TIMER(1).ALARM = counts + TIMER(1).COUNT;
+    }
+
+    return 0;
 }
