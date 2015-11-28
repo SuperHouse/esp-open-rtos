@@ -7,10 +7,12 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <esp8266.h>
 #include <esp/uart.h>
+#include <stdio.h>
 #include "FreeRTOS.h"
 #include "task.h"
 

@@ -23,43 +23,73 @@ typedef enum {
 } timer_frc_t;
 
 /* Return current count value for timer. */
-INLINED uint32_t timer_get_count(const timer_frc_t frc);
+static inline uint32_t timer_get_count(const timer_frc_t frc)
+{
+    return TIMER(frc).COUNT;
+}
 
 /* Return current load value for timer. */
-INLINED uint32_t timer_get_load(const timer_frc_t frc);
+static inline uint32_t timer_get_load(const timer_frc_t frc)
+{
+    return TIMER(frc).LOAD;
+}
 
 /* Write load value for timer. */
-INLINED void timer_set_load(const timer_frc_t frc, const uint32_t load);
+static inline void timer_set_load(const timer_frc_t frc, const uint32_t load)
+{
+    TIMER(frc).LOAD = load;
+}
 
 /* Returns maximum load value for timer. */
-INLINED uint32_t timer_max_load(const timer_frc_t frc);
+static inline uint32_t timer_max_load(const timer_frc_t frc)
+{
+    return (frc == FRC1) ? TIMER_FRC1_MAX_LOAD : UINT32_MAX;
+}
 
 /* Set the timer divider value */
-INLINED void timer_set_divider(const timer_frc_t frc, const timer_clkdiv_t div);
+static inline void timer_set_divider(const timer_frc_t frc, const timer_clkdiv_t div)
+{
+    if(div < TIMER_CLKDIV_1 || div > TIMER_CLKDIV_256)
+        return;
+    TIMER(frc).CTRL = SET_FIELD(TIMER(frc).CTRL, TIMER_CTRL_CLKDIV, div);
+}
 
 /* Enable or disable timer interrupts
 
    This both sets the xtensa interrupt mask and writes to the DPORT register
    that allows timer interrupts.
 */
-INLINED void timer_set_interrupts(const timer_frc_t frc, bool enable);
+void timer_set_interrupts(const timer_frc_t frc, bool enable);
 
 /* Turn the timer on or off */
-INLINED void timer_set_run(const timer_frc_t frc, const bool run);
+static inline void timer_set_run(const timer_frc_t frc, const bool run)
+{
+    if (run)
+        TIMER(frc).CTRL |= TIMER_CTRL_RUN;
+    else
+        TIMER(frc).CTRL &= ~TIMER_CTRL_RUN;
+}
 
 /* Get the run state of the timer (on or off) */
-INLINED bool timer_get_run(const timer_frc_t frc);
+static inline bool timer_get_run(const timer_frc_t frc)
+{
+    return TIMER(frc).CTRL & TIMER_CTRL_RUN;
+}
 
 /* Set timer auto-reload on or off */
-INLINED void timer_set_reload(const timer_frc_t frc, const bool reload);
+static inline void timer_set_reload(const timer_frc_t frc, const bool reload)
+{
+    if (reload)
+        TIMER(frc).CTRL |= TIMER_CTRL_RELOAD;
+    else
+        TIMER(frc).CTRL &= ~TIMER_CTRL_RELOAD;
+}
 
 /* Get the auto-reload state of the timer (on or off) */
-INLINED bool timer_get_reload(const timer_frc_t frc);
-
-/* Return a suitable timer divider for the specified frequency,
-   or -1 if none is found.
- */
-INLINED timer_clkdiv_t timer_freq_to_div(uint32_t freq);
+static inline bool timer_get_reload(const timer_frc_t frc)
+{
+    return TIMER(frc).CTRL & TIMER_CTRL_RELOAD;
+}
 
 /* Return the number of timer counts to achieve the specified
  * frequency with the specified divisor.
@@ -68,14 +98,41 @@ INLINED timer_clkdiv_t timer_freq_to_div(uint32_t freq);
  *
  * Returns 0 if the given freq/divisor combo cannot be achieved.
  *
- * Compile-time evaluates if all arguments are available at compile time.
  */
-INLINED uint32_t timer_freq_to_count(const timer_frc_t frc, uint32_t freq, const timer_clkdiv_t div);
+uint32_t timer_freq_to_count(const timer_frc_t frc, uint32_t freq, const timer_clkdiv_t div);
+
+/* Return a suitable timer divider for the specified frequency,
+   or -1 if none is found.
+ */
+static inline timer_clkdiv_t timer_freq_to_div(uint32_t freq)
+{
+    /*
+      try to maintain resolution without risking overflows.
+      these values are a bit arbitrary at the moment! */
+    if(freq > 100*1000)
+        return TIMER_CLKDIV_1;
+    else if(freq > 100)
+        return TIMER_CLKDIV_16;
+    else
+        return TIMER_CLKDIV_256;
+}
 
 /* Return a suitable timer divider for the specified duration in
    microseconds or -1 if none is found.
  */
-INLINED timer_clkdiv_t timer_time_to_div(uint32_t us);
+static inline timer_clkdiv_t timer_time_to_div(uint32_t us)
+{
+    /*
+      try to maintain resolution without risking overflows. Similar to
+      timer_freq_to_div, these values are a bit arbitrary at the
+      moment! */
+    if(us < 1000)
+        return TIMER_CLKDIV_1;
+    else if(us < 10*1000)
+        return TIMER_CLKDIV_16;
+    else
+        return TIMER_CLKDIV_256;
+}
 
 /* Return the number of timer counts for the specified timer duration
  * in microseconds, when using the specified divisor.
@@ -84,9 +141,8 @@ INLINED timer_clkdiv_t timer_time_to_div(uint32_t us);
  *
  * Returns 0 if the given time/divisor combo cannot be achieved.
  *
- * Compile-time evaluates if all arguments are available at compile time.
  */
-INLINED uint32_t timer_time_to_count(const timer_frc_t frc, uint32_t us, const timer_clkdiv_t div);
+uint32_t timer_time_to_count(const timer_frc_t frc, uint32_t us, const timer_clkdiv_t div);
 
 /* Set a target timer interrupt frequency in Hz.
 
@@ -104,11 +160,8 @@ INLINED uint32_t timer_time_to_count(const timer_frc_t frc, uint32_t us, const t
    timer_set_run.
 
    Returns true on success, false if given frequency could not be set.
-
-   Compile-time evaluates to simple register writes if all arguments
-   are available at compile time.
 */
-INLINED bool timer_set_frequency(const timer_frc_t frc, uint32_t freq);
+bool timer_set_frequency(const timer_frc_t frc, uint32_t freq);
 
 /* Sets the timer for a oneshot interrupt in 'us' microseconds.
 
@@ -124,13 +177,8 @@ INLINED bool timer_set_frequency(const timer_frc_t frc, uint32_t freq);
    timer_set_run(TIMER_FRC1, false);
 
    Returns true if the timeout was successfully set.
-
-   Compile-time evaluates to simple register writes if all arguments
-   are available at compile time.
 */
-INLINED bool timer_set_timeout(const timer_frc_t frc, uint32_t us);
-
-#include "timer_private.h"
+bool timer_set_timeout(const timer_frc_t frc, uint32_t us);
 
 #ifdef	__cplusplus
 }
