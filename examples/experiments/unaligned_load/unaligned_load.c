@@ -17,7 +17,7 @@ const char *dramtest = TESTSTRING;
 const __attribute__((section(".iram1.notrodata"))) char iramtest[] = TESTSTRING;
 const __attribute__((section(".text.notrodata"))) char iromtest[] = TESTSTRING;
 
-INLINED uint32_t get_ccount (void)
+static inline uint32_t get_ccount (void)
 {
     uint32_t ccount;
     asm volatile ("rsr.ccount %0" : "=a" (ccount));

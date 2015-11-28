@@ -22,7 +22,7 @@ extern "C" {
  * known at compile time, or return the result from a lookup table if not.
  *
  */
-inline static uint8_t gpio_to_iomux(const uint8_t gpio_number);
+uint8_t IRAM gpio_to_iomux(const uint8_t gpio_number);
 
 /**
  * Convert an iomux register index to a GPIO pin number.
@@ -31,7 +31,7 @@ inline static uint8_t gpio_to_iomux(const uint8_t gpio_number);
  * known at compile time, or return the result from a lookup table if not.
  *
  */
-inline static uint8_t iomux_to_gpio(const uint8_t iomux_num);
+uint8_t IRAM iomux_to_gpio(const uint8_t iomux_num);
 
 /**
  * Directly get the IOMUX register for a particular gpio number
@@ -63,10 +63,6 @@ inline static void iomux_set_gpio_function(const uint8_t gpio_number, const uint
     const uint32_t func = (reg_idx > 11 ? IOMUX_FUNC(0) : IOMUX_FUNC(3)) | flags;
     IOMUX.PIN[reg_idx] = func | flags;
 }
-
-/* esp_iomux_private contains implementation parts of the inline functions
-   declared above */
-#include "esp/iomux_private.h"
 
 #ifdef	__cplusplus
 }
