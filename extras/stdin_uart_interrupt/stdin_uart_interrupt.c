@@ -25,6 +25,7 @@
 #include <esp8266.h>
 #include <FreeRTOS.h>
 #include <semphr.h>
+#include <stdio.h>
 
 #if (configUSE_COUNTING_SEMAPHORES == 0)
  #error "You need to define configUSE_COUNTING_SEMAPHORES in a local FreeRTOSConfig.h, see examples/terminal/FreeRTOSConfig.h"
