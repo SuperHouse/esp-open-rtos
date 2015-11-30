@@ -59,4 +59,4 @@ script:
   - cd ${TRAVIS_BUILD_DIR}
   # Remove ssid_config requirement for examples
   - sed -i "s%#warning%//#warning%" include/ssid_config.h
-  - make -C examples/ build-examples CROSS="ccache xtensa-lx106-elf-"
+  - make -C examples/ build-examples CROSS="ccache xtensa-lx106-elf-" V=1
