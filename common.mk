@@ -106,7 +106,7 @@ CFLAGS		= $(C_CXX_FLAGS) -std=gnu99
 # Flags for C++ only
 CXXFLAGS	= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti
 
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(EXTRA_LDFLAGS)
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map  $(EXTRA_LDFLAGS)
 
 ifeq ($(SPLIT_SECTIONS),1)
   C_CXX_FLAGS += -ffunction-sections -fdata-sections
