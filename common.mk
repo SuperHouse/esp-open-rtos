@@ -100,11 +100,11 @@ ENTRY_SYMBOL ?= call_user_start
 SPLIT_SECTIONS ?= 1
 
 # Common flags for both C & C++_
-C_CXX_FLAGS     = -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals $(CPPFLAGS)
+C_CXX_FLAGS     ?= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals $(CPPFLAGS) $(EXTRA_C_CXX_FLAGS)
 # Flags for C only
-CFLAGS		= $(C_CXX_FLAGS) -std=gnu99
+CFLAGS		?= $(C_CXX_FLAGS) -std=gnu99 $(EXTRA_CFLAGS)
 # Flags for C++ only
-CXXFLAGS	= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti
+CXXFLAGS	?= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti $(EXTRA_CXXFLAGS)
 
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map  $(EXTRA_LDFLAGS)
 
