@@ -100,11 +100,14 @@ ENTRY_SYMBOL ?= call_user_start
 SPLIT_SECTIONS ?= 1
 
 # Common flags for both C & C++_
-C_CXX_FLAGS     ?= -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals $(CPPFLAGS) $(EXTRA_C_CXX_FLAGS)
+C_CXX_FLAGS     ?= -Wall -Werror -Wl,-EL -nostdlib $(EXTRA_C_CXX_FLAGS)
 # Flags for C only
 CFLAGS		?= $(C_CXX_FLAGS) -std=gnu99 $(EXTRA_CFLAGS)
 # Flags for C++ only
 CXXFLAGS	?= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti $(EXTRA_CXXFLAGS)
+
+# these aren't technically preprocesor args, but used by all 3 of C, C++, assembler
+CPPFLAGS	+= -mlongcalls -mtext-section-literals
 
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map  $(EXTRA_LDFLAGS)
 
@@ -248,29 +251,29 @@ $(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.S,$$($(1)_OBJ_DIR)%.o,$$($(1)_O
 $(1)_MAKEFILE ?= $(lastword $(MAKEFILE_LIST))
 
 ### determine compiler arguments ###
+$(1)_CPPFLAGS ?= $(CPPFLAGS)
 $(1)_CFLAGS ?= $(CFLAGS)
 $(1)_CXXFLAGS ?= $(CXXFLAGS)
-$(1)_CC_ARGS = $(Q) $(CC) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
-$(1)_CXX_ARGS = $(Q) $(C++) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CXXFLAGS)
+$(1)_CC_BASE = $(Q) $(CC) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CPPFLAGS)
 $(1)_AR = $(call lc,$(BUILD_DIR)$(1).a)
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "CC $$<"
 	$(Q) mkdir -p $$(dir $$@)
-	$$($(1)_CC_ARGS) -c $$< -o $$@
-	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+	$$($(1)_CC_BASE) $$($(1)_CFLAGS) -c $$< -o $$@
+	$$($(1)_CC_BASE) $$($(1)_CFLAGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.cpp $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "C++ $$<"
 	$(Q) mkdir -p $$(dir $$@)
-	$$($(1)_CXX_ARGS) -c $$< -o $$@
-	$$($(1)_CXX_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+	$$($(1)_CC_BASE) $$($(1)_CXXFLAGS) -c $$< -o $$@
+	$$($(1)_CC_BASE) $$($(1)_CXXFLAGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "AS $$<"
 	$(Q) mkdir -p $$(dir $$@)
-	$$($(1)_CC_ARGS) -c $$< -o $$@
-	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+	$$($(1)_CC_BASE) -c $$< -o $$@
+	$$($(1)_CC_BASE) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 # the component is shown to depend on both obj and source files so we get a meaningful error message
 # for missing explicitly named source files
