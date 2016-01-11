@@ -109,7 +109,7 @@ CXXFLAGS	?= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti $(EXTRA_CXXFLAGS)
 # these aren't technically preprocesor args, but used by all 3 of C, C++, assembler
 CPPFLAGS	+= -mlongcalls -mtext-section-literals
 
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map  $(EXTRA_LDFLAGS)
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(addprefix -T,$(LINKER_SCRIPTS)) $(EXTRA_LDFLAGS)
 
 ifeq ($(SPLIT_SECTIONS),1)
   C_CXX_FLAGS += -ffunction-sections -fdata-sections
@@ -135,11 +135,11 @@ GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
 CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV)
 
 ifeq ($(OTA),0)
-LINKER_SCRIPTS  = $(ROOT)ld/nonota.ld
+LINKER_SCRIPTS = $(ROOT)ld/nonota.ld
 else
 LINKER_SCRIPTS = $(ROOT)ld/ota.ld
 endif
-LINKER_SCRIPTS += $(ROOT)ld/common.ld $(ROOT)ld/rom.ld
+LINKER_SCRIPTS += $(ROOT)ld/common.ld $(ROOT)ld/rom.ld $(EXTRA_LINKER_SCRIPTS)
 
 ####
 #### no user configurable options below here
@@ -163,7 +163,6 @@ PROGRAM_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 SDK_LIB_ARGS  = $(addprefix -l,$(SDK_LIBS))
 LIB_ARGS      = $(addprefix -l,$(LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
-LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS))
 
 ifeq ($(OTA),0)
 # for non-OTA, we create two different files for uploading into the flash
