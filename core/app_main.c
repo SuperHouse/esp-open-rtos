@@ -165,7 +165,7 @@ void IRAM sdk_user_fatal_exception_handler(void) {
 
 
 static void IRAM default_putc(char c) {
-    uart_putc(0, c);
+    uart_putc(PRINT_UART, c);
 }
 
 // .text+0x258
@@ -232,6 +232,10 @@ void IRAM sdk_user_start(void) {
     sdk_SPIRead(ic_flash_addr, buf32, sizeof(struct sdk_g_ic_saved_st));
     Cache_Read_Enable(0, 0, 1);
     zero_bss();
+	// If user wants output through UART1, switch GPIO2 to U1TX function
+#if PRINT_UART == 1
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_U1TXD_BK);
+#endif
     sdk_os_install_putc1(default_putc);
     if (cksum_magic == 0xffffffff) {
         // No checksum required
