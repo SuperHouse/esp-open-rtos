@@ -4,3 +4,6 @@
 [submodule "extras/mbedtls/mbedtls"]
 	path = extras/mbedtls/mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "tests/unity"]
+	path = tests/unity
+	url = git@github.com:ThrowTheSwitch/Unity.git
