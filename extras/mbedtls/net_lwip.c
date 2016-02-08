@@ -129,19 +129,41 @@ int mbedtls_net_connect( mbedtls_net_context *ctx, const char *host, const char 
 int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char *port, int proto )
 {
     int n, ret;
-    struct addrinfo hints, *addr_list, *cur;
+    struct addrinfo *addr_list, *cur;
+
+    /* Only request desired protocol */
+    const struct addrinfo hints = {
+        .ai_family = AF_UNSPEC,
+        .ai_socktype = (proto == MBEDTLS_NET_PROTO_UDP ? SOCK_DGRAM : SOCK_STREAM),
+        .ai_protocol = (proto == MBEDTLS_NET_PROTO_UDP ? IPPROTO_UDP : IPPROTO_TCP),
+    };
+
+    struct sockaddr_in sockaddr_ipaddr_any = {
+        .sin_len = sizeof(struct sockaddr_in),
+        .sin_family = AF_INET,
+        .sin_port = htons(atoi(port)),
+        .sin_addr = { IPADDR_ANY },
+    };
+
+    struct addrinfo all_interfaces_addr = {
+        .ai_family = AF_INET,
+        .ai_socktype = hints.ai_socktype,
+        .ai_protocol = hints.ai_protocol,
+        .ai_addrlen = sizeof(struct sockaddr_in),
+        .ai_addr = (struct sockaddr *)&sockaddr_ipaddr_any,
+    };
 
     if( ( ret = net_prepare() ) != 0 )
         return( ret );
 
-    /* Bind to IPv6 and/or IPv4, but only in the desired protocol */
-    memset( &hints, 0, sizeof( hints ) );
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = proto == MBEDTLS_NET_PROTO_UDP ? SOCK_DGRAM : SOCK_STREAM;
-    hints.ai_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPPROTO_UDP : IPPROTO_TCP;
-
-    if( getaddrinfo( bind_ip, port, &hints, &addr_list ) != 0 )
+    if(bind_ip == NULL) {
+        /* mbedTLS docs specify bind_ip == NULL means all interfaces, but lwip getaddrinfo() assumes NULL
+           means localhost. So we swap in a precreated IPADDR_ANY addrinfo result here. */
+        addr_list = &all_interfaces_addr;
+    }
+    else if( getaddrinfo( bind_ip, port, &hints, &addr_list ) != 0 ) {
         return( MBEDTLS_ERR_NET_UNKNOWN_HOST );
+    }
 
     /* Try the sockaddrs until a binding succeeds */
     ret = MBEDTLS_ERR_NET_UNKNOWN_HOST;
@@ -187,7 +209,9 @@ int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char 
         break;
     }
 
-    freeaddrinfo( addr_list );
+    if(bind_ip != NULL) {
+        freeaddrinfo( addr_list );
+    }
 
     return( ret );
 

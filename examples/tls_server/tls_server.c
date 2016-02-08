@@ -158,7 +158,7 @@ void tls_server_task(void *pvParameters)
         /*
          * 1. Start the connection
          */
-        ret = mbedtls_net_bind(&server_ctx, "0.0.0.0", PORT, MBEDTLS_NET_PROTO_TCP);
+        ret = mbedtls_net_bind(&server_ctx, NULL, PORT, MBEDTLS_NET_PROTO_TCP);
         if(ret != 0)
         {
             printf(" failed\n  ! mbedtls_net_bind returned %d\n\n", ret);
