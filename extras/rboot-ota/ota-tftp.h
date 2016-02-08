@@ -20,6 +20,8 @@
  * IMPORTANT: TFTP is not a secure protocol.
  * Only allow TFTP OTA updates on trusted networks.
  *
+ *
+ * For more details, see https://github.com/SuperHouse/esp-open-rtos/wiki/OTA-Update-Configuration
  */
 
 /* Start a FreeRTOS task to wait to receive an OTA update from a TFTP client.
