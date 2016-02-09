@@ -139,13 +139,34 @@ SECTIONS
        (except for libgcc which is matched above.)
     */
     *(.literal .text .literal.* .text.*)
+    /* Anything explicitly marked as "irom" or "irom0" should go here */
+    *(.irom.* .irom.*.* .irom0.*)
+    _irom0_text_end = ABSOLUTE(.);
+
+    /* Temporary .rodata hacks start here, eventually all rodata will
+    be in irom by default */
     /* mbedtls rodata */
     *mbedtls.a:*.o(.rodata.* .rodata)
     /* actual certificate in example (TEMPORARY HACK) */
     *:cert.o(.rodata.* .rodata)
-    /* Anything explicitly marked as "irom" or "irom0" should go here */
-    *(.irom.* .irom.*.* .irom0.*)
-    _irom0_text_end = ABSOLUTE(.);
+    /*  C++ constructor and destructor tables, properly ordered:  */
+    __init_array_start = ABSOLUTE(.);
+    KEEP (*crtbegin.o(.ctors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+    KEEP (*(SORT(.ctors.*)))
+    KEEP (*(.ctors))
+    __init_array_end = ABSOLUTE(.);
+    KEEP (*crtbegin.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+    KEEP (*(SORT(.dtors.*)))
+    KEEP (*(.dtors))
+    /*  C++ exception handlers table:  */
+    __XT_EXCEPTION_DESCS__ = ABSOLUTE(.);
+    *(.xt_except_desc)
+    *(.gnu.linkonce.h.*)
+    __XT_EXCEPTION_DESCS_END__ = ABSOLUTE(.);
+    *(.xt_except_desc_end)
+
   } >irom0_0_seg :irom0_0_phdr
 
   .data : ALIGN(4)
@@ -179,23 +200,6 @@ SECTIONS
     *(.gnu.version_r)
     *(.eh_frame)
     . = (. + 3) & ~ 3;
-    /*  C++ constructor and destructor tables, properly ordered:  */
-    __init_array_start = ABSOLUTE(.);
-    KEEP (*crtbegin.o(.ctors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
-    KEEP (*(SORT(.ctors.*)))
-    KEEP (*(.ctors))
-    __init_array_end = ABSOLUTE(.);
-    KEEP (*crtbegin.o(.dtors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
-    KEEP (*(SORT(.dtors.*)))
-    KEEP (*(.dtors))
-    /*  C++ exception handlers table:  */
-    __XT_EXCEPTION_DESCS__ = ABSOLUTE(.);
-    *(.xt_except_desc)
-    *(.gnu.linkonce.h.*)
-    __XT_EXCEPTION_DESCS_END__ = ABSOLUTE(.);
-    *(.xt_except_desc_end)
     *(.dynamic)
     *(.gnu.version_d)
     . = ALIGN(4);		/* this table MUST be 4-byte aligned */
@@ -229,7 +233,6 @@ SECTIONS
 /*    _stack_sentry = ALIGN(0x8); */
   } >dram0_0_seg :dram0_0_bss_phdr
 /* __stack = 0x3ffc8000; */
-
 
   .lit4 : ALIGN(4)
   {
