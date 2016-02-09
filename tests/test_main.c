@@ -78,9 +78,25 @@ void user_init(void)
         type = 'A';
     else if (type == 'b')
         type = 'B';
-    printf("Running test case %d as %c (%s %s)\n", case_idx, type, cases_start[case_idx].name, get_requirements_name(cases_start[case_idx].type));
+    const testcase_t *tcase = &cases_start[case_idx];
+    printf("\nRunning test case %d (%s %s) as instance %c \nDefinition at %s:%d\n***\n", case_idx,
+           tcase->name, get_requirements_name(tcase->type), type,
+           tcase->file, tcase->line);
+    Unity.CurrentTestName = tcase->name;
+    Unity.TestFile = tcase->file;
+    Unity.CurrentTestLineNumber = tcase->line;
+    Unity.NumberOfTests = 1;
     if(type=='A')
         cases_start[case_idx].a_fn();
     else
         cases_start[case_idx].b_fn();
+    TEST_FAIL_MESSAGE("\n\nTest initialisation routine returned without calling TEST_PASS. Buggy test?");
+}
+
+/* testcase_register is a no-op function, we just need it so the linker
+   knows to pull in the argument at link time.
+ */
+void testcase_register(const testcase_t __attribute__((unused)) *ignored)
+{
+
 }
