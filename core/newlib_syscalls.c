@@ -45,8 +45,8 @@ long _write_r(struct _reent *r, int fd, const char *ptr, int len )
         if(ptr[i] == '\r')
             continue;
         if(ptr[i] == '\n')
-            uart_putc(0, '\r');
-        uart_putc(0, ptr[i]);
+            uart_putc(PRINT_UART, '\r');
+        uart_putc(PRINT_UART, ptr[i]);
     }
     return len;
 }

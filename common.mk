@@ -48,6 +48,9 @@ ESPTOOL ?= esptool.py
 ESPPORT ?= /dev/ttyUSB0
 ESPBAUD ?= 115200
 
+# Set STDOUT_UART to the UART number that will be used to output using printf/os_printf
+STDOUT_UART ?= 0
+
 # Set OTA to 1 to build an image that supports rBoot OTA bootloader
 #
 # Currently only works with 16mbit or more flash sizes, with 8mbit
@@ -100,7 +103,7 @@ ENTRY_SYMBOL ?= call_user_start
 SPLIT_SECTIONS ?= 1
 
 # Common flags for both C & C++_
-C_CXX_FLAGS     ?= -Wall -Werror -Wl,-EL -nostdlib $(EXTRA_C_CXX_FLAGS)
+C_CXX_FLAGS     ?= -Wall -Werror -Wl,-EL -nostdlib -DPRINT_UART=$(STDOUT_UART) $(EXTRA_C_CXX_FLAGS)
 # Flags for C only
 CFLAGS		?= $(C_CXX_FLAGS) -std=gnu99 $(EXTRA_CFLAGS)
 # Flags for C++ only
