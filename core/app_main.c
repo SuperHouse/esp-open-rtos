@@ -407,6 +407,9 @@ void sdk_user_init_task(void *params) {
     vTaskDelete(NULL);
 }
 
+extern void (*__init_array_start)(void);
+extern void (*__init_array_end)(void);
+
 // .Lfunc009 -- .irom0.text+0x5b4
 static void user_start_phase2(void) {
     uint8_t *buf;
@@ -436,6 +439,12 @@ static void user_start_phase2(void) {
     // Wait for UARTs to finish sending anything in their queues.
     uart_flush_txfifo(0);
     uart_flush_txfifo(1);
+
+    // Call gcc constructor functions
+    void (**ctor)(void);
+    for ( ctor = &__init_array_start; ctor != &__init_array_end; ++ctor) {
+        (*ctor)();
+    }
 
     if (phy_info[0] != 5) {
         // Bad version byte.  Discard what we read and use default values

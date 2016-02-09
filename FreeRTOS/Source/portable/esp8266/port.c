@@ -178,9 +178,6 @@ void xPortSysTickHandle (void)
 	//OpenNMI();
 }
 
-static bool sdk_compat_initialised;
-void sdk_compat_initialise(void);
-
 /*
  * See header file for description.
  */
@@ -188,14 +185,6 @@ portBASE_TYPE xPortStartScheduler( void )
 {
     _xt_isr_attach(INUM_SOFT, SV_ISR);
     _xt_isr_unmask(BIT(INUM_SOFT));
-
-    /* ENORMOUS HACK: Call the sdk_compat_initialise() function.
-       This can be removed happily once we have open source startup code.
-    */
-    if(!sdk_compat_initialised) {
-        sdk_compat_initialised = true;
-        sdk_compat_initialise();
-    }
 
     /* Initialize system tick timer interrupt and schedule the first tick. */
     _xt_isr_attach(INUM_TICK, sdk__xt_timer_int);
