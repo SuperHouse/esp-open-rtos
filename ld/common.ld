@@ -232,7 +232,7 @@ SECTIONS
     _heap_start = ABSOLUTE(.);
 /*    _stack_sentry = ALIGN(0x8); */
   } >dram0_0_seg :dram0_0_bss_phdr
-/* __stack = 0x3ffc8000; */
+/* __stack = 0x3ffc8000; <-- this value seems a bit odd, stack on sdk_user_start is ~0x3ffffce9 */
 
   .lit4 : ALIGN(4)
   {

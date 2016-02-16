@@ -12,6 +12,8 @@
 #include <esp/uart.h>
 #include <stdlib.h>
 
+extern void *xPortSupervisorStackPointer;
+
 IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
 {
     extern char   _heap_start; /* linker script defined */
@@ -21,13 +23,16 @@ IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
     if (heap_end == NULL)
 	heap_end = &_heap_start;
     prev_heap_end = heap_end;
-    /* TODO: Check stack collision
-       if (heap_end + incr > stack_ptr)
-       {
-       _write (1, "_sbrk: Heap collided with stack\n", 32);
-       while(1) {}
-       }
-    */
+
+    intptr_t sp = (intptr_t)xPortSupervisorStackPointer;
+    if(sp == 0) /* scheduler not started */
+        __asm__ __volatile__ ("mov %0, a1\n" : "=a"(sp));
+
+    if ((intptr_t)heap_end + incr >= sp)
+    {
+        r->_errno = ENOMEM;
+        return (caddr_t)-1;
+    }
     heap_end += incr;
 
     return (caddr_t) prev_heap_end;

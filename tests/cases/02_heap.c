@@ -4,6 +4,7 @@
 #include <FreeRTOS.h>
 
 DEFINE_SOLO_TESTCASE(02_heap_simple)
+DEFINE_SOLO_TESTCASE(02_heap_full)
 
 /* Simple heap accounting tests */
 static void a_02_heap_simple()
@@ -33,5 +34,23 @@ static void a_02_heap_simple()
     after = xPortGetFreeHeapSize();
     printf("after freeing xPortGetFreeHeapSize = %d bytes\n", after);
     TEST_ASSERT_UINT32_WITHIN_MESSAGE(100, freeheap, after, "Free heap size after freeing buffer should be close to initial");
+    TEST_PASS;
+}
+
+/* Ensure malloc behaves when out of memory */
+static void a_02_heap_full()
+{
+    void *x = malloc(65536);
+    TEST_ASSERT_NULL_MESSAGE(x, "Allocating 64kB should fail and return null");
+
+    void *y = malloc(32768);
+    TEST_ASSERT_NOT_NULL_MESSAGE(y, "Allocating 32kB should succeed");
+
+    void *z = malloc(32768);
+    TEST_ASSERT_NULL_MESSAGE(z, "Allocating second 32kB should fail");
+
+    free(y);
+    z = malloc(32768);
+    TEST_ASSERT_NOT_NULL_MESSAGE(z, "Allocating 32kB should succeed after first block freed");
     TEST_PASS;
 }
