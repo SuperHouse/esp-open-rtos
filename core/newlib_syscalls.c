@@ -9,8 +9,11 @@
 #include <sys/errno.h>
 #include <espressif/sdk_private.h>
 #include <common_macros.h>
+#include <xtensa_ops.h>
 #include <esp/uart.h>
 #include <stdlib.h>
+
+extern void *xPortSupervisorStackPointer;
 
 IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
 {
@@ -21,13 +24,17 @@ IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
     if (heap_end == NULL)
 	heap_end = &_heap_start;
     prev_heap_end = heap_end;
-    /* TODO: Check stack collision
-       if (heap_end + incr > stack_ptr)
-       {
-       _write (1, "_sbrk: Heap collided with stack\n", 32);
-       abort();
-       }
-    */
+
+    intptr_t sp = (intptr_t)xPortSupervisorStackPointer;
+    if(sp == 0) /* scheduler not started */
+        SP(sp);
+
+    if ((intptr_t)heap_end + incr >= sp)
+    {
+        r->_errno = ENOMEM;
+        return (caddr_t)-1;
+    }
+
     heap_end += incr;
 
     return (caddr_t) prev_heap_end;
