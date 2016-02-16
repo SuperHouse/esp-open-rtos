@@ -1,6 +1,5 @@
 PROGRAM=tests
 
-EXTRA_LINKER_SCRIPTS = $(PROGRAM_DIR)ld/tests.ld
 PROGRAM_SRC_DIR = $(PROGRAM_DIR) $(PROGRAM_DIR)cases
 
 # Add unity test framework headers & core source file

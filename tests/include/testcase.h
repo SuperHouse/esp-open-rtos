@@ -20,15 +20,15 @@ typedef enum {
 typedef void (testcase_fn_t)(void);
 
 typedef struct {
-    char *name;
-    char *file;
-    uint8_t line;
+    const char *name;
+    const char *file;
+    int line;
     testcase_type_t type;
     testcase_fn_t *a_fn;
     testcase_fn_t *b_fn;
 } testcase_t;
 
-void testcase_register(const testcase_t *ignored);
+void testcase_register(const testcase_t *testcase);
 
 /* Register a test case using these macros. Use DEFINE_SOLO_TESTCASE for single-MCU tests,
    and DEFINE_TESTCASE for all other test types.
@@ -43,17 +43,16 @@ void testcase_register(const testcase_t *ignored);
     _DEFINE_TESTCASE_COMMON(NAME, TYPE, A_##NAME, B_##NAME)
 
 
-#define _DEFINE_TESTCASE_COMMON(NAME, TYPE, A_FN, B_FN)    \
-    const __attribute__((section(".testcases.text")))                   \
-    testcase_t testcase_##NAME = { .name = #NAME,                       \
-                                   .file = __FILE__,                    \
-                                   .line = __LINE__,                    \
-                                   .type = TYPE,                        \
-                                   .a_fn = A_FN,                        \
-                                   .b_fn = B_FN,                        \
-    };                                                                  \
+#define _DEFINE_TESTCASE_COMMON(NAME, TYPE, A_FN, B_FN)                 \
     void __attribute__((constructor)) testcase_ctor_##NAME() {          \
-        testcase_register(&testcase_##NAME);                            \
+        const testcase_t testcase = { .name = #NAME,                    \
+                                      .file = __FILE__,                 \
+                                      .line = __LINE__,                 \
+                                      .type = TYPE,                     \
+                                      .a_fn = A_FN,                     \
+                                      .b_fn = B_FN,                     \
+        };                                                              \
+        testcase_register(&testcase);                                   \
     }
 
 #endif

@@ -1,10 +1,7 @@
 #include "testcase.h"
 #include <stdlib.h>
 #include <esp/uart.h>
-
-/* Linker sets up these pointers to the registered test cases */
-extern const testcase_t _testcases_start;
-extern const testcase_t _testcases_end;
+#include <string.h>
 
 /* Convert requirement enum to a string we can print */
 static const char *get_requirements_name(const testcase_type_t arg) {
@@ -20,16 +17,34 @@ static const char *get_requirements_name(const testcase_type_t arg) {
     }
 }
 
+static testcase_t *testcases;
+static uint32_t testcases_count;
+static uint32_t testcases_alloc;
+
+void testcase_register(const testcase_t *testcase)
+{
+    /* Grow the testcases buffer to fit the new test case,
+       this buffer will be freed before the test runs.
+     */
+    if(testcases_count == testcases_alloc) {
+        testcases_alloc += 1;
+        testcases = realloc(testcases, testcases_alloc * sizeof(testcase_t));
+        if(!testcases) {
+            printf("Failed to reallocate test case register length %d\n", testcases_alloc);
+            testcases_count = 0;
+            testcases_alloc = 0;
+        }
+    }
+    memcpy(&testcases[testcases_count++], testcase, sizeof(testcase_t));
+}
+
 void user_init(void)
 {
-    const testcase_t *cases_start = &_testcases_start;
-    const testcase_t *cases_end= &_testcases_end;
     uart_set_baud(0, 115200);
     printf("esp-open-rtos test runner.\n");
-    printf("testcases_start %p testcases_end %p\n", cases_start, cases_end);
-    printf("%d test cases are defined:\n\n", cases_end-cases_start);
-    for(const testcase_t *icase=cases_start; icase != cases_end; icase++) {
-        printf("CASE %d = %s %s\n", icase-cases_start, icase->name, get_requirements_name(icase->type));
+    printf("%d test cases are defined:\n\n", testcases_count);
+    for(int i = 0; i < testcases_count; i++) {
+        printf("CASE %d = %s %s\n", i, testcases[i].name, get_requirements_name(testcases[i].type));
     }
 
     printf("Enter A or B then number of test case to run, ie A0.\n");
@@ -65,10 +80,10 @@ void user_init(void)
         if(case_idx == -1) {
             printf("Invalid case index");
         }
-        else if(case_idx < 0 || case_idx >= cases_end-cases_start) {
+        else if(case_idx < 0 || case_idx >= testcases_count) {
             printf("Test case index out of range.\n");
         }
-        else if((type == 'b' || type =='B') && cases_start[case_idx].type == SOLO) {
+        else if((type == 'b' || type =='B') && testcases[case_idx].type == SOLO) {
             printf("No ESP type B for 'SOLO' test cases.\n");
         } else {
             break;
@@ -78,25 +93,23 @@ void user_init(void)
         type = 'A';
     else if (type == 'b')
         type = 'B';
-    const testcase_t *tcase = &cases_start[case_idx];
+    testcase_t testcase;
+    memcpy(&testcase, &testcases[case_idx], sizeof(testcase_t));
+    /* Free the register of test cases now we have the one we're running */
+    free(testcases);
+    testcases_alloc = 0;
+    testcases_count = 0;
+
     printf("\nRunning test case %d (%s %s) as instance %c \nDefinition at %s:%d\n***\n", case_idx,
-           tcase->name, get_requirements_name(tcase->type), type,
-           tcase->file, tcase->line);
-    Unity.CurrentTestName = tcase->name;
-    Unity.TestFile = tcase->file;
-    Unity.CurrentTestLineNumber = tcase->line;
+           testcase.name, get_requirements_name(testcase.type), type,
+           testcase.file, testcase.line);
+    Unity.CurrentTestName = testcase.name;
+    Unity.TestFile = testcase.file;
+    Unity.CurrentTestLineNumber = testcase.line;
     Unity.NumberOfTests = 1;
     if(type=='A')
-        cases_start[case_idx].a_fn();
+        testcase.a_fn();
     else
-        cases_start[case_idx].b_fn();
+        testcase.b_fn();
     TEST_FAIL_MESSAGE("\n\nTest initialisation routine returned without calling TEST_PASS. Buggy test?");
-}
-
-/* testcase_register is a no-op function, we just need it so the linker
-   knows to pull in the argument at link time.
- */
-void testcase_register(const testcase_t __attribute__((unused)) *ignored)
-{
-
 }
