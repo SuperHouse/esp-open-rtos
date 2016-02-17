@@ -279,7 +279,7 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 $$($(1)_AR): $$($(1)_OBJ_FILES) $$($(1)_SRC_FILES)
 	$(vecho) "AR $$@"
 	$(Q) mkdir -p $$(dir $$@)
-	$(Q) $(AR) cru $$@ $$^
+	$(Q) $(AR) cru $$@ $$(filter %.o,$$^)
 
 COMPONENT_ARS += $$($(1)_AR)
 
