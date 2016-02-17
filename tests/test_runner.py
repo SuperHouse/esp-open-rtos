@@ -9,7 +9,7 @@ import re
 import time
 import traceback
 
-TEST_RESET_TIMEOUT=0.1
+SHORT_OUTPUT_TIMEOUT=0.25 # timeout for resetting and/or waiting for more lines of output
 TESTCASE_TIMEOUT=10
 TESTRUNNER_BANNER="esp-open-rtos test runner."
 
@@ -150,12 +150,12 @@ class TestMonitor(object):
     def _monitorThread(self):
         self.output = ""
         start_time = time.time()
-        self._port.timeout = 0.1
+        self._port.timeout = SHORT_OUTPUT_TIMEOUT
         try:
             while not self._cancelled and time.time() < start_time + TESTCASE_TIMEOUT:
                 line = self._port.readline().decode("utf-8", "ignore")
                 if line == "":
-                    line = "(TIMED OUT)\r\n"
+                    continue # timed out
                 self.output += "%s+%4.2fs %s" % (self._instance, time.time()-start_time, line)
                 verbose_print(line.strip())
                 if line.endswith(":PASS\r\n"):
@@ -292,7 +292,7 @@ class TestSerialPort(serial.Serial):
     def __init__(self, *args, **kwargs):
         super(TestSerialPort, self).__init__(*args, **kwargs)
 
-    def wait_line(self, callback, timeout = TEST_RESET_TIMEOUT):
+    def wait_line(self, callback, timeout = SHORT_OUTPUT_TIMEOUT):
         """ Wait for the port to output a particular piece of line content, as judged by callback
 
             Callback called as 'callback(line)' and returns not-True if non-match otherwise can return any value.
