@@ -40,7 +40,7 @@ FLASH_SPEED ?= 40
 # Output directories to store intermediate compiled files
 # relative to the program directory
 BUILD_DIR ?= $(PROGRAM_DIR)build/
-FW_BASE ?= $(PROGRAM_DIR)firmware/
+FIRMWARE_DIR ?= $(PROGRAM_DIR)firmware/
 
 # esptool.py from https://github.com/themadinventor/esptool
 ESPTOOL ?= esptool.py
@@ -170,11 +170,11 @@ ifeq ($(OTA),0)
 # these are the names and options to generate them
 FW_ADDR_1	= 0x00000
 FW_ADDR_2	= 0x20000
-FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_ADDR_1).bin)
-FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_ADDR_2).bin)
+FW_FILE_1    = $(addprefix $(FIRMWARE_DIR),$(FW_ADDR_1).bin)
+FW_FILE_2    = $(addprefix $(FIRMWARE_DIR),$(FW_ADDR_2).bin)
 else
 # for OTA, it's a single monolithic image
-FW_FILE = $(addprefix $(FW_BASE),$(PROGRAM).bin)
+FW_FILE = $(addprefix $(FIRMWARE_DIR),$(PROGRAM).bin)
 endif
 
 # firmware tool arguments
@@ -339,14 +339,14 @@ $(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
 	$(vecho) "LD $@"
 	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(COMPONENT_ARS) $(LIB_ARGS) $(SDK_LIB_ARGS) -Wl,--end-group -o $@
 
-$(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib:
+$(BUILD_DIR) $(FIRMWARE_DIR) $(BUILD_DIR)sdklib:
 	$(Q) mkdir -p $@
 
-$(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FW_BASE)
+$(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(vecho) "FW $@"
-	$(Q) $(ESPTOOL) elf2image $(ESPTOOL_ARGS) $< -o $(FW_BASE)
+	$(Q) $(ESPTOOL) elf2image $(ESPTOOL_ARGS) $< -o $(FIRMWARE_DIR)
 
-$(FW_FILE): $(PROGRAM_OUT) $(FW_BASE)
+$(FW_FILE): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(Q) $(IMGTOOL) $(IMGTOOL_ARGS) -bin -boot2 $(PROGRAM_OUT) $(FW_FILE) .text .data .rodata
 
 ifeq ($(OTA),0)
@@ -372,7 +372,7 @@ rebuild:
 
 clean:
 	$(Q) rm -rf $(BUILD_DIR)
-	$(Q) rm -rf $(FW_BASE)
+	$(Q) rm -rf $(FIRMWARE_DIR)
 
 # prevent "intermediate" files from being deleted
 .SECONDARY:
