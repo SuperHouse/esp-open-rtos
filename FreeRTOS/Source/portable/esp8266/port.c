@@ -81,14 +81,12 @@
 unsigned cpu_sr;
 char level1_int_disabled;
 
-/* Supervisor stack pointer entry. On reset, sdk_user_start sets a
- * tentative 512 byte supervisor stack size.
+/* Supervisor stack pointer entry. This is the "high water mark" of
+   how far the supervisor stack grew down before task started. Is zero
+   before the scheduler starts.
 
- When the scheduler starts, this changes to the "high water mark" of
- how far the supervisor stack grew down before task started.
-
- After tasks start, task stacks are all allocated from the heap and
- FreeRTOS checks for stack overflow.
+ After the scheduler starts, task stacks are all allocated from the
+ heap and FreeRTOS checks for stack overflow.
 */
 void *xPortSupervisorStackPointer;
 
