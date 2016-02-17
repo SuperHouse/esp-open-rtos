@@ -131,7 +131,10 @@ else
     LDFLAGS += -g -O2
 endif
 
-GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
+GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD 2> /dev/null)\"
+ifeq ($(GITSHORTREV),\"\")
+  GITSHORTREV="\"(nogit)\"" # (same length as a short git hash)
+endif
 CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV)
 
 ifeq ($(OTA),0)
