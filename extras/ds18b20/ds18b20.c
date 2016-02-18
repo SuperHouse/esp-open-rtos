@@ -13,14 +13,8 @@
 #define DS1820_ALARMSEARCH      0xEC
 #define DS1820_CONVERT_T        0x44
 
-uint8_t readDS18B20(uint8_t pin, DSENSOR *result){
-    static uint8_t one_time = 1;
+uint8_t readDS18B20(uint8_t pin, ds_sensor_t *result){
     
-    if (one_time){
-        onewire_init(pin);
-        one_time = 0;
-    }
-
     uint8_t addr[8];
     uint8_t sensor_id = 0;
     onewire_reset_search(pin);
@@ -34,11 +28,11 @@ uint8_t readDS18B20(uint8_t pin, DSENSOR *result){
 
         onewire_reset(pin);
         onewire_select(pin, addr);
-        onewire_write(pin, DS1820_CONVERT_T, owDefaultPower);
+        onewire_write(pin, DS1820_CONVERT_T, ONEWIRE_DEFAULT_POWER);
         sdk_os_delay_us(750);
         onewire_reset(pin);
         onewire_select(pin, addr);
-        onewire_write(pin, DS1820_READ_SCRATCHPAD, owDefaultPower);
+        onewire_write(pin, DS1820_READ_SCRATCHPAD, ONEWIRE_DEFAULT_POWER);
 
         uint8_t get[10];
 
@@ -75,14 +69,14 @@ float read_single_DS18B20(uint8_t pin){
     onewire_init(pin);
     onewire_reset(pin);
 
-    onewire_write(pin, DS1820_SKIP_ROM, owDefaultPower);
-    onewire_write(pin, DS1820_CONVERT_T, owDefaultPower);
+    onewire_write(pin, DS1820_SKIP_ROM, ONEWIRE_DEFAULT_POWER);
+    onewire_write(pin, DS1820_CONVERT_T, ONEWIRE_DEFAULT_POWER);
 
     sdk_os_delay_us(750);
 
     onewire_reset(pin);
-    onewire_write(pin, DS1820_SKIP_ROM, owDefaultPower);
-    onewire_write(pin, DS1820_READ_SCRATCHPAD, owDefaultPower);
+    onewire_write(pin, DS1820_SKIP_ROM, ONEWIRE_DEFAULT_POWER);
+    onewire_write(pin, DS1820_READ_SCRATCHPAD, ONEWIRE_DEFAULT_POWER);
     
     uint8_t get[10];
 
