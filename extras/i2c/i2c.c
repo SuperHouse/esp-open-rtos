@@ -36,14 +36,21 @@
 #define CLK_STRETCH  (10)
 
 static bool started;
+static bool pullups;
 static uint8_t g_scl_pin;
 static uint8_t g_sda_pin;
 
 void i2c_init(uint8_t scl_pin, uint8_t sda_pin)
 {
     started = false;
+    pullups = false;
     g_scl_pin = scl_pin;
     g_sda_pin = sda_pin;
+}
+
+void i2c_pullups(bool enable)
+{
+	pullups = enable;
 }
 
 static void i2c_delay(void)
@@ -54,14 +61,14 @@ static void i2c_delay(void)
 // Set SCL as input and return current level of line, 0 or 1
 static bool read_scl(void)
 {
-    gpio_enable(g_scl_pin, GPIO_INPUT);
+    gpio_enable(g_scl_pin, pullups ? GPIO_INPUT_PULLUP : GPIO_INPUT);
     return gpio_read(g_scl_pin); // Clock high, valid ACK
 }
 
 // Set SDA as input and return current level of line, 0 or 1
 static bool read_sda(void)
 {
-    gpio_enable(g_sda_pin, GPIO_INPUT);
+    gpio_enable(g_sda_pin, pullups ? GPIO_INPUT_PULLUP : GPIO_INPUT);
     // TODO: Without this delay we get arbitration lost in i2c_stop
     i2c_delay();
     return gpio_read(g_sda_pin); // Clock high, valid ACK
