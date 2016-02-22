@@ -17,13 +17,20 @@ typedef enum {
     GPIO_INPUT,
     GPIO_OUTPUT,         /* "Standard" push-pull output */
     GPIO_OUT_OPEN_DRAIN, /* Open drain output */
-    GPIO_INPUT_PULLUP,
 } gpio_direction_t;
 
-/* Enable GPIO on the specified pin, and set it to input/output/ with
- *  pullup as needed
+/* Enable GPIO on the specified pin, and set it to input or output mode
  */
 void gpio_enable(const uint8_t gpio_num, const gpio_direction_t direction);
+
+/* Enable/disable internal pullup resistor for a particular GPIO
+ *
+ * Note: According to Espressif, pullup resistor values are between 30K and
+ * 100K ohms (see http://bbs.espressif.com/viewtopic.php?t=1079#p4097)
+ * However, measured values suggest that the actual value is likely to be close
+ * to 47K in reality.
+ */
+void gpio_set_pullup(uint8_t gpio_num, bool enabled, bool enabled_during_sleep);
 
 /* Disable GPIO on the specified pin, and set it Hi-Z.
  *
@@ -34,6 +41,19 @@ static inline void gpio_disable(const uint8_t gpio_num)
 {
     GPIO.ENABLE_OUT_CLEAR = BIT(gpio_num);
     *gpio_iomux_reg(gpio_num) &= ~IOMUX_PIN_OUTPUT_ENABLE;
+}
+
+/* Set whether the specified pin continues to drive its output when the ESP8266
+ * goes into sleep mode.  Note that this setting is reset to off whenever
+ * gpio_enable is called, so this must be called after calling that function.
+ */
+static inline void gpio_set_output_on_sleep(const uint8_t gpio_num, bool enabled)
+{
+    if (enabled) {
+        IOMUX.PIN[gpio_to_iomux(gpio_num)] |= IOMUX_PIN_OUTPUT_ENABLE_SLEEP;
+    } else {
+        IOMUX.PIN[gpio_to_iomux(gpio_num)] &= ~IOMUX_PIN_OUTPUT_ENABLE_SLEEP;
+    }
 }
 
 /* Set output of a pin high or low.
