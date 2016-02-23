@@ -1,7 +1,14 @@
 # Yet another one wire driver for the ESP8266
 
-This is a port of bit banging one wire driver based on nodemcu implementaion.
+This is a port of a bit-banging one wire driver based on the implementation
+from NodeMCU.
 
-Seams that they port it from  https://www.pjrc.com/teensy/td_libs_OneWire.html
+This, in turn, appears to have been based on the PJRC Teensy driver
+(https://www.pjrc.com/teensy/td_libs_OneWire.html), by Jim Studt, Paul
+Stoffregen, and a host of others.
 
-For all aspect regarding license, please check LICENSE file and coresponding projects.
+The original code is licensed under the MIT license.  The CRC code was taken
+(at least partially) from Dallas Semiconductor sample code, which was licensed
+under an MIT license with an additional clause (prohibiting inappropriate use
+of the Dallas Semiconductor name).  See the accompanying LICENSE file for
+details.
