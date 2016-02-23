@@ -13,7 +13,7 @@
 #define DS1820_ALARMSEARCH      0xEC
 #define DS1820_CONVERT_T        0x44
 
-uint8_t readDS18B20(uint8_t pin, ds_sensor_t *result){
+uint8_t ds18b20_read_all(uint8_t pin, ds_sensor_t *result) {
     
     uint8_t addr[8];
     uint8_t sensor_id = 0;
@@ -55,18 +55,16 @@ uint8_t readDS18B20(uint8_t pin, ds_sensor_t *result){
         float temperature;
 
         temperature = (temp * 625.0)/10000;
-        //printf("Got a DS18B20 Reading: %d.%d\n", (int)temperature, (int)(temperature - (int)temperature) * 100);
+        //printf("Got a DS18B20 Reading: %d.%02d\n", (int)temperature, (int)(temperature - (int)temperature) * 100);
         result[sensor_id].id = sensor_id;
-        result[sensor_id].major = (int)temperature;
-        result[sensor_id].minor = (int)(temperature) - (int)temperature * 100;
+        result[sensor_id].value = temperature;
         sensor_id++;
     }
     return sensor_id;
 }
 
-float read_single_DS18B20(uint8_t pin){
+float ds18b20_read_single(uint8_t pin) {
   
-    onewire_init(pin);
     onewire_reset(pin);
 
     onewire_write(pin, DS1820_SKIP_ROM, ONEWIRE_DEFAULT_POWER);
@@ -101,5 +99,5 @@ float read_single_DS18B20(uint8_t pin){
 
     temperature = (temp * 625.0)/10000;
     return temperature;
-    //printf("Got a DS18B20 Reading: %d.%d\n", (int)temperature, (int)(temperature - (int)temperature) * 100);
+    //printf("Got a DS18B20 Reading: %d.%02d\n", (int)temperature, (int)(temperature - (int)temperature) * 100);
 }
