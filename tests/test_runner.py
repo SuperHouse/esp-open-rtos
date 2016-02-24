@@ -66,7 +66,7 @@ class TestCase(object):
 
         Returns a TestResult
         """
-        print("Running test case '%s'..." % self.name)
+        sys.stdout.write("Running test case '%s'...%s" % (self.name, "\n" if verbose else " "*(40-len(self.name))))
         mon_a = env_a.start_testcase(self)
         mon_b = env_b.start_testcase(self) if env_b else None
         while True:
@@ -90,9 +90,17 @@ class TestCase(object):
 
         if mon_b is not None:
             # return whichever result is more severe
-            return max(mon_a.get_result(), mon_b.get_result())
+            res = max(mon_a.get_result(), mon_b.get_result())
         else:
-            return mon_a.get_result()
+            res = mon_a.get_result()
+        if not verbose: # finish the line after the ...
+            print(TestResult.STATUS_NAMES[res.status])
+            if res.is_failure():
+                message = res.message
+                if "/" in res.message: # cut anything before the file name in the failure
+                    message = message[message.index("/"):]
+                print("FAILURE MESSAGE:\n%s\n" % message)
+        return res
 
 class TestResult(object):
     """ Class to wrap a test result code and a message """
@@ -162,7 +170,7 @@ class TestMonitor(object):
                     self._result = TestResult(TestResult.PASSED, "Test passed.")
                     return
                 elif ":FAIL:" in line:
-                    self._result = TestResult(TestResult.FAILED, "Test failed.")
+                    self._result = TestResult(TestResult.FAILED, line)
                     return
                 elif line == TESTRUNNER_BANNER:
                     self._result = TestResult(TestResult.ERROR, "Test caused crash and reset.")
