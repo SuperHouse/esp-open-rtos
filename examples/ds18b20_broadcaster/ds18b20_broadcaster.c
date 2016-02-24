@@ -1,3 +1,11 @@
+/*
+ * This is example of udp broadcaster.
+ * It grab data from ds18b20 sensor and emit result over wifi.
+ *
+ * Author Grzegorz Hetman : ghetman@gmail.com
+ * License public domain/CC0
+ */
+
 #include <string.h>
 
 #include "espressif/esp_common.h"
