@@ -43,25 +43,41 @@ inline static esp_reg_t gpio_iomux_reg(const uint8_t gpio_number)
     return &(IOMUX.PIN[gpio_to_iomux(gpio_number)]);
 }
 
+inline static void iomux_set_function(uint8_t iomux_num, uint32_t func)
+{
+    uint32_t prev = IOMUX.PIN[iomux_num] & ~IOMUX_PIN_FUNC_MASK;
+    IOMUX.PIN[iomux_num] = IOMUX_FUNC(func) | prev;
+}
+
+inline static void iomux_set_direction_flags(uint8_t iomux_num, uint32_t dir_flags)
+{
+    uint32_t mask = IOMUX_PIN_OUTPUT_ENABLE | IOMUX_PIN_OUTPUT_ENABLE_SLEEP;
+    uint32_t prev = IOMUX.PIN[iomux_num] & ~mask;
+    IOMUX.PIN[iomux_num] = dir_flags | prev;
+}
+
+inline static void iomux_set_pullup_flags(uint8_t iomux_num, uint32_t pullup_flags)
+{
+    uint32_t mask = IOMUX_PIN_PULLUP | IOMUX_PIN_PULLDOWN | IOMUX_PIN_PULLUP_SLEEP | IOMUX_PIN_PULLDOWN_SLEEP;
+    uint32_t prev = IOMUX.PIN[iomux_num] & ~mask;
+    IOMUX.PIN[iomux_num] = pullup_flags | prev;
+}
+
 /**
  * Set a pin to the GPIO function.
  *
  * This allows you to set pins to GPIO without knowing in advance the
  * exact register masks to use.
  *
- * flags can be any of IOMUX_PIN_OUTPUT_ENABLE, IOMUX_PIN_PULLUP, IOMUX_PIN_PULLDOWN, etc. Any other flags will be cleared.
- *
- * Equivalent to a direct register operation if gpio_number is known at compile time.
- * ie the following are equivalent:
- *
- * iomux_set_gpio_function(12, IOMUX_PIN_OUTPUT_ENABLE);
- * IOMUX_GPIO12 = IOMUX_GPIO12_FUNC_GPIO | IOMUX_PIN_OUTPUT_ENABLE;
+ * Sets the function and direction, but leaves the pullup configuration the
+ * same as before.
  */
-inline static void iomux_set_gpio_function(const uint8_t gpio_number, const uint32_t flags)
+inline static void iomux_set_gpio_function(uint8_t gpio_number, bool output_enable)
 {
-    const uint8_t reg_idx = gpio_to_iomux(gpio_number);
-    const uint32_t func = (reg_idx > 11 ? IOMUX_FUNC(0) : IOMUX_FUNC(3)) | flags;
-    IOMUX.PIN[reg_idx] = func | flags;
+    const uint8_t iomux_num = gpio_to_iomux(gpio_number);
+    const uint32_t func = iomux_num > 11 ? 0 : 3;
+    iomux_set_function(iomux_num, func);
+    iomux_set_direction_flags(iomux_num, output_enable ? IOMUX_PIN_OUTPUT_ENABLE : 0);
 }
 
 #ifdef	__cplusplus

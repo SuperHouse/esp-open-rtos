@@ -8,32 +8,34 @@
 
 void gpio_enable(const uint8_t gpio_num, const gpio_direction_t direction)
 {
-    uint32_t iomux_flags;
-
-    switch(direction) {
+    switch (direction) {
     case GPIO_INPUT:
-        iomux_flags = 0;
+        GPIO.ENABLE_OUT_CLEAR = BIT(gpio_num);
+        iomux_set_gpio_function(gpio_num, false);
         break;
     case GPIO_OUTPUT:
-        iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
+        GPIO.CONF[gpio_num] &= ~GPIO_CONF_OPEN_DRAIN;
+        GPIO.ENABLE_OUT_SET = BIT(gpio_num);
+        iomux_set_gpio_function(gpio_num, true);
         break;
     case GPIO_OUT_OPEN_DRAIN:
-        iomux_flags = IOMUX_PIN_OUTPUT_ENABLE;
-        break;
-    case GPIO_INPUT_PULLUP:
-        iomux_flags = IOMUX_PIN_PULLUP;
-        break;
-    default:
-        return; /* Invalid direction flag */
-    }
-    iomux_set_gpio_function(gpio_num, iomux_flags);
-    if(direction == GPIO_OUT_OPEN_DRAIN)
         GPIO.CONF[gpio_num] |= GPIO_CONF_OPEN_DRAIN;
-    else
-        GPIO.CONF[gpio_num] &= ~GPIO_CONF_OPEN_DRAIN;
-    if (iomux_flags & IOMUX_PIN_OUTPUT_ENABLE)
         GPIO.ENABLE_OUT_SET = BIT(gpio_num);
-    else
-        GPIO.ENABLE_OUT_CLEAR = BIT(gpio_num);
+        iomux_set_gpio_function(gpio_num, true);
+        break;
+    }
+}
+
+void gpio_set_pullup(uint8_t gpio_num, bool enabled, bool enabled_during_sleep)
+{
+    uint32_t flags = 0;
+
+    if (enabled) {
+        flags |= IOMUX_PIN_PULLUP;
+    }
+    if (enabled_during_sleep) {
+        flags |= IOMUX_PIN_PULLUP_SLEEP;
+    }
+    iomux_set_pullup_flags(gpio_to_iomux(gpio_num), flags);
 }
 
