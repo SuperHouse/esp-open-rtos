@@ -1,9 +1,14 @@
-/* Very basic example that just demonstrates we can run at all!
- */
+/* Unit tests to verify the "unaligned load handler" in core/exception_vectors.S that allows us to
+   complete byte loads from unaligned memory, etc.
+
+   Adapted from a test program in 'experiments' that did this.
+*/
+#include "testcase.h"
 #include "esp/rom.h"
 #include "esp/timer.h"
-#include "espressif/esp_common.h"
 #include "esp/uart.h"
+#include "espressif/esp_common.h"
+#include "xtensa_ops.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -11,61 +16,97 @@
 #include "string.h"
 #include "strings.h"
 
+#include <malloc.h>
+
 #define TESTSTRING "O hai there! %d %d %d"
 
-const char *dramtest = TESTSTRING;
-const __attribute__((section(".iram1.notrodata"))) char iramtest[] = TESTSTRING;
-const __attribute__((section(".text.notrodata"))) char iromtest[] = TESTSTRING;
+static const char *dramtest = TESTSTRING;
+static const __attribute__((section(".iram1.notrodata"))) char iramtest[] = TESTSTRING;
+static const __attribute__((section(".text.notrodata"))) char iromtest[] = TESTSTRING;
+static const volatile __attribute__((section(".iram1.notliterals"))) int16_t unsigned_shorts[] = { -3, -4, -5, -32767, 44 };
+static const __attribute__((section(".iram1.notrodata"))) char sanity_test_data[] = {
+    0x01, 0x55, 0x7e, 0x2a, 0x81, 0xd5, 0xfe, 0xaa
+};
 
-static inline uint32_t get_ccount (void)
+DEFINE_SOLO_TESTCASE(03_byte_load_verify_sections)
+
+#define PTR_IN_REGION(PTR, START, LEN) ((START <= (intptr_t)(PTR)) && ((intptr_t)(PTR) < (START+LEN)))
+
+/* Sanity check, ensure the addresses of the various test strings are in the correct address space regions. */
+static void a_03_byte_load_verify_sections()
 {
-    uint32_t ccount;
-    asm volatile ("rsr.ccount %0" : "=a" (ccount));
-    return ccount;
+  printf("dramtest addr %p\n", dramtest);
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(dramtest, 0x3FFE8000, 0x14000), "dramtest should be in DRAM region");
+
+  printf("iramtest addr %p\n", iramtest);
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(iramtest, 0x40100000, 0x8000), "iramtest should be in IRAM region");
+
+  printf("iromtest addr %p\n", iromtest);
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(iromtest, 0x40220000, 0x100000), "iromtest sohuld be in IROM region");
+
+  printf("unsigned_shorts addr %p\n", unsigned_shorts);
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(unsigned_shorts, 0x40100000, 0x8000), "unsigned_shorts should be in IRAM region");
+
+  printf("sanity_test_data addr %p\n", sanity_test_data);
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(sanity_test_data, 0x40100000, 0x8000), "sanity_test_data should be in IRAM region");
+
+  TEST_PASS();
 }
 
-typedef void (* test_with_fn_t)(const char *string);
 
-char buf[64];
+/* test utility functions used for '03_byte_load_test_strings'
 
-void test_memcpy_aligned(const char *string)
+   returns the expected string result */
+typedef const char *(* test_with_fn_t)(const char *string);
+
+static char buf[64];
+
+static const char * test_memcpy_aligned(const char *string)
 {
     memcpy(buf, string, 16);
+    return "O hai there! %d ";
 }
 
-void test_memcpy_unaligned(const char *string)
+static const char * test_memcpy_unaligned(const char *string)
 {
     memcpy(buf, string, 15);
+    return "O hai there! %d";
 }
 
-void test_memcpy_unaligned2(const char *string)
+
+static const char * test_memcpy_unaligned2(const char *string)
 {
     memcpy(buf, string+1, 15);
+    return " hai there! %d ";
 }
 
-void test_strcpy(const char *string)
+static const char * test_strcpy(const char *string)
 {
     strcpy(buf, string);
+    return dramtest;
 }
 
-void test_sprintf(const char *string)
+static const char * test_sprintf(const char *string)
 {
     sprintf(buf, string, 1, 2, 3);
+    return "O hai there! 1 2 3";
 }
 
-void test_sprintf_arg(const char *string)
+static const char * test_sprintf_arg(const char *string)
 {
     sprintf(buf, "%s", string);
+    return dramtest;
 }
 
-void test_naive_strcpy(const char *string)
+static const char * test_naive_strcpy(const char *string)
 {
     char *to = buf;
     while((*to++ = *string++))
         ;
+    return dramtest;
 }
 
-void test_naive_strcpy_a0(const char *string)
+static const char * test_naive_strcpy_a0(const char *string)
 {
     asm volatile (
 "            mov          a8, %0    \n"
@@ -76,9 +117,10 @@ void test_naive_strcpy_a0(const char *string)
 "            addi.n       a8, a8, 1 \n"
 "            bnez         a0, tns_loop%=\n"
         : : "r" (buf), "r" (string) : "a0", "a8", "a9");
+    return dramtest;
 }
 
-void test_naive_strcpy_a2(const char *string)
+static const char * test_naive_strcpy_a2(const char *string)
 {
     asm volatile (
 "            mov          a8, %0    \n"
@@ -89,9 +131,10 @@ void test_naive_strcpy_a2(const char *string)
 "            addi.n       a8, a8, 1 \n"
 "            bnez         a2, tns_loop%=\n"
         : : "r" (buf), "r" (string) : "a2", "a8", "a9");
+    return dramtest;
 }
 
-void test_naive_strcpy_a3(const char *string)
+static const char * test_naive_strcpy_a3(const char *string)
 {
     asm volatile (
 "            mov          a8, %0    \n"
@@ -102,9 +145,10 @@ void test_naive_strcpy_a3(const char *string)
 "            addi.n       a8, a8, 1 \n"
 "            bnez         a3, tns_loop%=\n"
         : : "r" (buf), "r" (string) : "a3", "a8", "a9");
+    return TESTSTRING;
 }
 
-void test_naive_strcpy_a4(const char *string)
+static const char * test_naive_strcpy_a4(const char *string)
 {
     asm volatile (
 "            mov          a8, %0    \n"
@@ -115,9 +159,10 @@ void test_naive_strcpy_a4(const char *string)
 "            addi.n       a8, a8, 1 \n"
 "            bnez         a4, tns_loop%=\n"
         : : "r" (buf), "r" (string) : "a4", "a8", "a9");
+    return TESTSTRING;
 }
 
-void test_naive_strcpy_a5(const char *string)
+static const char * test_naive_strcpy_a5(const char *string)
 {
     asm volatile (
 "            mov          a8, %0    \n"
@@ -128,9 +173,10 @@ void test_naive_strcpy_a5(const char *string)
 "            addi.n       a8, a8, 1 \n"
 "            bnez         a5, tns_loop%=\n"
         : : "r" (buf), "r" (string) : "a5", "a8", "a9");
+    return TESTSTRING;
 }
 
-void test_naive_strcpy_a6(const char *string)
+static const char * test_naive_strcpy_a6(const char *string)
 {
     asm volatile (
 "            mov          a8, %0    \n"
@@ -141,101 +187,78 @@ void test_naive_strcpy_a6(const char *string)
 "            addi.n       a8, a8, 1 \n"
 "            bnez         a6, tns_loop%=\n"
         : : "r" (buf), "r" (string) : "a6", "a8", "a9");
+    return TESTSTRING;
 }
 
-void test_l16si(const char *string)
+static const char * test_noop(const char *string)
 {
-    /* This follows most of the l16si path, but as the
-     values in the string are all 7 bit none of them get sign extended.
-
-    See separate test_sign_extension function which validates
-    sign extension works as expected.
-    */
-    int16_t *src_int16 = (int16_t *)string;
-    int32_t *dst_int32 = (int32_t *)buf;
-    dst_int32[0] = src_int16[0];
-    dst_int32[1] = src_int16[1];
-    dst_int32[2] = src_int16[2];
+  buf[0] = 0;
+  return "";
 }
 
-#define TEST_REPEATS 1000
-
-void test_noop(const char *string)
-{
-
-}
-
-uint32_t IRAM run_test(const char *string, test_with_fn_t testfn, const char *testfn_label, uint32_t nullvalue, bool evict_cache)
+static uint32_t IRAM inner_string_test(const char *string, test_with_fn_t testfn, const char *testfn_label, uint32_t nullvalue, bool evict_cache)
 {
     printf(" .. against %30s: ", testfn_label);
     vPortEnterCritical();
-    uint32_t before = get_ccount();
+    uint32_t before;
+    RSR(before, CCOUNT);
+    const int TEST_REPEATS = 1000;
     for(int i = 0; i < TEST_REPEATS; i++) {
-        testfn(string);
-        if(evict_cache) {
-            Cache_Read_Disable();
-            Cache_Read_Enable(0,0,1);
-        }
+      memset(buf, 0, sizeof(buf));
+      const char *expected = testfn(string);
+      TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, buf, testfn_label);
+      if(evict_cache) {
+	Cache_Read_Disable();
+	Cache_Read_Enable(0,0,1);
+      }
     }
-    uint32_t after = get_ccount();
+    uint32_t after;
+    RSR(after, CCOUNT);
     vPortExitCritical();
     uint32_t instructions = (after-before)/TEST_REPEATS - nullvalue;
     printf("%5d instructions\r\n", instructions);
     return instructions;
 }
 
-void test_string(const char *string, char *label, bool evict_cache)
+static void string_test(const char *string, char *label, bool evict_cache)
 {
     printf("Testing %s (%p) '%s'\r\n", label, string, string);
     printf("Formats as: '");
     printf(string, 1, 2, 3);
     printf("'\r\n");
-    uint32_t nullvalue = run_test(string, test_noop, "null op", 0, evict_cache);
-    run_test(string, test_memcpy_aligned, "memcpy - aligned len", nullvalue, evict_cache);
-    run_test(string, test_memcpy_unaligned, "memcpy - unaligned len", nullvalue, evict_cache);
-    run_test(string, test_memcpy_unaligned2, "memcpy - unaligned start&len", nullvalue, evict_cache);
-    run_test(string, test_strcpy, "strcpy", nullvalue, evict_cache);
-    run_test(string, test_naive_strcpy, "naive strcpy", nullvalue, evict_cache);
-    run_test(string, test_naive_strcpy_a0, "naive strcpy (a0)", nullvalue, evict_cache);
-    run_test(string, test_naive_strcpy_a2, "naive strcpy (a2)", nullvalue, evict_cache);
-    run_test(string, test_naive_strcpy_a3, "naive strcpy (a3)", nullvalue, evict_cache);
-    run_test(string, test_naive_strcpy_a4, "naive strcpy (a4)", nullvalue, evict_cache);
-    run_test(string, test_naive_strcpy_a5, "naive strcpy (a5)", nullvalue, evict_cache);
-    run_test(string, test_naive_strcpy_a6, "naive strcpy (a6)", nullvalue, evict_cache);
-    run_test(string, test_sprintf, "sprintf", nullvalue, evict_cache);
-    run_test(string, test_sprintf_arg, "sprintf format arg", nullvalue, evict_cache);
-    run_test(string, test_l16si, "load as l16si", nullvalue, evict_cache);
+    uint32_t nullvalue = inner_string_test(string, test_noop, "null op", 0, evict_cache);
+    inner_string_test(string, test_memcpy_aligned, "memcpy - aligned len", nullvalue, evict_cache);
+    inner_string_test(string, test_memcpy_unaligned, "memcpy - unaligned len", nullvalue, evict_cache);
+    inner_string_test(string, test_memcpy_unaligned2, "memcpy - unaligned start&len", nullvalue, evict_cache);
+    inner_string_test(string, test_strcpy, "strcpy", nullvalue, evict_cache);
+    inner_string_test(string, test_naive_strcpy, "naive strcpy", nullvalue, evict_cache);
+    inner_string_test(string, test_naive_strcpy_a0, "naive strcpy (a0)", nullvalue, evict_cache);
+    inner_string_test(string, test_naive_strcpy_a2, "naive strcpy (a2)", nullvalue, evict_cache);
+    inner_string_test(string, test_naive_strcpy_a3, "naive strcpy (a3)", nullvalue, evict_cache);
+    inner_string_test(string, test_naive_strcpy_a4, "naive strcpy (a4)", nullvalue, evict_cache);
+    inner_string_test(string, test_naive_strcpy_a5, "naive strcpy (a5)", nullvalue, evict_cache);
+    inner_string_test(string, test_naive_strcpy_a6, "naive strcpy (a6)", nullvalue, evict_cache);
+    inner_string_test(string, test_sprintf, "sprintf", nullvalue, evict_cache);
+    inner_string_test(string, test_sprintf_arg, "sprintf format arg", nullvalue, evict_cache);
 }
 
-static void test_isr();
-static void test_sign_extension();
-static void test_system_interaction();
-void sanity_tests(void);
+DEFINE_SOLO_TESTCASE(03_byte_load_test_strings)
 
-void user_init(void)
+/* Test various operations on strings in various regions */
+static void a_03_byte_load_test_strings()
 {
-    uart_set_baud(0, 115200);
-
-    gpio_enable(2, GPIO_OUTPUT); /* used for LED debug */
-    gpio_write(2, 1); /* active low */
-
-    printf("\r\n\r\nSDK version:%s\r\n", sdk_system_get_sdk_version());
-    sanity_tests();
-    test_string(dramtest, "DRAM", 0);
-    test_string(iramtest, "IRAM", 0);
-    test_string(iromtest, "Cached flash", 0);
-    test_string(iromtest, "'Uncached' flash", 1);
-
-    test_isr();
-    test_sign_extension();
-
-    xTaskHandle taskHandle;
-    xTaskCreate(test_system_interaction, (signed char *)"interactionTask", 256, &taskHandle, 2, NULL);
+    string_test(dramtest, "DRAM", 0);
+    string_test(iramtest, "IRAM", 0);
+    string_test(iromtest, "Cached flash", 0);
+    string_test(iromtest, "'Uncached' flash", 1);
+    TEST_PASS();
 }
 
 static volatile bool frc1_ran;
 static volatile bool frc1_finished;
 static volatile char frc1_buf[80];
+
+DEFINE_SOLO_TESTCASE(03_byte_load_test_isr)
 
 static void frc1_interrupt_handler(void)
 {
@@ -245,7 +268,8 @@ static void frc1_interrupt_handler(void)
     frc1_finished = true;
 }
 
-static void test_isr()
+/* Verify that the unaligned loader can run inside an ISR */
+static void a_03_byte_load_test_isr()
 {
     printf("Testing behaviour inside ISRs...\r\n");
     timer_set_interrupts(FRC1, false);
@@ -257,26 +281,27 @@ static void test_isr()
     sdk_os_delay_us(2000);
 
     if(!frc1_ran)
-        printf("ERROR: FRC1 timer exception never fired.\r\n");
+      TEST_FAIL_MESSAGE("ERROR: FRC1 timer exception never fired.\r\n");
     else if(!frc1_finished)
-        printf("ERROR: FRC1 timer exception never finished.\r\n");
+      TEST_FAIL_MESSAGE("ERROR: FRC1 timer exception never finished.\r\n");
     else if(strcmp((char *)frc1_buf, iramtest))
-        printf("ERROR: FRC1 strcpy from IRAM failed.\r\n");
+      TEST_FAIL_MESSAGE("ERROR: FRC1 strcpy from IRAM failed.\r\n");
     else
-        printf("PASSED\r\n");
+      TEST_PASS();
 }
 
-const volatile __attribute__((section(".iram1.notliterals"))) int16_t unsigned_shorts[] = { -3, -4, -5, -32767, 44 };
+DEFINE_SOLO_TESTCASE(03_byte_load_test_sign_extension)
 
-static void test_sign_extension()
+static void a_03_byte_load_test_sign_extension()
 {
     /* this step seems to be necessary so the compiler will actually generate l16si */
     int16_t *shorts_p = (int16_t *)unsigned_shorts;
     if(shorts_p[0] == -3 && shorts_p[1] == -4 && shorts_p[2] == -5 && shorts_p[3] == -32767 && shorts_p[4] == 44)
     {
-        printf("l16si sign extension PASSED.\r\n");
+      TEST_PASS();
     } else {
-        printf("ERROR: l16si sign extension failed. Got values %d %d %d %d %d\r\n", shorts_p[0], shorts_p[1], shorts_p[2], shorts_p[3], shorts_p[4]);
+      sprintf(buf, "l16si sign extension failed. Got values %d %d %d %d %d\r\n", shorts_p[0], shorts_p[1], shorts_p[2], shorts_p[3], shorts_p[4]);
+      TEST_FAIL_MESSAGE(buf);
     }
 }
 
@@ -285,11 +310,13 @@ static void test_sign_extension()
 
    The following tests run inside a FreeRTOS task, after everything else.
 */
-static void test_system_interaction()
+DEFINE_SOLO_TESTCASE(03_byte_load_test_system_interaction);
+
+static void task_load_test_system_interaction()
 {
     uint32_t start = xTaskGetTickCount();
-    printf("Starting system/timer interaction test (takes approx 30 seconds)...\n");
-    for(int i = 0; i < 200*1000; i++) {
+    printf("Starting system/timer interaction test (takes approx 1 second)...\n");
+    for(int i = 0; i < 5000; i++) {
         test_naive_strcpy_a0(iromtest);
         test_naive_strcpy_a2(iromtest);
         test_naive_strcpy_a3(iromtest);
@@ -304,13 +331,22 @@ static void test_system_interaction()
         */
     }
     uint32_t ticks = xTaskGetTickCount() - start;
-    printf("Timer interaction test PASSED after %dms.\n", ticks*portTICK_RATE_MS);
-    while(1) {}
+    printf("Timer interaction test PASSED after %d ticks.\n", ticks);
+    TEST_PASS();
+}
+
+static void a_03_byte_load_test_system_interaction()
+{
+    xTaskCreate(task_load_test_system_interaction, (signed char *)"interactionTask", 256, NULL, 2, NULL);
+    while(1) {
+      vTaskDelay(100);
+    }
 }
 
 /* The following "sanity tests" are designed to try to execute every code path
  * of the LoadStoreError handler, with a variety of offsets and data values
  * designed to catch any mask/shift errors, sign-extension bugs, etc */
+DEFINE_SOLO_TESTCASE(03_byte_load_test_sanity)
 
 /* (Contrary to expectations, 'mov a15, a15' in Xtensa is not technically a
  * no-op, but is officially "undefined and reserved for future use", so we need
@@ -339,17 +375,13 @@ static void test_system_interaction()
         if (result != value) sanity_test_failed(op, reg, addr, value, result); \
     }
 
-void sanity_test_failed(const char *testname, const char *reg, const void *addr, int32_t value, int32_t result) {
+static void sanity_test_failed(const char *testname, const char *reg, const void *addr, int32_t value, int32_t result) {
     uint32_t actual_data = *(uint32_t *)((uint32_t)addr & 0xfffffffc);
-
-    printf("*** SANITY TEST FAILED: '%s %s' from %p (underlying 32-bit value: 0x%x): Expected 0x%08x (%d), got 0x%08x (%d)\n", testname, reg, addr, actual_data, value, value, result, result);
+    sprintf(buf, "%s %s from %p (32-bit value: 0x%x): Expected 0x%08x (%d), got 0x%08x (%d)\n", testname, reg, addr, actual_data, value, value, result, result);
+    TEST_FAIL_MESSAGE(buf);
 }
 
-const __attribute__((section(".iram1.notrodata"))) char sanity_test_data[] = {
-    0x01, 0x55, 0x7e, 0x2a, 0x81, 0xd5, 0xfe, 0xaa
-};
-
-void sanity_test_l8ui(const void *addr, int32_t value) {
+static void sanity_test_l8ui(const void *addr, int32_t value) {
     TEST_LOAD("l8ui", "a0", addr, value);
     TEST_LOAD("l8ui", "a1", addr, value);
     TEST_LOAD("l8ui", "a2", addr, value);
@@ -368,7 +400,7 @@ void sanity_test_l8ui(const void *addr, int32_t value) {
     TEST_LOAD("l8ui", "a15", addr, value);
 }
 
-void sanity_test_l16ui(const void *addr, int32_t value) {
+static void sanity_test_l16ui(const void *addr, int32_t value) {
     TEST_LOAD("l16ui", "a0", addr, value);
     TEST_LOAD("l16ui", "a1", addr, value);
     TEST_LOAD("l16ui", "a2", addr, value);
@@ -387,7 +419,7 @@ void sanity_test_l16ui(const void *addr, int32_t value) {
     TEST_LOAD("l16ui", "a15", addr, value);
 }
 
-void sanity_test_l16si(const void *addr, int32_t value) {
+static void sanity_test_l16si(const void *addr, int32_t value) {
     TEST_LOAD("l16si", "a0", addr, value);
     TEST_LOAD("l16si", "a1", addr, value);
     TEST_LOAD("l16si", "a2", addr, value);
@@ -406,7 +438,7 @@ void sanity_test_l16si(const void *addr, int32_t value) {
     TEST_LOAD("l16si", "a15", addr, value);
 }
 
-void sanity_tests(void) {
+static void a_03_byte_load_test_sanity(void) {
     printf("== Performing sanity tests (sanity_test_data @ %p)...\n", sanity_test_data);
 
     sanity_test_l8ui(sanity_test_data + 0, 0x01);
@@ -429,4 +461,5 @@ void sanity_tests(void) {
     sanity_test_l16si(sanity_test_data + 6, -21762);
 
     printf("== Sanity tests completed.\n");
+    TEST_PASS();
 }
