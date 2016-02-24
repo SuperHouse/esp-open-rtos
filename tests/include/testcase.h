@@ -8,7 +8,7 @@
 #include "unity.h"
 
 /* Need to explicitly flag once a test has completed successfully. */
-#define TEST_PASS do { UnityConcludeTest(); while(1) { } } while (0)
+#define TEST_PASS() do { UnityConcludeTest(); while(1) { } } while (0)
 
 /* Types of test, defined by hardware requirements */
 typedef enum {

@@ -36,7 +36,7 @@ static void a_01_scheduler_basic()
     TEST_ASSERT_TRUE_MESSAGE(a, "task set_a should have run");
     TEST_ASSERT_TRUE_MESSAGE(b, "task set_b should have run");
     TEST_ASSERT_TRUE_MESSAGE(c, "task set_c should have run");
-    TEST_PASS;
+    TEST_PASS();
 }
 
 /* Verify that a high-priority task will starve a lower priority task */
@@ -67,5 +67,5 @@ static void a_01_scheduler_priorities()
     vTaskDelay(1);
 
     TEST_ASSERT_TRUE_MESSAGE(lower, "lower prio task should have run");
-    TEST_PASS;
+    TEST_PASS();
 }

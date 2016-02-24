@@ -34,7 +34,7 @@ static void a_02_heap_simple()
     after = xPortGetFreeHeapSize();
     printf("after freeing xPortGetFreeHeapSize = %d bytes\n", after);
     TEST_ASSERT_UINT32_WITHIN_MESSAGE(100, freeheap, after, "Free heap size after freeing buffer should be close to initial");
-    TEST_PASS;
+    TEST_PASS();
 }
 
 /* Ensure malloc behaves when out of memory */
@@ -52,5 +52,5 @@ static void a_02_heap_full()
     free(y);
     z = malloc(32768);
     TEST_ASSERT_NOT_NULL_MESSAGE(z, "Allocating 32kB should succeed after first block freed");
-    TEST_PASS;
+    TEST_PASS();
 }
