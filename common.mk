@@ -48,6 +48,13 @@ ESPTOOL ?= esptool.py
 ESPPORT ?= /dev/ttyUSB0
 ESPBAUD ?= 115200
 
+# set this to 0 if you don't need floating point support in printf/scanf
+# this will save approx 14.5KB flash space and 448 bytes of statically allocated
+# data RAM
+#
+# NB: Setting the value to 0 requires a recent esptool.py (Feb 2016 / commit ebf02c9)
+PRINTF_SCANF_FLOAT_SUPPORT ?= 1
+
 # Set OTA to 1 to build an image that supports rBoot OTA bootloader
 #
 # Currently only works with 16mbit or more flash sizes, with 8mbit
@@ -109,7 +116,7 @@ CXXFLAGS	?= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti $(EXTRA_CXXFLAGS)
 # these aren't technically preprocesor args, but used by all 3 of C, C++, assembler
 CPPFLAGS	+= -mlongcalls -mtext-section-literals
 
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=$(BUILD_DIR)$(PROGRAM).map  $(EXTRA_LDFLAGS)
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=$(BUILD_DIR)$(PROGRAM).map $(EXTRA_LDFLAGS)
 
 ifeq ($(SPLIT_SECTIONS),1)
   C_CXX_FLAGS += -ffunction-sections -fdata-sections
@@ -202,6 +209,9 @@ INC_DIRS      = $(PROGRAM_DIR) $(PROGRAM_DIR)include $(ROOT)include
 ifeq ($(OWN_LIBC),1)
     INC_DIRS += $(ROOT)libc/xtensa-lx106-elf/include
     LDFLAGS += -L$(ROOT)libc/xtensa-lx106-elf/lib
+   ifeq ($(PRINTF_SCANF_FLOAT_SUPPORT),1)
+     LDFLAGS += -u _printf_float -u _scanf_float
+   endif
 endif
 
 ifeq ("$(V)","1")

@@ -250,7 +250,7 @@ void IRAM sdk_user_start(void) {
 
 // .text+0x3a8
 void IRAM vApplicationStackOverflowHook(xTaskHandle task, char *task_name) {
-    printf("\"%s\"(stack_size = %lu) overflow the heap_size.\n", task_name, uxTaskGetStackHighWaterMark(task));
+    printf("Task stack overflow (high water mark=%lu name=\"%s\")\n", uxTaskGetStackHighWaterMark(task), task_name);
 }
 
 // .text+0x3d8
