@@ -35,7 +35,7 @@ struct sdk_scan_config {
 };
 
 struct sdk_bss_info {
-    STAILQ_ENTRY(bss_info)     next;
+    STAILQ_ENTRY(sdk_bss_info)     next;
 
     uint8_t bssid[6];
     uint8_t ssid[32];
