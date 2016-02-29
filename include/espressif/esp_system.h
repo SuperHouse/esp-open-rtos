@@ -73,16 +73,9 @@ uint8_t sdk_system_get_cpu_freq(void);
    Measure voltage on the TOUT pin, 1V max. Returns 10 bits ADC value (1/1024V).
    Voltage range 0 .. 1.0V. RF must be enabled.
    Example:
-      printf ("ADC voltage %.3f", 1.0 / 1024 * sdk_system_adc_read());
+      printf ("ADC voltage is %.3f", 1.0 / 1024 * sdk_system_adc_read());
  */
 uint16_t sdk_system_adc_read(void);
-/*
-   Measure power voltage. Returns 10 bits ADC value (1/1024V).
-   TOUT pin must be floating and RF must be enabled.
-   Example:
-      printf ("Power voltage %.3f", 1.0 / 1024 * sdk_system_get_vdd33());
- */
-uint16_t sdk_system_get_vdd33(void);
 
 
 #ifdef	__cplusplus
