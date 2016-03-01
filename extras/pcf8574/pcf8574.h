@@ -1,17 +1,3 @@
-/*
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
 /**
  * \file Driver for PCF8574 compartible remote 8-bit I/O expanders for I2C-bus
  * \author Ruslan V. Uss
@@ -70,7 +56,7 @@ bool pcf8574_gpio_read(uint8_t addr, uint8_t num);
 
 /**
  * \brief Set GPIO pin output
- * Note it's READ - MODIFY - WRITE operation! Please read PCF8574
+ * Note this is READ - MODIFY - WRITE operation! Please read PCF8574
  * datasheet first.
  * \param addr I2C register address (0b0100<A2><A1><A0> for PCF8574)
  * \param num pin number (0..7)
