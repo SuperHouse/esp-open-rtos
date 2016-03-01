@@ -40,12 +40,12 @@ void demo_single(void)
 
         // note: This would be _WAY_ easier with HSL
 
-        while(x.c.g < 0xFF) { x.c.g++; ws2812_set(pin, x.num); delay_ms(delay); } // R->RG
-        while(x.c.r > 0x00) { x.c.r--; ws2812_set(pin, x.num); delay_ms(delay); } // RG->G
-        while(x.c.b < 0xFF) { x.c.b++; ws2812_set(pin, x.num); delay_ms(delay); } // G->GB
-        while(x.c.g > 0x00) { x.c.g--; ws2812_set(pin, x.num); delay_ms(delay); } // GB->B
-        while(x.c.r < 0xFF) { x.c.r++; ws2812_set(pin, x.num); delay_ms(delay); } // B->BR
-        while(x.c.b > 0x00) { x.c.b--; ws2812_set(pin, x.num); delay_ms(delay); } // BR->R
+        while(x.g < 0xFF) { x.g++; ws2812_set(pin, x.num); delay_ms(delay); } // R->RG
+        while(x.r > 0x00) { x.r--; ws2812_set(pin, x.num); delay_ms(delay); } // RG->G
+        while(x.b < 0xFF) { x.b++; ws2812_set(pin, x.num); delay_ms(delay); } // G->GB
+        while(x.g > 0x00) { x.g--; ws2812_set(pin, x.num); delay_ms(delay); } // GB->B
+        while(x.r < 0xFF) { x.r++; ws2812_set(pin, x.num); delay_ms(delay); } // B->BR
+        while(x.b > 0x00) { x.b--; ws2812_set(pin, x.num); delay_ms(delay); } // BR->R
     }
 }
 
@@ -97,12 +97,12 @@ void demo_strip(void *pvParameters)
             }
 
             switch (step) {
-                case 0: color.c.g += anim_step; if (color.c.g >= anim_max) step++;  break;
-                case 1: color.c.r -= anim_step; if (color.c.r == 0) step++; break;
-                case 2: color.c.b += anim_step; if (color.c.b >= anim_max) step++; break;
-                case 3: color.c.g -= anim_step; if (color.c.g == 0) step++; break;
-                case 4: color.c.r += anim_step; if (color.c.r >= anim_max) step++; break;
-                case 5: color.c.b -= anim_step; if (color.c.b == 0) step = 0; break;
+                case 0: color.g += anim_step; if (color.g >= anim_max) step++;  break;
+                case 1: color.r -= anim_step; if (color.r == 0) step++; break;
+                case 2: color.b += anim_step; if (color.b >= anim_max) step++; break;
+                case 3: color.g -= anim_step; if (color.g == 0) step++; break;
+                case 4: color.r += anim_step; if (color.r >= anim_max) step++; break;
+                case 5: color.b -= anim_step; if (color.b == 0) step = 0; break;
             }
         }
 
@@ -113,8 +113,6 @@ void demo_strip(void *pvParameters)
         delay_ms(delay);
     }
 }
-
-
 
 
 void user_init(void)

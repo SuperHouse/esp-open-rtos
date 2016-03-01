@@ -38,7 +38,7 @@
 /**
  * @brief Struct for easy manipulation of RGB colors.
  *
- * Set components in the xrgb.c.r (etc.) and you will get
+ * Set components in the xrgb.r (etc.) and you will get
  * the hex in xrgb.num.
  */
 typedef union {
@@ -48,7 +48,7 @@ typedef union {
         uint8_t b;
         uint8_t g;
         uint8_t r;
-    } c;
+    };
 
     /** RGB color as a single uint32_t */
     uint32_t num;
