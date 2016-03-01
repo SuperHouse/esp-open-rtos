@@ -1,3 +1,6 @@
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "onewire/onewire.h"
 #include "ds18b20.h"
 
@@ -29,7 +32,9 @@ uint8_t ds18b20_read_all(uint8_t pin, ds_sensor_t *result) {
         onewire_reset(pin);
         onewire_select(pin, addr);
         onewire_write(pin, DS1820_CONVERT_T, ONEWIRE_DEFAULT_POWER);
-        sdk_os_delay_us(750);
+        
+        vTaskDelay(750 / portTICK_RATE_MS);
+        
         onewire_reset(pin);
         onewire_select(pin, addr);
         onewire_write(pin, DS1820_READ_SCRATCHPAD, ONEWIRE_DEFAULT_POWER);
@@ -70,7 +75,7 @@ float ds18b20_read_single(uint8_t pin) {
     onewire_write(pin, DS1820_SKIP_ROM, ONEWIRE_DEFAULT_POWER);
     onewire_write(pin, DS1820_CONVERT_T, ONEWIRE_DEFAULT_POWER);
 
-    sdk_os_delay_us(750);
+    vTaskDelay(750 / portTICK_RATE_MS);
 
     onewire_reset(pin);
     onewire_write(pin, DS1820_SKIP_ROM, ONEWIRE_DEFAULT_POWER);
