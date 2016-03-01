@@ -14,6 +14,7 @@
  */
 /**
  * \file Driver for PCF8574 compartible remote 8-bit I/O expanders for I2C-bus
+ * \author Ruslan V. Uss
  */
 #ifndef PCF8574_PCF8574_H_
 #define PCF8574_PCF8574_H_
