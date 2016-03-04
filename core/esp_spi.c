@@ -107,7 +107,7 @@ void spi_set_frequency_div(uint8_t bus, uint32_t divider)
 {
     uint32_t predivider = divider & 0xffff;
     uint32_t count = divider >> 16;
-    if (count > 1 && divider > 1)
+    if (count > 1 || divider > 1)
     {
         predivider = predivider > SPI_CLOCK_DIV_PRE_M + 1 ? SPI_CLOCK_DIV_PRE_M + 1 : predivider;
         count = count > SPI_CLOCK_COUNT_NUM_M + 1 ? SPI_CLOCK_COUNT_NUM_M + 1 : count;
