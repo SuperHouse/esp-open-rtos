@@ -12,9 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "esp/spi_regs.h"
-
-// FIXME Better to define it somewhere else. This is not the CPU frequency!
-#define SYSTEM_BUS_FREQ 80000000UL
+#include "esp/clocks.h"
 
 /**
  * Macro for use with spi_init and spi_set_frequency_div.
@@ -121,7 +119,7 @@ void spi_set_frequency_div(uint8_t bus, uint32_t divider);
  */
 inline uint32_t spi_get_frequency_hz(uint8_t bus)
 {
-    return SYSTEM_BUS_FREQ /
+    return APB_CLK_FREQ /
         (((SPI(bus).CLOCK >> SPI_CLOCK_DIV_PRE_S) & SPI_CLOCK_DIV_PRE_M) + 1) /
         (((SPI(bus).CLOCK >> SPI_CLOCK_COUNT_NUM_S) & SPI_CLOCK_COUNT_NUM_M) + 1);
 }

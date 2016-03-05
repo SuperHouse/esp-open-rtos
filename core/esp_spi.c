@@ -194,13 +194,13 @@ void spi_transfer(uint8_t bus, void *data, size_t len)
     spi_endianness_t e = spi_get_endianness(bus);
     spi_set_endianness(bus, SPI_LITTLE_ENDIAN);
 
-    size_t counts = len / _SPI_BUF_SIZE;
-    for (uint8_t i = 0; i < counts; i++)
+    size_t blocks = len / _SPI_BUF_SIZE;
+    for (uint8_t i = 0; i < blocks; i++)
         _spi_buf_transfer(bus, data + i * _SPI_BUF_SIZE, _SPI_BUF_SIZE);
 
     uint8_t tail = len % _SPI_BUF_SIZE;
     if (tail)
-        _spi_buf_transfer(bus, data + counts * _SPI_BUF_SIZE, tail);
+        _spi_buf_transfer(bus, data + blocks * _SPI_BUF_SIZE, tail);
 
     spi_set_endianness(bus, e);
 }
