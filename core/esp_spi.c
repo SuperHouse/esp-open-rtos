@@ -11,8 +11,6 @@
 #include "esp/gpio.h"
 #include <string.h>
 
-//#include <stdio.h>
-
 #define _SPI0_SCK_GPIO  6
 #define _SPI0_MISO_GPIO 7
 #define _SPI0_MOSI_GPIO 8
@@ -161,14 +159,15 @@ static uint32_t _spi_single_transfer (uint8_t bus, uint32_t data, uint8_t len)
 }
 
 // works properly only with little endian byte order
-static void _spi_buf_transfer (uint8_t bus, uint8_t *data, size_t len)
+static void _spi_buf_transfer (uint8_t bus, const uint8_t *out_data, uint8_t *in_data, size_t len)
 {
     _wait(bus);
     _set_size(bus, len);
-    memcpy((void *)&SPI(bus).W0, data, len);
+    memcpy((void *)&SPI(bus).W0, out_data, len);
     _start(bus);
     _wait(bus);
-    memcpy(data, (void *)&SPI(bus).W0, len);
+    if (in_data)
+        memcpy(in_data, (void *)&SPI(bus).W0, len);
 }
 
 uint8_t spi_transfer_8(uint8_t bus, uint8_t data)
@@ -186,21 +185,28 @@ uint32_t spi_transfer_32(uint8_t bus, uint32_t data)
     return _spi_single_transfer(bus, data, sizeof(data));
 }
 
-void spi_transfer(uint8_t bus, void *data, size_t len)
+void spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len)
 {
-    if (!data || !len) return;
+    if (!out_data || !len) return;
 
     _wait(bus);
     spi_endianness_t e = spi_get_endianness(bus);
     spi_set_endianness(bus, SPI_LITTLE_ENDIAN);
 
     size_t blocks = len / _SPI_BUF_SIZE;
-    for (uint8_t i = 0; i < blocks; i++)
-        _spi_buf_transfer(bus, data + i * _SPI_BUF_SIZE, _SPI_BUF_SIZE);
+    for (size_t i = 0; i < blocks; i++)
+    {
+        size_t offset = i * _SPI_BUF_SIZE;
+        _spi_buf_transfer(bus, (const uint8_t *)out_data + offset,
+            in_data ? (uint8_t *)in_data + offset : NULL, _SPI_BUF_SIZE);
+    }
 
     uint8_t tail = len % _SPI_BUF_SIZE;
     if (tail)
-        _spi_buf_transfer(bus, data + blocks * _SPI_BUF_SIZE, tail);
+    {
+        _spi_buf_transfer(bus, (const uint8_t *)out_data + blocks * _SPI_BUF_SIZE,
+            in_data ? (uint8_t *)in_data + blocks * _SPI_BUF_SIZE : NULL, tail);
+    }
 
     spi_set_endianness(bus, e);
 }

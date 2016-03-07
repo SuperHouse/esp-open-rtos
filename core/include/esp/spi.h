@@ -183,10 +183,11 @@ uint32_t spi_transfer_32(uint8_t bus, uint32_t data);
 /**
  * \brief Transfer buffer over SPI
  * \param bus Bus ID: 0 - system, 1 - user
- * \param data Data to send. Buffer contents will be replaced with received data
+ * \param out_data Data to send.
+ * \param in_data Receive buffer. If NULL, received data will be lost.
  * \param len Buffer size
  */
-void spi_transfer(uint8_t bus, void *data, size_t len);
+void spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len);
 
 #ifdef __cplusplus
 }
