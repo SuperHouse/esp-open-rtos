@@ -575,6 +575,8 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
     if (!key_len) return SYSPARAM_ERR_BADVALUE;
     if (value_len > 0xff) return SYSPARAM_ERR_BADVALUE;
 
+    if (!value) value_len = 0;
+
     if (value_len && ((intptr_t)value & 0x3)) {
         // The passed value isn't word-aligned.  This will be a problem later
         // when calling `sdk_spi_flash_write`, so make a word-aligned copy.
@@ -733,6 +735,13 @@ sysparam_status_t sysparam_set_int(const char *key, int32_t value) {
 
 sysparam_status_t sysparam_set_bool(const char *key, bool value) {
     uint8_t buf[4] = {0xff, 0xff, 0xff, 0xff};
+    bool old_value;
+
+    // Don't write anything if the current setting already evaluates to the
+    // same thing.
+    if (sysparam_get_bool(key, &old_value) == SYSPARAM_OK) {
+        if (old_value == value) return SYSPARAM_OK;
+    }
 
     buf[0] = value ? 'y' : 'n';
     return sysparam_set_data(key, buf, 1);
