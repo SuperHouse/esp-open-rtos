@@ -1,6 +1,16 @@
 #ifndef _SYSPARAM_H_
 #define _SYSPARAM_H_
 
+/** @file sysparam.h
+ *
+ *  Read/write "system parameters" to persistent flash.
+ *
+ *  System parameters are stored as key/value pairs.  Keys are string values
+ *  between 1 and 255 characters long.  Values can be any data up to 255 bytes
+ *  in length (but are most commonly also strings).
+ *
+ */
+
 #include <esp/types.h>
 
 #ifndef SYSPARAM_REGION_SECTORS
@@ -14,29 +24,21 @@
 
 /** Status codes returned by all sysparam functions
  *
- *  Error codes all have values less than zero, and can be returned by any
- *  function.  Values greater than zero are non-error status codes which may be
- *  returned by some functions to indicate various results (each function should document which non-error statuses it may return).
+ *  Error codes (`SYSPARAM_ERR_*`) all have values less than zero, and can be
+ *  returned by any function.  Values greater than zero are non-error status
+ *  codes which may be returned by some functions to indicate various results.
  */
 typedef enum {
-    SYSPARAM_ERR_NOMEM    = -6,
-    SYSPARAM_ERR_CORRUPT  = -5,
-    SYSPARAM_ERR_IO       = -4,
-    SYSPARAM_ERR_FULL     = -3,
-    SYSPARAM_ERR_BADVALUE = -2,
-    SYSPARAM_ERR_NOINIT   = -1,
-    SYSPARAM_OK           = 0,
-    SYSPARAM_NOTFOUND     = 1,
-    SYSPARAM_PARSEFAILED  = 2,
+    SYSPARAM_OK           = 0,  ///< Success
+    SYSPARAM_NOTFOUND     = 1,  ///< Entry not found matching criteria
+    SYSPARAM_PARSEFAILED  = 2,  ///< Unable to parse retrieved value
+    SYSPARAM_ERR_NOINIT   = -1, ///< sysparam_init() must be called first
+    SYSPARAM_ERR_BADVALUE = -2, ///< One or more arguments were invalid
+    SYSPARAM_ERR_FULL     = -3, ///< No space left in sysparam area (or too many keys in use)
+    SYSPARAM_ERR_IO       = -4, ///< I/O error reading/writing flash
+    SYSPARAM_ERR_CORRUPT  = -5, ///< Sysparam region has bad/corrupted data
+    SYSPARAM_ERR_NOMEM    = -6, ///< Unable to allocate memory
 } sysparam_status_t;
-
- *  @retval SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
- *  @retval SYSPARAM_ERR_BADVALUE One or more arguments are invalid
- *  @retval SYSPARAM_ERR_FULL     No space left in sysparam area
- *                                (or too many keys in use)
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
 
 /** Structure used by sysparam_iter_next() to keep track of its current state
  * and return its results.  This should be initialized by calling
@@ -62,16 +64,16 @@ typedef struct {
  *  the normal initialization failed, or after calling sysparam_create_area()
  *  to reformat the current area.
  *
- *  @param base_addr [in] The flash address which should contain the start of
+ *  @param[in] base_addr  The flash address which should contain the start of
  *                        the (already present) sysparam area
  *
- *  @retval SYSPARAM_OK           Initialization successful.
- *  @retval SYSPARAM_NOTFOUND     The specified address does not appear to
- *                                contain a sysparam area.  It may be necessary
- *                                to call sysparam_create_area() to create one
- *                                first.
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
+ *  @retval ::SYSPARAM_OK           Initialization successful.
+ *  @retval ::SYSPARAM_NOTFOUND     The specified address does not appear to
+ *                                  contain a sysparam area.  It may be
+ *                                  necessary to call sysparam_create_area() to
+ *                                  create one first.
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_init(uint32_t base_addr);
 
@@ -83,15 +85,15 @@ sysparam_status_t sysparam_init(uint32_t base_addr);
  *  not overwrite it.  Setting `force` to `true` will cause it to clobber any
  *  existing data instead.
  *
- *  @param base_addr [in] The flash address at which it should start
+ *  @param[in] base_addr  The flash address at which it should start
  *                        (must be a multiple of the sector size)
- *  @param force     [in] Proceed even if the space does not appear to be empty
+ *  @param[in] force      Proceed even if the space does not appear to be empty
  *
- *  @retval SYSPARAM_OK        Area (re)created successfully.
- *  @retval SYSPARAM_NOTFOUND  `force` was not specified, and the area at
- *                             `base_addr` appears to have other data.  No
- *                             action taken.
- *  @retval SYSPARAM_ERR_IO    I/O error reading/writing flash
+ *  @retval ::SYSPARAM_OK        Area (re)created successfully.
+ *  @retval ::SYSPARAM_NOTFOUND  `force` was not specified, and the area at
+ *                               `base_addr` appears to have other data.  No
+ *                               action taken.
+ *  @retval ::SYSPARAM_ERR_IO    I/O error reading/writing flash
  *
  *  Note: This routine can create a sysparam area in another location than the
  *  one currently being used, but does not change which area is currently used
@@ -109,26 +111,25 @@ sysparam_status_t sysparam_create_area(uint32_t base_addr, bool force);
  *  contain any data (including zero bytes), so the `actual_length` parameter
  *  should be used to determine the length of the data in the buffer.
  *
- *  Note: It is up to the caller to free() the returned buffer when done using
- *  it.
+ *  It is up to the caller to free() the returned buffer when done using it.
  *
- *  @param key           [in]  Key name (zero-terminated string)
- *  @param destptr       [out] Pointer to a location to hold the address of the
- *                             returned data buffer
- *  @param actual_length [out] Pointer to a location to hold the length of the
- *                             returned data buffer
- *
- *  @retval SYSPARAM_OK           Value successfully retrieved.
- *  @retval SYSPARAM_NOTFOUND     Key/value not found.  No buffer returned.
- *  @retval SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
- *
- *  Note: If the result is anything other than SYSPARAM_OK, the value
+ *  Note: If the status result is anything other than ::SYSPARAM_OK, the value
  *  in `destptr` is not changed.  This means it is possible to set a default
  *  value before calling this function which will be left as-is if a sysparam
  *  value could not be successfully read.
+ *
+ *  @param[in]  key            Key name (zero-terminated string)
+ *  @param[out] destptr        Pointer to a location to hold the address of the
+ *                             returned data buffer
+ *  @param[out] actual_length  Pointer to a location to hold the length of the
+ *                             returned data buffer
+ *
+ *  @retval ::SYSPARAM_OK           Value successfully retrieved.
+ *  @retval ::SYSPARAM_NOTFOUND     Key/value not found.  No buffer returned.
+ *  @retval ::SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length);
 
@@ -146,75 +147,74 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
  *  must also be at least as large as the length of the key being requested.
  *  If it is not, an error will be returned.
  *
- *  @param key           [in]  Key name (zero-terminated string)
- *  @param buffer        [in]  Pointer to a buffer to hold the returned value
- *  @param buffer_size   [in]  Length of the supplied buffer in bytes
- *  @param actual_length [out] pointer to a location to hold the actual length
+ *  @param[in]  key            Key name (zero-terminated string)
+ *  @param[in]  buffer         Pointer to a buffer to hold the returned value
+ *  @param[in]  buffer_size    Length of the supplied buffer in bytes
+ *  @param[out] actual_length  pointer to a location to hold the actual length
  *                             of the data which was associated with the key
  *                             (may be NULL).
  *
- *  @retval SYSPARAM_OK           Value successfully retrieved
- *  @retval SYSPARAM_NOTFOUND     Key/value not found
- *  @retval SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
- *  @retval SYSPARAM_ERR_NOMEM    The supplied buffer is too small
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
+ *  @retval ::SYSPARAM_OK           Value successfully retrieved
+ *  @retval ::SYSPARAM_NOTFOUND     Key/value not found
+ *  @retval ::SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
+ *  @retval ::SYSPARAM_ERR_NOMEM    The supplied buffer is too small
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *buffer, size_t buffer_size, size_t *actual_length);
 
-/** Return the string value associated with a key
+/** Get the string value associated with a key
  * 
  *  This routine can be used if you know that the value in a key will (or at
  *  least should) be a string.  It will return a zero-terminated char buffer
  *  containing the value retrieved.
  *
- *  Note: It is up to the caller to free() the returned buffer when done using
- *  it.
+ *  It is up to the caller to free() the returned buffer when done using it.
  *
- *  @param key     [in]  Key name (zero-terminated string)
- *  @param destptr [out] Pointer to a location to hold the address of the
- *                       returned data buffer
- *
- *  @retval SYSPARAM_OK           Value successfully retrieved.
- *  @retval SYSPARAM_NOTFOUND     Key/value not found.
- *  @retval SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
- *
- *  Note: If the result is anything other than SYSPARAM_OK, the value
+ *  Note: If the status result is anything other than ::SYSPARAM_OK, the value
  *  in `destptr` is not changed.  This means it is possible to set a default
  *  value before calling this function which will be left as-is if a sysparam
  *  value could not be successfully read.
+ *
+ *  @param[in]  key      Key name (zero-terminated string)
+ *  @param[out] destptr  Pointer to a location to hold the address of the
+ *                       returned data buffer
+ *
+ *  @retval ::SYSPARAM_OK           Value successfully retrieved.
+ *  @retval ::SYSPARAM_NOTFOUND     Key/value not found.
+ *  @retval ::SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_get_string(const char *key, char **destptr);
 
-/** Return the int32_t value associated with a key
+/** Get the int32_t value associated with a key
  * 
  *  This routine can be used if you know that the value in a key will (or at
  *  least should) be an integer value.  It will parse the stored data as a
  *  number (in standard decimal or "0x" hex notation) and return the result.
  *
- *  @param key    [in]  Key name (zero-terminated string)
- *  @param result [out] Pointer to a location to hold returned integer value
- *
- *  @retval SYSPARAM_OK           Value successfully retrieved.
- *  @retval SYSPARAM_NOTFOUND     Key/value not found.
- *  @retval SYSPARAM_PARSEFAILED  The retrieved value could not be parsed as an
- *                                integer.
- *  @retval SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
- *
- *  Note: If the result is anything other than SYSPARAM_OK, the value
+ *  Note: If the status result is anything other than ::SYSPARAM_OK, the value
  *  in `result` is not changed.  This means it is possible to set a default
  *  value before calling this function which will be left as-is if a sysparam
  *  value could not be successfully read.
+ *
+ *  @param[in]  key     Key name (zero-terminated string)
+ *  @param[out] result  Pointer to a location to hold returned integer value
+ *
+ *  @retval ::SYSPARAM_OK           Value successfully retrieved.
+ *  @retval ::SYSPARAM_NOTFOUND     Key/value not found.
+ *  @retval ::SYSPARAM_PARSEFAILED  The retrieved value could not be parsed as
+ *                                  an integer.
+ *  @retval ::SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_get_int(const char *key, int32_t *result);
 
-/** Return the boolean value associated with a key
+/** Get the boolean value associated with a key
  * 
  *  This routine can be used if you know that the value in a key will (or at
  *  least should) be a boolean setting.  It will read the specified value as a
@@ -224,22 +224,22 @@ sysparam_status_t sysparam_get_int(const char *key, int32_t *result);
  *    * True: "yes", "y", "true", "t", "1"
  *    * False: "no", "n", "false", "f", "0"
  *
- *  @param key    [in]  Key name (zero-terminated string)
- *  @param result [out] Pointer to a location to hold returned boolean value
- *
- *  @retval SYSPARAM_OK           Value successfully retrieved.
- *  @retval SYSPARAM_NOTFOUND     Key/value not found.
- *  @retval SYSPARAM_PARSEFAILED  The retrieved value could not be parsed as a
- *                                boolean setting.
- *  @retval SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
- *
- *  Note: If the result is anything other than SYSPARAM_OK, the value
+ *  Note: If the status result is anything other than ::SYSPARAM_OK, the value
  *  in `result` is not changed.  This means it is possible to set a default
  *  value before calling this function which will be left as-is if a sysparam
  *  value could not be successfully read.
+ *
+ *  @param[in]  key     Key name (zero-terminated string)
+ *  @param[out] result  Pointer to a location to hold returned boolean value
+ *
+ *  @retval ::SYSPARAM_OK           Value successfully retrieved.
+ *  @retval ::SYSPARAM_NOTFOUND     Key/value not found.
+ *  @retval ::SYSPARAM_PARSEFAILED  The retrieved value could not be parsed as a
+ *                                  boolean setting.
+ *  @retval ::SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_get_bool(const char *key, bool *result);
 
@@ -249,19 +249,19 @@ sysparam_status_t sysparam_get_bool(const char *key, bool *result);
  *  is NULL or `value_len` is 0, this is treated as a request to delete any
  *  current entry matching `key`.
  *
- *  @param key       [in] Key name (zero-terminated string)
- *  @param value     [in] Pointer to a buffer containing the value data
- *  @param value_len [in] Length of the data in the buffer
+ *  @param[in] key        Key name (zero-terminated string)
+ *  @param[in] value      Pointer to a buffer containing the value data
+ *  @param[in] value_len  Length of the data in the buffer
  *
- *  @retval SYSPARAM_OK           Value successfully set.
- *  @retval SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
- *  @retval SYSPARAM_ERR_BADVALUE Either an empty key was provided or value_len
- *                                is too large
- *  @retval SYSPARAM_ERR_FULL     No space left in sysparam area
- *                                (or too many keys in use)
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
+ *  @retval ::SYSPARAM_OK           Value successfully set.
+ *  @retval ::SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
+ *  @retval ::SYSPARAM_ERR_BADVALUE Either an empty key was provided or
+ *                                  value_len is too large
+ *  @retval ::SYSPARAM_ERR_FULL     No space left in sysparam area
+ *                                  (or too many keys in use)
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_t value_len);
 
@@ -270,17 +270,17 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
  *  Performs the same function as sysparam_set_data(), but accepts a
  *  zero-terminated string value instead.
  *
- *  @param key       [in] Key name (zero-terminated string)
- *  @param value     [in] Value to set (zero-terminated string)
+ *  @param[in] key        Key name (zero-terminated string)
+ *  @param[in] value      Value to set (zero-terminated string)
  *
- *  @retval SYSPARAM_OK           Value successfully set.
- *  @retval SYSPARAM_ERR_BADVALUE Either an empty key was provided or the
- *                                length of `value` is too large
- *  @retval SYSPARAM_ERR_FULL     No space left in sysparam area
- *                                (or too many keys in use)
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
+ *  @retval ::SYSPARAM_OK           Value successfully set.
+ *  @retval ::SYSPARAM_ERR_BADVALUE Either an empty key was provided or the
+ *                                  length of `value` is too large
+ *  @retval ::SYSPARAM_ERR_FULL     No space left in sysparam area
+ *                                  (or too many keys in use)
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_set_string(const char *key, const char *value);
 
@@ -290,16 +290,16 @@ sysparam_status_t sysparam_set_string(const char *key, const char *value);
  *  specified key.  This does the inverse of the sysparam_get_int()
  *  function.
  *
- *  @param key       [in] Key name (zero-terminated string)
- *  @param value     [in] Value to set
+ *  @param[in] key        Key name (zero-terminated string)
+ *  @param[in] value      Value to set
  *
- *  @retval SYSPARAM_OK           Value successfully set.
- *  @retval SYSPARAM_ERR_BADVALUE An empty key was provided.
- *  @retval SYSPARAM_ERR_FULL     No space left in sysparam area
- *                                (or too many keys in use)
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
+ *  @retval ::SYSPARAM_OK           Value successfully set.
+ *  @retval ::SYSPARAM_ERR_BADVALUE An empty key was provided.
+ *  @retval ::SYSPARAM_ERR_FULL     No space left in sysparam area
+ *                                  (or too many keys in use)
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_set_int(const char *key, int32_t value);
 
@@ -312,16 +312,16 @@ sysparam_status_t sysparam_set_int(const char *key, int32_t value);
  *  Note that if the key already contains a value which parses to the same
  *  boolean (true/false) value, it is left unchanged.
  *
- *  @param key       [in] Key name (zero-terminated string)
- *  @param value     [in] Value to set
+ *  @param[in] key        Key name (zero-terminated string)
+ *  @param[in] value      Value to set
  *
- *  @retval SYSPARAM_OK           Value successfully set.
- *  @retval SYSPARAM_ERR_BADVALUE An empty key was provided.
- *  @retval SYSPARAM_ERR_FULL     No space left in sysparam area
- *                                (or too many keys in use)
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
+ *  @retval ::SYSPARAM_OK           Value successfully set.
+ *  @retval ::SYSPARAM_ERR_BADVALUE An empty key was provided.
+ *  @retval ::SYSPARAM_ERR_FULL     No space left in sysparam area
+ *                                  (or too many keys in use)
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_set_bool(const char *key, bool value);
 
@@ -335,10 +335,10 @@ sysparam_status_t sysparam_set_bool(const char *key, bool value);
  *  NOTE: When done, you must call sysparam_iter_end() to free the resources
  *  associated with `iter`, or you will leak memory.
  *
- *  @param iter [in] A pointer to a sysparam_iter_t structure to initialize
+ *  @param[in] iter  A pointer to a sysparam_iter_t structure to initialize
  *
- *  @retval SYSPARAM_OK           Initialization successful
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_OK           Initialization successful
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
  */
 sysparam_status_t sysparam_iter_start(sysparam_iter_t *iter);
 
@@ -353,12 +353,12 @@ sysparam_status_t sysparam_iter_start(sysparam_iter_t *iter);
  *  sysparam_iter_next() using the same `iter`.  They should *not* be free()d
  *  after use.
  *
- *  @param iter [in]  The iterator structure to update
+ *  @param[in] iter  The iterator structure to update
  *
- *  @retval SYSPARAM_OK           Next key/value retrieved
- *  @retval SYSPARAM_ERR_NOMEM    Unable to allocate memory
- *  @retval SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
- *  @retval SYSPARAM_ERR_IO       I/O error reading/writing flash
+ *  @retval ::SYSPARAM_OK           Next key/value retrieved
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
 sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter);
 
