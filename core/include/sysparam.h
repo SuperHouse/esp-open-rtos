@@ -1,17 +1,21 @@
 #ifndef _SYSPARAM_H_
 #define _SYSPARAM_H_
 
+#include <esp/types.h>
+
 /** @file sysparam.h
  *
  *  Read/write "system parameters" to persistent flash.
  *
  *  System parameters are stored as key/value pairs.  Keys are string values
  *  between 1 and 255 characters long.  Values can be any data up to 255 bytes
- *  in length (but are most commonly also strings).
+ *  in length (but are most commonly also text strings).  Up to 126 key/value
+ *  pairs can be stored at a time.
  *
+ *  Keys and values are stored in flash using a progressive list structure
+ *  which allows space-efficient storage and minimizes flash erase cycles,
+ *  improving write speed and increasing the lifespan of the flash memory.
  */
-
-#include <esp/types.h>
 
 #ifndef SYSPARAM_REGION_SECTORS
 /** Number of (4K) sectors that make up a sysparam region.  Total sysparam data

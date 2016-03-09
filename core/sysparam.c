@@ -577,6 +577,7 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
 
     if (!value) value_len = 0;
 
+    debug(1, "updating value for '%s' (%d bytes)", key, value_len);
     if (value_len && ((intptr_t)value & 0x3)) {
         // The passed value isn't word-aligned.  This will be a problem later
         // when calling `sdk_spi_flash_write`, so make a word-aligned copy.
@@ -708,6 +709,8 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
             if (status < 0) break;
             _sysparam_info.end_addr = write_ctx.addr;
         }
+
+        debug(1, "new addr is 0x%08x (%d bytes remaining)", _sysparam_info.end_addr, _sysparam_info.cur_base + _sysparam_info.region_size - _sysparam_info.end_addr - 4);
 
         // Delete old value (if present) by setting it's id to 0x00
         if (old_value_addr) {
