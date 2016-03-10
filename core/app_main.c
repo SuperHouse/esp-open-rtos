@@ -85,6 +85,7 @@ static void zero_bss(void);
 static void init_networking(uint8_t *phy_info, uint8_t *mac_addr);
 static void init_g_ic(void);
 static void dump_excinfo(void);
+static void dump_stack(uint32_t *sp);
 static void user_start_phase2(void);
 static void dump_flash_sector(uint32_t start_sector, uint32_t length);
 static void dump_flash_config_sectors(uint32_t start_sector);
@@ -147,7 +148,7 @@ static void IRAM set_spi0_divisor(uint32_t divisor) {
 }
 
 // .text+0x148
-void IRAM sdk_user_fatal_exception_handler(void) {
+void IRAM sdk_user_fatal_exception_handler(uint32_t *sp) {
     if (!sdk_NMIIrqIsOn) {
         vPortEnterCritical();
         do {
@@ -157,6 +158,8 @@ void IRAM sdk_user_fatal_exception_handler(void) {
     Cache_Read_Disable();
     Cache_Read_Enable(0, 0, 1);
     dump_excinfo();
+    if (sp)
+        dump_stack(sp);
     uart_flush_txfifo(0);
     uart_flush_txfifo(1);
     sdk_system_restart_in_nmi();
@@ -361,6 +364,24 @@ static void dump_excinfo(void) {
     excinfo[6] = depc;
     excinfo[7] = excsave1;
     sdk_system_rtc_mem_write(0, excinfo, 32);
+}
+
+/* There's a lot of smart stuff we could do while dumping stack
+   but for now we just dump a likely looking section of stack
+   memory
+*/
+static void dump_stack(uint32_t *sp) {
+    printf("\nStack: SP=%p\n", sp);
+    for(uint32_t *p = sp; p < sp + 32; p += 4) {
+        if((intptr_t)p >= 0x3fffc000) {
+            break; /* approximate end of RAM */
+        }
+        printf("%p: %08x %08x %08x %08x\n", p, p[0], p[1], p[2], p[3]);
+        if(p[0] == 0xa5a5a5a5 && p[1] == 0xa5a5a5a5
+           && p[2] == 0xa5a5a5a5 && p[3] == 0xa5a5a5a5) {
+            break; /* FreeRTOS uses this pattern to mark untouched stack space */
+        }
+    }
 }
 
 // .irom0.text+0x398
