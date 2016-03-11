@@ -50,6 +50,14 @@ void SntpTsk(void *pvParameters)
 	sntp_initialize(1, 0);
 	sntp_set_servers(servers, sizeof(servers) / sizeof(char*));
 	printf("DONE!\n");
+
+	struct timespec ts;
+	clock_getres(CLOCK_REALTIME, &ts);
+	printf("Time resolution: %d secs, %d nanosecs\n", t.tv_sec, t.tv_nsec);
+
+	clock_gettime(CLOCK_REALTIME, &t);
+	printf("Time: %d secs, %d nanosecs\n", t.tv_sec, t.tv_nsec);
+
 	while(1) {
 		vTaskDelayMs(5000);
 		time_t ts = sntp_get_rtc_time(NULL);

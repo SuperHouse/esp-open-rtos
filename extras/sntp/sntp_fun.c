@@ -4,6 +4,10 @@
  * Jesus Alonso (doragasu)
  */
 
+#include <sys/reent.h>
+#include <sys/types.h>
+#include <sys/errno.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <espressif/esp_common.h>
 #include <esp/timer.h>
@@ -83,6 +87,16 @@ time_t sntp_get_rtc_time(int32_t *us) {
 	}
 	return secs;
 }
+
+int _gettimeofday_r(struct _reent *r, struct timeval *tp, void *tzp) {
+	(void)r;
+	(void)tzp;
+
+	printf("DEB; gettimeofday called");
+	tp->tv_sec = sntp_get_rtc_time((int32_t*)&tp->tv_usec);
+	return 0;
+}
+
 
 /// Update RTC timer. Called by SNTP module each time it receives an update.
 void sntp_update_rtc(time_t t, uint32_t us) {
