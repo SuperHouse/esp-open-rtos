@@ -123,8 +123,8 @@ void spi_set_frequency_div(uint8_t bus, uint32_t divider);
 inline uint32_t spi_get_frequency_hz(uint8_t bus)
 {
     return APB_CLK_FREQ /
-    	(FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) /
-    	(FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
+        (FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) /
+        (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
 }
 
 /**
