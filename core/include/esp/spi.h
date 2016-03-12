@@ -49,9 +49,15 @@ typedef enum _spi_mode_t {
 } spi_mode_t;
 
 typedef enum _spi_endianness_t {
-    SPI_LITTLE_ENDIAN,
+    SPI_LITTLE_ENDIAN = 0,
     SPI_BIG_ENDIAN
 } spi_endianness_t;
+
+typedef enum _spi_word_size_t {
+    SPI_8BIT  = 1,  ///< 1 byte, no endian swapping
+    SPI_16BIT = 2,  ///< 2 bytes, swap 16-bit values in SPI_BIG_ENDIAN mode
+    SPI_32BIT = 4   ///< 4 bytes, swap 32-bit values in SPI_BIG_ENDIAN mode
+} spi_word_size_t;
 
 /**
  * \brief Initalize SPI bus
@@ -90,10 +96,7 @@ void spi_set_mode(uint8_t bus, spi_mode_t mode);
  * \param bus Bus ID: 0 - system, 1 - user
  * \return Bus mode
  */
-inline spi_mode_t spi_get_mode(uint8_t bus)
-{
-    return (spi_mode_t)((SPI(bus).PIN & SPI_PIN_IDLE_EDGE ? 2 : 0) | (SPI(bus).USER0 & SPI_USER0_CLOCK_OUT_EDGE ? 1 : 0));
-}
+spi_mode_t spi_get_mode(uint8_t bus);
 
 /**
  * \brief Set SPI bus frequency
@@ -120,8 +123,8 @@ void spi_set_frequency_div(uint8_t bus, uint32_t divider);
 inline uint32_t spi_get_frequency_hz(uint8_t bus)
 {
     return APB_CLK_FREQ /
-        (((SPI(bus).CLOCK >> SPI_CLOCK_DIV_PRE_S) & SPI_CLOCK_DIV_PRE_M) + 1) /
-        (((SPI(bus).CLOCK >> SPI_CLOCK_COUNT_NUM_S) & SPI_CLOCK_COUNT_NUM_M) + 1);
+    	(FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) /
+    	(FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
 }
 
 /**
@@ -155,39 +158,48 @@ void spi_set_endianness(uint8_t bus, spi_endianness_t endianness);
 inline spi_endianness_t spi_get_endianness(uint8_t bus)
 {
     return SPI(bus).USER0 & (SPI_USER0_WR_BYTE_ORDER | SPI_USER0_RD_BYTE_ORDER)
-    	? SPI_BIG_ENDIAN
-    	: SPI_LITTLE_ENDIAN;
+        ? SPI_BIG_ENDIAN
+        : SPI_LITTLE_ENDIAN;
 }
 
 /**
- * \brief Transfer byte over SPI
+ * \brief Transfer 8 bits over SPI
  * \param bus Bus ID: 0 - system, 1 - user
  * \param data Byte to send
  * \return Received byte
  */
 uint8_t spi_transfer_8(uint8_t bus, uint8_t data);
 /**
- * \brief Transfer word over SPI
+ * \brief Transfer 16 bits over SPI
  * \param bus Bus ID: 0 - system, 1 - user
  * \param data Word to send
  * \return Received word
  */
 uint16_t spi_transfer_16(uint8_t bus, uint16_t data);
 /**
- * \brief Transfer dword over SPI
+ * \brief Transfer 32 bits over SPI
  * \param bus Bus ID: 0 - system, 1 - user
  * \param data dword to send
  * \return Received dword
  */
 uint32_t spi_transfer_32(uint8_t bus, uint32_t data);
 /**
- * \brief Transfer buffer over SPI
+ * \brief Transfer buffer of words over SPI
+ * Please note that the buffer size is in words, not in bytes!
+ * Example:
+ *    const uint16_t out_buf[4] = { 0xa0b0, 0xa1b1, 0xa2b2, 0xa3b3 };
+ *    uint16_t in_buf[4];
+ *    spi_init(1, SPI_MODE1, SPI_FREQ_DIV_4M, true, SPI_BIG_ENDIAN, true);
+ *    spi_transfer(1, buf, in_buf, 4, SPI_16BIT); // len = 4 words = 8 bytes
+ *
  * \param bus Bus ID: 0 - system, 1 - user
  * \param out_data Data to send.
  * \param in_data Receive buffer. If NULL, received data will be lost.
- * \param len Buffer size
+ * \param len Buffer size in words
+ * \param word_size Size of the word
+ * \return Transmitted/received words count
  */
-void spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len);
+size_t spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len, spi_word_size_t word_size);
 
 #ifdef __cplusplus
 }

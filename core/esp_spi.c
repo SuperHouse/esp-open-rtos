@@ -72,17 +72,30 @@ bool spi_init(uint8_t bus, spi_mode_t mode, uint32_t freq_divider, bool msb, spi
 
 void spi_set_mode(uint8_t bus, spi_mode_t mode)
 {
+    bool cpha = (uint8_t)mode & 1;
+    bool cpol = (uint8_t)mode & 2;
+    if (cpol)
+        cpha = !cpha;  // CPHA must be inverted when CPOL = 1, I have no idea why
+
     // CPHA
-    if ((uint8_t)mode & 1)
+    if (cpha)
         SPI(bus).USER0 |= SPI_USER0_CLOCK_OUT_EDGE;
     else
         SPI(bus).USER0 &= ~SPI_USER0_CLOCK_OUT_EDGE;
 
     // CPOL - see http://bbs.espressif.com/viewtopic.php?t=342#p5384
-    if ((uint8_t)mode & 2)
+    if (cpol)
         SPI(bus).PIN |= SPI_PIN_IDLE_EDGE;
     else
         SPI(bus).PIN &= ~SPI_PIN_IDLE_EDGE;
+}
+
+spi_mode_t spi_get_mode(uint8_t bus)
+{
+    uint8_t cpha = SPI(bus).USER0 & SPI_USER0_CLOCK_OUT_EDGE ? 1 : 0;
+    uint8_t cpol = SPI(bus).PIN & SPI_PIN_IDLE_EDGE ? 2 : 0;
+
+    return (spi_mode_t)(cpol | (cpol ? 1 - cpha : cpha)); // see spi_set_mode
 }
 
 void spi_set_msb(uint8_t bus, bool msb)
@@ -103,17 +116,15 @@ void spi_set_endianness(uint8_t bus, spi_endianness_t endianness)
 
 void spi_set_frequency_div(uint8_t bus, uint32_t divider)
 {
-    uint32_t predivider = divider & 0xffff;
-    uint32_t count = divider >> 16;
-    if (count > 1 || divider > 1)
+    uint32_t predivider = (divider & 0xffff) - 1;
+    uint32_t count = (divider >> 16) - 1;
+    if (count || predivider)
     {
-        predivider = predivider > SPI_CLOCK_DIV_PRE_M + 1 ? SPI_CLOCK_DIV_PRE_M + 1 : predivider;
-        count = count > SPI_CLOCK_COUNT_NUM_M + 1 ? SPI_CLOCK_COUNT_NUM_M + 1 : count;
         IOMUX.CONF &= ~(bus == 0 ? IOMUX_CONF_SPI0_CLOCK_EQU_SYS_CLOCK : IOMUX_CONF_SPI1_CLOCK_EQU_SYS_CLOCK);
-        SPI(bus).CLOCK = (((predivider - 1) & SPI_CLOCK_DIV_PRE_M) << SPI_CLOCK_DIV_PRE_S) |
-            (((count - 1)     & SPI_CLOCK_COUNT_NUM_M)  << SPI_CLOCK_COUNT_NUM_S) |
-            (((count / 2 - 1) & SPI_CLOCK_COUNT_HIGH_M) << SPI_CLOCK_COUNT_HIGH_S) |
-            (((count - 1)     & SPI_CLOCK_COUNT_LOW_M)  << SPI_CLOCK_COUNT_LOW_S);
+        SPI(bus).CLOCK = VAL2FIELD_M(SPI_CLOCK_DIV_PRE, predivider) |
+                         VAL2FIELD_M(SPI_CLOCK_COUNT_NUM, count) |
+                         VAL2FIELD_M(SPI_CLOCK_COUNT_HIGH, count / 2) |
+                         VAL2FIELD_M(SPI_CLOCK_COUNT_LOW, count);
     }
     else
     {
@@ -124,11 +135,9 @@ void spi_set_frequency_div(uint8_t bus, uint32_t divider)
 
 inline static void _set_size(uint8_t bus, uint8_t bytes)
 {
-    uint16_t bits = ((uint16_t)bytes << 3) - 1;
-    const uint32_t mask = ~((SPI_USER1_MOSI_BITLEN_M << SPI_USER1_MOSI_BITLEN_S) |
-        (SPI_USER1_MISO_BITLEN_M << SPI_USER1_MISO_BITLEN_S));
-    SPI(bus).USER1 = (SPI(bus).USER1 & mask) | (bits << SPI_USER1_MOSI_BITLEN_S) |
-        (bits << SPI_USER1_MISO_BITLEN_S);
+    uint32_t bits = ((uint32_t)bytes << 3) - 1;
+    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_MISO_BITLEN, bits);
+    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_MOSI_BITLEN, bits);
 }
 
 inline static void _wait(uint8_t bus)
@@ -142,71 +151,95 @@ inline static void _start(uint8_t bus)
     SPI(bus).CMD |= SPI_CMD_USR;
 }
 
-inline static uint32_t _reverse_bytes(uint32_t value)
+inline static uint32_t _swap_bytes(uint32_t value)
 {
     return (value << 24) | ((value << 8) & 0x00ff0000) | ((value >> 8) & 0x0000ff00) | (value >> 24);
 }
 
-static uint32_t _spi_single_transfer (uint8_t bus, uint32_t data, uint8_t len)
+inline static uint32_t _swap_words(uint32_t value)
 {
-    _wait(bus);
-    _set_size(bus, len);
-    spi_endianness_t e = spi_get_endianness(bus);
-    SPI(bus).W0 = e == SPI_BIG_ENDIAN ? _reverse_bytes(data) : data;
-    _start(bus);
-    _wait(bus);
-    return e == SPI_BIG_ENDIAN ? _reverse_bytes(SPI(bus).W0) : SPI(bus).W0;
+    return (value << 16) | (value >> 16);
 }
 
-// works properly only with little endian byte order
-static void _spi_buf_transfer (uint8_t bus, const uint8_t *out_data, uint8_t *in_data, size_t len)
+static void _prepare_buffer(uint8_t bus, size_t len, spi_endianness_t e, spi_word_size_t word_size)
+{
+    if (e == SPI_LITTLE_ENDIAN || word_size == SPI_32BIT) return;
+
+    if (word_size == SPI_16BIT)
+    {
+        if (len % 2)
+            len ++;
+        len /= 2;
+    }
+
+    uint32_t *data = (uint32_t *)&SPI(bus).W0;
+    for (size_t i = 0; i < len; i ++)
+    {
+        data[i] = word_size == SPI_16BIT
+            ? _swap_words(data[i])
+            : _swap_bytes(data[i]);
+    }
+}
+
+static void _spi_buf_transfer(uint8_t bus, const void *out_data, void *in_data,
+    size_t len, spi_endianness_t e, spi_word_size_t word_size)
 {
     _wait(bus);
-    _set_size(bus, len);
-    memcpy((void *)&SPI(bus).W0, out_data, len);
+    size_t bytes = len * (uint8_t)word_size;
+    _set_size(bus, bytes);
+    memcpy((void *)&SPI(bus).W0, out_data, bytes);
+    _prepare_buffer(bus, len, e, word_size);
     _start(bus);
     _wait(bus);
     if (in_data)
-        memcpy(in_data, (void *)&SPI(bus).W0, len);
+    {
+        _prepare_buffer(bus, len, e, word_size);
+        memcpy(in_data, (void *)&SPI(bus).W0, bytes);
+    }
 }
 
 uint8_t spi_transfer_8(uint8_t bus, uint8_t data)
 {
-    return _spi_single_transfer(bus, data, sizeof(data));
+    uint8_t res;
+    _spi_buf_transfer(bus, &data, &res, 1, spi_get_endianness(bus), SPI_8BIT);
+    return res;
 }
 
 uint16_t spi_transfer_16(uint8_t bus, uint16_t data)
 {
-    return _spi_single_transfer(bus, data, sizeof(data));
+    uint16_t res;
+    _spi_buf_transfer(bus, &data, &res, 1, spi_get_endianness(bus), SPI_16BIT);
+    return res;
 }
 
 uint32_t spi_transfer_32(uint8_t bus, uint32_t data)
 {
-    return _spi_single_transfer(bus, data, sizeof(data));
+    uint32_t res;
+    _spi_buf_transfer(bus, &data, &res, 1, spi_get_endianness(bus), SPI_32BIT);
+    return res;
 }
 
-void spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len)
+size_t spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len, spi_word_size_t word_size)
 {
-    if (!out_data || !len) return;
+    if (!out_data || !len) return 0;
 
-    _wait(bus);
     spi_endianness_t e = spi_get_endianness(bus);
-    spi_set_endianness(bus, SPI_LITTLE_ENDIAN);
+    uint8_t buf_size = _SPI_BUF_SIZE / (uint8_t)word_size;
 
-    size_t blocks = len / _SPI_BUF_SIZE;
+    size_t blocks = len / buf_size;
     for (size_t i = 0; i < blocks; i++)
     {
         size_t offset = i * _SPI_BUF_SIZE;
         _spi_buf_transfer(bus, (const uint8_t *)out_data + offset,
-            in_data ? (uint8_t *)in_data + offset : NULL, _SPI_BUF_SIZE);
+            in_data ? (uint8_t *)in_data + offset : NULL, buf_size, e, word_size);
     }
 
-    uint8_t tail = len % _SPI_BUF_SIZE;
+    uint8_t tail = len % buf_size;
     if (tail)
     {
         _spi_buf_transfer(bus, (const uint8_t *)out_data + blocks * _SPI_BUF_SIZE,
-            in_data ? (uint8_t *)in_data + blocks * _SPI_BUF_SIZE : NULL, tail);
+            in_data ? (uint8_t *)in_data + blocks * _SPI_BUF_SIZE : NULL, tail, e, word_size);
     }
 
-    spi_set_endianness(bus, e);
+    return len;
 }
