@@ -54,9 +54,9 @@ typedef enum _spi_endianness_t {
 } spi_endianness_t;
 
 typedef enum _spi_word_size_t {
-    SPI_8BIT  = 1,  ///< 1 byte, no endian swapping
-    SPI_16BIT = 2,  ///< 2 bytes, swap 16-bit values in SPI_BIG_ENDIAN mode
-    SPI_32BIT = 4   ///< 4 bytes, swap 32-bit values in SPI_BIG_ENDIAN mode
+    SPI_8BIT  = 1,  ///< 1 byte
+    SPI_16BIT = 2,  ///< 2 bytes
+    SPI_32BIT = 4   ///< 4 bytes
 } spi_word_size_t;
 
 /**
@@ -145,7 +145,6 @@ inline bool spi_get_msb(uint8_t bus)
 
 /**
  * \brief Set SPI bus byte order
- * This value is ignored when transferring buffer with spi_transfer()
  * \param bus Bus ID: 0 - system, 1 - user
  * \param endianness Byte order
  */
@@ -187,10 +186,10 @@ uint32_t spi_transfer_32(uint8_t bus, uint32_t data);
  * \brief Transfer buffer of words over SPI
  * Please note that the buffer size is in words, not in bytes!
  * Example:
- *    const uint16_t out_buf[4] = { 0xa0b0, 0xa1b1, 0xa2b2, 0xa3b3 };
- *    uint16_t in_buf[4];
+ *    const uint16_t out_buf[] = { 0xa0b0, 0xa1b1, 0xa2b2, 0xa3b3 };
+ *    uint16_t in_buf[sizeof(out_buf)];
  *    spi_init(1, SPI_MODE1, SPI_FREQ_DIV_4M, true, SPI_BIG_ENDIAN, true);
- *    spi_transfer(1, buf, in_buf, 4, SPI_16BIT); // len = 4 words = 8 bytes
+ *    spi_transfer(1, out_buf, in_buf, sizeof(out_buf), SPI_16BIT); // len = 4 words * 2 bytes = 8 bytes
  *
  * \param bus Bus ID: 0 - system, 1 - user
  * \param out_data Data to send.
