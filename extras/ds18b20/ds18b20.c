@@ -4,17 +4,17 @@
 #include "onewire/onewire.h"
 #include "ds18b20.h"
 
-#define DS1820_WRITE_SCRATCHPAD 0x4E
-#define DS1820_READ_SCRATCHPAD  0xBE
-#define DS1820_COPY_SCRATCHPAD  0x48
-#define DS1820_READ_EEPROM      0xB8
-#define DS1820_READ_PWRSUPPLY   0xB4
-#define DS1820_SEARCHROM        0xF0
-#define DS1820_SKIP_ROM         0xCC
-#define DS1820_READROM          0x33
-#define DS1820_MATCHROM         0x55
-#define DS1820_ALARMSEARCH      0xEC
-#define DS1820_CONVERT_T        0x44
+#define DS18B20_WRITE_SCRATCHPAD 0x4E
+#define DS18B20_READ_SCRATCHPAD  0xBE
+#define DS18B20_COPY_SCRATCHPAD  0x48
+#define DS18B20_READ_EEPROM      0xB8
+#define DS18B20_READ_PWRSUPPLY   0xB4
+#define DS18B20_SEARCHROM        0xF0
+#define DS18B20_SKIP_ROM         0xCC
+#define DS18B20_READROM          0x33
+#define DS18B20_MATCHROM         0x55
+#define DS18B20_ALARMSEARCH      0xEC
+#define DS18B20_CONVERT_T        0x44
 
 uint8_t ds18b20_read_all(uint8_t pin, ds_sensor_t *result) {
     onewire_addr_t addr;
@@ -32,13 +32,14 @@ uint8_t ds18b20_read_all(uint8_t pin, ds_sensor_t *result) {
 
         onewire_reset(pin);
         onewire_select(pin, addr);
-        onewire_write(pin, DS1820_CONVERT_T);
+        onewire_write(pin, DS18B20_CONVERT_T);
         
+        onewire_power(pin);
         vTaskDelay(750 / portTICK_RATE_MS);
         
         onewire_reset(pin);
         onewire_select(pin, addr);
-        onewire_write(pin, DS1820_READ_SCRATCHPAD);
+        onewire_write(pin, DS18B20_READ_SCRATCHPAD);
 
         uint8_t get[10];
 
@@ -73,13 +74,14 @@ float ds18b20_read_single(uint8_t pin) {
   
     onewire_reset(pin);
     onewire_skip_rom(pin);
-    onewire_write(pin, DS1820_CONVERT_T);
+    onewire_write(pin, DS18B20_CONVERT_T);
 
+    onewire_power(pin);
     vTaskDelay(750 / portTICK_RATE_MS);
 
     onewire_reset(pin);
     onewire_skip_rom(pin);
-    onewire_write(pin, DS1820_READ_SCRATCHPAD);
+    onewire_write(pin, DS18B20_READ_SCRATCHPAD);
     
     uint8_t get[10];
 
