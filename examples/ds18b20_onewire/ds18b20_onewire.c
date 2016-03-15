@@ -12,8 +12,6 @@
 
 // DS18B20 driver
 #include "ds18b20/ds18b20.h"
-// Onewire init
-#include "onewire/onewire.h"
  
 void print_temperature(void *pvParameters)
 {
@@ -25,8 +23,6 @@ void print_temperature(void *pvParameters)
     
     // Use GPIO 13 as one wire pin. 
     uint8_t GPIO_FOR_ONE_WIRE = 13;
-    
-    onewire_init(GPIO_FOR_ONE_WIRE);
     
     while(1) {
         // Search all DS18B20, return its amount and feed 't' structure with result data.

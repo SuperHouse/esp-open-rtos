@@ -17,27 +17,28 @@
 #define DS1820_CONVERT_T        0x44
 
 uint8_t ds18b20_read_all(uint8_t pin, ds_sensor_t *result) {
-    
-    uint8_t addr[8];
+    onewire_addr_t addr;
+    onewire_search_t search;
     uint8_t sensor_id = 0;
-    onewire_reset_search(pin);
+
+    onewire_search_start(&search);
     
-    while(onewire_search(pin, addr)){
-        uint8_t crc = onewire_crc8(addr, 7);
-        if (crc != addr[7]){
-            printf("CRC check failed: %02X %02X\n", addr[7], crc);
+    while ((addr = onewire_search_next(&search, pin)) != ONEWIRE_NONE) {
+        uint8_t crc = onewire_crc8((uint8_t *)&addr, 7);
+        if (crc != (addr >> 56)){
+            printf("CRC check failed: %02X %02X\n", (unsigned)(addr >> 56), crc);
             return 0;
         }
 
         onewire_reset(pin);
         onewire_select(pin, addr);
-        onewire_write(pin, DS1820_CONVERT_T, ONEWIRE_DEFAULT_POWER);
+        onewire_write(pin, DS1820_CONVERT_T);
         
         vTaskDelay(750 / portTICK_RATE_MS);
         
         onewire_reset(pin);
         onewire_select(pin, addr);
-        onewire_write(pin, DS1820_READ_SCRATCHPAD, ONEWIRE_DEFAULT_POWER);
+        onewire_write(pin, DS1820_READ_SCRATCHPAD);
 
         uint8_t get[10];
 
@@ -71,15 +72,14 @@ uint8_t ds18b20_read_all(uint8_t pin, ds_sensor_t *result) {
 float ds18b20_read_single(uint8_t pin) {
   
     onewire_reset(pin);
-
-    onewire_write(pin, DS1820_SKIP_ROM, ONEWIRE_DEFAULT_POWER);
-    onewire_write(pin, DS1820_CONVERT_T, ONEWIRE_DEFAULT_POWER);
+    onewire_skip_rom(pin);
+    onewire_write(pin, DS1820_CONVERT_T);
 
     vTaskDelay(750 / portTICK_RATE_MS);
 
     onewire_reset(pin);
-    onewire_write(pin, DS1820_SKIP_ROM, ONEWIRE_DEFAULT_POWER);
-    onewire_write(pin, DS1820_READ_SCRATCHPAD, ONEWIRE_DEFAULT_POWER);
+    onewire_skip_rom(pin);
+    onewire_write(pin, DS1820_READ_SCRATCHPAD);
     
     uint8_t get[10];
 
