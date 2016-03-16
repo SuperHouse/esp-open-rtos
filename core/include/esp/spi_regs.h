@@ -152,6 +152,7 @@ _Static_assert(sizeof(struct SPI_REGS) == 0x100, "SPI_REGS is the wrong size");
 #define SPI_USER0_CS_SETUP                 BIT(5)
 #define SPI_USER0_CS_HOLD                  BIT(4)
 #define SPI_USER0_FLASH_MODE               BIT(2)
+#define SPI_USER0_DUPLEX                   BIT(0)
 
 /* Details for USER1 register */
 
@@ -173,6 +174,7 @@ _Static_assert(sizeof(struct SPI_REGS) == 0x100, "SPI_REGS is the wrong size");
 
 /* Details for PIN register */
 
+#define SPI_PIN_IDLE_EDGE                  BIT(29)  ///< CPOL
 #define SPI_PIN_CS2_DISABLE                BIT(2)
 #define SPI_PIN_CS1_DISABLE                BIT(1)
 #define SPI_PIN_CS0_DISABLE                BIT(0)
