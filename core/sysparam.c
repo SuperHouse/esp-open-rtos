@@ -436,6 +436,7 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
     sysparam_status_t status;
     size_t key_len = strlen(key);
     uint8_t *buffer;
+    uint8_t *newbuf;
    
     if (!_sysparam_info.cur_base) return SYSPARAM_ERR_NOINIT;
 
@@ -450,10 +451,12 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
         status = _find_entry(&ctx, ctx.entry.id | 0x80);
         if (status != SYSPARAM_OK) break;
 
-        buffer = realloc(buffer, ctx.entry.len + 1);
-        if (!buffer) {
-            return SYSPARAM_ERR_NOMEM;
+        newbuf = realloc(buffer, ctx.entry.len + 1);
+        if (!newbuf) {
+            status = SYSPARAM_ERR_NOMEM;
+            break;
         }
+        buffer = newbuf;
         status = _read_payload(&ctx, buffer, ctx.entry.len);
         if (status != SYSPARAM_OK) break;
 
@@ -565,6 +568,7 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
     sysparam_status_t status = SYSPARAM_OK;
     uint8_t key_len = strlen(key);
     uint8_t *buffer;
+    uint8_t *newbuf;
     size_t free_space;
     size_t needed_space;
     bool free_value = false;
@@ -612,8 +616,12 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
                 if (ctx.entry.len == value_len) {
                     // Are we trying to write the same value that's already there?
                     if (value_len > key_len) {
-                        buffer = realloc(buffer, value_len);
-                        if (!buffer) return SYSPARAM_ERR_NOMEM;
+                        newbuf = realloc(buffer, value_len);
+                        if (!newbuf) {
+                            status = SYSPARAM_ERR_NOMEM;
+                            break;
+                        }
+                        buffer = newbuf;
                     }
                     status = _read_payload(&ctx, buffer, value_len);
                     if (status == SYSPARAM_ERR_CORRUPT) {
@@ -779,6 +787,7 @@ sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
     struct sysparam_context *ctx = iter->ctx;
     struct sysparam_context value_ctx;
     size_t key_space;
+    char *newbuf;
 
     while (true) {
         status = _find_key(ctx, NULL, 0, buffer);
@@ -792,11 +801,11 @@ sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
         key_space = ROUND_TO_WORD_BOUNDARY(ctx->entry.len + 1);
         required_len = key_space + value_ctx.entry.len + 1;
         if (required_len > iter->bufsize) {
-            iter->key = realloc(iter->key, required_len);
-            if (!iter->key) {
-                iter->bufsize = 0;
+            newbuf = realloc(iter->key, required_len);
+            if (!newbuf) {
                 return SYSPARAM_ERR_NOMEM;
             }
+            iter->key = newbuf;
             iter->bufsize = required_len;
         }
 
