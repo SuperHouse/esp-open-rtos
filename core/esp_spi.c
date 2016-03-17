@@ -28,6 +28,8 @@
 
 #define _SPI_BUF_SIZE 64
 
+static bool _minimal_pins[2] = {false, false};
+
 inline static void _set_pin_function(uint8_t pin, uint32_t function)
 {
     iomux_set_function(gpio_to_iomux(pin), function);
@@ -59,6 +61,7 @@ bool spi_init(uint8_t bus, spi_mode_t mode, uint32_t freq_divider, bool msb, spi
             return false;
     }
 
+    _minimal_pins[bus] = minimal_pins;
     SPI(bus).USER0 = SPI_USER0_MOSI | SPI_USER0_CLOCK_IN_EDGE | SPI_USER0_DUPLEX |
         (minimal_pins ? 0 : (SPI_USER0_CS_HOLD | SPI_USER0_CS_SETUP));
 
@@ -68,6 +71,15 @@ bool spi_init(uint8_t bus, spi_mode_t mode, uint32_t freq_divider, bool msb, spi
     spi_set_endianness(bus, endianness);
 
     return true;
+}
+
+void spi_get_settings(uint8_t bus, spi_settings_t *s)
+{
+    s->mode = spi_get_mode(bus);
+    s->freq_divider = spi_get_frequency_div(bus);
+    s->msb = spi_get_msb(bus);
+    s->endianness = spi_get_endianness(bus);
+    s->minimal_pins = _minimal_pins[bus];
 }
 
 void spi_set_mode(uint8_t bus, spi_mode_t mode)
@@ -161,19 +173,13 @@ inline static uint32_t _swap_words(uint32_t value)
     return (value << 16) | (value >> 16);
 }
 
-static void _prepare_buffer(uint8_t bus, size_t len, spi_endianness_t e, spi_word_size_t word_size)
+static void _spi_buf_prepare(uint8_t bus, size_t len, spi_endianness_t e, spi_word_size_t word_size)
 {
     if (e == SPI_LITTLE_ENDIAN || word_size == SPI_32BIT) return;
 
-    if (word_size == SPI_16BIT)
-    {
-        if (len % 2)
-            len ++;
-        len /= 2;
-    }
-
+    size_t count = word_size == SPI_16BIT ? (len + 1) / 2 : (len + 3) / 4;
     uint32_t *data = (uint32_t *)&SPI(bus).W0;
-    for (size_t i = 0; i < len; i ++)
+    for (size_t i = 0; i < count; i ++)
     {
         data[i] = word_size == SPI_16BIT
             ? _swap_words(data[i])
@@ -188,12 +194,12 @@ static void _spi_buf_transfer(uint8_t bus, const void *out_data, void *in_data,
     size_t bytes = len * (uint8_t)word_size;
     _set_size(bus, bytes);
     memcpy((void *)&SPI(bus).W0, out_data, bytes);
-    _prepare_buffer(bus, len, e, word_size);
+    _spi_buf_prepare(bus, len, e, word_size);
     _start(bus);
     _wait(bus);
     if (in_data)
     {
-        _prepare_buffer(bus, len, e, word_size);
+        _spi_buf_prepare(bus, len, e, word_size);
         memcpy(in_data, (void *)&SPI(bus).W0, bytes);
     }
 }

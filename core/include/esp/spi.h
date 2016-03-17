@@ -19,7 +19,7 @@
  * SPI frequency = 80000000 / divider / count
  * dvider must be in 1..8192 and count in 1..64
  */
-#define SPI_GET_FREQ_DIV(divider, count) (((count) << 16) | (divider))
+#define SPI_GET_FREQ_DIV(divider, count) (((count) << 16) | ((divider) & 0xffff))
 
 /**
  * Predefinded SPI frequency dividers
@@ -60,6 +60,18 @@ typedef enum _spi_word_size_t {
 } spi_word_size_t;
 
 /**
+ * SPI bus settings
+ */
+typedef struct
+{
+    spi_mode_t mode;              ///< Bus mode
+    uint32_t freq_divider;        ///< Bus frequency as a divider. See spi_init()
+    bool msb;                     ///< MSB first if true
+    spi_endianness_t endianness;  ///< Bus byte order
+    bool minimal_pins;            ///< Minimal set of pins if true. Spee spi_init()
+} spi_settings_t;
+
+/**
  * \brief Initalize SPI bus
  * Initalize specified SPI bus and setup appropriate pins:
  * Bus 0:
@@ -84,11 +96,47 @@ typedef enum _spi_word_size_t {
  * \return false when error
  */
 bool spi_init(uint8_t bus, spi_mode_t mode, uint32_t freq_divider, bool msb, spi_endianness_t endianness, bool minimal_pins);
+/**
+ * \brief Initalize SPI bus
+ * spi_init() wrapper.
+ * Example:
+ *
+ *     const spi_settings_t my_settings = {
+ *         .mode = SPI_MODE0,
+ *         .freq_divider = SPI_FREQ_DIV_4M,
+ *         .msb = true,
+ *         .endianness = SPI_LITTLE_ENDIAN,
+ *         .minimal_pins = true
+ *     }
+ *     ....
+ *     spi_settings_t old;
+ *     spi_get_settings(1, &old); // save current settings
+ *     //spi_init(1, SPI_MODE0, SPI_FREQ_DIV_4M, true, SPI_LITTLE_ENDIAN, true); // use own settings
+ *     // or
+ *     spi_set_settings(1, &my_settings);
+ *     // some work with spi here
+ *     ....
+ *     spi_set_settings(1, &old); // restore saved settings
+ *
+ * \param s Pointer to the settings structure
+ * \return false when error
+ */
+static inline bool spi_set_settings(uint8_t bus, const spi_settings_t *s)
+{
+    return spi_init(bus, s->mode, s->freq_divider, s->msb, s->endianness, s->minimal_pins);
+}
+/**
+ * \brief Get current settings of the SPI bus
+ * See spi_set_settings().
+ * \param bus Bus ID: 0 - system, 1 - user
+ * \param s Pointer to the structure that receives SPI bus settings
+ */
+void spi_get_settings(uint8_t bus, spi_settings_t *s);
 
 /**
  * \brief Set SPI bus mode
  * \param bus Bus ID: 0 - system, 1 - user
- * \param mode Bus mode.
+ * \param mode Bus mode
  */
 void spi_set_mode(uint8_t bus, spi_mode_t mode);
 /**
@@ -115,8 +163,24 @@ spi_mode_t spi_get_mode(uint8_t bus);
  */
 void spi_set_frequency_div(uint8_t bus, uint32_t divider);
 /**
- * \brief Get SPI bus frequency
- * Note the result is in Hz.
+ * \brief Get SPI bus frequency as a divider
+ * Example:
+ *
+ *   uint32_t old_freq = spi_get_frequency_div(1);
+ *   spi_set_frequency_div(1, SPI_FREQ_DIV_8M);
+ *   ...
+ *   spi_set_frequency_div(1, old_freq);
+ *
+ * \param bus Bus ID: 0 - system, 1 - user
+ * \return SPI frequency, as divider.
+ */
+inline uint32_t spi_get_frequency_div(uint8_t bus)
+{
+    return (FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) |
+           (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
+}
+/**
+ * \brief Get SPI bus frequency in Hz
  * \param bus Bus ID: 0 - system, 1 - user
  * \return SPI frequency, Hz
  */
@@ -186,6 +250,7 @@ uint32_t spi_transfer_32(uint8_t bus, uint32_t data);
  * \brief Transfer buffer of words over SPI
  * Please note that the buffer size is in words, not in bytes!
  * Example:
+ *
  *    const uint16_t out_buf[] = { 0xa0b0, 0xa1b1, 0xa2b2, 0xa3b3 };
  *    uint16_t in_buf[sizeof(out_buf)];
  *    spi_init(1, SPI_MODE1, SPI_FREQ_DIV_4M, true, SPI_BIG_ENDIAN, true);
