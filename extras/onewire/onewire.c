@@ -3,6 +3,22 @@
 #include "task.h"
 #include "esp/gpio.h"
 
+// Waits up to `max_wait` microseconds for the specified pin to go high.
+// Returns true if successful, false if the bus never comes high (likely
+// shorted).
+static inline bool _onewire_wait_for_bus(int pin, int max_wait) {
+    bool state;
+    for (int i = 0; i < ((max_wait + 4) / 5); i++) {
+        if (gpio_read(pin)) break;
+        sdk_os_delay_us(5);
+    }
+    state = gpio_read(pin);
+    // Wait an extra 1us to make sure the devices have an adequate recovery
+    // time before we drive things low again.
+    sdk_os_delay_us(1);
+    return state;
+}
+
 // Perform the onewire reset function.  We will wait up to 250uS for
 // the bus to come high, if it doesn't then it is broken or shorted
 // and we return false;
@@ -11,19 +27,11 @@
 //
 bool onewire_reset(int pin) {
     bool r;
-    const int retries = 50;
 
     gpio_enable(pin, GPIO_OUT_OPEN_DRAIN);
     gpio_write(pin, 1);
     // wait until the wire is high... just in case
-    for (int i = 0; i < retries; i++) {
-        if (gpio_read(pin)) break;
-        sdk_os_delay_us(5);
-    }
-    if (!gpio_read(pin)) {
-        // Bus shorted?
-        return false;
-    }
+    if (!_onewire_wait_for_bus(pin, 250)) return false;
 
     gpio_write(pin, 0);
     sdk_os_delay_us(480);
@@ -35,17 +43,13 @@ bool onewire_reset(int pin) {
     taskEXIT_CRITICAL();
 
     // Wait for all devices to finish pulling the bus low before returning
-    for (int i = 0; i < retries; i++) {
-        if (gpio_read(pin)) break;
-        sdk_os_delay_us(5);
-    }
-    sdk_os_delay_us(2);
+    if (!_onewire_wait_for_bus(pin, 410)) return false;
 
     return r;
 }
 
-static void onewire_write_bit(int pin, uint8_t v) {
-    //TODO: should verify that the bus is high before starting
+static bool _onewire_write_bit(int pin, uint8_t v) {
+    if (!_onewire_wait_for_bus(pin, 10)) return false;
     if (v & 1) {
         taskENTER_CRITICAL();
         gpio_write(pin, 0);  // drive output low
@@ -61,12 +65,14 @@ static void onewire_write_bit(int pin, uint8_t v) {
         taskEXIT_CRITICAL();
     }
     sdk_os_delay_us(1);
+
+    return true;
 }
 
-static int onewire_read_bit(int pin) {
+static int _onewire_read_bit(int pin) {
     int r;
 
-    //TODO: should verify that the bus is high before starting
+    if (!_onewire_wait_for_bus(pin, 10)) return -1;
     taskENTER_CRITICAL();
     gpio_write(pin, 0);
     sdk_os_delay_us(2);
@@ -84,40 +90,56 @@ static int onewire_read_bit(int pin) {
 // power after the write (e.g. DS18B20 in parasite power mode) then call
 // onewire_power() after this is complete to actively drive the line high.
 //
-void onewire_write(int pin, uint8_t v) {
+bool onewire_write(int pin, uint8_t v) {
     uint8_t bitMask;
 
     for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-        onewire_write_bit(pin, (bitMask & v)?1:0);
+        if (!_onewire_write_bit(pin, (bitMask & v)?1:0)) {
+            return false;
+        }
     }
+    return true;
 }
 
-void onewire_write_bytes(int pin, const uint8_t *buf, size_t count) {
+bool onewire_write_bytes(int pin, const uint8_t *buf, size_t count) {
     size_t i;
 
     for (i = 0 ; i < count ; i++) {
-        onewire_write(pin, buf[i]);
+        if (!onewire_write(pin, buf[i])) {
+            return false;
+        }
     }
+    return true;
 }
 
 // Read a byte
 //
-uint8_t onewire_read(int pin) {
+int onewire_read(int pin) {
     uint8_t bitMask;
-    uint8_t r = 0;
+    int r = 0;
+    int bit;
 
     for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-        if (onewire_read_bit(pin)) r |= bitMask;
+        bit = _onewire_read_bit(pin);
+        if (bit < 0) {
+            return -1;
+        } else if (bit) {
+            r |= bitMask;
+        }
     }
     return r;
 }
 
-void onewire_read_bytes(int pin, uint8_t *buf, size_t count) {
+bool onewire_read_bytes(int pin, uint8_t *buf, size_t count) {
     size_t i;
+    int b;
 
     for (i = 0 ; i < count ; i++) {
-        buf[i] = onewire_read(pin);
+        b = onewire_read(pin);
+        if (b < 0) return false;
+        buf[i] = b;
     }
+    return true;
 }
 
 // Do a ROM select
@@ -181,6 +203,7 @@ void onewire_search_prefix(onewire_search_t *search, uint8_t family_code) {
 //        0 : device not found, end of search
 //
 onewire_addr_t onewire_search_next(onewire_search_t *search, int pin) {
+    //TODO: add more checking for read/write errors
     uint8_t id_bit_number;
     uint8_t last_zero, search_result;
     int rom_byte_number;
@@ -212,11 +235,14 @@ onewire_addr_t onewire_search_next(onewire_search_t *search, int pin) {
         // loop to do the search
         do {
             // read a bit and its complement
-            id_bit = onewire_read_bit(pin);
-            cmp_id_bit = onewire_read_bit(pin);
+            id_bit = _onewire_read_bit(pin);
+            cmp_id_bit = _onewire_read_bit(pin);
 
             // check for no devices on 1-wire
-            if ((id_bit == 1) && (cmp_id_bit == 1)) {
+            if ((id_bit < 0) || (cmp_id_bit < 0)) {
+                // Read error
+                break;
+            } else if ((id_bit == 1) && (cmp_id_bit == 1)) {
                 break;
             } else {
                 // all devices coupled have 0 or 1
@@ -247,7 +273,7 @@ onewire_addr_t onewire_search_next(onewire_search_t *search, int pin) {
                 }
 
                 // serial number search direction write bit
-                onewire_write_bit(pin, search_direction);
+                _onewire_write_bit(pin, search_direction);
 
                 // increment the byte counter id_bit_number
                 // and shift the mask rom_byte_mask

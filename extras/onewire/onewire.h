@@ -57,14 +57,16 @@ void onewire_skip_rom(int pin);
 // resistor to pull the line high when not driven low.  If you need strong
 // power after the write (e.g. DS18B20 in parasite power mode) then call
 // onewire_power() after this is complete to actively drive the line high.
-void onewire_write(int pin, uint8_t v);
+// Returns true if successful, false on error.
+bool onewire_write(int pin, uint8_t v);
 
-void onewire_write_bytes(int pin, const uint8_t *buf, size_t count);
+bool onewire_write_bytes(int pin, const uint8_t *buf, size_t count);
 
 // Read a byte.
-uint8_t onewire_read(int pin);
+// Returns the read byte on success, negative value on error.
+int onewire_read(int pin);
 
-void onewire_read_bytes(int pin, uint8_t *buf, size_t count);
+bool onewire_read_bytes(int pin, uint8_t *buf, size_t count);
 
 // Actively drive the bus high to provide extra power for certain operations of
 // parasitically-powered devices.
