@@ -3,6 +3,10 @@
 #include "task.h"
 #include "esp/gpio.h"
 
+#define ONEWIRE_SELECT_ROM 0x55
+#define ONEWIRE_SKIP_ROM   0xcc
+#define ONEWIRE_SEARCH     0xf0
+
 // Waits up to `max_wait` microseconds for the specified pin to go high.
 // Returns true if successful, false if the bus never comes high (likely
 // shorted).
@@ -48,9 +52,9 @@ bool onewire_reset(int pin) {
     return r;
 }
 
-static bool _onewire_write_bit(int pin, uint8_t v) {
+static bool _onewire_write_bit(int pin, bool v) {
     if (!_onewire_wait_for_bus(pin, 10)) return false;
-    if (v & 1) {
+    if (v) {
         taskENTER_CRITICAL();
         gpio_write(pin, 0);  // drive output low
         sdk_os_delay_us(10);
@@ -94,7 +98,7 @@ bool onewire_write(int pin, uint8_t v) {
     uint8_t bitMask;
 
     for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-        if (!_onewire_write_bit(pin, (bitMask & v)?1:0)) {
+        if (!_onewire_write_bit(pin, (bitMask & v))) {
             return false;
         }
     }
@@ -142,28 +146,36 @@ bool onewire_read_bytes(int pin, uint8_t *buf, size_t count) {
     return true;
 }
 
-// Do a ROM select
-//
-void onewire_select(int pin, onewire_addr_t rom) {
+bool onewire_select(int pin, onewire_addr_t addr) {
     uint8_t i;
 
-    onewire_write(pin, 0x55);  // Choose ROM
+    if (!onewire_write(pin, ONEWIRE_SELECT_ROM)) {
+        return false;
+    }
 
     for (i = 0; i < 8; i++) {
-        onewire_write(pin, rom & 0xff);
-        rom >>= 8;
+        if (!onewire_write(pin, addr & 0xff)) {
+            return false;
+        }
+        addr >>= 8;
     }
+
+    return true;
 }
 
-// Do a ROM skip
-//
-void onewire_skip_rom(int pin) {
-    onewire_write(pin, 0xCC);  // Skip ROM
+bool onewire_skip_rom(int pin) {
+    return onewire_write(pin, ONEWIRE_SKIP_ROM);
 }
 
-void onewire_power(int pin) {
+bool onewire_power(int pin) {
+    // Make sure the bus is not being held low before driving it high, or we
+    // may end up shorting ourselves out.
+    if (!_onewire_wait_for_bus(pin, 10)) return false;
+
     gpio_enable(pin, GPIO_OUTPUT);
     gpio_write(pin, 1);
+
+    return true;
 }
 
 void onewire_depower(int pin) {
@@ -175,9 +187,6 @@ void onewire_search_start(onewire_search_t *search) {
     memset(search, 0, sizeof(*search));
 }
 
-// Setup the search to find the device type 'family_code' on the next call
-// to search(*newAddr) if it is present.
-//
 void onewire_search_prefix(onewire_search_t *search, uint8_t family_code) {
     uint8_t i;
 
@@ -209,8 +218,8 @@ onewire_addr_t onewire_search_next(onewire_search_t *search, int pin) {
     int rom_byte_number;
     uint8_t id_bit, cmp_id_bit;
     onewire_addr_t addr;
-
-    unsigned char rom_byte_mask, search_direction;
+    unsigned char rom_byte_mask;
+    bool search_direction;
 
     // initialize for search
     id_bit_number = 1;
@@ -230,7 +239,7 @@ onewire_addr_t onewire_search_next(onewire_search_t *search, int pin) {
         }
 
         // issue the search command
-        onewire_write(pin, 0xF0);
+        onewire_write(pin, ONEWIRE_SEARCH);
 
         // loop to do the search
         do {
@@ -259,14 +268,14 @@ onewire_addr_t onewire_search_next(onewire_search_t *search, int pin) {
                     }
 
                     // if 0 was picked then record its position in LastZero
-                    if (search_direction == 0) {
+                    if (!search_direction) {
                         last_zero = id_bit_number;
                     }
                 }
 
                 // set or clear the bit in the ROM byte rom_byte_number
                 // with mask rom_byte_mask
-                if (search_direction == 1) {
+                if (search_direction) {
                     search->rom_no[rom_byte_number] |= rom_byte_mask;
                 } else {
                     search->rom_no[rom_byte_number] &= ~rom_byte_mask;
