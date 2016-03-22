@@ -1,8 +1,8 @@
 /* A very simple OTA example
  *
- * Binds a TCP socket, reads an image from it and then flashes live.
+ * Binds a TCP socket, reads an image from it over TFTP and then flashes live.
  *
- * This lets you flash from the command line via netcat.
+ * For more information about esp-open-rtos OTA see https://github.com/SuperHouse/esp-open-rtos/wiki/OTA-Update-Configuration
  *
  * NOT SUITABLE TO PUT ON THE INTERNET OR INTO A PRODUCTION ENVIRONMENT!!!!
  */

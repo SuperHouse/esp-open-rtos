@@ -53,8 +53,30 @@
     #define IROM __attribute__((section(".irom0.literal"))) const
 #endif
 
-#define INLINED inline static __attribute__((always_inline)) __attribute__((unused))
+/* Use this macro to place functions into Instruction RAM (IRAM)
+   instead of flash memory (IROM).
 
+   This is useful for functions which are called when the flash may
+   not be available (for example during NMI exceptions), or for
+   functions which are called very frequently and need high
+   performance.
+
+   Bear in mind IRAM is limited (32KB), compared to up to 1MB of flash.
+*/
 #define IRAM __attribute__((section(".iram1.text")))
+
+/* Use this macro to place read-only data into Instruction RAM (IRAM)
+   instead of loaded into rodata which resides in DRAM.
+
+   This may be useful to free up data RAM. However all data read from
+   the instruction space must be 32-bit aligned word reads
+   (non-aligned reads will use an interrupt routine to "fix" them and
+   still work, but are very slow..
+*/
+#ifdef	__cplusplus
+    #define IRAM_DATA __attribute__((section(".iram1.rodata")))
+#else
+    #define IRAM_DATA __attribute__((section(".iram1.rodata"))) const
+#endif
 
 #endif

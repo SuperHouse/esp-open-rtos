@@ -1,3 +1,8 @@
+*NOTE: This rboot-ota and the TFTP server ota-tftp.h are specific to esp-open-rtos. The below Makefile is from the upstream rboot-ota project.*
+
+For more details on OTA in esp-open-rtos, see https://github.com/SuperHouse/esp-open-rtos/wiki/OTA-Update-Configuration
+
+
 rBoot - User API and OTA support for rBoot on the ESP8266
 ---------------------------------------------------------
 by Richard A Burton, richardaburton@gmail.com

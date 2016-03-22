@@ -40,13 +40,20 @@ FLASH_SPEED ?= 40
 # Output directories to store intermediate compiled files
 # relative to the program directory
 BUILD_DIR ?= $(PROGRAM_DIR)build/
-FW_BASE ?= $(PROGRAM_DIR)firmware/
+FIRMWARE_DIR ?= $(PROGRAM_DIR)firmware/
 
 # esptool.py from https://github.com/themadinventor/esptool
 ESPTOOL ?= esptool.py
 # serial port settings for esptool.py
 ESPPORT ?= /dev/ttyUSB0
 ESPBAUD ?= 115200
+
+# set this to 0 if you don't need floating point support in printf/scanf
+# this will save approx 14.5KB flash space and 448 bytes of statically allocated
+# data RAM
+#
+# NB: Setting the value to 0 requires a recent esptool.py (Feb 2016 / commit ebf02c9)
+PRINTF_SCANF_FLOAT_SUPPORT ?= 1
 
 # Set OTA to 1 to build an image that supports rBoot OTA bootloader
 #
@@ -100,13 +107,16 @@ ENTRY_SYMBOL ?= call_user_start
 SPLIT_SECTIONS ?= 1
 
 # Common flags for both C & C++_
-C_CXX_FLAGS     = -Wall -Werror -Wl,-EL -nostdlib -mlongcalls -mtext-section-literals $(CPPFLAGS)
+C_CXX_FLAGS     ?= -Wall -Werror -Wl,-EL -nostdlib $(EXTRA_C_CXX_FLAGS)
 # Flags for C only
-CFLAGS		= $(C_CXX_FLAGS) -std=gnu99
+CFLAGS		?= $(C_CXX_FLAGS) -std=gnu99 $(EXTRA_CFLAGS)
 # Flags for C++ only
-CXXFLAGS	= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti
+CXXFLAGS	?= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti $(EXTRA_CXXFLAGS)
 
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -Wl,-L$(BUILD_DIR)sdklib -Wl,-L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=build/${PROGRAM}.map $(EXTRA_LDFLAGS)
+# these aren't technically preprocesor args, but used by all 3 of C, C++, assembler
+CPPFLAGS	+= -mlongcalls -mtext-section-literals
+
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=$(BUILD_DIR)$(PROGRAM).map $(EXTRA_LDFLAGS)
 
 ifeq ($(SPLIT_SECTIONS),1)
   C_CXX_FLAGS += -ffunction-sections -fdata-sections
@@ -128,11 +138,18 @@ else
     LDFLAGS += -g -O2
 endif
 
-GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD)\"
-CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV) -DFLASH_SIZE=$(FLASH_SIZE)
+GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD 2> /dev/null)\"
+ifeq ($(GITSHORTREV),\"\")
+  GITSHORTREV="\"(nogit)\"" # (same length as a short git hash)
+endif
+CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV)
 
-# Linker scripts, all found in $(ROOT)/ld
-LINKER_SCRIPTS  = eagle.app.v6.ld eagle.rom.addr.v6.ld
+ifeq ($(OTA),0)
+LINKER_SCRIPTS  = $(ROOT)ld/nonota.ld
+else
+LINKER_SCRIPTS = $(ROOT)ld/ota.ld
+endif
+LINKER_SCRIPTS += $(ROOT)ld/common.ld $(ROOT)ld/rom.ld
 
 ####
 #### no user configurable options below here
@@ -152,30 +169,22 @@ lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(s
 # assume the program dir is the directory the top-level makefile was run in
 PROGRAM_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 
-# linker scripts get run through the C preprocessor
-ifeq ($(OTA),1)
-LD_DIR = $(BUILD_DIR)ld-$(FLASH_SIZE)-ota/
-else
-LD_DIR = $(BUILD_DIR)ld-$(FLASH_SIZE)/
-endif
-LINKER_SCRIPTS_PROCESSED = $(addprefix $(LD_DIR),$(LINKER_SCRIPTS))
-
 # derive various parts of compiler/linker arguments
 SDK_LIB_ARGS  = $(addprefix -l,$(SDK_LIBS))
 LIB_ARGS      = $(addprefix -l,$(LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
-LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS_PROCESSED))
+LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS))
 
 ifeq ($(OTA),0)
 # for non-OTA, we create two different files for uploading into the flash
 # these are the names and options to generate them
 FW_ADDR_1	= 0x00000
 FW_ADDR_2	= 0x20000
-FW_FILE_1    = $(addprefix $(FW_BASE),$(FW_ADDR_1).bin)
-FW_FILE_2    = $(addprefix $(FW_BASE),$(FW_ADDR_2).bin)
+FW_FILE_1    = $(addprefix $(FIRMWARE_DIR),$(FW_ADDR_1).bin)
+FW_FILE_2    = $(addprefix $(FIRMWARE_DIR),$(FW_ADDR_2).bin)
 else
 # for OTA, it's a single monolithic image
-FW_FILE = $(addprefix $(FW_BASE),$(PROGRAM).bin)
+FW_FILE = $(addprefix $(FIRMWARE_DIR),$(PROGRAM).bin)
 endif
 
 # firmware tool arguments
@@ -200,6 +209,9 @@ INC_DIRS      = $(PROGRAM_DIR) $(PROGRAM_DIR)include $(ROOT)include
 ifeq ($(OWN_LIBC),1)
     INC_DIRS += $(ROOT)libc/xtensa-lx106-elf/include
     LDFLAGS += -L$(ROOT)libc/xtensa-lx106-elf/lib
+   ifeq ($(PRINTF_SCANF_FLOAT_SUPPORT),1)
+     LDFLAGS += -u _printf_float -u _scanf_float
+   endif
 endif
 
 ifeq ("$(V)","1")
@@ -252,29 +264,29 @@ $(1)_OBJ_FILES = $$(patsubst $$($(1)_REAL_ROOT)%.S,$$($(1)_OBJ_DIR)%.o,$$($(1)_O
 $(1)_MAKEFILE ?= $(lastword $(MAKEFILE_LIST))
 
 ### determine compiler arguments ###
+$(1)_CPPFLAGS ?= $(CPPFLAGS)
 $(1)_CFLAGS ?= $(CFLAGS)
 $(1)_CXXFLAGS ?= $(CXXFLAGS)
-$(1)_CC_ARGS = $(Q) $(CC) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CFLAGS)
-$(1)_CXX_ARGS = $(Q) $(C++) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CXXFLAGS)
+$(1)_CC_BASE = $(Q) $(CC) $$(addprefix -I,$$(INC_DIRS)) $$(addprefix -I,$$($(1)_INC_DIR)) $$($(1)_CPPFLAGS)
 $(1)_AR = $(call lc,$(BUILD_DIR)$(1).a)
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.c $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "CC $$<"
 	$(Q) mkdir -p $$(dir $$@)
-	$$($(1)_CC_ARGS) -c $$< -o $$@
-	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+	$$($(1)_CC_BASE) $$($(1)_CFLAGS) -c $$< -o $$@
+	$$($(1)_CC_BASE) $$($(1)_CFLAGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.cpp $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "C++ $$<"
 	$(Q) mkdir -p $$(dir $$@)
-	$$($(1)_CXX_ARGS) -c $$< -o $$@
-	$$($(1)_CXX_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+	$$($(1)_CC_BASE) $$($(1)_CXXFLAGS) -c $$< -o $$@
+	$$($(1)_CC_BASE) $$($(1)_CXXFLAGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*.mk) | $$($(1)_SRC_DIR)
 	$(vecho) "AS $$<"
 	$(Q) mkdir -p $$(dir $$@)
-	$$($(1)_CC_ARGS) -c $$< -o $$@
-	$$($(1)_CC_ARGS) -MM -MT $$@ -MF $$(@:.o=.d) $$<
+	$$($(1)_CC_BASE) -c $$< -o $$@
+	$$($(1)_CC_BASE) -MM -MT $$@ -MF $$(@:.o=.d) $$<
 
 # the component is shown to depend on both obj and source files so we get a meaningful error message
 # for missing explicitly named source files
@@ -294,7 +306,7 @@ endef
 # - prefix all defined symbols with 'sdk_'
 # - weaken all global symbols so they can be overriden from the open SDK side
 #
-# SDK binary libraries are preprocessed into build/sdklib
+# SDK binary libraries are preprocessed into $(BUILD_DIR)/sdklib
 SDK_PROCESSED_LIBS = $(addsuffix .a,$(addprefix $(BUILD_DIR)sdklib/lib,$(SDK_LIBS)))
 
 # Make rules for preprocessing each SDK library
@@ -335,23 +347,19 @@ $(foreach component,$(COMPONENTS), 					\
 	)								\
 )
 
-## Run linker scripts via C preprocessor to evaluate macros
-$(LD_DIR)%.ld: $(ROOT)ld/%.ld | $(LD_DIR)
-	$(Q) $(CPP) $(CPPFLAGS) -E -C -P $< > $@
-
 # final linking step to produce .elf
-$(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS_PROCESSED)
+$(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
 	$(vecho) "LD $@"
 	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(COMPONENT_ARS) $(LIB_ARGS) $(SDK_LIB_ARGS) -Wl,--end-group -o $@
 
-$(BUILD_DIR) $(FW_BASE) $(BUILD_DIR)sdklib $(LD_DIR):
+$(BUILD_DIR) $(FIRMWARE_DIR) $(BUILD_DIR)sdklib:
 	$(Q) mkdir -p $@
 
-$(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FW_BASE)
+$(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(vecho) "FW $@"
-	$(Q) $(ESPTOOL) elf2image $(ESPTOOL_ARGS) $< -o $(FW_BASE)
+	$(Q) $(ESPTOOL) elf2image $(ESPTOOL_ARGS) $< -o $(FIRMWARE_DIR)
 
-$(FW_FILE): $(PROGRAM_OUT) $(FW_BASE)
+$(FW_FILE): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(Q) $(IMGTOOL) $(IMGTOOL_ARGS) -bin -boot2 $(PROGRAM_OUT) $(FW_FILE) .text .data .rodata
 
 ifeq ($(OTA),0)
@@ -377,7 +385,7 @@ rebuild:
 
 clean:
 	$(Q) rm -rf $(BUILD_DIR)
-	$(Q) rm -rf $(FW_BASE)
+	$(Q) rm -rf $(FIRMWARE_DIR)
 
 # prevent "intermediate" files from being deleted
 .SECONDARY:

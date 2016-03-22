@@ -1,3 +1,11 @@
+/* Linker script containing Boot ROM functions for ESP8266
+
+   For more information, see:
+
+   http://esp8266-re.foogod.com/wiki/Boot_ROM
+   https://github.com/jcmvbkbc/esp-elf-rom/
+*/
+
 PROVIDE ( SPI_sector_erase = 0x400040c0 );
 PROVIDE ( SPI_page_program = 0x40004174 );
 PROVIDE ( SPI_read_data = 0x400042ac );
@@ -8,21 +16,21 @@ PROVIDE ( Wait_SPI_Idle = 0x4000448c );
 PROVIDE ( Enable_QMode = 0x400044c0 );
 PROVIDE ( Disable_QMode = 0x40004508 );
 
+/* When using OTA, Cache_Read_Enable is defined in extras/rboot-ota so
+   the ROM Cache_Read_Enable isn't picked up from here. However we
+   also provide access to the ROM function in all cases, via the name
+   rom_Cache_Read_Enable */
 PROVIDE ( rom_Cache_Read_Enable = 0x40004678 );
+PROVIDE ( Cache_Read_Enable = rom_Cache_Read_Enable );
+
 PROVIDE ( Cache_Read_Disable = 0x400047f0 );
-
-#ifndef OTA
-/* If not building an OTA image for boot, can use the default (simple)
-   cache enable function from ROM.
-
-   Otherwise, we need an OTA-aware one (see extras/rboot-ota/rboot-cache.S)
-*/
-Cache_Read_Enable = rom_Cache_Read_Enable;
-#endif
 
 PROVIDE ( lldesc_build_chain = 0x40004f40 );
 PROVIDE ( lldesc_num2link = 0x40005050 );
 PROVIDE ( lldesc_set_owner = 0x4000507c );
+
+/* TODO: Nearly everything below here is probably provided by the
+   libc, so never linked in, and can therefore be removed. */
 
 PROVIDE ( __adddf3 = 0x4000c538 );
 PROVIDE ( __addsf3 = 0x4000c180 );
