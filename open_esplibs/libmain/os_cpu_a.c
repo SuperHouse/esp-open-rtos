@@ -1,3 +1,7 @@
+#include "open_esplibs.h"
+#if OPEN_LIBMAIN_OS_CPU_A
+// The contents of this file are only built if OPEN_LIBMAIN_OS_CPU_A is set to true
+
 #include "esp/types.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -119,3 +123,4 @@ void IRAM sdk__xt_clear_ints(uint32_t mask) {
     WSR(mask, intclear);
 }
 
+#endif /* OPEN_LIBMAIN_OS_CPU_A */

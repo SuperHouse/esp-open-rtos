@@ -1,3 +1,7 @@
+#include "open_esplibs.h"
+#if OPEN_LIBMAIN_TIMERS
+// The contents of this file are only built if OPEN_LIBMAIN_TIMERS is set to true
+
 #include "etstimer.h"
 #include "stdio.h"
 
@@ -88,3 +92,4 @@ void sdk_os_timer_disarm(ETSTimer *ptimer) {
     }
 }
 
+#endif /* OPEN_LIBMAIN_TIMERS */

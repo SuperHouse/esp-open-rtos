@@ -1,3 +1,7 @@
+#include "open_esplibs.h"
+#if OPEN_LIBMAIN_UART
+// The contents of this file are only built if OPEN_LIBMAIN_UART is set to true
+
 #include "espressif/sdk_private.h"
 #include "esp/uart_regs.h"
 
@@ -15,3 +19,4 @@ void sdk_Uart_Init(void) {
     /* No-Op */
 }
 
+#endif /* OPEN_LIBMAIN_UART */

@@ -1,3 +1,7 @@
+#include "open_esplibs.h"
+#if OPEN_LIBMAIN_MISC
+// The contents of this file are only built if OPEN_LIBMAIN_MISC is set to true
+
 #include "espressif/esp_misc.h"
 #include "esp/gpio_regs.h"
 #include "esp/rtc_regs.h"
@@ -57,3 +61,5 @@ uint8_t sdk_rtc_get_reset_reason(void) {
     RTC.RESET_REASON0 &= ~RTC_RESET_REASON0_SOMETHING;
     return reason;
 }
+
+#endif /* OPEN_LIBMAIN_MISC */
