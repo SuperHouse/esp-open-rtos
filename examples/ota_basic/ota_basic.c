@@ -6,12 +6,14 @@
  *
  * NOT SUITABLE TO PUT ON THE INTERNET OR INTO A PRODUCTION ENVIRONMENT!!!!
  */
+#include <string.h>
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "esp8266.h"
 #include "ssid_config.h"
+#include "mbedtls/sha256.h"
 
 #include "ota-tftp.h"
 #include "rboot.h"
@@ -20,6 +22,9 @@
 #define TFTP_IMAGE_SERVER "192.168.1.23"
 #define TFTP_IMAGE_FILENAME1 "firmware1.bin"
 #define TFTP_IMAGE_FILENAME2 "firmware2.bin"
+
+/* Output of the command 'sha256sum firmware1.bin' */
+static const char *FIRMWARE1_SHA256 = "88199daff8b9e76975f685ec7f95bc1df3c61bd942a33a54a40707d2a41e5488";
 
 void tftp_client_task(void *pvParameters)
 {
@@ -43,9 +48,43 @@ void tftp_client_task(void *pvParameters)
         int res = ota_tftp_download(TFTP_IMAGE_SERVER, TFTP_PORT, TFTP_IMAGE_FILENAME1, 1000, slot);
         printf("ota_tftp_download %s result %d\n", TFTP_IMAGE_FILENAME1, res);
         if(res == 0) {
-            printf("Rebooting into slot %d...\n", slot);
-            rboot_set_current_rom(slot);
-            sdk_system_restart();
+            printf("Looks valid, calculating SHA256...\n");
+            uint32_t length;
+            bool valid = rboot_verify_image(conf.roms[slot], &length, NULL);
+            static mbedtls_sha256_context ctx;
+            mbedtls_sha256_init(&ctx);
+            mbedtls_sha256_starts(&ctx, 0);
+            valid = valid && rboot_digest_image(conf.roms[slot], length, (rboot_digest_update_fn)mbedtls_sha256_update, &ctx);
+            static uint8_t hash_result[32];
+            mbedtls_sha256_finish(&ctx, hash_result);
+            mbedtls_sha256_free(&ctx);
+
+            if(!valid)
+            {
+                printf("Not valid after all :(\n");
+            }
+            else
+            {
+                printf("Image SHA256 = ");
+                bool valid = true;
+                for(int i = 0; i < sizeof(hash_result); i++) {
+                    char hexbuf[3];
+                    snprintf(hexbuf, 3, "%02x", hash_result[i]);
+                    printf(hexbuf);
+                    if(strncmp(hexbuf, FIRMWARE1_SHA256+i*2, 2))
+                        valid = false;
+
+                }
+                printf("\n");
+                if (valid) {
+                    printf("SHA256 Matches. Rebooting into slot %d...\n", slot);
+                    rboot_set_current_rom(slot);
+                    sdk_system_restart();
+                }
+                else {
+                    printf("Downloaded image SHA256 didn't match expected '%s'\n", FIRMWARE1_SHA256);
+                }
+            }
         }
         vTaskDelay(5000 / portTICK_RATE_MS);
 
@@ -77,5 +116,5 @@ void user_init(void)
     sdk_wifi_station_set_config(&config);
 
     ota_tftp_init_server(TFTP_PORT);
-    xTaskCreate(&tftp_client_task, (signed char *)"tftp_client", 1024, NULL, 2, NULL);
+    xTaskCreate(&tftp_client_task, (signed char *)"tftp_client", 2048, NULL, 2, NULL);
 }

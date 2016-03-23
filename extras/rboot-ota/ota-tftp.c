@@ -369,7 +369,9 @@ static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t lim
                it so the client gets an indication if things were successful.
             */
             const char *err = "Unknown validation error";
-            if(!rboot_verify_image(start_offs, *received_len, &err)) {
+            uint32_t image_length;
+            if(!rboot_verify_image(start_offs, &image_length, &err)
+               || image_length != *received_len) {
                 tftp_send_error(nc, TFTP_ERR_ILLEGAL, err);
                 return ERR_VAL;
             }
