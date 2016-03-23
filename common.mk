@@ -165,7 +165,7 @@ LINKER_SCRIPTS += $(ROOT)ld/common.ld $(ROOT)ld/rom.ld
 ####
 
 ifndef PROGRAM
-	$(error "Set the PROGRAM environment variable in your Makefile before including common.mk"
+$(error "Set the PROGRAM environment variable in your Makefile before including common.mk")
 endif
 
 # hacky way to get a single space value
@@ -223,7 +223,7 @@ Q := @
 vecho := @echo
 endif
 
-.PHONY: all clean debug_print
+.PHONY: all clean debug_print flash flash_bootloader erase_flash
 
 all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 
@@ -361,6 +361,7 @@ $(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(Q) $(ESPTOOL) elf2image $(ESPTOOL_ARGS) $< -o $(FIRMWARE_DIR)
 
 $(FW_FILE): $(PROGRAM_OUT) $(FIRMWARE_DIR)
+	$(vecho) "FW $@"
 	$(Q) $(ESPTOOL) elf2image --version=2 $(ESPTOOL_ARGS) $< -o $(FW_FILE)
 
 ifeq ($(OTA),0)
@@ -371,6 +372,12 @@ flash: $(FW_FILE)
 	$(vecho) "Flashing OTA image slot 0 (bootloader not updated)"
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) 0x2000 $(FW_FILE)
 endif
+
+flash_bootloader:
+	$(MAKE) -C $(ROOT)/bootloader flash
+
+erase_flash:
+	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) erase_flash
 
 size: $(PROGRAM_OUT)
 	$(Q) $(CROSS)size --format=sysv $(PROGRAM_OUT)

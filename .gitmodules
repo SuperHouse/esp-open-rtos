@@ -7,3 +7,7 @@
 [submodule "extras/jsmn/jsmn"]
 	path = extras/jsmn/jsmn
 	url = https://github.com/zserge/jsmn.git
+[submodule "bootloader/rboot"]
+	path = bootloader/rboot
+	url = https://github.com/raburton/rboot.git
+
