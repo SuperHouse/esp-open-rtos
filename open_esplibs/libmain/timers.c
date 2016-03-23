@@ -1,4 +1,5 @@
 #include "etstimer.h"
+#include "stdio.h"
 
 struct timer_list_st {
     struct timer_list_st *next;
