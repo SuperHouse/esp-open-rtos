@@ -36,7 +36,7 @@ sdk_SpiFlashOpResult sdk_spi_flash_erase_sector(uint16_t sec);
    src is pointer to a buffer to read bytes from. Should be 4-byte aligned.
    size is length of buffer in bytes. Should be a multiple of 4.
 */
-sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, const void *src, uint32_t size);
+sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, uint32_t *src, uint32_t size);
 
 /* Read data from flash.
 
@@ -44,8 +44,12 @@ sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, const void *src, uin
    des is pointer to a buffer to read bytes into. Should be 4-byte aligned.
    size is number of bytes to read. Should be a multiple of 4.
 */
-sdk_SpiFlashOpResult sdk_spi_flash_read(uint32_t src_addr, void *des, uint32_t size);
+sdk_SpiFlashOpResult sdk_spi_flash_read(uint32_t src_addr, uint32_t *des, uint32_t size);
 
+/* SDK uses this structure internally to account for flash size.
+
+   See flashchip.h for more info.
+*/
 extern sdk_flashchip_t sdk_flashchip;
 
 #ifdef	__cplusplus
