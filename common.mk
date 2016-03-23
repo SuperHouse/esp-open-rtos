@@ -57,15 +57,11 @@ PRINTF_SCANF_FLOAT_SUPPORT ?= 1
 
 # Set OTA to 1 to build an image that supports rBoot OTA bootloader
 #
-# Currently only works with 16mbit or more flash sizes, with 8mbit
-# images for each "slot"
+# Requires 16mbit or higher flash sizes, with 8mbit
+# images for each OTA "slot"
 OTA ?= 0
 
 ifeq ($(OTA),1)
-# for OTA, we build a "SDK v1.2 bootloader" compatible image where everything is in
-# one file (should work with the v1.2 binary bootloader, and the FOSS rBoot bootloader).
-IMGTOOL ?= esptool2
-
 # Tell C preprocessor that we're building for OTA
 CPPFLAGS = -DOTA
 endif
@@ -188,6 +184,9 @@ LIB_ARGS      = $(addprefix -l,$(LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
 LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS))
 
+# firmware tool arguments
+ESPTOOL_ARGS=-fs $(FLASH_SIZE)m -fm $(FLASH_MODE) -ff $(FLASH_SPEED)m
+
 ifeq ($(OTA),0)
 # for non-OTA, we create two different files for uploading into the flash
 # these are the names and options to generate them
@@ -197,19 +196,8 @@ FW_FILE_1    = $(addprefix $(FIRMWARE_DIR),$(FW_ADDR_1).bin)
 FW_FILE_2    = $(addprefix $(FIRMWARE_DIR),$(FW_ADDR_2).bin)
 else
 # for OTA, it's a single monolithic image
-FW_FILE = $(addprefix $(FIRMWARE_DIR),$(PROGRAM).bin)
+FW_FILE = $(addprefix $(FIRMWARE_DIR),$(PROGRAM)-ota.bin)
 endif
-
-# firmware tool arguments
-ESPTOOL_ARGS=-fs $(FLASH_SIZE)m -fm $(FLASH_MODE) -ff $(FLASH_SPEED)m
-
-IMGTOOL_FLASH_SIZE_2=256
-IMGTOOL_FLASH_SIZE_4=512
-IMGTOOL_FLASH_SIZE_8=1024
-IMGTOOL_FLASH_SIZE_16=2048
-IMGTOOL_FLASH_SIZE_32=4096
-IMGTOOL_FLASH_SIZE=$(value IMGTOOL_FLASH_SIZE_$(FLASH_SIZE))
-IMGTOOL_ARGS=-$(IMGTOOL_FLASH_SIZE) -$(FLASH_MODE) -$(FLASH_SPEED)
 
 # Common include directories, shared across all "components"
 # components will add their include directories to this argument
@@ -373,7 +361,7 @@ $(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(Q) $(ESPTOOL) elf2image $(ESPTOOL_ARGS) $< -o $(FIRMWARE_DIR)
 
 $(FW_FILE): $(PROGRAM_OUT) $(FIRMWARE_DIR)
-	$(Q) $(IMGTOOL) $(IMGTOOL_ARGS) -bin -boot2 $(PROGRAM_OUT) $(FW_FILE) .text .data .rodata
+	$(Q) $(ESPTOOL) elf2image --version=2 $(ESPTOOL_ARGS) $< -o $(FW_FILE)
 
 ifeq ($(OTA),0)
 flash: $(FW_FILE_1) $(FW_FILE_2)
