@@ -1,3 +1,7 @@
+#include "open_esplibs.h"
+#if OPEN_LIBMAIN_XTENSA_CONTEXT
+// The contents of this file are only built if OPEN_LIBMAIN_XTENSA_CONTEXT is set to true
+
         .section .iram1.text, "ax", @progbits
 
         .balign 4
@@ -39,3 +43,4 @@ sdk__xt_context_restore:
         l32i    a13, sp, 64
         ret
 
+#endif /* OPEN_LIBMAIN_XTENSA_CONTEXT */

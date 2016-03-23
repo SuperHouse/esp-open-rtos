@@ -1,3 +1,7 @@
+#include "open_esplibs.h"
+#if OPEN_LIBMAIN_SPI_FLASH
+// The contents of this file are only built if OPEN_LIBMAIN_SPI_FLASH is set to true
+
 #include "FreeRTOS.h"
 #include "common_macros.h"
 #include "esp/spi_regs.h"
@@ -181,3 +185,4 @@ sdk_SpiFlashOpResult IRAM sdk_spi_flash_read(uint32_t src_addr, uint32_t *des_ad
     return result;
 }
 
+#endif /* OPEN_LIBMAIN_SPI_FLASH */
