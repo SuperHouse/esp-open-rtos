@@ -28,4 +28,11 @@
 #define RBOOT_DEBUG(f_, ...)
 #endif
 
+/* Enable checksumming when writing out the config,
+   so if the bootloader is built with checksumming then
+   it will still work.
+*/
+#define BOOT_CONFIG_CHKSUM
+
+
 #endif // __RBOOT_INTEGRATION_H__

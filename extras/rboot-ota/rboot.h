@@ -18,8 +18,13 @@ extern "C" {
 // if you aren't using gcc you may need to do this
 //#define BOOT_NO_ASM
 
-// uncomment to have a checksum on the boot config
-//#define BOOT_CONFIG_CHKSUM
+// Note: enabling RBOOT_CONFIG_CHECKSUM here means the config sector
+// is always written by esp-open-rtos with a checksum.
+//
+// This means it will work whether the bootloader has config
+// checksumming enabled or not.
+
+#define BOOT_CONFIG_CHKSUM
 
 // uncomment to enable big flash support (>1MB)
 #define BOOT_BIG_FLASH
