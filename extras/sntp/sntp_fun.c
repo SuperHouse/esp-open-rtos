@@ -95,15 +95,6 @@ int _gettimeofday_r(struct _reent *r, struct timeval *tp, void *tzp) {
 	return 0;
 }
 
-// Added te get nearer the standard way of using time functions.
-time_t time(time_t *tloc) {
-	time_t datetime;
-
-	datetime = sntp_get_rtc_time(NULL);
-	if (tloc) *tloc = datetime;
-	return datetime;
-}
-
 // Update RTC timer. Called by SNTP module each time it receives an update.
 void sntp_update_rtc(time_t t, uint32_t us) {
 	// Apply daylight and timezone correction

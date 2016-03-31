@@ -48,12 +48,6 @@ void sntp_initialize(const struct timezone *tz);
 void sntp_set_timezone(const struct timezone *tz);
 
 /*
- * Returns the time in seconds since Epoch. If tloc is not NULL, return
- * value is also stored in the memory pointed by tloc.
- */
-time_t time(time_t *tloc);
-
-/*
  * Set SNTP servers. Up to SNTP_NUM_SERVERS_SUPPORTED can be set.
  * Returns 0 if OK, less than 0 if error.
  * NOTE: This function must NOT be called before sntp_initialize().
