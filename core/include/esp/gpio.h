@@ -13,6 +13,10 @@
 #include "esp/iomux.h"
 #include "esp/interrupts.h"
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     GPIO_INPUT,
     GPIO_OUTPUT,         /* "Standard" push-pull output */
@@ -138,5 +142,9 @@ static inline gpio_inttype_t gpio_get_interrupt(const uint8_t gpio_num)
 {
     return (gpio_inttype_t)FIELD2VAL(GPIO_CONF_INTTYPE, GPIO.CONF[gpio_num]);
 }
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
