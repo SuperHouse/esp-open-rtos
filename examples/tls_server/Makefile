@@ -1,4 +1,4 @@
 PROGRAM=tls_server
-COMPONENTS = FreeRTOS lwip core extras/mbedtls
+EXTRA_COMPONENTS = extras/mbedtls
 
 include ../../common.mk

@@ -54,8 +54,8 @@ uint32_t sdk_system_get_chip_id(void);
 uint32_t sdk_system_rtc_clock_cali_proc(void);
 uint32_t sdk_system_get_rtc_time(void);
 
-bool sdk_system_rtc_mem_read(uint8_t src, void *dst, uint16_t n);
-bool sdk_system_rtc_mem_write(uint8_t dst, const void *src, uint16_t n);
+bool sdk_system_rtc_mem_read(uint32_t src_addr, void *des_addr, uint16_t save_size);
+bool sdk_system_rtc_mem_write(uint32_t des_addr, void *src_addr, uint16_t save_size);
 
 void sdk_system_uart_swap(void);
 void sdk_system_uart_de_swap(void);
