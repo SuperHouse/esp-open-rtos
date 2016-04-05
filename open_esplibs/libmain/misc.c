@@ -58,7 +58,7 @@ uint8_t sdk_rtc_get_reset_reason(void) {
             }
         }
     }
-    RTC.RESET_REASON0 &= ~RTC_RESET_REASON0_SOMETHING;
+    RTC.RESET_REASON0 &= ~RTC_RESET_REASON0_BIT21;
     return reason;
 }
 

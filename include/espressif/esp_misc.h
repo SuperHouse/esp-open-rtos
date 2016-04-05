@@ -27,6 +27,8 @@ void sdk_os_delay_us(uint16_t us);
 void sdk_os_install_putc1(void (*p)(char c));
 void sdk_os_putc(char c);
 
+void sdk_gpio_output_set(uint32_t set_mask, uint32_t clear_mask, uint32_t enable_mask, uint32_t disable_mask);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -4,6 +4,7 @@
 #include "espressif/esp_wifi.h"
 #include "espressif/spi_flash.h"
 #include "espressif/phy_info.h"
+#include "etstimer.h"
 #include "lwip/netif.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -13,31 +14,38 @@
 // 'info' is declared in app_main.o at .bss+0x4
 
 struct sdk_info_st {
-    uint32_t _unknown0;
-    uint32_t _unknown1;
-    uint32_t _unknown2;
-    uint8_t _unknown3[12];
-    uint8_t softap_mac_addr[6];
-    uint8_t sta_mac_addr[6];
+    uint32_t _unknown0;         // 0x00
+    uint32_t _unknown4;         // 0x04
+    uint32_t _unknown8;         // 0x08
+    ip_addr_t ipaddr;           // 0x0c
+    ip_addr_t netmask;          // 0x10
+    ip_addr_t gw;               // 0x14
+    uint8_t softap_mac_addr[6]; // 0x18
+    uint8_t sta_mac_addr[6];    // 0x1e
 };
 
 extern struct sdk_info_st sdk_info;
 
 // 'rst_if' is declared in user_interface.o at .bss+0xfc
-
-struct sdk_rst_if_st {
-    uint32_t version;
-    uint8_t _unknown[28];
-};
-
-extern struct sdk_rst_if_st sdk_rst_if;
+extern struct sdk_rst_info sdk_rst_if;
 
 // 'g_ic' is declared in libnet80211/ieee80211.o at .bss+0x0
 // See also: http://esp8266-re.foogod.com/wiki/G_ic_(IoT_RTOS_SDK_0.9.9)
 
 struct sdk_g_ic_netif_info {
-    struct netif *netif;
-    //TODO: rest of this structure is unknown.
+    struct netif *netif;     // 0x00
+    ETSTimer timer;          // 0x04 - 0x20
+    uint8_t _unknown20[28];  // 0x20 - 0x3c
+    uint32_t _unknown3c;     // 0x3c (referenced by sdk_wifi_station_disconnect)
+    uint8_t _unknown40[6];   // 0x40 - 0x46
+    uint8_t _unknown46[66];  // 0x46 - 0x88
+    struct sdk_netif_conninfo *_unknown88;  // 0x88
+    uint32_t _unknown8c;     // 0x8c
+    struct sdk_netif_conninfo *conninfo[6]; // 0x90 - 0xa8
+    uint8_t _unknowna8[16];  // 0xa8 - 0xb8
+    uint8_t _unknownb8;      // 0xb8 (referenced by sdk_wifi_station_connect / sdk_wifi_station_disconnect)
+    uint8_t _unknownb9;      // 0xb9 (referenced by sdk_wifi_station_connect / sdk_wifi_station_disconnect)
+    uint8_t connect_status;  // 0xba (referenced by sdk_system_station_got_ip_set / sdk_wifi_station_disconnect)
 };
 
 // This is the portion of g_ic which is not loaded/saved to the flash ROM, and
@@ -197,7 +205,6 @@ extern struct sdk_g_ic_st sdk_g_ic;
 ///////////////////////////////////////////////////////////////////////////////
 
 _Static_assert(sizeof(struct sdk_info_st) == 0x24, "info_st is the wrong size!");
-_Static_assert(sizeof(struct sdk_rst_if_st) == 0x20, "sdk_rst_if_st is the wrong size!");
 _Static_assert(sizeof(struct sdk_g_ic_volatile_st) == 0x1d8, "sdk_g_ic_volatile_st is the wrong size!");
 _Static_assert(sizeof(struct sdk_g_ic_saved_st) == 0x370, "sdk_g_ic_saved_st is the wrong size!");
 _Static_assert(sizeof(struct sdk_g_ic_st) == 0x548, "sdk_g_ic_st is the wrong size!");
@@ -221,7 +228,6 @@ void sdk_pp_soft_wdt_init(void);
 int sdk_register_chipv6_phy(sdk_phy_info_t *);
 void sdk_sleep_reset_analog_rtcreg_8266(void);
 uint32_t sdk_system_get_checksum(uint8_t *, uint32_t);
-void sdk_system_restart_in_nmi(void);
 void sdk_wDevEnableRx(void);
 void sdk_wDev_Initialize(void);
 void sdk_wifi_mode_set(uint8_t);

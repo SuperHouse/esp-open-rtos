@@ -31,7 +31,8 @@ struct RTC_REGS {
     uint32_t volatile CTRL0;        // 0x00
     uint32_t volatile COUNTER_ALARM;    // 0x04
     uint32_t volatile RESET_REASON0;    // 0x08       //FIXME: need better name
-    uint32_t volatile _unknownc[2];     // 0x0c - 0x10
+    uint32_t volatile _unknownc;        // 0x0c
+    uint32_t volatile _unknown10;       // 0x10
     uint32_t volatile RESET_REASON1;    // 0x14       //FIXME: need better name
     uint32_t volatile RESET_REASON2;    // 0x18       //FIXME: need better name
     uint32_t volatile COUNTER;          // 0x1c
@@ -40,7 +41,10 @@ struct RTC_REGS {
     uint32_t volatile INT_ENABLE;       // 0x28
     uint32_t volatile _unknown2c;       // 0x2c
     uint32_t volatile SCRATCH[4];       // 0x30 - 3c
-    uint32_t volatile _unknown40[10];   // 0x40 - 0x64
+    uint32_t volatile _unknown40;       // 0x40
+    uint32_t volatile _unknown44;       // 0x44
+    uint32_t volatile _unknown48;       // 0x48
+    uint32_t volatile _unknown4c[7];    // 0x4c - 0x64
     uint32_t volatile GPIO_OUT;         // 0x68
     uint32_t volatile _unknown6c[2];    // 0x6c - 0x70
     uint32_t volatile GPIO_ENABLE;      // 0x74

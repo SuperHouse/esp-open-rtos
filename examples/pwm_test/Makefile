@@ -1,4 +1,4 @@
 # Simple makefile for simple example
 PROGRAM=pwm_test
-COMPONENTS = FreeRTOS lwip core extras/pwm
+EXTRA_COMPONENTS = extras/pwm
 include ../../common.mk
