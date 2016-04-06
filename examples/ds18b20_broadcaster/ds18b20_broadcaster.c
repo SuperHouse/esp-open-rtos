@@ -19,15 +19,14 @@
 
 // DS18B20 driver
 #include "ds18b20/ds18b20.h"
-// Onewire init
-#include "onewire/onewire.h"
 
 void broadcast_temperature(void *pvParameters)
 {
 
     uint8_t amount = 0;
-    uint8_t sensors = 2;
-    ds_sensor_t t[sensors];
+    uint8_t sensors = 1;
+    ds18b20_addr_t addrs[sensors];
+    float results[sensors];
     
     // Use GPIO 13 as one wire pin. 
     uint8_t GPIO_FOR_ONE_WIRE = 13;
@@ -36,8 +35,6 @@ void broadcast_temperature(void *pvParameters)
 
     // Broadcaster part
     err_t err;
-    // Initialize one wire bus.
-    onewire_init(GPIO_FOR_ONE_WIRE);
 
     while(1) {
 
@@ -66,18 +63,17 @@ void broadcast_temperature(void *pvParameters)
 
         for(;;) {
             // Search all DS18B20, return its amount and feed 't' structure with result data.
-            amount = ds18b20_read_all(GPIO_FOR_ONE_WIRE, t);
+            amount = ds18b20_scan_devices(GPIO_FOR_ONE_WIRE, addrs, sensors);
 
             if (amount < sensors){
                 printf("Something is wrong, I expect to see %d sensors \nbut just %d was detected!\n", sensors, amount);
             }
 
-            for (int i = 0; i < amount; ++i)
+            ds18b20_measure_and_read_multi(GPIO_FOR_ONE_WIRE, addrs, sensors, results);
+            for (int i = 0; i < sensors; ++i)
             {
-                int intpart = (int)t[i].value;
-                int fraction = (int)((t[i].value - intpart) * 100);
-                // Multiple "" here is just to satisfy compiler and don`t raise 'hex escape sequence out of range' warning.
-                sprintf(msg, "Sensor %d report: %d.%02d ""\xC2""\xB0""C\n",t[i].id, intpart, fraction);
+                // ("\xC2\xB0" is the degree character (U+00B0) in UTF-8)
+                sprintf(msg, "Sensor %08x%08x reports: %f \xC2\xB0""C\n", (uint32_t)(addrs[i] >> 32), (uint32_t)addrs[i], results[i]);
                 printf("%s", msg);
 
                 struct netbuf* buf = netbuf_new();
