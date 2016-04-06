@@ -106,8 +106,14 @@ ENTRY_SYMBOL ?= call_user_start
 # but compiled code size will come down a small amount.)
 SPLIT_SECTIONS ?= 1
 
+# Set this to 1 to have all compiler warnings treated as errors (and stop the
+# build).  This is recommended whenever you are working on code which will be
+# submitted back to the main project, as all submitted code will be expected to
+# compile without warnings to be accepted.
+WARNINGS_AS_ERRORS ?= 0
+
 # Common flags for both C & C++_
-C_CXX_FLAGS     ?= -Wall -Werror -Wl,-EL -nostdlib $(EXTRA_C_CXX_FLAGS)
+C_CXX_FLAGS ?= -Wall -Wl,-EL -nostdlib $(EXTRA_C_CXX_FLAGS)
 # Flags for C only
 CFLAGS		?= $(C_CXX_FLAGS) -std=gnu99 $(EXTRA_CFLAGS)
 # Flags for C++ only
@@ -117,6 +123,10 @@ CXXFLAGS	?= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti $(EXTRA_CXXFLAGS)
 CPPFLAGS	+= -mlongcalls -mtext-section-literals
 
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=$(BUILD_DIR)$(PROGRAM).map $(EXTRA_LDFLAGS)
+
+ifeq ($(WARNINGS_AS_ERRORS),1)
+    C_CXX_FLAGS += -Werror
+endif
 
 ifeq ($(SPLIT_SECTIONS),1)
   C_CXX_FLAGS += -ffunction-sections -fdata-sections
