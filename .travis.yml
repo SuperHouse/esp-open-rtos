@@ -57,5 +57,5 @@ before_install:
 script:
   - cd ${TRAVIS_BUILD_DIR}
   # Remove ssid_config requirement for examples
-  - sed -i "s%#warning%//#warning%" include/ssid_config.h
+  - sed -i "s%#error%//#error%" include/ssid_config.h
   - make WARNINGS_AS_ERRORS=1 -C examples/ build-examples CROSS="ccache xtensa-lx106-elf-" V=1
