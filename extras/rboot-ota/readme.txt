@@ -1,4 +1,4 @@
-*NOTE: This rboot-ota and the TFTP server ota-tftp.h are specific to esp-open-rtos. The below Makefile is from the upstream rboot-ota project.*
+*NOTE: This rboot-ota and the TFTP server ota-tftp.h are specific to esp-open-rtos. The below Makefile is from the upstream rboot-ota project and the rboot code is taken from #75ca33b.*
 
 For more details on OTA in esp-open-rtos, see https://github.com/SuperHouse/esp-open-rtos/wiki/OTA-Update-Configuration
 

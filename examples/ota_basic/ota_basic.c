@@ -14,13 +14,15 @@
 #include "ssid_config.h"
 
 #include "ota-tftp.h"
-#include "rboot-ota.h"
+#include "rboot-integration.h"
+#include "rboot.h"
+#include "rboot-api.h"
 
 void user_init(void)
 {
     uart_set_baud(0, 115200);
 
-    rboot_config_t conf = rboot_get_config();
+    rboot_config conf = rboot_get_config();
     printf("\r\n\r\nOTA Basic demo.\r\nCurrently running on flash slot %d / %d.\r\n\r\n",
            conf.current_rom, conf.count);
 
