@@ -2,7 +2,7 @@ language: c
 sudo: false
 env:
   # Target commit for https://github.com/pfalcon/esp-open-sdk/
-  OPENSDK_COMMIT=e33c0ad3
+  OPENSDK_COMMIT=cfe15bd
   CROSS_ROOT="${HOME}/toolchain-${OPENSDK_COMMIT}"
   CROSS_BINDIR="${CROSS_ROOT}/bin"
   ESPTOOL2_COMMIT=ec0e2c7
@@ -47,7 +47,7 @@ before_install:
   - ${HAS_TC} || git submodule update
   - ${HAS_TC} || sed -i "s/2.69/2.68/" lx106-hal/configure.ac # this is a nasty hack as Ubuntu Precise only has autoconf 2.68 not 2.69...
   - ${HAS_TC} || sed -r -i 's%TOOLCHAIN ?=.*%TOOLCHAIN=${CROSS_ROOT}%' Makefile
-  - ${HAS_TC} || make toolchain esptool libhal STANDALONE=n
+  - ${HAS_TC} || make STANDALONE=n
   - export HAS_ET2="test -f ${ESPTOOL2_DIR}/esptool2"
   - ${HAS_ET2} || git clone https://github.com/raburton/esptool2 ${ESPTOOL2_DIR}
   - ${HAS_ET2} || cd ${ESPTOOL2_DIR}
