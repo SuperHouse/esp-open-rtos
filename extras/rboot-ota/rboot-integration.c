@@ -10,17 +10,10 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-#include "rboot-ota.h"
+#include <rboot.h>
 
 #define ROM_MAGIC_OLD 0xe9
 #define ROM_MAGIC_NEW 0xea
-#define CHECKSUM_INIT 0xef
-
-#if 0
-#define RBOOT_DEBUG(f_, ...) printf((f_), __VA_ARGS__)
-#else
-#define RBOOT_DEBUG(f_, ...)
-#endif
 
 typedef struct __attribute__((packed)) {
     uint8_t magic;
@@ -34,67 +27,6 @@ typedef struct __attribute__((packed)) {
     uint32_t length;
 } section_header_t;
 
-
-// get the rboot config
-rboot_config_t rboot_get_config() {
-	rboot_config_t conf;
-	sdk_spi_flash_read(BOOT_CONFIG_SECTOR * SECTOR_SIZE, (uint32_t*)&conf, sizeof(rboot_config_t));
-	return conf;
-}
-
-// write the rboot config
-// preserves contents of rest of sector, so rest
-// of sector can be used to store user data
-// updates checksum automatically, if enabled
-bool rboot_set_config(rboot_config_t *conf) {
-	uint8_t *buffer;
-#ifdef RBOOT_CONFIG_CHKSUM
-	uint8_t chksum;
-	uint8_t *ptr;
-#endif
-
-	buffer = (uint8_t*)malloc(SECTOR_SIZE);
-	if (!buffer) {
-		printf("rboot_set_config: Failed to allocate sector buffer\r\n");
-		return false;
-	}
-
-#ifdef BOOT_CONFIG_CHKSUM
-	chksum = CHKSUM_INIT;
-	for (ptr = (uint8_t*)conf; ptr < &conf->chksum; ptr++) {
-		chksum ^= *ptr;
-	}
-	conf->chksum = chksum;
-#endif
-
-	sdk_spi_flash_read(BOOT_CONFIG_SECTOR * SECTOR_SIZE, (uint32_t*)buffer, SECTOR_SIZE);
-	memcpy(buffer, conf, sizeof(rboot_config_t));
-        vPortEnterCritical();
-	sdk_spi_flash_erase_sector(BOOT_CONFIG_SECTOR);
-        vPortExitCritical();
-        taskYIELD();
-        vPortEnterCritical();
-	sdk_spi_flash_write(BOOT_CONFIG_SECTOR * SECTOR_SIZE, (uint32_t*)buffer, SECTOR_SIZE);
-        vPortExitCritical();
-	free(buffer);
-	return true;
-}
-
-// get current boot rom
-uint8_t rboot_get_current_rom() {
-	rboot_config_t conf;
-	conf = rboot_get_config();
-	return conf.current_rom;
-}
-
-// set current boot rom
-bool rboot_set_current_rom(uint8_t rom) {
-	rboot_config_t conf;
-	conf = rboot_get_config();
-	if (rom >= conf.count) return false;
-	conf.current_rom = rom;
-	return rboot_set_config(&conf);
-}
 
 // Check that a valid-looking rboot image is found at this offset on the flash, and
 // takes up 'expected_length' bytes.
@@ -120,7 +52,7 @@ bool rboot_verify_image(uint32_t offset, uint32_t expected_length, const char **
 
     int remaining_sections = image_header.section_count;
 
-    uint8_t checksum = CHECKSUM_INIT;
+    uint8_t checksum = CHKSUM_INIT;
 
     while(remaining_sections > 0 && offset < end_offset)
     {
