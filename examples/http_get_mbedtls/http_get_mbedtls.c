@@ -41,11 +41,11 @@
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
-#define WEB_SERVER "howsmyssl.com"
+#define WEB_SERVER "www.howsmyssl.com"
 #define WEB_PORT "443"
 #define WEB_URL "https://www.howsmyssl.com/a/check"
 
-#define GET_REQUEST "GET "WEB_URL" HTTP/1.1\n\n"
+#define GET_REQUEST "GET "WEB_URL" HTTP/1.1\nHost: "WEB_SERVER"\n\n"
 
 /* Root cert for howsmyssl.com, stored in cert.c */
 extern const char *server_root_cert;
