@@ -9,6 +9,8 @@
 
 _xt_isr isr[16];
 
+bool esp_in_isr;
+
 void IRAM _xt_isr_attach(uint8_t i, _xt_isr func)
 {
     isr[i] = func;
@@ -20,6 +22,8 @@ void IRAM _xt_isr_attach(uint8_t i, _xt_isr func)
 */
 uint16_t IRAM _xt_isr_handler(uint16_t intset)
 {
+    esp_in_isr = true;
+
     /* WDT has highest priority (occasional WDT resets otherwise) */
     if(intset & BIT(INUM_WDT)) {
         _xt_clear_ints(BIT(INUM_WDT));
@@ -34,6 +38,8 @@ uint16_t IRAM _xt_isr_handler(uint16_t intset)
         isr[index]();
         intset -= mask;
     }
+
+    esp_in_isr = false;
 
     return 0;
 }
