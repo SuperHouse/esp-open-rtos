@@ -440,12 +440,6 @@ static void user_start_phase2(void) {
     uart_flush_txfifo(0);
     uart_flush_txfifo(1);
 
-    // Call gcc constructor functions
-    void (**ctor)(void);
-    for ( ctor = &__init_array_start; ctor != &__init_array_end; ++ctor) {
-        (*ctor)();
-    }
-
     if (phy_info[0] != 5) {
         // Bad version byte.  Discard what we read and use default values
         // instead.
@@ -453,6 +447,13 @@ static void user_start_phase2(void) {
     }
     init_networking(phy_info, sdk_info.sta_mac_addr);
     free(phy_info);
+
+    // Call gcc constructor functions
+    void (**ctor)(void);
+    for ( ctor = &__init_array_start; ctor != &__init_array_end; ++ctor) {
+        (*ctor)();
+    }
+
     tcpip_init(NULL, NULL);
     sdk_wdt_init();
     xTaskCreate(sdk_user_init_task, (signed char *)"uiT", 1024, 0, 14, &sdk_xUserTaskHandle);
