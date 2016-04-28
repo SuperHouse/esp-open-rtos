@@ -210,7 +210,7 @@ unsigned long ulReturn;
 	{
 		configASSERT( xInsideISR == ( portBASE_TYPE ) 0 );
 
-		if( pdTRUE == xQueueReceive( *pxMailBox, &( *ppvBuffer ), ulTimeOut/ portTICK_RATE_MS ) )
+		if( pdTRUE == xQueueReceive( *pxMailBox, &( *ppvBuffer ), ulTimeOut / portTICK_RATE_MS ) )
 		{
 			xEndTime = xTaskGetTickCount();
 			xElapsed = ( xEndTime - xStartTime ) * portTICK_RATE_MS;
@@ -479,7 +479,7 @@ void sys_init(void)
 
 u32_t sys_now(void)
 {
-	return xTaskGetTickCount();
+	return xTaskGetTickCount() * portTICK_RATE_MS;
 }
 
 /*---------------------------------------------------------------------------*
