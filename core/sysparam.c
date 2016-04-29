@@ -3,19 +3,14 @@
 #include <stdio.h>
 #include <sysparam.h>
 #include <espressif/spi_flash.h>
+#include <common_macros.h>
 
 //TODO: make this properly threadsafe
 //TODO: reduce stack usage
-//FIXME: CRC calculations/checking
 
-/* The "magic" values that indicate the start of a sysparam region in flash.
- * Note that SYSPARAM_STALE_MAGIC is written over SYSPARAM_ACTIVE_MAGIC, so it
- * must not contain any set bits which are not set in SYSPARAM_ACTIVE_MAGIC
- * (that is, going from SYSPARAM_ACTIVE_MAGIC to SYSPARAM_STALE_MAGIC must only
- * clear bits, not set them)
+/* The "magic" value that indicates the start of a sysparam region in flash.
  */
-#define SYSPARAM_ACTIVE_MAGIC 0x70524f45 // "EORp" in little-endian
-#define SYSPARAM_STALE_MAGIC  0x40524f45 // "EOR@" in little-endian
+#define SYSPARAM_MAGIC 0x70524f45 // "EORp" in little-endian
 
 /* The size of the initial buffer created by sysparam_iter_start, etc, to hold
  * returned key-value pairs.  Setting this too small may result in a lot of
@@ -30,17 +25,41 @@
  */
 #define SCAN_BUFFER_SIZE 8 // words
 
+/* The size of the temporary buffer used for reading back and verifying data
+ * written to flash.  Making this larger will make the write-and-verify
+ * operation slightly faster, but will use more heap during writes
+ */
+#define VERIFY_BUF_SIZE 64
+
 /* Size of region/entry headers.  These should not normally need tweaking (and
  * will probably require some code changes if they are tweaked).
  */
-#define REGION_HEADER_SIZE 4 // NOTE: Must be multiple of 4
+#define REGION_HEADER_SIZE 8 // NOTE: Must be multiple of 4
 #define ENTRY_HEADER_SIZE 4  // NOTE: Must be multiple of 4
 
-/* Maximum value that can be used for a key_id.  This is limited by the format
- * to 0x7e (0x7f would produce a corresponding value ID of 0xff, which is
- * invalid)
+/* These are limited by the format to 0xffff, but could be set lower if desired
  */
-#define MAX_KEY_ID 0x7e
+#define MAX_KEY_LEN   0xffff
+#define MAX_VALUE_LEN 0xffff
+
+/* Maximum value that can be used for a key_id.  This is limited by the format
+ * to 0xffe (0xfff indicates end/unwritten space)
+ */
+#define MAX_KEY_ID 0x0ffe
+
+#define REGION_FLAG_SECOND  0x8000 // First (0) or second (1) region
+#define REGION_FLAG_ACTIVE  0x4000 // Stale (0) or active (1) region
+#define REGION_MASK_SIZE    0x0fff // Region size in sectors
+
+#define ENTRY_FLAG_ALIVE    0x8000 // Deleted (0) or active (1)
+#define ENTRY_FLAG_INVALID  0x4000 // Valid (0) or invalid (1) entry
+#define ENTRY_FLAG_VALUE    0x2000 // Key (0) or value (1)
+#define ENTRY_FLAG_BINARY   0x1000 // Text (0) or binary (1) data
+
+#define ENTRY_MASK_ID  0xfff
+
+#define ENTRY_ID_END   0xfff
+#define ENTRY_ID_ANY  0x1000
 
 #ifndef SYSPARAM_DEBUG
 #define SYSPARAM_DEBUG 0
@@ -60,19 +79,23 @@
 
 /********************* Internal datatypes and structures *********************/
 
+struct region_header {
+    uint32_t magic;
+    uint16_t flags_size;
+    uint16_t reserved;
+} __attribute__ ((packed));
+
 struct entry_header {
-    uint8_t prev_len;
-    uint8_t len;
-    uint8_t id;
-    uint8_t crc;
+    uint16_t idflags;
+    uint16_t len;
 } __attribute__ ((packed));
 
 struct sysparam_context {
     uint32_t addr;
     struct entry_header entry;
-    uint64_t unused_keys[2];
+    int unused_keys;
     size_t compactable;
-    uint8_t max_key_id;
+    uint16_t max_key_id;
 };
 
 /*************************** Global variables/data ***************************/
@@ -82,26 +105,90 @@ static struct {
     uint32_t alt_base;
     uint32_t end_addr;
     size_t region_size;
+    bool force_compact;
 } _sysparam_info;
 
 /***************************** Internal routines *****************************/
 
+static inline IRAM sysparam_status_t _do_write(uint32_t addr, const void *data, size_t data_size) {
+    CHECK_FLASH_OP(sdk_spi_flash_write(addr, data, data_size));
+    return SYSPARAM_OK;
+}
+
+static inline IRAM sysparam_status_t _do_verify(uint32_t addr, const void *data, void *buffer, size_t len) {
+    CHECK_FLASH_OP(sdk_spi_flash_read(addr, buffer, len));
+    if (memcmp(data, buffer, len)) {
+        return SYSPARAM_ERR_IO;
+    }
+    return SYSPARAM_OK;
+}
+
+/*FIXME: Eventually, this should probably be implemented down at the SPI flash library layer, where it can just compare bytes/words straight from the SPI hardware buffer instead of allocating a whole separate temp buffer, reading chunks into that, and then doing a memcmp.. */
+static IRAM sysparam_status_t _write_and_verify(uint32_t addr, const void *data, size_t data_size) {
+    int i;
+    size_t count;
+    sysparam_status_t status = SYSPARAM_OK;
+    uint8_t *verify_buf = malloc(VERIFY_BUF_SIZE);
+
+    if (!verify_buf) return SYSPARAM_ERR_NOMEM;
+    do {
+        status = _do_write(addr, data, data_size);
+        if (status != SYSPARAM_OK) break;
+        for (i = 0; i < data_size; i += VERIFY_BUF_SIZE) {
+            count = min(data_size - i, VERIFY_BUF_SIZE);
+            status = _do_verify(addr + i, data + i, verify_buf, count);
+            if (status != SYSPARAM_OK) {
+                debug(1, "Flash write (@ 0x%08x) verify failed!", addr);
+                break;
+            }
+        }
+    } while (false);
+    free(verify_buf);
+    return status;
+}
+
 /** Erase the sectors of a region */
-static sysparam_status_t _format_region(uint32_t addr) {
+static sysparam_status_t _format_region(uint32_t addr, uint16_t num_sectors) {
     uint16_t sector = addr / sdk_flashchip.sector_size;
     int i;
 
-    for (i = 0; i < SYSPARAM_REGION_SECTORS; i++) {
+    for (i = 0; i < num_sectors; i++) {
         CHECK_FLASH_OP(sdk_spi_flash_erase_sector(sector + i));
     }
     return SYSPARAM_OK;
 }
 
-/** Write the magic value at the beginning of a region */
-static inline sysparam_status_t _write_region_header(uint32_t addr, bool active) {
-    uint32_t magic = active ? SYSPARAM_ACTIVE_MAGIC : SYSPARAM_STALE_MAGIC;
-    debug(3, "write region header (0x%08x) @ 0x%08x", magic, addr);
-    CHECK_FLASH_OP(sdk_spi_flash_write(addr, &magic, 4));
+/** Write the magic data at the beginning of a region */
+static inline sysparam_status_t _write_region_header(uint32_t addr, uint32_t other, bool active) {
+    struct region_header header;
+    sysparam_status_t status;
+    int16_t num_sectors;
+
+    header.magic = SYSPARAM_MAGIC;
+    if (addr < other) {
+        num_sectors = (other - addr) / sdk_flashchip.sector_size;
+        header.flags_size = num_sectors & REGION_MASK_SIZE;
+    } else {
+        num_sectors = (addr - other) / sdk_flashchip.sector_size;
+        header.flags_size = num_sectors & REGION_MASK_SIZE;
+        header.flags_size |= REGION_FLAG_SECOND;
+    }
+    if (active) {
+        header.flags_size |= REGION_FLAG_ACTIVE;
+    }
+    header.reserved = 0;
+
+    debug(3, "write region header (0x%04x) @ 0x%08x", header.flags_size, addr);
+    status = _write_and_verify(addr, &header, REGION_HEADER_SIZE);
+    if (status != SYSPARAM_OK) {
+        // Uh oh.. Something failed, so we don't know whether what we wrote is
+        // actually in the flash or not.  Try to zero it out to be sure and
+        // return an error.
+        debug(3, "zero region header @ 0x%08x", addr);
+        memset(&header, 0, REGION_HEADER_SIZE);
+        _write_and_verify(addr, &header, REGION_HEADER_SIZE);
+        return SYSPARAM_ERR_IO;
+    }
     return SYSPARAM_OK;
 }
 
@@ -122,51 +209,79 @@ static sysparam_status_t init_write_context(struct sysparam_context *ctx) {
 
 /** Search through the region for an entry matching the specified id
  *
- *  @param match_id  The id to match, or 0 to match any key, or 0xff to scan
+ *  @param match_id  The id to match, or 0 to match any key, or 0xfff to scan
  *                   to the end.
  */
-static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint8_t match_id) {
-    uint8_t prev_len;
+static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint16_t match_id, bool find_value) {
+    uint16_t id;
 
-    while (ctx->addr + ENTRY_SIZE(ctx->entry.len) < _sysparam_info.end_addr) {
-        prev_len = ctx->entry.len;
-        ctx->addr += ENTRY_SIZE(ctx->entry.len);
+    while (true) {
+        if (ctx->addr == _sysparam_info.cur_base) {
+            ctx->addr += REGION_HEADER_SIZE;
+        } else {
+            uint32_t next_addr = ctx->addr + ENTRY_SIZE(ctx->entry.len);
+            if (next_addr > _sysparam_info.cur_base + _sysparam_info.region_size) {
+                // This entry has an obviously impossible length, so we need to
+                // stop reading here.
+                // We can report this as the end of the valid entries, but then
+                // any future writes (to the end) will write over
+                // previously-written data and result in garbage.  The best
+                // workaround is to make sure that the next write operation
+                // will always start with a compaction, which will leave off
+                // the invalid data at the end and fix the issue going forward.
+                debug(1, "Encountered entry with invalid length (0x%04x) @ 0x%08x (region end is 0x%08x).  Truncating entries.", ctx->entry.len, ctx->addr, _sysparam_info.end_addr);
+                _sysparam_info.force_compact = true;
+                break;
+            }
+            ctx->addr = next_addr;
+            if (ctx->addr == _sysparam_info.cur_base + _sysparam_info.region_size) {
+                // This is the last entry in the available space, but it
+                // exactly fits.  Stop reading here.
+                break;
+            }
+        }
 
         debug(3, "read entry header @ 0x%08x", ctx->addr);
         CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr, &ctx->entry, ENTRY_HEADER_SIZE));
-        if (ctx->entry.prev_len != prev_len) {
-            // Uh oh.. This should match the entry.len field from the
-            // previous entry.  If it doesn't, it means that field may have
-            // been corrupted and we don't even know if we're in the right
-            // place anymore.  We have to bail out.
-            debug(1, "prev_len mismatch at 0x%08x (%d != %d)", ctx->addr, ctx->entry.prev_len, prev_len);
-            ctx->addr = _sysparam_info.end_addr;
-            return SYSPARAM_ERR_CORRUPT;
+        debug(3, "  idflags = 0x%04x", ctx->entry.idflags);
+        if (ctx->entry.idflags == 0xffff) {
+            // 0xffff is never a valid id field, so this means we've hit the
+            // end and are looking at unwritten flash space from here on.
+            break;
         }
 
-        if (ctx->entry.id) {
-            if (!(ctx->entry.id & 0x80)) {
-                // Key definition
-                ctx->max_key_id = ctx->entry.id;
-                ctx->unused_keys[ctx->entry.id >> 6] |= (1 << (ctx->entry.id & 0x3f));
-                if (!match_id) {
-                    // We're looking for any key, so make this a matching key.
-                    match_id = ctx->entry.id;
+        id = ctx->entry.idflags & ENTRY_MASK_ID;
+        if ((ctx->entry.idflags & (ENTRY_FLAG_ALIVE | ENTRY_FLAG_INVALID)) == ENTRY_FLAG_ALIVE) {
+            debug(3, "  entry is alive and valid");
+            if (!(ctx->entry.idflags & ENTRY_FLAG_VALUE)) {
+                debug(3, "  entry is a key");
+                ctx->max_key_id = id;
+                ctx->unused_keys++;
+                if (!find_value) {
+                    if ((id == match_id) || (match_id == ENTRY_ID_ANY)) {
+                        return SYSPARAM_OK;
+                    }
                 }
             } else {
-                // Value entry
-                ctx->unused_keys[(ctx->entry.id >> 6) & 1] &= ~(1 << (ctx->entry.id & 0x3f));
+                debug(3, "  entry is a value");
+                ctx->unused_keys--;
+                if (find_value) {
+                    if ((id == match_id) || (match_id == ENTRY_ID_ANY)) {
+                        return SYSPARAM_OK;
+                    }
+                }
             }
-            if (ctx->entry.id == match_id) {
-                return SYSPARAM_OK;
-            }
+            debug(3, "  (not a match)");
         } else {
-            // Deleted entry
+            debug(3, "  entry is deleted or invalid");
             ctx->compactable += ENTRY_SIZE(ctx->entry.len);
         }
     }
+    if (match_id == ENTRY_ID_END) {
+        return SYSPARAM_OK;
+    }
     ctx->entry.len = 0;
-    ctx->entry.id = 0;
+    ctx->entry.idflags = 0;
     return SYSPARAM_NOTFOUND;
 }
 
@@ -174,18 +289,19 @@ static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint8_t match
 static inline sysparam_status_t _read_payload(struct sysparam_context *ctx, uint8_t *buffer, size_t buffer_size) {
     debug(3, "read payload (%d) @ 0x%08x", min(buffer_size, ctx->entry.len), ctx->addr);
     CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr + ENTRY_HEADER_SIZE, buffer, min(buffer_size, ctx->entry.len)));
-    //FIXME: check crc
     return SYSPARAM_OK;
 }
 
 /** Find the entry corresponding to the specified key name */
-static sysparam_status_t _find_key(struct sysparam_context *ctx, const char *key, uint8_t key_len, uint8_t *buffer) {
+static sysparam_status_t _find_key(struct sysparam_context *ctx, const char *key, uint16_t key_len, uint8_t *buffer) {
     sysparam_status_t status;
 
+    debug(3, "find key: %s", key ? key : "(null)");
     while (true) {
         // Find the next key entry
-        status = _find_entry(ctx, 0);
+        status = _find_entry(ctx, ENTRY_ID_ANY, false);
         if (status != SYSPARAM_OK) return status;
+        debug(3, "found a key entry @ 0x%08x", ctx->addr);
         if (!key) {
             // We're looking for the next (any) key, so we're done.
             break;
@@ -197,43 +313,70 @@ static sysparam_status_t _find_key(struct sysparam_context *ctx, const char *key
                 // We have a match
                 break;
             }
+            debug(3, "entry payload does not match");
+        } else {
+            debug(3, "key length (%d) does not match (%d)", ctx->entry.len, key_len);
         }
     }
+    debug(3, "key match @ 0x%08x (idflags = 0x%04x)", ctx->addr, ctx->entry.idflags);
 
     return SYSPARAM_OK;
+}
+
+/** Find the value entry matching the id field from a particular key */
+static inline sysparam_status_t _find_value(struct sysparam_context *ctx, uint16_t id_field) {
+    debug(3, "find value: 0x%04x", id_field);
+    return _find_entry(ctx, id_field & ENTRY_MASK_ID, true);
 }
 
 /** Write an entry at the specified address */
-static inline sysparam_status_t _write_entry(uint32_t addr, uint8_t id, const uint8_t *payload, uint8_t len, uint8_t prev_len) {
+static inline sysparam_status_t _write_entry(uint32_t addr, uint16_t id, const uint8_t *payload, uint16_t len) {
     struct entry_header entry;
+    sysparam_status_t status;
 
     debug(2, "Writing entry 0x%02x @ 0x%08x", id, addr);
-    entry.prev_len = prev_len;
+    entry.idflags = id | ENTRY_FLAG_ALIVE | ENTRY_FLAG_INVALID;
     entry.len = len;
-    entry.id = id;
-    entry.crc = 0; //FIXME: calculate crc
-    debug(3, "write entry header @ 0x%08x", addr);
-    CHECK_FLASH_OP(sdk_spi_flash_write(addr, &entry, ENTRY_HEADER_SIZE));
+    debug(3, "write initial entry header @ 0x%08x", addr);
+    status = _write_and_verify(addr, &entry, ENTRY_HEADER_SIZE);
+    if (status == SYSPARAM_ERR_IO) {
+        // Uh-oh.. Either the flash call failed in some way or we didn't get
+        // back what we wrote.  This could be a problem because depending on
+        // how it went wrong it could screw up all reads/writes from this point
+        // forward.  Try to salvage the on-flash structure by overwriting the
+        // failed header with all zeros, which (if successful) will be
+        // interpreted on later reads as a deleted empty-payload entry (and it
+        // will just skip to the next spot).
+        memset(&entry, 0, ENTRY_HEADER_SIZE);
+        debug(3, "zeroing entry header @ 0x%08x", addr);
+        status = _write_and_verify(addr, &entry, ENTRY_HEADER_SIZE);
+        if (status != SYSPARAM_OK) return status;
+
+        // Make sure future writes skip past this zeroed bit
+        if (_sysparam_info.end_addr == addr) {
+            _sysparam_info.end_addr += ENTRY_HEADER_SIZE;
+        }
+        // We could just skip to the next space and try again, but
+        // unfortunately now we can't be sure there's enough space remaining to
+        // fit the entry, so we just have to fail this operation.  Hopefully,
+        // at least, future requests will still succeed, though.
+        status = SYSPARAM_ERR_IO;
+    }
+    if (status != SYSPARAM_OK) return status;
+
+    // If we've gotten this far, we've committed to writing the full entry.
+    if (_sysparam_info.end_addr == addr) {
+        _sysparam_info.end_addr += ENTRY_SIZE(len);
+    }
     debug(3, "write payload (%d) @ 0x%08x", len, addr + ENTRY_HEADER_SIZE);
-    CHECK_FLASH_OP(sdk_spi_flash_write(addr + ENTRY_HEADER_SIZE, payload, len));
+    status = _write_and_verify(addr + ENTRY_HEADER_SIZE, payload, len);
+    if (status != SYSPARAM_OK) return status;
 
-    return SYSPARAM_OK;
-}
+    debug(3, "set entry valid @ 0x%08x", addr);
+    entry.idflags &= ~ENTRY_FLAG_INVALID;
+    status = _write_and_verify(addr, &entry, ENTRY_HEADER_SIZE);
 
-/** Write the "tail" entry on the end of the region
- *  (this entry just contains the `prev_len` field with all others set to 0xff)
- */
-static inline sysparam_status_t _write_entry_tail(uint32_t addr, uint8_t prev_len) {
-    struct entry_header entry;
-
-    entry.prev_len = prev_len;
-    entry.len = 0xff;
-    entry.id = 0xff;
-    entry.crc = 0xff;
-    debug(3, "write entry tail @ 0x%08x", addr);
-    CHECK_FLASH_OP(sdk_spi_flash_write(addr, &entry, ENTRY_HEADER_SIZE));
-
-    return SYSPARAM_OK;
+    return status;
 }
 
 /** Mark an entry as "deleted" so it won't be considered in future reads */
@@ -244,7 +387,7 @@ static inline sysparam_status_t _delete_entry(uint32_t addr) {
     debug(3, "read entry header @ 0x%08x", addr);
     CHECK_FLASH_OP(sdk_spi_flash_read(addr, &entry, ENTRY_HEADER_SIZE));
     // Set the ID to zero to mark it as "deleted"
-    entry.id = 0x00;
+    entry.idflags &= ~ENTRY_FLAG_ALIVE;
     debug(3, "write entry header @ 0x%08x", addr);
     CHECK_FLASH_OP(sdk_spi_flash_write(addr, &entry, ENTRY_HEADER_SIZE));
 
@@ -263,16 +406,17 @@ static inline sysparam_status_t _delete_entry(uint32_t addr) {
  *  automatically update *key_id to contain the ID of this key in the new
  *  compacted result as well.
  */
-static sysparam_status_t _compact_params(struct sysparam_context *ctx, uint8_t *key_id) {
+static sysparam_status_t _compact_params(struct sysparam_context *ctx, int *key_id) {
     uint32_t new_base = _sysparam_info.alt_base;
     sysparam_status_t status;
     uint32_t addr = new_base + REGION_HEADER_SIZE;
-    uint8_t current_key_id = 0;
+    uint16_t current_key_id = 0;
     sysparam_iter_t iter;
-    uint8_t prev_len = 0;
+    uint16_t binary_flag;
+    uint16_t num_sectors = _sysparam_info.region_size / sdk_flashchip.sector_size;
 
-    debug(1, "compacting region (current size %d, expect to recover %d%s bytes)...", _sysparam_info.end_addr - _sysparam_info.cur_base, ctx->compactable, (ctx->unused_keys[0] || ctx->unused_keys[1]) ? "+ (unused keys present)" : "");
-    status = _format_region(new_base);
+    debug(1, "compacting region (current size %d, expect to recover %d%s bytes)...", _sysparam_info.end_addr - _sysparam_info.cur_base, ctx->compactable, (ctx->unused_keys > 0) ? "+ (unused keys present)" : "");
+    status = _format_region(new_base, num_sectors);
     if (status < 0) return status;
     status = sysparam_iter_start(&iter);
     if (status < 0) return status;
@@ -285,12 +429,11 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, uint8_t *
 
         // Write the key to the new region
         debug(2, "writing %d key @ 0x%08x", current_key_id, addr);
-        status = _write_entry(addr, current_key_id, (uint8_t *)iter.key, iter.key_len, prev_len);
+        status = _write_entry(addr, current_key_id, (uint8_t *)iter.key, iter.key_len);
         if (status < 0) break;
-        prev_len = iter.key_len;
         addr += ENTRY_SIZE(iter.key_len);
 
-        if (iter.ctx->entry.id == *key_id) {
+        if ((iter.ctx->entry.idflags & ENTRY_MASK_ID) == *key_id) {
             // Update key_id to have the correct id for the compacted result
             *key_id = current_key_id;
             // Don't copy the old value, since we'll just be deleting it
@@ -300,16 +443,12 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, uint8_t *
 
         // Copy the value to the new region
         debug(2, "writing %d value @ 0x%08x", current_key_id, addr);
-        status = _write_entry(addr, current_key_id | 0x80, iter.value, iter.value_len, prev_len);
+        binary_flag = iter.binary ? ENTRY_FLAG_BINARY : 0;
+        status = _write_entry(addr, current_key_id | ENTRY_FLAG_VALUE | binary_flag, iter.value, iter.value_len);
         if (status < 0) break;
-        prev_len = iter.value_len;
         addr += ENTRY_SIZE(iter.value_len);
     }
     sysparam_iter_end(&iter);
-
-    if (status >= 0) {
-        status = _write_entry_tail(addr, prev_len);
-    }
 
     // If we broke out with an error, return the error instead of continuing.
     if (status < 0) {
@@ -318,19 +457,19 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, uint8_t *
     }
 
     // Switch to officially using the new region.
-    status = _write_region_header(new_base, true);
+    status = _write_region_header(new_base, _sysparam_info.cur_base, true);
     if (status < 0) return status;
-    status = _write_region_header(_sysparam_info.cur_base, false);
+    status = _write_region_header(_sysparam_info.cur_base, new_base, false);
     if (status < 0) return status;
 
     _sysparam_info.alt_base = _sysparam_info.cur_base;
     _sysparam_info.cur_base = new_base;
     _sysparam_info.end_addr = addr;
+    _sysparam_info.force_compact = false;
 
     // Fix up ctx so it doesn't point to invalid stuff
     memset(ctx, 0, sizeof(*ctx));
     ctx->addr = addr;
-    ctx->entry.prev_len = prev_len;
     ctx->max_key_id = current_key_id;
 
     debug(1, "done compacting (current size %d)", _sysparam_info.end_addr - _sysparam_info.cur_base);
@@ -340,42 +479,82 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, uint8_t *
 
 /***************************** Public Functions ******************************/
 
-sysparam_status_t sysparam_init(uint32_t base_addr) {
+sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
     sysparam_status_t status;
-    uint32_t magic0, magic1;
+    uint32_t addr0, addr1;
+    struct region_header header0, header1;
     struct sysparam_context ctx;
+    uint16_t num_sectors;
 
-    _sysparam_info.region_size = SYSPARAM_REGION_SECTORS * sdk_flashchip.sector_size;
-    // First, see if we can find an existing one.
-    debug(3, "read magic @ 0x%08x", base_addr);
-    CHECK_FLASH_OP(sdk_spi_flash_read(base_addr, &magic0, 4));
-    debug(3, "read magic @ 0x%08x", base_addr + _sysparam_info.region_size);
-    CHECK_FLASH_OP(sdk_spi_flash_read(base_addr + _sysparam_info.region_size, &magic1, 4));
-    if (magic0 == SYSPARAM_ACTIVE_MAGIC && magic1 == SYSPARAM_STALE_MAGIC) {
-        // Sysparam area found, first region is active
-        _sysparam_info.cur_base = base_addr;
-        _sysparam_info.alt_base = base_addr + _sysparam_info.region_size;
-    } else if (magic0 == SYSPARAM_STALE_MAGIC && magic1 == SYSPARAM_ACTIVE_MAGIC) {
-        // Sysparam area found, second region is active
-        _sysparam_info.cur_base = base_addr + _sysparam_info.region_size;
-        _sysparam_info.alt_base = base_addr;
-    } else if (magic0 == SYSPARAM_ACTIVE_MAGIC && magic1 == SYSPARAM_ACTIVE_MAGIC) {
-        // Both regions are marked as active.  Not sure which to use.
-        // This can theoretically happen if something goes wrong at exactly the
-        // wrong time during compacting.
-        return SYSPARAM_ERR_CORRUPT;
-    } else if (magic0 == SYSPARAM_STALE_MAGIC && magic1 == SYSPARAM_STALE_MAGIC) {
-        // Both regions are marked as inactive.  This shouldn't ever happen.
-        return SYSPARAM_ERR_CORRUPT;
-    } else {
-        // Looks like there's something else at that location entirely.
+    // Make sure we're starting at the beginning of the sector
+    base_addr -= (base_addr % sdk_flashchip.sector_size);
+
+    if (!top_addr || top_addr == base_addr) {
+        // Only scan the specified sector, nowhere else.
+        top_addr = base_addr + sdk_flashchip.sector_size;
+    }
+    for (addr0 = base_addr; addr0 < top_addr; addr0 += sdk_flashchip.sector_size) {
+        CHECK_FLASH_OP(sdk_spi_flash_read(addr0, &header0, REGION_HEADER_SIZE));
+        if (header0.magic == SYSPARAM_MAGIC) {
+            // Found a starting point...
+            break;
+        }
+    }
+    if (addr0 >= top_addr) {
         return SYSPARAM_NOTFOUND;
+    }
+
+    // We've found a valid header at addr0.  Now find the other half of the sysparam area.
+    num_sectors = header0.flags_size & REGION_MASK_SIZE;
+
+    if (header0.flags_size & REGION_FLAG_SECOND) {
+        addr1 = addr0 - num_sectors * sdk_flashchip.sector_size;
+    } else {
+        addr1 = addr0 + num_sectors * sdk_flashchip.sector_size;
+    }
+    CHECK_FLASH_OP(sdk_spi_flash_read(addr1, &header1, REGION_HEADER_SIZE));
+
+    if (header1.magic == SYSPARAM_MAGIC) {
+        // Yay! Found the other one.  Sanity-check it..
+        if ((header0.flags_size & REGION_FLAG_SECOND) == (header1.flags_size & REGION_FLAG_SECOND)) {
+            // Hmm.. they both say they're the same region.  That can't be right...
+            debug(1, "Found region headers @ 0x%08x and 0x%08x, but both claim to be the same region.", addr0, addr1);
+            return SYSPARAM_ERR_CORRUPT;
+        }
+    } else {
+        // Didn't find a valid header at the alternate location (which probably means something clobbered it or something went wrong at a critical point when rewriting it.  Is the one we did find the active or stale one?
+        if (header0.flags_size & REGION_FLAG_ACTIVE) {
+            // Found the active one.  We can work with this.  Try to recreate the missing stale region...
+            debug(2, "Found active region header @ 0x%08x but no stale region @ 0x%08x. Trying to recreate stale region.", addr0, addr1);
+            status = _format_region(addr1, num_sectors);
+            if (status != SYSPARAM_OK) return status;
+            status = _write_region_header(addr1, addr0, false);
+            if (status != SYSPARAM_OK) return status;
+        } else {
+            // Found the stale one.  We have no idea how old it is, so we shouldn't use it without some sort of confirmation/recovery.  We'll have to bail for now.
+            debug(1, "Found stale-region header @ 0x%08x, but no active region.", addr0);
+            return SYSPARAM_ERR_CORRUPT;
+        }
+    }
+    // At this point we have confirmed valid regions at addr0 and addr1.
+
+    _sysparam_info.region_size = num_sectors * sdk_flashchip.sector_size;
+    if (header0.flags_size & REGION_FLAG_ACTIVE) {
+        _sysparam_info.cur_base = addr0;
+        _sysparam_info.alt_base = addr1;
+        debug(3, "Active region @ 0x%08x (0x%04x).  Stale region @ 0x%08x (0x%04x).", addr0, header0.flags_size, addr1, header1.flags_size);
+
+    } else {
+        _sysparam_info.cur_base = addr1;
+        _sysparam_info.alt_base = addr0;
+        debug(3, "Active region @ 0x%08x (0x%04x).  Stale region @ 0x%08x (0x%04x).", addr1, header1.flags_size, addr0, header0.flags_size);
     }
 
     // Find the actual end
     _sysparam_info.end_addr = _sysparam_info.cur_base + _sysparam_info.region_size;
+    _sysparam_info.force_compact = false;
     _init_context(&ctx);
-    status = _find_entry(&ctx, 0xff);
+    status = _find_entry(&ctx, ENTRY_ID_END, false);
     if (status < 0) {
         _sysparam_info.cur_base = 0;
         _sysparam_info.alt_base = 0;
@@ -389,17 +568,24 @@ sysparam_status_t sysparam_init(uint32_t base_addr) {
     return SYSPARAM_OK;
 }
 
-sysparam_status_t sysparam_create_area(uint32_t base_addr, bool force) {
+sysparam_status_t sysparam_create_area(uint32_t base_addr, uint16_t num_sectors, bool force) {
+    size_t region_size;
     sysparam_status_t status;
     uint32_t buffer[SCAN_BUFFER_SIZE];
     uint32_t addr;
     int i;
-    size_t region_size = SYSPARAM_REGION_SECTORS * sdk_flashchip.sector_size;
+
+    // Convert "number of sectors for area" into "number of sectors per region"
+    if (num_sectors < 1 || (num_sectors & 1)) {
+        return SYSPARAM_ERR_BADVALUE;
+    }
+    num_sectors >>= 1;
+    region_size = num_sectors * sdk_flashchip.sector_size;
 
     if (!force) {
         // First, scan through the area and make sure it's actually empty and
         // we're not going to be clobbering something else important.
-        for (addr = base_addr; addr < base_addr + SYSPARAM_REGION_SECTORS * 2 * sdk_flashchip.sector_size; addr += SCAN_BUFFER_SIZE) {
+        for (addr = base_addr; addr < base_addr + region_size * 2; addr += SCAN_BUFFER_SIZE) {
             debug(3, "read %d words @ 0x%08x", SCAN_BUFFER_SIZE, addr);
             CHECK_FLASH_OP(sdk_spi_flash_read(addr, buffer, SCAN_BUFFER_SIZE * 4));
             for (i = 0; i < SCAN_BUFFER_SIZE; i++) {
@@ -417,21 +603,19 @@ sysparam_status_t sysparam_create_area(uint32_t base_addr, bool force) {
         // `sysparam_init()` afterwards.
         memset(&_sysparam_info, 0, sizeof(_sysparam_info));
     }
-    status = _format_region(base_addr);
+    status = _format_region(base_addr, num_sectors);
     if (status < 0) return status;
-    status = _format_region(base_addr + region_size);
+    status = _format_region(base_addr + region_size, num_sectors);
     if (status < 0) return status;
-    status = _write_entry_tail(base_addr + REGION_HEADER_SIZE, 0);
+    status = _write_region_header(base_addr, base_addr + region_size, true);
     if (status < 0) return status;
-    status = _write_region_header(base_addr + region_size, false);
-    if (status < 0) return status;
-    status = _write_region_header(base_addr, true);
+    status = _write_region_header(base_addr + region_size, base_addr, false);
     if (status < 0) return status;
 
     return SYSPARAM_OK;
 }
 
-sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length) {
+sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length, bool *is_binary) {
     struct sysparam_context ctx;
     sysparam_status_t status;
     size_t key_len = strlen(key);
@@ -448,7 +632,7 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
         if (status != SYSPARAM_OK) break;
 
         // Find the associated value
-        status = _find_entry(&ctx, ctx.entry.id | 0x80);
+        status = _find_value(&ctx, ctx.entry.idflags);
         if (status != SYSPARAM_OK) break;
 
         newbuf = realloc(buffer, ctx.entry.len + 1);
@@ -467,6 +651,7 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
 
         *destptr = buffer;
         if (actual_length) *actual_length = ctx.entry.len;
+        if (is_binary) *is_binary = (bool)(ctx.entry.idflags & ENTRY_FLAG_BINARY);
         return SYSPARAM_OK;
     } while (false);
 
@@ -475,7 +660,7 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
     return status;
 }
 
-sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *buffer, size_t buffer_size, size_t *actual_length) {
+sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *buffer, size_t buffer_size, size_t *actual_length, bool *is_binary) {
     struct sysparam_context ctx;
     sysparam_status_t status = SYSPARAM_OK;
     size_t key_len = strlen(key);
@@ -491,19 +676,33 @@ sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *buffer, siz
     _init_context(&ctx);
     status = _find_key(&ctx, key, key_len, buffer);
     if (status != SYSPARAM_OK) return status;
-    status = _find_entry(&ctx, ctx.entry.id | 0x80);
+    status = _find_value(&ctx, ctx.entry.idflags);
     if (status != SYSPARAM_OK) return status;
     status = _read_payload(&ctx, buffer, buffer_size);
     if (status != SYSPARAM_OK) return status;
 
     if (actual_length) *actual_length = ctx.entry.len;
+    if (is_binary) *is_binary = (bool)(ctx.entry.idflags & ENTRY_FLAG_BINARY);
     return SYSPARAM_OK;
 }
 
 sysparam_status_t sysparam_get_string(const char *key, char **destptr) {
+    bool is_binary;
+    sysparam_status_t status;
+    uint8_t *buf;
+
+    status = sysparam_get_data(key, &buf, NULL, &is_binary);
+    if (status != SYSPARAM_OK) return status;
+    if (is_binary) {
+        // Value was saved as binary data, which means we shouldn't try to
+        // interpret it as a string.
+        free(buf);
+        return SYSPARAM_PARSEFAILED;
+    }
     // `sysparam_get_data` will zero-terminate the result as a matter of course,
     // so no need to do that here.
-    return sysparam_get_data(key, (uint8_t **)destptr, NULL);
+    *destptr = (char *)buf;
+    return SYSPARAM_OK;
 }
 
 sysparam_status_t sysparam_get_int(const char *key, int32_t *result) {
@@ -528,29 +727,23 @@ sysparam_status_t sysparam_get_int(const char *key, int32_t *result) {
 
 sysparam_status_t sysparam_get_bool(const char *key, bool *result) {
     char *buffer;
-    int i;
     sysparam_status_t status;
 
     status = sysparam_get_string(key, &buffer);
     if (status != SYSPARAM_OK) return status;
     do {
-        for (i = 0; buffer[i]; i++) {
-            // Quick-and-dirty tolower().  Not perfect, but works for our
-            // purposes, and avoids needing to pull in additional libc stuff.
-            if (buffer[i] >= 0x41) buffer[i] |= 0x20;
-        }
-        if (!strcmp(buffer, "y")    ||
-            !strcmp(buffer, "yes")  ||
-            !strcmp(buffer, "t")    ||
-            !strcmp(buffer, "true") ||
+        if (!strcasecmp(buffer, "y")    ||
+            !strcasecmp(buffer, "yes")  ||
+            !strcasecmp(buffer, "t")    ||
+            !strcasecmp(buffer, "true") ||
             !strcmp(buffer, "1")) {
                 *result = true;
                 break;
         }
-        if (!strcmp(buffer, "n")     ||
-            !strcmp(buffer, "no")    ||
-            !strcmp(buffer, "f")     ||
-            !strcmp(buffer, "false") ||
+        if (!strcasecmp(buffer, "n")     ||
+            !strcasecmp(buffer, "no")    ||
+            !strcasecmp(buffer, "f")     ||
+            !strcasecmp(buffer, "false") ||
             !strcmp(buffer, "0")) {
                 *result = false;
                 break;
@@ -562,22 +755,24 @@ sysparam_status_t sysparam_get_bool(const char *key, bool *result) {
     return status;
 }
 
-sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_t value_len) {
+sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_t value_len, bool is_binary) {
     struct sysparam_context ctx;
     struct sysparam_context write_ctx;
     sysparam_status_t status = SYSPARAM_OK;
-    uint8_t key_len = strlen(key);
+    uint16_t key_len = strlen(key);
     uint8_t *buffer;
     uint8_t *newbuf;
     size_t free_space;
     size_t needed_space;
     bool free_value = false;
-    uint8_t key_id = 0;
+    int key_id = -1;
     uint32_t old_value_addr = 0;
+    uint16_t binary_flag;
    
     if (!_sysparam_info.cur_base) return SYSPARAM_ERR_NOINIT;
     if (!key_len) return SYSPARAM_ERR_BADVALUE;
-    if (value_len > 0xff) return SYSPARAM_ERR_BADVALUE;
+    if (key_len > MAX_KEY_LEN) return SYSPARAM_ERR_BADVALUE;
+    if (value_len > MAX_VALUE_LEN) return SYSPARAM_ERR_BADVALUE;
 
     if (!value) value_len = 0;
 
@@ -603,17 +798,19 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
         status = _find_key(&ctx, key, key_len, buffer);
         if (status == SYSPARAM_OK) {
             // Key already exists, see if there's a current value.
-            key_id = ctx.entry.id;
-            status = _find_entry(&ctx, key_id | 0x80);
+            key_id = ctx.entry.idflags & ENTRY_MASK_ID;
+            status = _find_value(&ctx, key_id);
             if (status == SYSPARAM_OK) {
                 old_value_addr = ctx.addr;
             }
         }
         if (status < 0) break;
 
+        binary_flag = is_binary ? ENTRY_FLAG_BINARY : 0;
+
         if (value_len) {
             if (old_value_addr) {
-                if (ctx.entry.len == value_len) {
+                if ((ctx.entry.idflags & ENTRY_FLAG_BINARY) == binary_flag && ctx.entry.len == value_len) {
                     // Are we trying to write the same value that's already there?
                     if (value_len > key_len) {
                         newbuf = realloc(buffer, value_len);
@@ -624,12 +821,8 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
                         buffer = newbuf;
                     }
                     status = _read_payload(&ctx, buffer, value_len);
-                    if (status == SYSPARAM_ERR_CORRUPT) {
-                        // If the CRC check failed, don't worry about it.  We're
-                        // going to be deleting this entry anyway.
-                    } else if (status < 0) {
-                        break;
-                    } else if (!memcmp(buffer, value, value_len)) {
+                    if (status < 0) break;
+                    if (!memcmp(buffer, value, value_len)) {
                         // Yup, it's a match! No need to do anything further,
                         // just leave the current value as-is.
                         status = SYSPARAM_OK;
@@ -645,9 +838,9 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
 
             // Append new value to the end, but first make sure we have enough
             // space.
-            free_space = _sysparam_info.cur_base + _sysparam_info.region_size - _sysparam_info.end_addr - 4;
+            free_space = _sysparam_info.cur_base + _sysparam_info.region_size - _sysparam_info.end_addr;
             needed_space = ENTRY_SIZE(value_len);
-            if (!key_id) {
+            if (key_id < 0) {
                 // We did not find a previous key entry matching this key.  We
                 // will need to add a key entry as well.
                 key_len = strlen(key);
@@ -657,13 +850,13 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
                 // Can we compact things?
                 // First, scan all remaining entries up to the end so we can
                 // get a reasonably accurate "compactable" reading.
-                _find_entry(&ctx, 0xff);
+                _find_entry(&ctx, ENTRY_ID_END, false);
                 if (needed_space <= free_space + ctx.compactable) {
                     // We should be able to get enough space by compacting.
                     status = _compact_params(&ctx, &key_id);
                     if (status < 0) break;
                     old_value_addr = 0;
-                } else if (ctx.unused_keys[0] || ctx.unused_keys[1]) {
+                } else if (ctx.unused_keys > 0) {
                     // Compacting will gain more space than expected, because
                     // there are some keys that can be omitted too, but we
                     // don't know exactly how much that will gain, so all we
@@ -672,7 +865,7 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
                     if (status < 0) break;
                     old_value_addr = 0;
                 }
-                free_space = _sysparam_info.cur_base + _sysparam_info.region_size - _sysparam_info.end_addr - 4;
+                free_space = _sysparam_info.cur_base + _sysparam_info.region_size - _sysparam_info.end_addr;
             }
             if (needed_space > free_space) {
                 // Nothing we can do here.. We're full.
@@ -683,17 +876,14 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
                 break;
             }
 
-            init_write_context(&write_ctx);
-
-            if (!key_id) {
+            if (key_id < 0) {
                 // We need to write a key entry for a new key.
                 // If we didn't find the key, then we already know _find_entry
                 // has gone through the entire contents, and thus
                 // ctx.max_key_id has the largest key_id found in the whole
                 // region.
-                key_id = ctx.max_key_id + 1;
-                if (key_id > MAX_KEY_ID) {
-                    if (ctx.unused_keys[0] || ctx.unused_keys[1]) {
+                if (ctx.max_key_id >= MAX_KEY_ID) {
+                    if (ctx.unused_keys > 0) {
                         status = _compact_params(&ctx, &key_id);
                         if (status < 0) break;
                         old_value_addr = 0;
@@ -703,28 +893,40 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
                         break;
                     }
                 }
-                status = _write_entry(write_ctx.addr, key_id, (uint8_t *)key, key_len, write_ctx.entry.prev_len);
+            }
+
+            if (_sysparam_info.force_compact) {
+                // We didn't need to compact above, but due to previously
+                // detected inconsistencies, we should compact anyway before
+                // writing anything new, so do that.
+                status = _compact_params(&ctx, &key_id);
+                if (status < 0) break;
+            }
+
+            init_write_context(&write_ctx);
+
+            if (key_id < 0) {
+                // Write a new key entry
+                key_id = ctx.max_key_id + 1;
+                status = _write_entry(write_ctx.addr, key_id, (uint8_t *)key, key_len);
                 if (status < 0) break;
                 write_ctx.addr += ENTRY_SIZE(key_len);
-                write_ctx.entry.prev_len = key_len;
             }
 
             // Write new value
-            status = _write_entry(write_ctx.addr, key_id | 0x80, value, value_len, write_ctx.entry.prev_len);
+            status = _write_entry(write_ctx.addr, key_id | ENTRY_FLAG_VALUE | binary_flag, value, value_len);
             if (status < 0) break;
             write_ctx.addr += ENTRY_SIZE(value_len);
-            status = _write_entry_tail(write_ctx.addr, value_len);
-            if (status < 0) break;
             _sysparam_info.end_addr = write_ctx.addr;
         }
 
-        debug(1, "new addr is 0x%08x (%d bytes remaining)", _sysparam_info.end_addr, _sysparam_info.cur_base + _sysparam_info.region_size - _sysparam_info.end_addr - 4);
-
-        // Delete old value (if present) by setting it's id to 0x00
+        // Delete old value (if present) by clearing its "alive" flag
         if (old_value_addr) {
             status = _delete_entry(old_value_addr);
             if (status < 0) break;
         }
+
+        debug(1, "New addr is 0x%08x (%d bytes remaining)", _sysparam_info.end_addr, _sysparam_info.cur_base + _sysparam_info.region_size - _sysparam_info.end_addr);
     } while (false);
 
     if (free_value) free((void *)value);
@@ -733,7 +935,7 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
 }
 
 sysparam_status_t sysparam_set_string(const char *key, const char *value) {
-    return sysparam_set_data(key, (const uint8_t *)value, strlen(value));
+    return sysparam_set_data(key, (const uint8_t *)value, strlen(value), false);
 }
 
 sysparam_status_t sysparam_set_int(const char *key, int32_t value) {
@@ -741,7 +943,7 @@ sysparam_status_t sysparam_set_int(const char *key, int32_t value) {
     int len;
     
     len = snprintf((char *)buffer, 12, "%d", value);
-    return sysparam_set_data(key, buffer, len);
+    return sysparam_set_data(key, buffer, len, false);
 }
 
 sysparam_status_t sysparam_set_bool(const char *key, bool value) {
@@ -755,7 +957,7 @@ sysparam_status_t sysparam_set_bool(const char *key, bool value) {
     }
 
     buf[0] = value ? 'y' : 'n';
-    return sysparam_set_data(key, buf, 1);
+    return sysparam_set_data(key, buf, 1, false);
 }
 
 sysparam_status_t sysparam_iter_start(sysparam_iter_t *iter) {
@@ -794,7 +996,7 @@ sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
         if (status != SYSPARAM_OK) return status;
         memcpy(&value_ctx, ctx, sizeof(value_ctx));
 
-        status = _find_entry(&value_ctx, ctx->entry.id | 0x80);
+        status = _find_value(&value_ctx, ctx->entry.idflags);
         if (status < 0) return status;
         if (status == SYSPARAM_NOTFOUND) continue;
 
@@ -821,7 +1023,13 @@ sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
         // Null-terminate the value (just in case)
         iter->value[value_ctx.entry.len] = 0;
         iter->value_len = value_ctx.entry.len;
-        debug(2, "iter_next: (0x%08x) '%s' = (0x%08x) '%s' (%d)", ctx->addr, iter->key, value_ctx.addr, iter->value, iter->value_len);
+        if (value_ctx.entry.idflags & ENTRY_FLAG_BINARY) {
+            iter->binary = true;
+            debug(2, "iter_next: (0x%08x) '%s' = (0x%08x) <binary-data> (%d)", ctx->addr, iter->key, value_ctx.addr, iter->value_len);
+        } else {
+            iter->binary = false;
+            debug(2, "iter_next: (0x%08x) '%s' = (0x%08x) '%s' (%d)", ctx->addr, iter->key, value_ctx.addr, iter->value, iter->value_len);
+        }
 
         return SYSPARAM_OK;
     }

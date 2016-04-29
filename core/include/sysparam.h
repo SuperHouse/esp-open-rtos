@@ -17,15 +17,6 @@
  *  improving write speed and increasing the lifespan of the flash memory.
  */
 
-#ifndef SYSPARAM_REGION_SECTORS
-/** Number of (4K) sectors that make up a sysparam region.  Total sysparam data
- *  cannot be larger than this.  Note that the full sysparam area is two
- *  regions, so the actual amount of used flash space will be *twice* this
- *  amount.
- */
-#define SYSPARAM_REGION_SECTORS 1
-#endif
-
 /** Status codes returned by all sysparam functions
  *
  *  Error codes (`SYSPARAM_ERR_*`) all have values less than zero, and can be
@@ -54,6 +45,7 @@ typedef struct {
     uint8_t *value;
     size_t key_len;
     size_t value_len;
+    bool binary;
     size_t bufsize;
     struct sysparam_context *ctx;
 } sysparam_iter_t;
@@ -68,8 +60,14 @@ typedef struct {
  *  the normal initialization failed, or after calling sysparam_create_area()
  *  to reformat the current area.
  *
- *  @param[in] base_addr  The flash address which should contain the start of
+ *  This routine will start at `base_addr` and scan all sectors up to
+ *  `top_addr` looking for a valid sysparam area.  If `top_addr` is zero (or
+ *  equal to `base_addr`, then only the sector at `base_addr` will be checked.
+ *
+ *  @param[in] base_addr  The flash address to start looking for the start of
  *                        the (already present) sysparam area
+ *  @param[in] top_addr   The flash address to stop looking for the sysparam
+ *                        area
  *
  *  @retval ::SYSPARAM_OK           Initialization successful.
  *  @retval ::SYSPARAM_NOTFOUND     The specified address does not appear to
@@ -79,7 +77,7 @@ typedef struct {
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_init(uint32_t base_addr);
+sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr);
 
 /** Create a new sysparam area in flash at the specified address.
  *
@@ -89,15 +87,21 @@ sysparam_status_t sysparam_init(uint32_t base_addr);
  *  not overwrite it.  Setting `force` to `true` will cause it to clobber any
  *  existing data instead.
  *
- *  @param[in] base_addr  The flash address at which it should start
- *                        (must be a multiple of the sector size)
- *  @param[in] force      Proceed even if the space does not appear to be empty
+ *  @param[in] base_addr   The flash address at which it should start
+ *                         (must be a multiple of the sector size)
+ *  @param[in] num_sectors The number of flash sectors to use for the sysparam
+ *                         area.  This should be an even number >= 2.  Note
+ *                         that the actual amount of useable parameter space
+ *                         will be roughly half this amount.
+ *  @param[in] force       Proceed even if the space does not appear to be empty
  *
- *  @retval ::SYSPARAM_OK        Area (re)created successfully.
- *  @retval ::SYSPARAM_NOTFOUND  `force` was not specified, and the area at
- *                               `base_addr` appears to have other data.  No
- *                               action taken.
- *  @retval ::SYSPARAM_ERR_IO    I/O error reading/writing flash
+ *  @retval ::SYSPARAM_OK           Area (re)created successfully.
+ *  @retval ::SYSPARAM_NOTFOUND     `force` was not specified, and the area at
+ *                                  `base_addr` appears to have other data.  No
+ *                                  action taken.
+ *  @retval ::SYSPARAM_ERR_BADVALUE The `num_sectors` value was not even (or
+ *                                  was zero)
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  *
  *  Note: This routine can create a sysparam area in another location than the
  *  one currently being used, but does not change which area is currently used
@@ -106,7 +110,7 @@ sysparam_status_t sysparam_init(uint32_t base_addr);
  *  sysparam_init() again afterward before you will be able to continue using
  *  it.
  */ 
-sysparam_status_t sysparam_create_area(uint32_t base_addr, bool force);
+sysparam_status_t sysparam_create_area(uint32_t base_addr, uint16_t num_sectors, bool force);
 
 /** Get the value associated with a key
  *
@@ -126,7 +130,9 @@ sysparam_status_t sysparam_create_area(uint32_t base_addr, bool force);
  *  @param[out] destptr        Pointer to a location to hold the address of the
  *                             returned data buffer
  *  @param[out] actual_length  Pointer to a location to hold the length of the
- *                             returned data buffer
+ *                             returned data buffer (may be NULL)
+ *  @param[out] is_binary      Pointer to a bool to hold whether the returned
+ *                             value is "binary" or not (may be NULL)
  *
  *  @retval ::SYSPARAM_OK           Value successfully retrieved.
  *  @retval ::SYSPARAM_NOTFOUND     Key/value not found.  No buffer returned.
@@ -135,7 +141,7 @@ sysparam_status_t sysparam_create_area(uint32_t base_addr, bool force);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length);
+sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length, bool *is_binary);
 
 /** Get the value associate with a key (static buffers only)
  *
@@ -157,6 +163,8 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
  *  @param[out] actual_length  pointer to a location to hold the actual length
  *                             of the data which was associated with the key
  *                             (may be NULL).
+ *  @param[out] is_binary      Pointer to a bool to hold whether the returned
+ *                             value is "binary" or not (may be NULL)
  *
  *  @retval ::SYSPARAM_OK           Value successfully retrieved
  *  @retval ::SYSPARAM_NOTFOUND     Key/value not found
@@ -165,7 +173,7 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *buffer, size_t buffer_size, size_t *actual_length);
+sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *buffer, size_t buffer_size, size_t *actual_length, bool *is_binary);
 
 /** Get the string value associated with a key
  * 
@@ -186,6 +194,7 @@ sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *buffer, siz
  *
  *  @retval ::SYSPARAM_OK           Value successfully retrieved.
  *  @retval ::SYSPARAM_NOTFOUND     Key/value not found.
+ *  @retval ::SYSPARAM_PARSEFAILED  The retrieved value was a binary value
  *  @retval ::SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
  *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
@@ -253,9 +262,17 @@ sysparam_status_t sysparam_get_bool(const char *key, bool *result);
  *  is NULL or `value_len` is 0, this is treated as a request to delete any
  *  current entry matching `key`.
  *
+ *  If `binary` is true, the data will be considered binary (unprintable) data,
+ *  and this will be annotated in the saved entry.  This does not affect the
+ *  saving or loading process in any way, but may be used by some applications
+ *  to (for example) print binary data differently than text entries when
+ *  printing parameter values.
+ *
  *  @param[in] key        Key name (zero-terminated string)
  *  @param[in] value      Pointer to a buffer containing the value data
  *  @param[in] value_len  Length of the data in the buffer
+ *  @param[in] binary     Whether the data should be considered "binary"
+ *                        (unprintable) data
  *
  *  @retval ::SYSPARAM_OK           Value successfully set.
  *  @retval ::SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
@@ -267,7 +284,7 @@ sysparam_status_t sysparam_get_bool(const char *key, bool *result);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_t value_len);
+sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_t value_len, bool binary);
 
 /** Set a key's value from a string
  *
