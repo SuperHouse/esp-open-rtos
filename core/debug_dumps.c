@@ -68,6 +68,22 @@ void dump_stack(uint32_t *sp) {
     }
 }
 
+/* Dump exception status registers as stored above 'sp'
+   by the interrupt handler preamble
+*/
+void dump_exception_registers(uint32_t *sp) {
+    uint32_t excsave1;
+    uint32_t *saved = sp - (0x50 / sizeof(uint32_t));
+    printf("Registers:\n");
+    RSR(excsave1, excsave1);
+    printf("a0 %08x ", excsave1);
+    printf("a1 %08x ", (intptr_t)sp);
+    for(int a = 2; a < 14; a++) {
+        printf("a%-2d %08x%c", a, saved[a+3], a == 3 || a == 7 || a == 11 ? '\n':' ');
+    }
+    printf("SAR %08x\n", saved[0x13]);
+}
+
 void IRAM fatal_exception_handler(uint32_t *sp) {
     if (!sdk_NMIIrqIsOn) {
         vPortEnterCritical();
@@ -78,11 +94,12 @@ void IRAM fatal_exception_handler(uint32_t *sp) {
     Cache_Read_Disable();
     Cache_Read_Enable(0, 0, 1);
     dump_excinfo();
-    if (sp)
+    if (sp) {
+        dump_exception_registers(sp);
         dump_stack(sp);
+    }
     uart_flush_txfifo(0);
     uart_flush_txfifo(1);
     sdk_system_restart_in_nmi();
     while(1) {}
 }
-
