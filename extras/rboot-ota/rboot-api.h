@@ -128,6 +128,22 @@ bool ICACHE_FLASH_ATTR rboot_get_last_boot_rom(uint8 *rom);
 bool ICACHE_FLASH_ATTR rboot_get_last_boot_mode(uint8 *mode);
 #endif
 
+/* ADDITIONS TO RBOOT-API FOR ESP-OPEN-RTOS FOLLOW */
+
+/* Returns offset of given rboot slot, or (uint32_t)-1 if slot is invalid.
+ */
+uint32_t rboot_get_slot_offset(uint8_t slot);
+
+/** @description Verify basic image parameters - headers, CRC8 checksum.
+
+    @param Offset of image to verify. Can use rboot_get_slot_offset() to find.
+    @param Optional pointer will return the total valid length of the image.
+    @param Optional pointer to a static human-readable error message if fails.
+
+    @return True for valid, False for invalid.
+**/
+bool rboot_verify_image(uint32_t offset, uint32_t *image_length, const char **error_message);
+
 #ifdef __cplusplus
 }
 #endif

@@ -28,7 +28,4 @@
 #define RBOOT_DEBUG(f_, ...)
 #endif
 
-// Check that a valid-looking rboot image is found at this offset on the flash, and
-// takes up 'expected_length' bytes.
-bool rboot_verify_image(uint32_t offset, uint32_t expected_length, const char **error_message);
 #endif // __RBOOT_INTEGRATION_H__

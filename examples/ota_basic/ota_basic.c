@@ -14,7 +14,6 @@
 #include "ssid_config.h"
 
 #include "ota-tftp.h"
-#include "rboot-integration.h"
 #include "rboot.h"
 #include "rboot-api.h"
 
