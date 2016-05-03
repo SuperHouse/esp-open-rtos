@@ -8,6 +8,7 @@ env:
   ESPTOOL2_COMMIT=ec0e2c7
   ESPTOOL2_DIR="${HOME}/esptool2-${ESPTOOL2_COMMIT}"
   PATH=${PATH}:${CROSS_BINDIR}:${ESPTOOL2_DIR}
+  MAKE_CMD="make WARNINGS_AS_ERRORS=1 -C examples/ build-examples CROSS=\"ccache xtensa-lx106-elf-\""
 cache:
   directories:
     - ${CROSS_ROOT}
@@ -58,4 +59,6 @@ script:
   - cd ${TRAVIS_BUILD_DIR}
   # Remove ssid_config requirement for examples
   - sed -i "s%#error%//#error%" include/ssid_config.h
-  - make WARNINGS_AS_ERRORS=1 -C examples/ build-examples CROSS="ccache xtensa-lx106-elf-" V=1
+  # Try building everything w/ non-verbose output (to avoid 4MB log limit), but if it fails then
+  # rerun with V=1 so the error part is output verbosely
+  - ${MAKE_CMD} || ( ${MAKE_CMD} V=1 )
