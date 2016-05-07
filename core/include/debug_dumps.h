@@ -17,13 +17,6 @@ void dump_stack(uint32_t *sp);
 
    Probably not useful to be called in other contexts.
 */
-void fatal_exception_handler(uint32_t *sp);
-
-/* Dump the current exception register state.
-
-   Probably mostly useful when called from fatal exception handler.
-*/
-void dump_excinfo(void);
-
+void __attribute__((noreturn)) fatal_exception_handler(uint32_t *sp);
 
 #endif

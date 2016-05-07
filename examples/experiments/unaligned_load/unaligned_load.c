@@ -305,7 +305,7 @@ static void test_system_interaction()
     }
     uint32_t ticks = xTaskGetTickCount() - start;
     printf("Timer interaction test PASSED after %dms.\n", ticks*portTICK_RATE_MS);
-    while(1) {}
+    abort();
 }
 
 /* The following "sanity tests" are designed to try to execute every code path

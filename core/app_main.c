@@ -40,8 +40,6 @@ void user_init(void);
 #define RTCMEM_BACKUP_PHY_VER  31
 #define RTCMEM_SYSTEM_PP_VER   62
 
-#define halt()  while (1) {}
-
 extern uint32_t _bss_start;
 extern uint32_t _bss_end;
 
@@ -100,11 +98,11 @@ static void IRAM get_otp_mac_address(uint8_t *buf) {
     if (!(otp_flags & 0x8000)) {
         //FIXME: do we really need this check?
         printf("Firmware ONLY supports ESP8266!!!\n");
-        halt();
+        abort();
     }
     if (otp_id0 == 0 && otp_id1 == 0) {
         printf("empty otp\n");
-        halt();
+        abort();
     }
     if (otp_flags & 0x1000) {
         // If bit 12 is set, it indicates that the vendor portion of the MAC
@@ -258,7 +256,7 @@ static void zero_bss(void) {
 static void init_networking(uint8_t *phy_info, uint8_t *mac_addr) {
     if (sdk_register_chipv6_phy(phy_info)) {
         printf("FATAL: sdk_register_chipv6_phy failed");
-        halt();
+        abort();
     }
     uart_set_baud(0, 74906);
     uart_set_baud(1, 74906);

@@ -25,7 +25,7 @@ IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
        if (heap_end + incr > stack_ptr)
        {
        _write (1, "_sbrk: Heap collided with stack\n", 32);
-       while(1) {}
+       abort();
        }
     */
     heap_end += incr;
