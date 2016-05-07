@@ -69,6 +69,7 @@ DebugExceptionVector:
 
         wsr     a0, excsave2
         mov     a2, a1
+        movi    a3, 0
         call0   fatal_exception_handler
         rfi     2
 
@@ -83,6 +84,7 @@ KernelExceptionVector:
 
         break   1, 0
         mov     a2, a1
+        movi    a3, 0
         call0   fatal_exception_handler
         rfe
 
@@ -101,6 +103,7 @@ DoubleExceptionVector:
 
         break   1, 4
         mov     a2, a1
+        movi    a3, 0
         call0   fatal_exception_handler
 
 /* Reset vector at offset 0x80 is unused, as vecbase gets reset to mask ROM
@@ -259,6 +262,7 @@ LoadStoreErrorHandler:
         l32i    a4, sp, 0x10
         rsr     a1, excsave1
         mov     a2, a1
+        movi    a3, 0
         call0   fatal_exception_handler
 
         .balign 4
@@ -520,6 +524,7 @@ UserExceptionHandler:
 .LUserFailOtherExceptionCause:
         break   1, 1
         addi    a2, a1, 0x50 /* UserExceptionHandler pushes stack down 0x50 */
+        movi    a3, 1
         call0   fatal_exception_handler
 
 /* _xt_user_exit is pushed onto the stack as part of the user exception handler,

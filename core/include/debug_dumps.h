@@ -17,6 +17,6 @@ void dump_stack(uint32_t *sp);
 
    Probably not useful to be called in other contexts.
 */
-void __attribute__((noreturn)) fatal_exception_handler(uint32_t *sp);
+void __attribute__((noreturn)) fatal_exception_handler(uint32_t *sp, bool registers_saved_on_stack);
 
 #endif
