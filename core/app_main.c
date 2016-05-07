@@ -411,7 +411,7 @@ extern void (*__init_array_start)(void);
 extern void (*__init_array_end)(void);
 
 // .Lfunc009 -- .irom0.text+0x5b4
-static void user_start_phase2(void) {
+static __attribute__((noinline)) void user_start_phase2(void) {
     uint8_t *buf;
     uint8_t *phy_info;
 
@@ -483,7 +483,7 @@ static void dump_flash_sector(uint32_t start_sector, uint32_t length) {
 }
 
 // .Lfunc011 -- .irom0.text+0x790
-static void dump_flash_config_sectors(uint32_t start_sector) {
+static __attribute__((noinline)) void dump_flash_config_sectors(uint32_t start_sector) {
     printf("system param error\n");
     // Note: original SDK code didn't dump PHY info
     printf("phy_info:\n");
