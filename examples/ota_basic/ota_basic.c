@@ -16,7 +16,6 @@
 #include "mbedtls/sha256.h"
 
 #include "ota-tftp.h"
-#include "rboot.h"
 #include "rboot-api.h"
 
 #define TFTP_IMAGE_SERVER "192.168.1.23"

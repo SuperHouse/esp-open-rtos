@@ -12,6 +12,7 @@
  *  @{
 */
 
+#include <rboot-integration.h>
 #include <rboot.h>
 
 #ifdef __cplusplus

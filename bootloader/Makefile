@@ -1,34 +1,17 @@
 # This is a wrapper around the rboot makefile, which gives us the parameters
-# we need to use rboot with esp-open-rtos
+# we need to use rboot with esp-open-rtos.
+#
+# Use 'make bootloader' to build a custom bootloader.
+#
+# 'make flash' for any esp-open-rtos program will use the compiled
+# bootloader if it exists, or a prebuilt bootloader if no custom
+# bootloader was compiled.
 #
 # The wrapper means we don't require esptool2 in the build process, so we can just use
 # esptool.py (still need xxd, grep, sed to generate the header - see below.)
+BOOTLOADER_DIR:=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-BUILD_DIR ?= build
-FIRMWARE_DIR ?= firmware
-
-# RBOOT configuration parameters.
-# RBOOT_BIG_FLASH is required for esp-open-rtos.
-export RBOOT_BIG_FLASH    = 1
-
-export RBOOT_BUILD_BASE=$(abspath $(BUILD_DIR))
-
-# Default ESPTOOL params, all the same as when using normal esp-open-rtos makefiles
-ESPTOOL ?= esptool.py
-ESPPORT ?= /dev/ttyUSB0
-ESPBAUD ?= 115200
-
-FLASH_SIZE ?= 16
-FLASH_MODE ?= qio
-FLASH_SPEED ?= 40
-
-ESPTOOL_ARGS=-fs $(FLASH_SIZE)m -fm $(FLASH_MODE) -ff $(FLASH_SPEED)m
-
-ifeq ("$(V)","1")
-Q :=
-else
-Q := @
-endif
+include ../parameters.mk
 
 all: $(FIRMWARE_DIR)/rboot.bin
 
@@ -52,14 +35,19 @@ $(BUILD_DIR)/rboot-hex2a.h: $(BUILD_DIR)/rboot-stage2a.elf $(BUILD_DIR)
 	$(Q) echo "const uint32 _text_addr = 0x$$(xtensa-lx106-elf-objdump -h -j .text $< | grep ".text" | grep -o '401.....' | head -n1);" >> $@.in
 	$(Q) mv $@.in $@
 
+
+RBOOT_BUILD_BASE="$(abspath $(BUILD_DIR))"
+RBOOT_FW_BASE="$(abspath $(FIRMWARE_DIR))"
+MAKE_VARS=RBOOT_EXTRA_INCDIR=$(BOOTLOADER_DIR) RBOOT_BUILD_BASE=$(RBOOT_BUILD_BASE) RBOOT_FW_BASE=$(RBOOT_FW_BASE)
+
 $(BUILD_DIR)/rboot-stage2a.elf: $(BUILD_DIR)
-	$(Q) $(MAKE) -C rboot $(RBOOT_BUILD_BASE)/rboot-stage2a.elf
+	$(Q) $(MAKE) -C rboot $(RBOOT_BUILD_BASE)/rboot-stage2a.elf $(MAKE_VARS)
 
 $(BUILD_DIR)/rboot.elf: $(BUILD_DIR)/rboot-hex2a.h
-	$(Q) $(MAKE) -C rboot $(RBOOT_BUILD_BASE)/rboot.elf
+	$(Q) $(MAKE) -C rboot $(RBOOT_BUILD_BASE)/rboot.elf $(MAKE_VARS)
 
 $(BUILD_DIR) $(FIRMWARE_DIR):
-	$(Q) mkdir -p "$@"
+	mkdir -p $@
 
 flash: $(FIRMWARE_DIR)/rboot.bin
 	$(Q) $(ESPTOOL) -p $(ESPPORT) -b $(ESPBAUD) write_flash $(ESPTOOL_ARGS) 0x0 $<
@@ -68,4 +56,4 @@ clean:
 	$(Q) rm -rf $(BUILD_DIR)
 	$(Q) rm -rf $(FIRMWARE_DIR)
 
-.PHONY: all clean flash erase_config
+.PHONY: all

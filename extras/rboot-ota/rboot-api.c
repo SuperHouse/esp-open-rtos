@@ -8,7 +8,7 @@
 // esp-open-rtos additions Copyright 2016 Angus Gratton
 //////////////////////////////////////////////////
 
-#include <rboot.h>
+#include <rboot-api.h>
 #include <string.h>
 //#include <c_types.h>
 //#include <spi_flash.h>

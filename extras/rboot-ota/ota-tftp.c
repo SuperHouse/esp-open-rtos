@@ -22,7 +22,6 @@
 #include <espressif/esp_system.h>
 
 #include "ota-tftp.h"
-#include "rboot.h"
 #include "rboot-api.h"
 
 #define TFTP_FIRMWARE_FILE "firmware.bin"
