@@ -1,5 +1,5 @@
 /* Code for dumping status/debug output/etc, including fatal
- * exception handling.
+ * exception handling & abort implementation.
  *
  * Part of esp-open-rtos
  *
@@ -20,7 +20,49 @@
 #include "espressif/esp_common.h"
 #include "sdk_internal.h"
 
-void dump_excinfo(void) {
+/* Forward declarations */
+static void IRAM fatal_handler_prelude(void);
+/* Inner parts of crash handlers marked noinline to ensure they don't inline into IRAM. */
+static void __attribute__((noinline)) __attribute__((noreturn)) fatal_exception_handler_inner(uint32_t *sp);
+static void __attribute__((noinline)) __attribute__((noreturn)) abort_handler_inner(uint32_t *caller, uint32_t *sp);
+
+/* fatal_exception_handler called from any unhandled user exception
+ *
+ * (similar to a hard fault on other processor architectures)
+ *
+ * This function is run from IRAM, but the majority of the handler
+ * runs from flash after fatal_handler_prelude ensures it is mapped
+ * safely.
+ */
+void IRAM __attribute__((noreturn)) fatal_exception_handler(uint32_t *sp) {
+    fatal_handler_prelude();
+    fatal_exception_handler_inner(sp);
+}
+
+/* Abort implementation
+ *
+ * Replaces the weak-linked abort implementation provided by newlib libc.
+ *
+ * Disable interrupts, enable flash mapping, dump stack & caller
+ * address, restart.
+ *
+ * This function is run from IRAM, but the majority of the abort
+ * handler runs from flash after fatal_handler_prelude ensures it is
+ * mapped safely.
+ *
+ */
+void IRAM abort(void) {
+    uint32_t *sp, *caller;
+    RETADDR(caller);
+    /* abort() caller is one instruction before our return address */
+    caller = (uint32_t *)((intptr_t)caller - 3);
+    SP(sp);
+    fatal_handler_prelude();
+    abort_handler_inner(caller, sp);
+}
+
+/* Dump exception information from special function registers */
+static void dump_excinfo(void) {
     uint32_t exccause, epc1, epc2, epc3, excvaddr, depc, excsave1;
     uint32_t excinfo[8];
 
@@ -50,9 +92,13 @@ void dump_excinfo(void) {
     sdk_system_rtc_mem_write(0, excinfo, 32);
 }
 
-/* There's a lot of smart stuff we could do while dumping stack
-   but for now we just dump a likely looking section of stack
-   memory
+/* dump stack memory (frames above sp) to stdout
+
+   There's a lot of smart stuff we could do while dumping stack
+   but for now we just dump what looks like our stack region.
+
+   Probably dumps more memory than it needs to, the first instance of
+   0xa5a5a5a5 probably constitutes the end of our stack.
 */
 void dump_stack(uint32_t *sp) {
     printf("\nStack: SP=%p\n", sp);
@@ -68,10 +114,10 @@ void dump_stack(uint32_t *sp) {
     }
 }
 
-/* Dump exception status registers as stored above 'sp'
-   by the interrupt handler preamble
+/* Dump normal registers that were stored above 'sp'
+   by the exception handler preamble
 */
-void dump_exception_registers(uint32_t *sp) {
+void dump_registers_in_exception_handler(uint32_t *sp) {
     uint32_t excsave1;
     uint32_t *saved = sp - (0x50 / sizeof(uint32_t));
     printf("Registers:\n");
@@ -84,7 +130,11 @@ void dump_exception_registers(uint32_t *sp) {
     printf("SAR %08x\n", saved[0x13]);
 }
 
-void IRAM fatal_exception_handler(uint32_t *sp) {
+
+/* Prelude ensures exceptions/NMI off and flash is mapped, allowing
+   calls to non-IRAM functions.
+*/
+static void IRAM fatal_handler_prelude(void) {
     if (!sdk_NMIIrqIsOn) {
         vPortEnterCritical();
         do {
@@ -93,11 +143,29 @@ void IRAM fatal_exception_handler(uint32_t *sp) {
     }
     Cache_Read_Disable();
     Cache_Read_Enable(0, 0, 1);
+}
+
+/* Main part of fatal exception handler, is run from flash to save
+   some IRAM.
+*/
+static void fatal_exception_handler_inner(uint32_t *sp) {
     dump_excinfo();
     if (sp) {
-        dump_exception_registers(sp);
+        dump_registers_in_exception_handler(sp);
         dump_stack(sp);
     }
+    uart_flush_txfifo(0);
+    uart_flush_txfifo(1);
+    sdk_system_restart_in_nmi();
+    while(1) {}
+}
+
+/* Main part of abort handler, can be run from flash to save some
+   IRAM.
+*/
+static void abort_handler_inner(uint32_t *caller, uint32_t *sp) {
+    printf("abort() invoked at %p.\n", caller);
+    dump_stack(sp);
     uart_flush_txfifo(0);
     uart_flush_txfifo(1);
     sdk_system_restart_in_nmi();

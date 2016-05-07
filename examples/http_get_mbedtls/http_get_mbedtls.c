@@ -115,7 +115,7 @@ void http_get_task(void *pvParameters)
                                     strlen(pers))) != 0)
     {
         printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
-        while(1) {} /* todo: replace with abort() */
+        abort();
     }
 
     printf(" ok\n");
@@ -129,7 +129,7 @@ void http_get_task(void *pvParameters)
     if(ret < 0)
     {
         printf(" failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret);
-        while(1) {} /* todo: replace with abort() */
+        abort();
     }
 
     printf(" ok (%d skipped)\n", ret);
@@ -138,7 +138,7 @@ void http_get_task(void *pvParameters)
     if((ret = mbedtls_ssl_set_hostname(&ssl, WEB_SERVER)) != 0)
     {
         printf(" failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret);
-        while(1) {} /* todo: replace with abort() */
+        abort();
     }
 
     /*
