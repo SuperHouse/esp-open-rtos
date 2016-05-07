@@ -23,7 +23,7 @@
 /* Forward declarations */
 static void IRAM fatal_handler_prelude(void);
 /* Inner parts of crash handlers marked noinline to ensure they don't inline into IRAM. */
-static void __attribute__((noinline)) __attribute__((noreturn)) fatal_exception_handler_inner(uint32_t *sp);
+static void __attribute__((noinline)) __attribute__((noreturn)) fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack);
 static void __attribute__((noinline)) __attribute__((noreturn)) abort_handler_inner(uint32_t *caller, uint32_t *sp);
 
 /* fatal_exception_handler called from any unhandled user exception
@@ -34,9 +34,9 @@ static void __attribute__((noinline)) __attribute__((noreturn)) abort_handler_in
  * runs from flash after fatal_handler_prelude ensures it is mapped
  * safely.
  */
-void IRAM __attribute__((noreturn)) fatal_exception_handler(uint32_t *sp) {
+void IRAM __attribute__((noreturn)) fatal_exception_handler(uint32_t *sp, bool registers_saved_on_stack) {
     fatal_handler_prelude();
-    fatal_exception_handler_inner(sp);
+    fatal_exception_handler_inner(sp, registers_saved_on_stack);
 }
 
 /* Abort implementation
@@ -148,10 +148,12 @@ static void IRAM fatal_handler_prelude(void) {
 /* Main part of fatal exception handler, is run from flash to save
    some IRAM.
 */
-static void fatal_exception_handler_inner(uint32_t *sp) {
+static void fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack) {
     dump_excinfo();
     if (sp) {
-        dump_registers_in_exception_handler(sp);
+        if (registers_saved_on_stack) {
+            dump_registers_in_exception_handler(sp);
+        }
         dump_stack(sp);
     }
     uart_flush_txfifo(0);
