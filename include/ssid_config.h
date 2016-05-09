@@ -20,7 +20,7 @@
 //   https://www.kernel.org/pub/software/scm/git/docs/git-update-index.html
 //
 
-#warning "You need to enter your wifi credentials in this file and follow the instructions here to keep the password safe from Github commits."
+#error "You need to enter your wifi credentials in this file and follow the instructions here to keep the password safe from Github commits."
 
 #ifndef __SSID_CONFIG_H__
 #define __SSID_CONFIG_H__

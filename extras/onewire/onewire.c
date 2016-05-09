@@ -1,206 +1,207 @@
 #include "onewire.h"
+#include "string.h"
+#include "task.h"
+#include "esp/gpio.h"
 
-// global search state
-static unsigned char ROM_NO[ONEWIRE_NUM][8];
-static uint8_t LastDiscrepancy[ONEWIRE_NUM];
-static uint8_t LastFamilyDiscrepancy[ONEWIRE_NUM];
-static uint8_t LastDeviceFlag[ONEWIRE_NUM];
+#define ONEWIRE_SELECT_ROM 0x55
+#define ONEWIRE_SKIP_ROM   0xcc
+#define ONEWIRE_SEARCH     0xf0
 
-void onewire_init(uint8_t pin)
-{
-  gpio_enable(pin, GPIO_INPUT);  
-  onewire_reset_search(pin);
+// Waits up to `max_wait` microseconds for the specified pin to go high.
+// Returns true if successful, false if the bus never comes high (likely
+// shorted).
+static inline bool _onewire_wait_for_bus(int pin, int max_wait) {
+    bool state;
+    for (int i = 0; i < ((max_wait + 4) / 5); i++) {
+        if (gpio_read(pin)) break;
+        sdk_os_delay_us(5);
+    }
+    state = gpio_read(pin);
+    // Wait an extra 1us to make sure the devices have an adequate recovery
+    // time before we drive things low again.
+    sdk_os_delay_us(1);
+    return state;
 }
 
 // Perform the onewire reset function.  We will wait up to 250uS for
 // the bus to come high, if it doesn't then it is broken or shorted
-// and we return a 0;
+// and we return false;
 //
-// Returns 1 if a device asserted a presence pulse, 0 otherwise.
+// Returns true if a device asserted a presence pulse, false otherwise.
 //
-uint8_t onewire_reset(uint8_t pin)
-{
-	uint8_t r;
-	uint8_t retries = 125;
+bool onewire_reset(int pin) {
+    bool r;
 
-	noInterrupts();
-	DIRECT_MODE_INPUT(pin);
-	interrupts();
-	// wait until the wire is high... just in case
-	do {
-		if (--retries == 0) return 0;
-		delayMicroseconds(2);
-	} while ( !DIRECT_READ(pin));
+    gpio_enable(pin, GPIO_OUT_OPEN_DRAIN);
+    gpio_write(pin, 1);
+    // wait until the wire is high... just in case
+    if (!_onewire_wait_for_bus(pin, 250)) return false;
 
-	noInterrupts();
-	DIRECT_WRITE_LOW(pin);
-	DIRECT_MODE_OUTPUT(pin);	// drive output low
-	interrupts();
-	delayMicroseconds(480);
-	noInterrupts();
-	DIRECT_MODE_INPUT(pin);	// allow it to float
-	delayMicroseconds(70);
-	r = !DIRECT_READ(pin);
-	interrupts();
-	delayMicroseconds(410);
-	return r;
+    gpio_write(pin, 0);
+    sdk_os_delay_us(480);
+
+    taskENTER_CRITICAL();
+    gpio_write(pin, 1); // allow it to float
+    sdk_os_delay_us(70);
+    r = !gpio_read(pin);
+    taskEXIT_CRITICAL();
+
+    // Wait for all devices to finish pulling the bus low before returning
+    if (!_onewire_wait_for_bus(pin, 410)) return false;
+
+    return r;
 }
 
-// Write a bit. Port and bit is used to cut lookup time and provide
-// more certain timing.
-//
-static void onewire_write_bit(uint8_t pin, uint8_t v)
-{
-	if (v & 1) {
-		noInterrupts();
-		DIRECT_WRITE_LOW(pin);
-		DIRECT_MODE_OUTPUT(pin);	// drive output low
-		delayMicroseconds(10);
-		DIRECT_WRITE_HIGH(pin);	// drive output high
-		interrupts();
-		delayMicroseconds(55);
-	} else {
-		noInterrupts();
-		DIRECT_WRITE_LOW(pin);
-		DIRECT_MODE_OUTPUT(pin);	// drive output low
-		delayMicroseconds(65);
-		DIRECT_WRITE_HIGH(pin);	// drive output high
-		interrupts();
-		delayMicroseconds(5);
-	}
+static bool _onewire_write_bit(int pin, bool v) {
+    if (!_onewire_wait_for_bus(pin, 10)) return false;
+    if (v) {
+        taskENTER_CRITICAL();
+        gpio_write(pin, 0);  // drive output low
+        sdk_os_delay_us(10);
+        gpio_write(pin, 1);  // allow output high
+        taskEXIT_CRITICAL();
+        sdk_os_delay_us(55);
+    } else {
+        taskENTER_CRITICAL();
+        gpio_write(pin, 0);  // drive output low
+        sdk_os_delay_us(65);
+        gpio_write(pin, 1); // allow output high
+        taskEXIT_CRITICAL();
+    }
+    sdk_os_delay_us(1);
+
+    return true;
 }
 
-// Read a bit. Port and bit is used to cut lookup time and provide
-// more certain timing.
-//
-static uint8_t onewire_read_bit(uint8_t pin)
-{
-	uint8_t r;
+static int _onewire_read_bit(int pin) {
+    int r;
 
-	noInterrupts();
-	DIRECT_MODE_OUTPUT(pin);
-	DIRECT_WRITE_LOW(pin);
-	delayMicroseconds(3);
-	DIRECT_MODE_INPUT(pin);	// let pin float, pull up will raise
-	delayMicroseconds(10);
-	r = DIRECT_READ(pin);
-	interrupts();
-	delayMicroseconds(53);
-	return r;
+    if (!_onewire_wait_for_bus(pin, 10)) return -1;
+    taskENTER_CRITICAL();
+    gpio_write(pin, 0);
+    sdk_os_delay_us(2);
+    gpio_write(pin, 1);  // let pin float, pull up will raise
+    sdk_os_delay_us(11);
+    r = gpio_read(pin);  // Must sample within 15us of start
+    taskEXIT_CRITICAL();
+    sdk_os_delay_us(48);
+
+    return r;
 }
 
-// Write a byte. The writing code uses the active drivers to raise the
-// pin high, if you need power after the write (e.g. DS18S20 in
-// parasite power mode) then set 'power' to 1, otherwise the pin will
-// go tri-state at the end of the write to avoid heating in a short or
-// other mishap.
+// Write a byte. The writing code uses open-drain mode and expects the pullup
+// resistor to pull the line high when not driven low.  If you need strong
+// power after the write (e.g. DS18B20 in parasite power mode) then call
+// onewire_power() after this is complete to actively drive the line high.
 //
-void onewire_write(uint8_t pin, uint8_t v, uint8_t power /* = 0 */) {
-  uint8_t bitMask;
+bool onewire_write(int pin, uint8_t v) {
+    uint8_t bitMask;
 
-  for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-	  onewire_write_bit(pin, (bitMask & v)?1:0);
-  }
-  if ( !power) {
-  	noInterrupts();
-  	DIRECT_MODE_INPUT(pin);
-  	DIRECT_WRITE_LOW(pin);
-  	interrupts();
-  }
+    for (bitMask = 0x01; bitMask; bitMask <<= 1) {
+        if (!_onewire_write_bit(pin, (bitMask & v))) {
+            return false;
+        }
+    }
+    return true;
 }
 
-void onewire_write_bytes(uint8_t pin, const uint8_t *buf, uint16_t count, bool power /* = 0 */) {
-  uint16_t i;
-  for (i = 0 ; i < count ; i++)
-    onewire_write(pin, buf[i], ONEWIRE_DEFAULT_POWER);
-  if (!power) {
-    noInterrupts();
-    DIRECT_MODE_INPUT(pin);
-    DIRECT_WRITE_LOW(pin);
-    interrupts();
-  }
+bool onewire_write_bytes(int pin, const uint8_t *buf, size_t count) {
+    size_t i;
+
+    for (i = 0 ; i < count ; i++) {
+        if (!onewire_write(pin, buf[i])) {
+            return false;
+        }
+    }
+    return true;
 }
 
 // Read a byte
 //
-uint8_t onewire_read(uint8_t pin) {
-  uint8_t bitMask;
-  uint8_t r = 0;
+int onewire_read(int pin) {
+    uint8_t bitMask;
+    int r = 0;
+    int bit;
 
-  for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-  	if (onewire_read_bit(pin)) r |= bitMask;
-  }
-  return r;
+    for (bitMask = 0x01; bitMask; bitMask <<= 1) {
+        bit = _onewire_read_bit(pin);
+        if (bit < 0) {
+            return -1;
+        } else if (bit) {
+            r |= bitMask;
+        }
+    }
+    return r;
 }
 
-void onewire_read_bytes(uint8_t pin, uint8_t *buf, uint16_t count) {
-  uint16_t i;
-  for (i = 0 ; i < count ; i++)
-    buf[i] = onewire_read(pin);
+bool onewire_read_bytes(int pin, uint8_t *buf, size_t count) {
+    size_t i;
+    int b;
+
+    for (i = 0 ; i < count ; i++) {
+        b = onewire_read(pin);
+        if (b < 0) return false;
+        buf[i] = b;
+    }
+    return true;
 }
 
-// Do a ROM select
-//
-void onewire_select(uint8_t pin, const uint8_t rom[8])
-{
+bool onewire_select(int pin, onewire_addr_t addr) {
     uint8_t i;
 
-    onewire_write(pin, 0x55, ONEWIRE_DEFAULT_POWER);           // Choose ROM
+    if (!onewire_write(pin, ONEWIRE_SELECT_ROM)) {
+        return false;
+    }
 
-    for (i = 0; i < 8; i++) onewire_write(pin, rom[i], ONEWIRE_DEFAULT_POWER);
+    for (i = 0; i < 8; i++) {
+        if (!onewire_write(pin, addr & 0xff)) {
+            return false;
+        }
+        addr >>= 8;
+    }
+
+    return true;
 }
 
-// Do a ROM skip
-//
-void onewire_skip(uint8_t pin)
-{
-    onewire_write(pin, 0xCC, ONEWIRE_DEFAULT_POWER);           // Skip ROM
+bool onewire_skip_rom(int pin) {
+    return onewire_write(pin, ONEWIRE_SKIP_ROM);
 }
 
-void onewire_depower(uint8_t pin)
-{
-	noInterrupts();
-	DIRECT_MODE_INPUT(pin);
-	interrupts();
+bool onewire_power(int pin) {
+    // Make sure the bus is not being held low before driving it high, or we
+    // may end up shorting ourselves out.
+    if (!_onewire_wait_for_bus(pin, 10)) return false;
+
+    gpio_enable(pin, GPIO_OUTPUT);
+    gpio_write(pin, 1);
+
+    return true;
 }
 
-// You need to use this function to start a search again from the beginning.
-// You do not need to do it for the first search, though you could.
-//
-void onewire_reset_search(uint8_t pin)
-{
-  // reset the search state
-  LastDiscrepancy[pin] = 0;
-  LastDeviceFlag[pin] = 0;
-  LastFamilyDiscrepancy[pin] = 0;
-  int i;
-  for(i = 7; ; i--) {
-    ROM_NO[pin][i] = 0;
-    if ( i == 0) break;
-  }
+void onewire_depower(int pin) {
+    gpio_enable(pin, GPIO_OUT_OPEN_DRAIN);
 }
 
-// Setup the search to find the device type 'family_code' on the next call
-// to search(*newAddr) if it is present.
-//
-void onewire_target_search(uint8_t pin, uint8_t family_code)
-{
-   // set the search state to find SearchFamily type devices
-   ROM_NO[pin][0] = family_code;
-   uint8_t i;
-   for (i = 1; i < 8; i++)
-      ROM_NO[pin][i] = 0;
-   LastDiscrepancy[pin] = 64;
-   LastFamilyDiscrepancy[pin] = 0;
-   LastDeviceFlag[pin] = 0;
+void onewire_search_start(onewire_search_t *search) {
+    // reset the search state
+    memset(search, 0, sizeof(*search));
 }
 
-// Perform a search. If this function returns a '1' then it has
-// enumerated the next device and you may retrieve the ROM from the
-// OneWire::address variable. If there are no devices, no further
+void onewire_search_prefix(onewire_search_t *search, uint8_t family_code) {
+    uint8_t i;
+
+    search->rom_no[0] = family_code;
+    for (i = 1; i < 8; i++) {
+        search->rom_no[i] = 0;
+    }
+    search->last_discrepancy = 64;
+    search->last_device_found = false;
+}
+
+// Perform a search. If the next device has been successfully enumerated, its
+// ROM address will be returned.  If there are no devices, no further
 // devices, or something horrible happens in the middle of the
-// enumeration then a 0 is returned.  If a new device is found then
-// its address is copied to newAddr.  Use OneWire::reset_search() to
+// enumeration then ONEWIRE_NONE is returned.  Use OneWire::reset_search() to
 // start over.
 //
 // --- Replaced by the one from the Dallas Semiconductor web site ---
@@ -210,129 +211,119 @@ void onewire_target_search(uint8_t pin, uint8_t family_code)
 // Return 1 : device found, ROM number in ROM_NO buffer
 //        0 : device not found, end of search
 //
-uint8_t onewire_search(uint8_t pin, uint8_t *newAddr)
-{
-   uint8_t id_bit_number;
-   uint8_t last_zero, rom_byte_number, search_result;
-   uint8_t id_bit, cmp_id_bit;
+onewire_addr_t onewire_search_next(onewire_search_t *search, int pin) {
+    //TODO: add more checking for read/write errors
+    uint8_t id_bit_number;
+    uint8_t last_zero, search_result;
+    int rom_byte_number;
+    uint8_t id_bit, cmp_id_bit;
+    onewire_addr_t addr;
+    unsigned char rom_byte_mask;
+    bool search_direction;
 
-   unsigned char rom_byte_mask, search_direction;
-
-   // initialize for search
-   id_bit_number = 1;
-   last_zero = 0;
-   rom_byte_number = 0;
-   rom_byte_mask = 1;
-   search_result = 0;
+    // initialize for search
+    id_bit_number = 1;
+    last_zero = 0;
+    rom_byte_number = 0;
+    rom_byte_mask = 1;
+    search_result = 0;
    
-   // if the last call was not the last one
-   if (!LastDeviceFlag[pin])
-   {
-      // 1-Wire reset
-      if (!onewire_reset(pin))
-      {
-         // reset the search
-         LastDiscrepancy[pin] = 0;
-         LastDeviceFlag[pin] = 0;
-         LastFamilyDiscrepancy[pin] = 0;
-         return 0;
-      }
+    // if the last call was not the last one
+    if (!search->last_device_found) {
+        // 1-Wire reset
+        if (!onewire_reset(pin)) {
+            // reset the search
+            search->last_discrepancy = 0;
+            search->last_device_found = false;
+            return ONEWIRE_NONE;
+        }
 
-      // issue the search command
-      onewire_write(pin, 0xF0, ONEWIRE_DEFAULT_POWER);
+        // issue the search command
+        onewire_write(pin, ONEWIRE_SEARCH);
 
-      // loop to do the search
-      do
-      {
-         // read a bit and its complement
-         id_bit = onewire_read_bit(pin);
-         cmp_id_bit = onewire_read_bit(pin);
+        // loop to do the search
+        do {
+            // read a bit and its complement
+            id_bit = _onewire_read_bit(pin);
+            cmp_id_bit = _onewire_read_bit(pin);
 
-         // check for no devices on 1-wire
-         if ((id_bit == 1) && (cmp_id_bit == 1))
-            break;
-         else
-         {
-            // all devices coupled have 0 or 1
-            if (id_bit != cmp_id_bit)
-               search_direction = id_bit;  // bit write value for search
-            else
-            {
-               // if this discrepancy if before the Last Discrepancy
-               // on a previous next then pick the same as last time
-               if (id_bit_number < LastDiscrepancy[pin])
-                  search_direction = ((ROM_NO[pin][rom_byte_number] & rom_byte_mask) > 0);
-               else
-                  // if equal to last pick 1, if not then pick 0
-                  search_direction = (id_bit_number == LastDiscrepancy[pin]);
+            // check for no devices on 1-wire
+            if ((id_bit < 0) || (cmp_id_bit < 0)) {
+                // Read error
+                break;
+            } else if ((id_bit == 1) && (cmp_id_bit == 1)) {
+                break;
+            } else {
+                // all devices coupled have 0 or 1
+                if (id_bit != cmp_id_bit) {
+                    search_direction = id_bit;  // bit write value for search
+                } else {
+                    // if this discrepancy if before the Last Discrepancy
+                    // on a previous next then pick the same as last time
+                    if (id_bit_number < search->last_discrepancy) {
+                        search_direction = ((search->rom_no[rom_byte_number] & rom_byte_mask) > 0);
+                    } else {
+                        // if equal to last pick 1, if not then pick 0
+                        search_direction = (id_bit_number == search->last_discrepancy);
+                    }
 
-               // if 0 was picked then record its position in LastZero
-               if (search_direction == 0)
-               {
-                  last_zero = id_bit_number;
+                    // if 0 was picked then record its position in LastZero
+                    if (!search_direction) {
+                        last_zero = id_bit_number;
+                    }
+                }
 
-                  // check for Last discrepancy in family
-                  if (last_zero < 9)
-                     LastFamilyDiscrepancy[pin] = last_zero;
-               }
+                // set or clear the bit in the ROM byte rom_byte_number
+                // with mask rom_byte_mask
+                if (search_direction) {
+                    search->rom_no[rom_byte_number] |= rom_byte_mask;
+                } else {
+                    search->rom_no[rom_byte_number] &= ~rom_byte_mask;
+                }
+
+                // serial number search direction write bit
+                _onewire_write_bit(pin, search_direction);
+
+                // increment the byte counter id_bit_number
+                // and shift the mask rom_byte_mask
+                id_bit_number++;
+                rom_byte_mask <<= 1;
+
+                // if the mask is 0 then go to new SerialNum byte rom_byte_number and reset mask
+                if (rom_byte_mask == 0) {
+                    rom_byte_number++;
+                    rom_byte_mask = 1;
+                }
+            }
+        } while (rom_byte_number < 8);  // loop until through all ROM bytes 0-7
+
+        // if the search was successful then
+        if (!(id_bit_number < 65)) {
+            // search successful so set last_discrepancy,last_device_found,search_result
+            search->last_discrepancy = last_zero;
+
+            // check for last device
+            if (search->last_discrepancy == 0) {
+                search->last_device_found = true;
             }
 
-            // set or clear the bit in the ROM byte rom_byte_number
-            // with mask rom_byte_mask
-            if (search_direction == 1)
-              ROM_NO[pin][rom_byte_number] |= rom_byte_mask;
-            else
-              ROM_NO[pin][rom_byte_number] &= ~rom_byte_mask;
+            search_result = 1;
+        }
+    }
 
-            // serial number search direction write bit
-            onewire_write_bit(pin, search_direction);
-
-            // increment the byte counter id_bit_number
-            // and shift the mask rom_byte_mask
-            id_bit_number++;
-            rom_byte_mask <<= 1;
-
-            // if the mask is 0 then go to new SerialNum byte rom_byte_number and reset mask
-            if (rom_byte_mask == 0)
-            {
-                rom_byte_number++;
-                rom_byte_mask = 1;
-            }
-         }
-      }
-      while(rom_byte_number < 8);  // loop until through all ROM bytes 0-7
-
-      // if the search was successful then
-      if (!(id_bit_number < 65))
-      {
-         // search successful so set LastDiscrepancy,LastDeviceFlag,search_result
-         LastDiscrepancy[pin] = last_zero;
-
-         // check for last device
-         if (LastDiscrepancy[pin] == 0)
-            LastDeviceFlag[pin] = 1;
-
-         search_result = 1;
-      }
-   }
-
-   // if no device found then reset counters so next 'search' will be like a first
-   if (!search_result || !ROM_NO[pin][0])
-   {
-      LastDiscrepancy[pin] = 0;
-      LastDeviceFlag[pin] = 0;
-      LastFamilyDiscrepancy[pin] = 0;
-      search_result = 0;
-   }
-   else
-   {
-      for (rom_byte_number = 0; rom_byte_number < 8; rom_byte_number++)
-      {
-         newAddr[rom_byte_number] = ROM_NO[pin][rom_byte_number];
-         //printf("Ok I found something at %d - %x...\n",rom_byte_number, newAddr[rom_byte_number]);
-      }
-   }
-   return search_result;
+    // if no device found then reset counters so next 'search' will be like a first
+    if (!search_result || !search->rom_no[0]) {
+        search->last_discrepancy = 0;
+        search->last_device_found = false;
+        return ONEWIRE_NONE;
+    } else {
+        addr = 0;
+        for (rom_byte_number = 7; rom_byte_number >= 0; rom_byte_number--) {
+            addr = (addr << 8) | search->rom_no[rom_byte_number];
+        }
+        //printf("Ok I found something at %08x%08x...\n", (uint32_t)(addr >> 32), (uint32_t)addr);
+    }
+    return addr;
 }
 
 // The 1-Wire CRC scheme is described in Maxim Application Note 27:
@@ -371,41 +362,38 @@ static const uint8_t dscrc_table[] = {
 // compared to all those delayMicrosecond() calls.  But I got
 // confused, so I use this table from the examples.)
 //
-uint8_t onewire_crc8(const uint8_t *addr, uint8_t len)
-{
-	uint8_t crc = 0;
+uint8_t onewire_crc8(const uint8_t *data, uint8_t len) {
+    uint8_t crc = 0;
 
-	while (len--) {
-		crc = pgm_read_byte(dscrc_table + (crc ^ *addr++));
-	}
-	return crc;
+    while (len--) {
+        crc = pgm_read_byte(dscrc_table + (crc ^ *data++));
+    }
+    return crc;
 }
 #else
 //
 // Compute a Dallas Semiconductor 8 bit CRC directly.
 // this is much slower, but much smaller, than the lookup table.
 //
-uint8_t onewire_crc8(const uint8_t *addr, uint8_t len)
-{
-	uint8_t crc = 0;
-	
-	while (len--) {
-		uint8_t inbyte = *addr++;
-    uint8_t i;
-		for (i = 8; i; i--) {
-			uint8_t mix = (crc ^ inbyte) & 0x01;
-			crc >>= 1;
-			if (mix) crc ^= 0x8C;
-			inbyte >>= 1;
-		}
-	}
-	return crc;
+uint8_t onewire_crc8(const uint8_t *data, uint8_t len) {
+    uint8_t crc = 0;
+    
+    while (len--) {
+        uint8_t inbyte = *data++;
+        for (int i = 8; i; i--) {
+            uint8_t mix = (crc ^ inbyte) & 0x01;
+            crc >>= 1;
+            if (mix) crc ^= 0x8C;
+            inbyte >>= 1;
+        }
+    }
+    return crc;
 }
 #endif
 
 // Compute the 1-Wire CRC16 and compare it against the received CRC.
 // Example usage (reading a DS2408):
-    //    // Put everything in a buffer so we can compute the CRC easily.
+//    // Put everything in a buffer so we can compute the CRC easily.
 //    uint8_t buf[13];
 //    buf[0] = 0xF0;    // Read PIO Registers
 //    buf[1] = 0x88;    // LSB address
@@ -423,9 +411,8 @@ uint8_t onewire_crc8(const uint8_t *addr, uint8_t len)
 //                       *not* at a 16-bit integer.
 // @param crc - The crc starting value (optional)
 // @return 1, iff the CRC matches.
-bool onewire_check_crc16(const uint8_t* input, uint16_t len, const uint8_t* inverted_crc, uint16_t crc)
-{
-    crc = ~onewire_crc16(input, len, crc);
+bool onewire_check_crc16(const uint8_t* input, size_t len, const uint8_t* inverted_crc, uint16_t crc_iv) {
+    uint16_t crc = ~onewire_crc16(input, len, crc_iv);
     return (crc & 0xFF) == inverted_crc[0] && (crc >> 8) == inverted_crc[1];
 }
 
@@ -441,8 +428,8 @@ bool onewire_check_crc16(const uint8_t* input, uint16_t len, const uint8_t* inve
 // @param len - How many bytes to use.
 // @param crc - The crc starting value (optional)
 // @return The CRC16, as defined by Dallas Semiconductor.
-uint16_t onewire_crc16(const uint8_t* input, uint16_t len, uint16_t crc)
-{
+uint16_t onewire_crc16(const uint8_t* input, size_t len, uint16_t crc_iv) {
+    uint16_t crc = crc_iv;
     static const uint8_t oddparity[16] =
         { 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0 };
 

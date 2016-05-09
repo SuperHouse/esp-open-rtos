@@ -68,7 +68,9 @@ DebugExceptionVector:
         .type   DebugExceptionVector, @function
 
         wsr     a0, excsave2
-        call0   sdk_user_fatal_exception_handler
+        mov     a2, a1
+        movi    a3, 0
+        call0   fatal_exception_handler
         rfi     2
 
         .org    VecBase + 0x20
@@ -81,7 +83,9 @@ KernelExceptionVector:
         .type   KernelExceptionVector, @function
 
         break   1, 0
-        call0   sdk_user_fatal_exception_handler
+        mov     a2, a1
+        movi    a3, 0
+        call0   fatal_exception_handler
         rfe
 
         .org    VecBase + 0x50
@@ -98,7 +102,9 @@ DoubleExceptionVector:
         .type   DoubleExceptionVector, @function
 
         break   1, 4
-        call0   sdk_user_fatal_exception_handler
+        mov     a2, a1
+        movi    a3, 0
+        call0   fatal_exception_handler
 
 /* Reset vector at offset 0x80 is unused, as vecbase gets reset to mask ROM
  * vectors on chip reset. */
@@ -251,11 +257,13 @@ LoadStoreErrorHandler:
          * will have correct values */
         wsr     a0, sar
         l32i    a0, sp, 0
-        l32i    a2, sp, 0x08
+        /*l32i    a2, sp, 0x08*/
         l32i    a3, sp, 0x0c
         l32i    a4, sp, 0x10
         rsr     a1, excsave1
-        call0   sdk_user_fatal_exception_handler
+        mov     a2, a1
+        movi    a3, 0
+        call0   fatal_exception_handler
 
         .balign 4
 .LSE_assign_a1:
@@ -515,7 +523,9 @@ UserExceptionHandler:
         .literal_position
 .LUserFailOtherExceptionCause:
         break   1, 1
-        call0   sdk_user_fatal_exception_handler
+        addi    a2, a1, 0x50 /* UserExceptionHandler pushes stack down 0x50 */
+        movi    a3, 1
+        call0   fatal_exception_handler
 
 /* _xt_user_exit is pushed onto the stack as part of the user exception handler,
    restores same set registers which were saved there and returns from exception */

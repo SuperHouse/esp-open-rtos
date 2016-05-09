@@ -41,8 +41,6 @@ void user_init(void);
 #define RTCMEM_BACKUP_PHY_VER  31
 #define RTCMEM_SYSTEM_PP_VER   62
 
-#define halt()  while (1) {}
-
 extern uint32_t _bss_start;
 extern uint32_t _bss_end;
 
@@ -85,7 +83,6 @@ static void IRAM set_spi0_divisor(uint32_t divisor);
 static void zero_bss(void);
 static void init_networking(uint8_t *phy_info, uint8_t *mac_addr);
 static void init_g_ic(void);
-static void dump_excinfo(void);
 static void user_start_phase2(void);
 static void dump_flash_sector(uint32_t start_sector, uint32_t length);
 static void dump_flash_config_sectors(uint32_t start_sector);
@@ -102,11 +99,11 @@ static void IRAM get_otp_mac_address(uint8_t *buf) {
     if (!(otp_flags & 0x8000)) {
         //FIXME: do we really need this check?
         printf("Firmware ONLY supports ESP8266!!!\n");
-        halt();
+        abort();
     }
     if (otp_id0 == 0 && otp_id1 == 0) {
         printf("empty otp\n");
-        halt();
+        abort();
     }
     if (otp_flags & 0x1000) {
         // If bit 12 is set, it indicates that the vendor portion of the MAC
@@ -145,23 +142,6 @@ static void IRAM set_spi0_divisor(uint32_t divisor) {
         IOMUX.CONF &= ~IOMUX_CONF_SPI0_CLOCK_EQU_SYS_CLOCK;
     }
     SPI(0).CTRL0 = SET_FIELD(SPI(0).CTRL0, SPI_CTRL0_CLOCK, clkdiv);
-}
-
-// .text+0x148
-void IRAM sdk_user_fatal_exception_handler(void) {
-    if (!sdk_NMIIrqIsOn) {
-        vPortEnterCritical();
-        do {
-            DPORT.DPORT0 &= 0xffffffe0;
-        } while (DPORT.DPORT0 & 0x00000001);
-    }
-    Cache_Read_Disable();
-    Cache_Read_Enable(0, 0, 1);
-    dump_excinfo();
-    uart_flush_txfifo(0);
-    uart_flush_txfifo(1);
-    sdk_system_restart_in_nmi();
-    halt();
 }
 
 
@@ -277,7 +257,7 @@ static void zero_bss(void) {
 static void init_networking(uint8_t *phy_info, uint8_t *mac_addr) {
     if (sdk_register_chipv6_phy(phy_info)) {
         printf("FATAL: sdk_register_chipv6_phy failed");
-        halt();
+        abort();
     }
     uart_set_baud(0, 74906);
     uart_set_baud(1, 74906);
@@ -333,37 +313,6 @@ static void init_g_ic(void) {
     }
 }
 
-// .Lfunc008 -- .irom0.text+0x2a0
-static void dump_excinfo(void) {
-    uint32_t exccause, epc1, epc2, epc3, excvaddr, depc, excsave1;
-    uint32_t excinfo[8];
-
-    RSR(exccause, exccause);
-    printf("Fatal exception (%d): \n", (int)exccause);
-    RSR(epc1, epc1);
-    RSR(epc2, epc2);
-    RSR(epc3, epc3);
-    RSR(excvaddr, excvaddr);
-    RSR(depc, depc);
-    RSR(excsave1, excsave1);
-    printf("%s=0x%08x\n", "epc1", epc1);
-    printf("%s=0x%08x\n", "epc2", epc2);
-    printf("%s=0x%08x\n", "epc3", epc3);
-    printf("%s=0x%08x\n", "excvaddr", excvaddr);
-    printf("%s=0x%08x\n", "depc", depc);
-    printf("%s=0x%08x\n", "excsave1", excsave1);
-    sdk_system_rtc_mem_read(0, excinfo, 32); // Why?
-    excinfo[0] = 2;
-    excinfo[1] = exccause;
-    excinfo[2] = epc1;
-    excinfo[3] = epc2;
-    excinfo[4] = epc3;
-    excinfo[5] = excvaddr;
-    excinfo[6] = depc;
-    excinfo[7] = excsave1;
-    sdk_system_rtc_mem_write(0, excinfo, 32);
-}
-
 // .irom0.text+0x398
 void sdk_wdt_init(void) {
     WDT.CTRL &= ~WDT_CTRL_ENABLE;
@@ -408,6 +357,9 @@ void sdk_user_init_task(void *params) {
     vTaskDelete(NULL);
 }
 
+extern void (*__init_array_start)(void);
+extern void (*__init_array_end)(void);
+
 // .Lfunc009 -- .irom0.text+0x5b4
 static void user_start_phase2(void) {
     uint8_t *buf;
@@ -445,6 +397,13 @@ static void user_start_phase2(void) {
     }
     init_networking(phy_info, sdk_info.sta_mac_addr);
     free(phy_info);
+
+    // Call gcc constructor functions
+    void (**ctor)(void);
+    for ( ctor = &__init_array_start; ctor != &__init_array_end; ++ctor) {
+        (*ctor)();
+    }
+
     tcpip_init(NULL, NULL);
     sdk_wdt_init();
     xTaskCreate(sdk_user_init_task, (signed char *)"uiT", 1024, 0, 14, &sdk_xUserTaskHandle);

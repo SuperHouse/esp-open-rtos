@@ -22,7 +22,8 @@
 #include <espressif/esp_system.h>
 
 #include "ota-tftp.h"
-#include "rboot-ota.h"
+#include "rboot.h"
+#include "rboot-api.h"
 
 #define TFTP_FIRMWARE_FILE "firmware.bin"
 #define TFTP_OCTET_MODE "octet" /* non-case-sensitive */
@@ -112,7 +113,7 @@ static void tftp_task(void *listen_port)
         netbuf_delete(netbuf);
 
         /* Find next free slot - this requires flash unmapping so best done when no packets in flight */
-        rboot_config_t conf;
+        rboot_config conf;
         conf = rboot_get_config();
         int slot = (conf.current_rom + 1) % conf.count;
 

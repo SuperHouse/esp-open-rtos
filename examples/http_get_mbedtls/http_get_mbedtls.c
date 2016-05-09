@@ -41,11 +41,11 @@
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
-#define WEB_SERVER "howsmyssl.com"
+#define WEB_SERVER "www.howsmyssl.com"
 #define WEB_PORT "443"
 #define WEB_URL "https://www.howsmyssl.com/a/check"
 
-#define GET_REQUEST "GET "WEB_URL" HTTP/1.1\n\n"
+#define GET_REQUEST "GET "WEB_URL" HTTP/1.1\nHost: "WEB_SERVER"\n\n"
 
 /* Root cert for howsmyssl.com, stored in cert.c */
 extern const char *server_root_cert;
@@ -115,7 +115,7 @@ void http_get_task(void *pvParameters)
                                     strlen(pers))) != 0)
     {
         printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
-        while(1) {} /* todo: replace with abort() */
+        abort();
     }
 
     printf(" ok\n");
@@ -129,7 +129,7 @@ void http_get_task(void *pvParameters)
     if(ret < 0)
     {
         printf(" failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret);
-        while(1) {} /* todo: replace with abort() */
+        abort();
     }
 
     printf(" ok (%d skipped)\n", ret);
@@ -138,7 +138,7 @@ void http_get_task(void *pvParameters)
     if((ret = mbedtls_ssl_set_hostname(&ssl, WEB_SERVER)) != 0)
     {
         printf(" failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret);
-        while(1) {} /* todo: replace with abort() */
+        abort();
     }
 
     /*
