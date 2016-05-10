@@ -615,6 +615,14 @@ sysparam_status_t sysparam_create_area(uint32_t base_addr, uint16_t num_sectors,
     return SYSPARAM_OK;
 }
 
+sysparam_status_t sysparam_get_info(uint32_t *base_addr, uint32_t *num_sectors) {
+    if (!_sysparam_info.cur_base) return SYSPARAM_ERR_NOINIT;
+
+    *base_addr = min(_sysparam_info.cur_base, _sysparam_info.alt_base);
+    *num_sectors = (_sysparam_info.region_size / sdk_flashchip.sector_size) * 2;
+    return SYSPARAM_OK;
+}
+
 sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length, bool *is_binary) {
     struct sysparam_context ctx;
     sysparam_status_t status;

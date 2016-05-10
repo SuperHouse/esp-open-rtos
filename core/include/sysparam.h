@@ -3,6 +3,10 @@
 
 #include <esp/types.h>
 
+#ifndef DEFAULT_SYSPARAM_SECTORS
+#define DEFAULT_SYSPARAM_SECTORS 4
+#endif
+
 /** @file sysparam.h
  *
  *  Read/write "system parameters" to persistent flash.
@@ -111,6 +115,22 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr);
  *  it.
  */ 
 sysparam_status_t sysparam_create_area(uint32_t base_addr, uint16_t num_sectors, bool force);
+
+/** Get the start address and size of the currently active sysparam area
+ *
+ *  Fills in `base_addr` and `num_sectors` with the location and size of the
+ *  currently active sysparam area.  The returned values correspond to the
+ *  arguments passed to the sysparam_create_area() call when the area was
+ *  originally created.
+ *
+ *  @param[out] base_addr   The flash address at which the sysparam area starts
+ *  @param[out] num_sectors The number of flash sectors used by the sysparam
+ *                          area
+ *
+ *  @retval ::SYSPARAM_OK           Completed successfully
+ *  @retval ::SYSPARAM_ERR_NOINIT   No current sysparam area is active
+ */
+sysparam_status_t sysparam_get_info(uint32_t *base_addr, uint32_t *num_sectors);
 
 /** Get the value associated with a key
  *
