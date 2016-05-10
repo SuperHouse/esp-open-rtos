@@ -5,19 +5,9 @@
 #include <string.h>
 #include <sysparam.h>
 
+#include <espressif/spi_flash.h>
+
 #define CMD_BUF_SIZE 5000
-
-// Number of (4K) sectors that make up a sysparam area.  Total sysparam data
-// cannot be larger than half this amount.
-// Note that if there is already a sysparam area created with a different size,
-// that will continue to be used (if it can be found).  This value is only used
-// when creating/reformatting the sysparam area.
-#define SYSPARAM_SECTORS 4
-
-// This places the sysparam region just below the upper-4 sdk-reserved sectors
-// for a 16mbit flash
-#define FLASH_TOP 0x1fc000
-#define SYSPARAM_ADDR (FLASH_TOP - (SYSPARAM_SECTORS * 4096))
 
 const int status_base = -6;
 const char *status_messages[] = {
@@ -159,6 +149,7 @@ void sysparam_editor_task(void *pvParameters) {
     uint8_t *bin_value;
     size_t len;
     uint8_t *data;
+    uint32_t base_addr, num_sectors;
 
     if (!cmd_buffer) {
         printf("ERROR: Cannot allocate command buffer!\n");
@@ -167,21 +158,17 @@ void sysparam_editor_task(void *pvParameters) {
 
     printf("\nWelcome to the system parameter editor!  Enter 'help' for more information.\n\n");
 
-    // NOTE: Eventually, this initialization part will be done automatically on
-    // system startup, so the app won't need to do it.
-    printf("Initializing sysparam...\n");
-    status = sysparam_init(SYSPARAM_ADDR, FLASH_TOP);
-    printf("(status %d)\n", status);
-    if (status == SYSPARAM_NOTFOUND) {
-        printf("Trying to create new sysparam area...\n");
-        status = sysparam_create_area(SYSPARAM_ADDR, SYSPARAM_SECTORS, false);
-        printf("(status %d)\n", status);
-        if (status == SYSPARAM_OK) {
-            status = sysparam_init(SYSPARAM_ADDR, 0);
-            printf("(status %d)\n", status);
-        }
+    status = sysparam_get_info(&base_addr, &num_sectors);
+    if (status == SYSPARAM_OK) {
+        printf("[current sysparam region is at 0x%08x (%d sectors)]\n", base_addr, num_sectors);
+    } else {
+        printf("[NOTE: No current sysparam region (initialization problem during boot?)]\n");
+        // Default to the same place/size as the normal system initialization
+        // stuff, so if the user uses this utility to reformat it, it will put
+        // it somewhere the system will find it later
+        num_sectors = DEFAULT_SYSPARAM_SECTORS;
+        base_addr = sdk_flashchip.chip_size - (4 + num_sectors) * sdk_flashchip.sector_size;
     }
-
     while (true) {
         printf("==> ");
         len = tty_readline(cmd_buffer, CMD_BUF_SIZE, true);
@@ -221,11 +208,11 @@ void sysparam_editor_task(void *pvParameters) {
             status = dump_params();
         } else if (!strcmp(cmd_buffer, "reformat")) {
             printf("Re-initializing region...\n");
-            status = sysparam_create_area(SYSPARAM_ADDR, SYSPARAM_SECTORS, true);
+            status = sysparam_create_area(base_addr, num_sectors, true);
             if (status == SYSPARAM_OK) {
                 // We need to re-init after wiping out the region we've been
                 // using.
-                status = sysparam_init(SYSPARAM_ADDR, 0);
+                status = sysparam_init(base_addr, 0);
             }
         } else if (!strcmp(cmd_buffer, "help")) {
             usage();

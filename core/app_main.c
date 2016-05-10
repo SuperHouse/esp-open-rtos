@@ -25,6 +25,7 @@
 
 #include "espressif/esp_common.h"
 #include "sdk_internal.h"
+#include "sysparam.h"
 
 /* This is not declared in any header file (but arguably should be) */
 
@@ -180,6 +181,8 @@ void IRAM sdk_user_start(void) {
     uint32_t cksum_len;
     uint32_t cksum_value;
     uint32_t ic_flash_addr;
+    uint32_t sysparam_addr;
+    sysparam_status_t status;
 
     SPI(0).USER0 |= SPI_USER0_CS_SETUP;
     sdk_SPIRead(0, buf32, 4);
@@ -244,6 +247,20 @@ void IRAM sdk_user_start(void) {
         //FIXME: should we halt here? (original SDK code doesn't)
     }
     memcpy(&sdk_g_ic.s, buf32, sizeof(struct sdk_g_ic_saved_st));
+
+    // By default, put the sysparam region just below the config sectors at the
+    // top of the flash space
+    sysparam_addr = flash_size - (4 + DEFAULT_SYSPARAM_SECTORS) * sdk_flashchip.sector_size;
+    status = sysparam_init(sysparam_addr, flash_size);
+    if (status == SYSPARAM_NOTFOUND) {
+        status = sysparam_create_area(sysparam_addr, DEFAULT_SYSPARAM_SECTORS, false);
+        if (status == SYSPARAM_OK) {
+            status = sysparam_init(sysparam_addr, 0);
+        }
+    }
+    if (status != SYSPARAM_OK) {
+        printf("WARNING: Could not initialize sysparams (%d)!\n", status);
+    }
 
     user_start_phase2();
 }
