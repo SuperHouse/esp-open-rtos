@@ -2,7 +2,7 @@ language: c
 sudo: false
 env:
   # Target commit for https://github.com/pfalcon/esp-open-sdk/
-  OPENSDK_COMMIT=e33c0ad3
+  OPENSDK_COMMIT=a48b12f
   CROSS_ROOT="${HOME}/toolchain-${OPENSDK_COMMIT}"
   CROSS_BINDIR="${CROSS_ROOT}/bin"
   ESPTOOL2_COMMIT=ec0e2c7
