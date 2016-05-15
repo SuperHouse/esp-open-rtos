@@ -73,6 +73,7 @@
 #include <malloc.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <xtensa_ops.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -87,7 +88,7 @@ char level1_int_disabled;
    After tasks start, task stacks are all allocated from the heap and
    FreeRTOS checks for stack overflow.
 */
-static uint32_t xPortSupervisorStackPointer;
+uint32_t xPortSupervisorStackPointer;
 
 /*
  * Stack initialization
@@ -220,7 +221,7 @@ size_t xPortGetFreeHeapSize( void )
 
     uint32_t sp = xPortSupervisorStackPointer;
     if(sp == 0) /* scheduler not started */
-        __asm__ __volatile__ ("mov %0, a1\n" : "=a"(sp));
+        SP(sp);
     return sp - brk_val + mi.fordblks;
 }
 

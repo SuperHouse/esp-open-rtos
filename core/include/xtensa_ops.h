@@ -19,7 +19,7 @@
  * Note that the compiler will push a stack frame (minimum 16 bytes)
  * in the prelude of a C function that calls any other functions.
  */
-#define SP(var) asm volatile ("mov %0, a1" : "=r" (var));
+#define SP(var) asm volatile ("mov %0, a1" : "=r" (var))
 
 /* Read the function return address to a variable.
  *

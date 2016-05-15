@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <FreeRTOS.h>
 #include <task.h>
+#include <malloc.h>
+#include <unistd.h>
 
 #include "debug_dumps.h"
 #include "common_macros.h"
@@ -156,10 +158,46 @@ static void fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_
         }
         dump_stack(sp);
     }
+    dump_heapinfo();
     uart_flush_txfifo(0);
     uart_flush_txfifo(1);
     sdk_system_restart_in_nmi();
     while(1) {}
+}
+
+void dump_heapinfo(void)
+{
+    extern char _heap_start;
+    extern uint32_t xPortSupervisorStackPointer;
+    struct mallinfo mi = mallinfo();
+    uint32_t brk_val = (uint32_t) sbrk(0);
+    uint32_t sp = xPortSupervisorStackPointer;
+    if(sp == 0) {
+        SP(sp);
+    }
+
+    /* Total free heap is all memory that could be allocated via
+       malloc (assuming fragmentation doesn't become a problem) */
+    printf("\nFree Heap: %d\n", sp - brk_val + mi.fordblks);
+
+    /* delta between brk & supervisor sp is the contiguous memory
+       region that is available to be put into heap space via
+       brk(). */
+    printf("_heap_start %p brk 0x%08x supervisor sp 0x%08x sp-brk %d bytes\n",
+           &_heap_start, brk_val, sp, sp-brk_val);
+
+    /* arena/fordblks/uordblks determines the amount of free space
+      inside the heap region already added via brk(). May be
+      fragmented.
+
+       The values in parentheses are the values used internally by
+       nano-mallocr.c, the field names outside parentheses are the
+       POSIX compliant field names of the mallinfo structure.
+
+       "arena" should be equal to brk-_heap_start ie total size available.
+     */
+    printf("arena (total_size) %d fordblks (free_size) %d uordblocks (used_size) %d\n",
+           mi.arena, mi.fordblks, mi.uordblks);
 }
 
 /* Main part of abort handler, can be run from flash to save some
@@ -168,6 +206,7 @@ static void fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_
 static void abort_handler_inner(uint32_t *caller, uint32_t *sp) {
     printf("abort() invoked at %p.\n", caller);
     dump_stack(sp);
+    dump_heapinfo();
     uart_flush_txfifo(0);
     uart_flush_txfifo(1);
     sdk_system_restart_in_nmi();
