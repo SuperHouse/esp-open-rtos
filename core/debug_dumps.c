@@ -24,9 +24,13 @@
 
 /* Forward declarations */
 static void IRAM fatal_handler_prelude(void);
-/* Inner parts of crash handlers marked noinline to ensure they don't inline into IRAM. */
-static void __attribute__((noinline)) __attribute__((noreturn)) fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack);
+/* Inner parts of crash handlers */
+typedef void __attribute__((noreturn)) (*fatal_exception_handler_fn)(uint32_t *sp, bool registers_saved_on_stack);
+static void __attribute__((noreturn)) standard_fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack);
+static void __attribute__((noreturn)) second_fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack);
 static void __attribute__((noinline)) __attribute__((noreturn)) abort_handler_inner(uint32_t *caller, uint32_t *sp);
+
+static IRAM_DATA fatal_exception_handler_fn fatal_exception_handler_inner = standard_fatal_exception_handler_inner;
 
 /* fatal_exception_handler called from any unhandled user exception
  *
@@ -38,7 +42,8 @@ static void __attribute__((noinline)) __attribute__((noreturn)) abort_handler_in
  */
 void IRAM __attribute__((noreturn)) fatal_exception_handler(uint32_t *sp, bool registers_saved_on_stack) {
     fatal_handler_prelude();
-    fatal_exception_handler_inner(sp, registers_saved_on_stack);
+    fatal_exception_handler_fn inner_fn = fatal_exception_handler_inner;
+    inner_fn(sp, registers_saved_on_stack);
 }
 
 /* Abort implementation
@@ -132,6 +137,12 @@ void dump_registers_in_exception_handler(uint32_t *sp) {
     printf("SAR %08x\n", saved[0x13]);
 }
 
+static void __attribute__((noreturn)) post_crash_reset(void) {
+    uart_flush_txfifo(0);
+    uart_flush_txfifo(1);
+    sdk_system_restart_in_nmi();
+    while(1) {}
+}
 
 /* Prelude ensures exceptions/NMI off and flash is mapped, allowing
    calls to non-IRAM functions.
@@ -150,7 +161,10 @@ static void IRAM fatal_handler_prelude(void) {
 /* Main part of fatal exception handler, is run from flash to save
    some IRAM.
 */
-static void fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack) {
+static void standard_fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack) {
+    /* Replace the fatal exception handler 'inner' function so we
+       don't end up in a crash loop if this handler crashes. */
+    fatal_exception_handler_inner = second_fatal_exception_handler_inner;
     dump_excinfo();
     if (sp) {
         if (registers_saved_on_stack) {
@@ -159,10 +173,16 @@ static void fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_
         dump_stack(sp);
     }
     dump_heapinfo();
-    uart_flush_txfifo(0);
-    uart_flush_txfifo(1);
-    sdk_system_restart_in_nmi();
-    while(1) {}
+    post_crash_reset();
+}
+
+/* This is the exception handler that gets called if a crash occurs inside the standard handler,
+   so we don't end up in a crash loop. It doesn't rely on contents of stack or heap.
+*/
+static void second_fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack) {
+    dump_excinfo();
+    printf("Second fatal exception occured inside fatal exception handler. Can't continue.\n");
+    post_crash_reset();
 }
 
 void dump_heapinfo(void)
@@ -207,8 +227,5 @@ static void abort_handler_inner(uint32_t *caller, uint32_t *sp) {
     printf("abort() invoked at %p.\n", caller);
     dump_stack(sp);
     dump_heapinfo();
-    uart_flush_txfifo(0);
-    uart_flush_txfifo(1);
-    sdk_system_restart_in_nmi();
-    while(1) {}
+    post_crash_reset();
 }
