@@ -65,18 +65,16 @@
 */
 #define IRAM __attribute__((section(".iram1.text")))
 
-/* Use this macro to place read-only data into Instruction RAM (IRAM)
+/* Use this macro to place data into Instruction RAM (IRAM)
    instead of loaded into rodata which resides in DRAM.
+
+   (IRAM can also be written to as necessary.)
 
    This may be useful to free up data RAM. However all data read from
    the instruction space must be 32-bit aligned word reads
    (non-aligned reads will use an interrupt routine to "fix" them and
    still work, but are very slow..
 */
-#ifdef	__cplusplus
-    #define IRAM_DATA __attribute__((section(".iram1.rodata")))
-#else
-    #define IRAM_DATA __attribute__((section(".iram1.rodata"))) const
-#endif
+#define IRAM_DATA __attribute__((section(".iram1.rodata")))
 
 #endif

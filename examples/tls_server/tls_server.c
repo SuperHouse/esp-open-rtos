@@ -85,7 +85,7 @@ void tls_server_task(void *pvParameters)
                                     strlen(pers))) != 0)
     {
         printf(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
-        while(1) {} /* todo: replace with abort() */
+        abort();
     }
 
     printf(" ok\n");
@@ -99,7 +99,7 @@ void tls_server_task(void *pvParameters)
     if(ret < 0)
     {
         printf(" failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret);
-        while(1) {} /* todo: replace with abort() */
+        abort();
     }
 
     printf(" ok (%d skipped)\n", ret);
@@ -109,7 +109,7 @@ void tls_server_task(void *pvParameters)
     if(ret != 0)
     {
         printf(" failed\n ! mbedtls_pk_parse_key returned - 0x%x\n\n", -ret);
-        while(1) { } /*todo: replace with abort() */
+        abort();
     }
 
     printf(" ok\n");
@@ -134,7 +134,7 @@ void tls_server_task(void *pvParameters)
     if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
     {
         printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
-        while(1) { }
+        abort();
     }
 
     mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &ctr_drbg);
