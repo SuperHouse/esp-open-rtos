@@ -43,7 +43,7 @@
 
 static void tftp_task(void *port_p);
 static char *tftp_get_field(int field, struct netbuf *netbuf);
-static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t limit_offs, size_t *received_len, ip_addr_t *peer_addr, int peer_port);
+static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t limit_offs, size_t *received_len, ip_addr_t *peer_addr, int peer_port, tftp_receive_cb receive_cb);
 static err_t tftp_send_ack(struct netconn *nc, int block);
 static err_t tftp_send_rrq(struct netconn *nc, const char *filename);
 static void tftp_send_error(struct netconn *nc, int err_code, const char *err_msg);
@@ -53,7 +53,8 @@ void ota_tftp_init_server(int listen_port)
     xTaskCreate(tftp_task, (signed char *)"tftpOTATask", 512, (void *)listen_port, 2, NULL);
 }
 
-err_t ota_tftp_download(const char *server, int port, const char *filename, int timeout, int ota_slot)
+err_t ota_tftp_download(const char *server, int port, const char *filename,
+                        int timeout, int ota_slot, tftp_receive_cb receive_cb)
 {
     rboot_config rboot_config = rboot_get_config();
     /* Validate the OTA slot parameter */
@@ -101,7 +102,8 @@ err_t ota_tftp_download(const char *server, int port, const char *filename, int 
     }
 
     size_t received_len;
-    err = tftp_receive_data(nc, flash_offset, flash_offset+MAX_IMAGE_SIZE, &received_len, &addr, port);
+    err = tftp_receive_data(nc, flash_offset, flash_offset+MAX_IMAGE_SIZE,
+                            &received_len, &addr, port, receive_cb);
     netconn_delete(nc);
     return err;
 }
@@ -189,7 +191,7 @@ static void tftp_task(void *listen_port)
         /* Finished WRQ phase, start TFTP data transfer */
         size_t received_len;
         netconn_set_recvtimeout(nc, 10000);
-        int recv_err = tftp_receive_data(nc, conf.roms[slot], conf.roms[slot]+MAX_IMAGE_SIZE, &received_len, NULL, 0);
+        int recv_err = tftp_receive_data(nc, conf.roms[slot], conf.roms[slot]+MAX_IMAGE_SIZE, &received_len, NULL, 0, NULL);
 
         netconn_disconnect(nc);
         printf("OTA TFTP receive data result %d bytes %d\r\n", recv_err, received_len);
@@ -240,7 +242,7 @@ static char *tftp_get_field(int field, struct netbuf *netbuf)
 
 #define TFTP_TIMEOUT_RETRANSMITS 10
 
-static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t limit_offs, size_t *received_len, ip_addr_t *peer_addr, int peer_port)
+static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t limit_offs, size_t *received_len, ip_addr_t *peer_addr, int peer_port, tftp_receive_cb receive_cb)
 {
     *received_len = 0;
     const int DATA_PACKET_SZ = 512 + 4; /*( packet size plus header */
@@ -380,6 +382,11 @@ static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t lim
         if(ack_err != ERR_OK) {
             printf("OTA TFTP failed to send ACK.\r\n");
             return ack_err;
+        }
+
+        // Make sure ack was successful before calling callback.
+        if(receive_cb) {
+            receive_cb(*received_len);
         }
 
         if(len < DATA_PACKET_SZ) {

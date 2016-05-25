@@ -3,6 +3,8 @@
 
 #include "lwip/err.h"
 
+typedef void (*tftp_receive_cb)(size_t bytes_received);
+
 /* TFTP Server OTA Support
  *
  * To use, call ota_tftp_init_server() which will start the TFTP server task
@@ -41,8 +43,12 @@ void ota_tftp_init_server(int listen_port);
    Returns 0 on success, LWIP err.h values for errors.
 
    Does not change the current firmware slot, or reboot.
+
+   receive_cb: called repeatedly after each successful packet that
+   has been written to flash and ACKed.  Can pass NULL to omit.
  */
-err_t ota_tftp_download(const char *server, int port, const char *filename, int timeout, int ota_slot);
+err_t ota_tftp_download(const char *server, int port, const char *filename,
+                        int timeout, int ota_slot, tftp_receive_cb receive_cb);
 
 #define TFTP_PORT 69
 
