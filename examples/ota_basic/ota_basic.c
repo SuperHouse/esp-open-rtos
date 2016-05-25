@@ -34,7 +34,7 @@ static const char *FIRMWARE1_SHA256 = "88199daff8b9e76975f685ec7f95bc1df3c61bd94
 static void tftpclient_download_and_verify_file1(int slot, rboot_config *conf)
 {
     printf("Downloading %s to slot %d...\n", TFTP_IMAGE_FILENAME1, slot);
-    int res = ota_tftp_download(TFTP_IMAGE_SERVER, TFTP_PORT+1, TFTP_IMAGE_FILENAME1, 1000, slot);
+    int res = ota_tftp_download(TFTP_IMAGE_SERVER, TFTP_PORT+1, TFTP_IMAGE_FILENAME1, 1000, slot, NULL);
     printf("ota_tftp_download %s result %d\n", TFTP_IMAGE_FILENAME1, res);
 
     if (res != 0) {
@@ -86,7 +86,7 @@ static void tftpclient_download_and_verify_file1(int slot, rboot_config *conf)
 static void tftpclient_download_file2(int slot)
 {
     printf("Downloading %s to slot %d...\n", TFTP_IMAGE_FILENAME2, slot);
-    int res = ota_tftp_download(TFTP_IMAGE_SERVER, TFTP_PORT+1, TFTP_IMAGE_FILENAME2, 1000, slot);
+    int res = ota_tftp_download(TFTP_IMAGE_SERVER, TFTP_PORT+1, TFTP_IMAGE_FILENAME2, 1000, slot, NULL);
     printf("ota_tftp_download %s result %d\n", TFTP_IMAGE_FILENAME2, res);
 }
 
