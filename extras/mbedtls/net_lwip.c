@@ -217,18 +217,14 @@ int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char 
 
 }
 
-#if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
-    !defined(EFI32)
-/*
- * Check if the requested operation would be blocking on a non-blocking socket
- * and thus 'failed' with a negative return value.
- */
-static int net_would_block( const mbedtls_net_context *ctx )
+static int socket_errno( const mbedtls_net_context *ctx )
 {
-    ((void) ctx);
-    return( WSAGetLastError() == WSAEWOULDBLOCK );
+    int sock_errno = 0;
+    u32_t optlen = sizeof(sock_errno);
+    lwip_getsockopt(ctx->fd, SOL_SOCKET, SO_ERROR, &sock_errno, &optlen);
+    return sock_errno;
 }
-#else
+
 /*
  * Check if the requested operation would be blocking on a non-blocking socket
  * and thus 'failed' with a negative return value.
@@ -243,7 +239,8 @@ static int net_would_block( const mbedtls_net_context *ctx )
     if( ( fcntl( ctx->fd, F_GETFL, 0) & O_NONBLOCK ) != O_NONBLOCK )
         return( 0 );
 
-    switch( errno )
+
+    switch( socket_errno(ctx) )
     {
 #if defined EAGAIN
         case EAGAIN:
@@ -255,7 +252,6 @@ static int net_would_block( const mbedtls_net_context *ctx )
     }
     return( 0 );
 }
-#endif /* ( _WIN32 || _WIN32_WCE ) && !EFIX64 && !EFI32 */
 
 /*
  * Accept a connection from a remote client
@@ -401,9 +397,7 @@ void mbedtls_net_usleep( unsigned long usec )
 #endif
 }
 
-/*
- * Read at most 'len' characters
- */
+/* Read at most 'len' characters */
 int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len )
 {
     int ret;
@@ -419,17 +413,13 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len )
         if( net_would_block( ctx ) != 0 )
             return( MBEDTLS_ERR_SSL_WANT_READ );
 
-#if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
-    !defined(EFI32)
-        if( WSAGetLastError() == WSAECONNRESET )
-            return( MBEDTLS_ERR_NET_CONN_RESET );
-#else
-        if( errno == EPIPE || errno == ECONNRESET )
+        int sock_errno = socket_errno(ctx);
+
+        if( sock_errno == EPIPE || sock_errno == ECONNRESET )
             return( MBEDTLS_ERR_NET_CONN_RESET );
 
-        if( errno == EINTR )
+        if( sock_errno == EINTR )
             return( MBEDTLS_ERR_SSL_WANT_READ );
-#endif
 
         return( MBEDTLS_ERR_NET_RECV_FAILED );
     }
@@ -465,14 +455,8 @@ int mbedtls_net_recv_timeout( void *ctx, unsigned char *buf, size_t len,
 
     if( ret < 0 )
     {
-#if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
-    !defined(EFI32)
-        if( WSAGetLastError() == WSAEINTR )
-            return( MBEDTLS_ERR_SSL_WANT_READ );
-#else
         if( errno == EINTR )
             return( MBEDTLS_ERR_SSL_WANT_READ );
-#endif
 
         return( MBEDTLS_ERR_NET_RECV_FAILED );
     }
@@ -499,17 +483,13 @@ int mbedtls_net_send( void *ctx, const unsigned char *buf, size_t len )
         if( net_would_block( ctx ) != 0 )
             return( MBEDTLS_ERR_SSL_WANT_WRITE );
 
-#if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
-    !defined(EFI32)
-        if( WSAGetLastError() == WSAECONNRESET )
-            return( MBEDTLS_ERR_NET_CONN_RESET );
-#else
-        if( errno == EPIPE || errno == ECONNRESET )
+        int sock_errno = socket_errno(ctx);
+
+        if( sock_errno == EPIPE || sock_errno == ECONNRESET )
             return( MBEDTLS_ERR_NET_CONN_RESET );
 
-        if( errno == EINTR )
+        if( sock_errno == EINTR )
             return( MBEDTLS_ERR_SSL_WANT_WRITE );
-#endif
 
         return( MBEDTLS_ERR_NET_SEND_FAILED );
     }
