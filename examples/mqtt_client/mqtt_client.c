@@ -1,3 +1,18 @@
+/*
+  MQTT Example Client
+
+  Connects to mosquitto test server, publishes to /beat and
+  subscribes to /esptopic
+
+  If using mosquitto, then commands to interact with this example are:
+
+  mosquitto_pub -h test.mosquitto.org -t /esptopic -m "Hello!"
+
+  mosquitto_sub -h test.mosquitto.org -t /beat
+
+  Sample code originally by @baoshi, adapted by Yudi Ludkevich & Angus
+  Gratton. BSD Licensed.
+ */
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 
@@ -10,15 +25,13 @@
 #include <espressif/esp_sta.h>
 #include <espressif/esp_wifi.h>
 
-#include <paho_mqtt_c/MQTTESP8266.h>
-#include <paho_mqtt_c/MQTTClient.h>
+#include <MQTTClient.h>
 
 #include <semphr.h>
 
-
 /* You can use http://test.mosquitto.org/ to test mqtt_client instead
  * of setting up your own MQTT server */
-#define MQTT_HOST ("test.mosquitto.org")
+#define MQTT_HOST "test.mosquitto.org"
 #define MQTT_PORT 1883
 
 #define MQTT_USER NULL
@@ -36,21 +49,21 @@ static void  beat_task(void *pvParameters)
 
     while (1) {
         vTaskDelayUntil(&xLastWakeTime, 10000 / portTICK_RATE_MS);
-        printf("beat\r\n");
         snprintf(msg, PUB_MSG_LEN, "Beat %d\r\n", count++);
+        printf(msg);
         if (xQueueSend(publish_queue, (void *)msg, 0) == pdFALSE) {
             printf("Publish queue overflow.\r\n");
         }
     }
 }
 
-static void  topic_received(MessageData *md)
+static void topic_received(struct MessageData *md)
 {
     int i;
     MQTTMessage *message = md->message;
     printf("Received: ");
-    for( i = 0; i < md->topic->lenstring.len; ++i)
-        printf("%c", md->topic->lenstring.data[ i ]);
+    for( i = 0; i < md->topicName->lenstring.len; ++i)
+        printf("%c", md->topicName->lenstring.data[ i ]);
 
     printf(" = ");
     for( i = 0; i < (int)message->payloadlen; ++i)
@@ -86,9 +99,9 @@ static const char *  get_my_id(void)
 
 static void  mqtt_task(void *pvParameters)
 {
-    int ret         = 0;
-    struct Network network;
-    MQTTClient client   = DefaultClient;
+    int ret = 0;
+    Client client;
+    Network network;
     char mqtt_client_id[20];
     uint8_t mqtt_buf[100];
     uint8_t mqtt_readbuf[100];
@@ -111,7 +124,7 @@ static void  mqtt_task(void *pvParameters)
             continue;
         }
         printf("done\n\r");
-        NewMQTTClient(&client, &network, 5000, mqtt_buf, 100,
+        MQTTClient(&client, &network, 5000, mqtt_buf, 100,
                       mqtt_readbuf, 100);
 
         data.willFlag       = 0;
@@ -153,7 +166,7 @@ static void  mqtt_task(void *pvParameters)
             }
 
             ret = MQTTYield(&client, 1000);
-            if (ret == DISCONNECTED)
+            if (ret == FAILURE)
                 break;
         }
         printf("Connection dropped, request restart\n\r");

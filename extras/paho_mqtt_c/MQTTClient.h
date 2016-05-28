@@ -18,20 +18,24 @@
 #define __MQTT_CLIENT_C_
 
 #include "MQTTPacket.h"
-#include "MQTTESP8266.h"
+#include "stdio.h"
+#include "MQTTESP8266.h" //Platform specific implementation header file
 
 #define MAX_PACKET_ID 65535
 #define MAX_MESSAGE_HANDLERS 5
-#define MAX_FAIL_ALLOWED  2
 
 enum QoS { QOS0, QOS1, QOS2 };
 
 // all failure return codes must be negative
-enum returnCode {DISCONNECTED = -3, BUFFER_OVERFLOW = -2, FAILURE = -1, SUCCESS = 0 };
+enum returnCode { BUFFER_OVERFLOW = -2, FAILURE = -1, SUCCESS = 0 };
 
 void NewTimer(Timer*);
 
-typedef struct _MQTTMessage
+typedef struct MQTTMessage MQTTMessage;
+
+typedef struct MessageData MessageData;
+
+struct MQTTMessage
 {
     enum QoS qos;
     char retained;
@@ -39,26 +43,37 @@ typedef struct _MQTTMessage
     unsigned short id;
     void *payload;
     size_t payloadlen;
-} MQTTMessage;
+};
 
-typedef struct _MessageData
+struct MessageData
 {
-    MQTTString* topic;
     MQTTMessage* message;
-} MessageData;
+    MQTTString* topicName;
+};
 
 typedef void (*messageHandler)(MessageData*);
 
-struct _MQTTClient
-{
+typedef struct Client Client;
+
+int MQTTConnect (Client*, MQTTPacket_connectData*);
+int MQTTPublish (Client*, const char*, MQTTMessage*);
+int MQTTSubscribe (Client*, const char*, enum QoS, messageHandler);
+int MQTTUnsubscribe (Client*, const char*);
+int MQTTDisconnect (Client*);
+int MQTTYield (Client*, int);
+
+void setDefaultMessageHandler(Client*, messageHandler);
+
+void MQTTClient(Client*, Network*, unsigned int, unsigned char*, size_t, unsigned char*, size_t);
+
+struct Client {
     unsigned int next_packetid;
     unsigned int command_timeout_ms;
     size_t buf_size, readbuf_size;
-    unsigned char *buf;
-    unsigned char *readbuf;
+    unsigned char *buf;  
+    unsigned char *readbuf; 
     unsigned int keepAliveInterval;
     char ping_outstanding;
-    int fail_count;
     int isconnected;
 
     struct MessageHandlers
@@ -66,25 +81,12 @@ struct _MQTTClient
         const char* topicFilter;
         void (*fp) (MessageData*);
     } messageHandlers[MAX_MESSAGE_HANDLERS];      // Message handlers are indexed by subscription topic
-
+    
     void (*defaultMessageHandler) (MessageData*);
-
+    
     Network* ipstack;
     Timer ping_timer;
 };
-
-
-typedef struct _MQTTClient MQTTClient;
-
-
-int MQTTConnect(MQTTClient* c, MQTTPacket_connectData* options);
-int MQTTPublish(MQTTClient* c, const char* topic, MQTTMessage* message);
-int MQTTSubscribe(MQTTClient* c, const char* topic, enum QoS qos, messageHandler handler);
-int MQTTUnsubscribe(MQTTClient* c, const char* topic);
-int MQTTDisconnect(MQTTClient* c);
-int MQTTYield(MQTTClient* c, int timeout_ms);
-
-void NewMQTTClient(MQTTClient*, Network*, unsigned int, unsigned char*, size_t, unsigned char*, size_t);
 
 #define DefaultClient {0, 0, 0, 0, NULL, NULL, 0, 0, 0}
 

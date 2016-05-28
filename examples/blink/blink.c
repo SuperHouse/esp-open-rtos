@@ -8,6 +8,10 @@
 #include "task.h"
 #include "esp8266.h"
 
+#include "mbedtls/aes.h"
+#include "xtensa_ops.h"
+#include <string.h>
+
 const int gpio = 2;
 
 /* This task uses the high level GPIO API (esp_gpio.h) to blink an LED.
@@ -53,6 +57,32 @@ void blinkenRegisterTask(void *pvParameters)
 void user_init(void)
 {
     uart_set_baud(0, 115200);
-    xTaskCreate(blinkenTask, (signed char *)"blinkenTask", 256, NULL, 2, NULL);
-    //xTaskCreate(blinkenRegisterTask, (signed char *)"blinkenRegisterTask", 256, NULL, 2, NULL);
+    static uint8_t data[1024];
+    static uint8_t output[1024];
+    static uint8_t iv[16];
+
+    static uint8_t key[256 / 8];
+
+    memset(data, 0, sizeof(data));
+    memset(iv, 0, sizeof(iv));
+
+    mbedtls_aes_context ctx;
+    uint32_t before, after;
+    RSR(before, CCOUNT)
+    mbedtls_aes_init(&ctx);
+    mbedtls_aes_setkey_enc(&ctx, key, 256);
+
+    for(int r = 0; r < 10; r++) {
+        mbedtls_aes_crypt_cbc(&ctx,
+                              MBEDTLS_AES_ENCRYPT,
+                              sizeof(data),
+                              iv,
+                              data,
+                              output);
+        memcpy(data, output, 1024);
+    }
+    RSR(after, CCOUNT);
+    printf("cycle count %d\n", after - before);
+    vPortExitCritical();
+    while(1) {}
 }

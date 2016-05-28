@@ -10,4 +10,6 @@
 [submodule "bootloader/rboot"]
 	path = bootloader/rboot
 	url = https://github.com/raburton/rboot.git
-
+[submodule "extras/paho_mqtt_c/org.eclipse.paho.mqtt.embedded-c"]
+	path = extras/paho_mqtt_c/org.eclipse.paho.mqtt.embedded-c
+	url = https://git.eclipse.org/r/paho/org.eclipse.paho.mqtt.embedded-c
