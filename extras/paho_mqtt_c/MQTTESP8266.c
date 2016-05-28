@@ -72,9 +72,8 @@ int  mqtt_esp_read(Network* n, unsigned char* buffer, int len, int timeout_ms)
     int rcvd = 0;
     FD_ZERO(&fdset);
     FD_SET(n->my_socket, &fdset);
-    // It seems tv_sec actually means FreeRTOS tick
-    tv.tv_sec = timeout_ms / portTICK_RATE_MS;
-    tv.tv_usec = 0;
+    tv.tv_sec = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
     rc = select(n->my_socket + 1, &fdset, 0, 0, &tv);
     if ((rc > 0) && (FD_ISSET(n->my_socket, &fdset)))
     {
@@ -97,9 +96,8 @@ int  mqtt_esp_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
 
     FD_ZERO(&fdset);
     FD_SET(n->my_socket, &fdset);
-    // It seems tv_sec actually means FreeRTOS tick
-    tv.tv_sec = timeout_ms / portTICK_RATE_MS;
-    tv.tv_usec = 0;
+    tv.tv_sec = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
     rc = select(n->my_socket + 1, 0, &fdset, 0, &tv);
     if ((rc > 0) && (FD_ISSET(n->my_socket, &fdset)))
     {
