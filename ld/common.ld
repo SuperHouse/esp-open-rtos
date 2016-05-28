@@ -132,43 +132,6 @@ SECTIONS
     _etext = .;
   } >iram1_0_seg :iram1_0_phdr
 
-  .irom0.text : ALIGN(4)
-  {
-    _irom0_text_start = ABSOLUTE(.);
-    /* esp-open-rtos compiled code goes into IROM by default
-       (except for libgcc which is matched above.)
-    */
-    *(.literal .text .literal.* .text.*)
-    /* Anything explicitly marked as "irom" or "irom0" should go here */
-    *(.irom.* .irom.*.* .irom0.*)
-    _irom0_text_end = ABSOLUTE(.);
-
-    /* Temporary .rodata hacks start here, eventually all rodata will
-    be in irom by default */
-    /* mbedtls rodata */
-    *mbedtls.a:*.o(.rodata.* .rodata)
-    /* actual certificate in example (TEMPORARY HACK) */
-    *:cert.o(.rodata.* .rodata)
-    /*  C++ constructor and destructor tables, properly ordered:  */
-    __init_array_start = ABSOLUTE(.);
-    KEEP (*crtbegin.o(.ctors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
-    KEEP (*(SORT(.ctors.*)))
-    KEEP (*(.ctors))
-    __init_array_end = ABSOLUTE(.);
-    KEEP (*crtbegin.o(.dtors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
-    KEEP (*(SORT(.dtors.*)))
-    KEEP (*(.dtors))
-    /*  C++ exception handlers table:  */
-    __XT_EXCEPTION_DESCS__ = ABSOLUTE(.);
-    *(.xt_except_desc)
-    *(.gnu.linkonce.h.*)
-    __XT_EXCEPTION_DESCS_END__ = ABSOLUTE(.);
-    *(.xt_except_desc_end)
-
-  } >irom0_0_seg :irom0_0_phdr
-
   .data : ALIGN(4)
   {
     _data_start = ABSOLUTE(.);
@@ -186,29 +149,37 @@ SECTIONS
     _data_end = ABSOLUTE(.);
   } >dram0_0_seg :dram0_0_phdr
 
+  /* rodata in DRAM
+
+     cherry-picked compilation units that need rodata
+     to be in DRAM - anything that may be run while
+     SPI flash is unmapped (ie IRAM functions that are
+     called from interrupt context or spi flash management
+     functions) need their compilation units listed here.
+
+     If you have constant data that is performance-critical,
+     list the compilation unit(s) here as well.
+  */
   .rodata : ALIGN(4)
   {
     _rodata_start = ABSOLUTE(.);
-    *(.rodata)
-    *(.rodata.*)
-    *(.gnu.linkonce.r.*)
-    *(.rodata1)
-    __XT_EXCEPTION_TABLE__ = ABSOLUTE(.);
-    *(.xt_except_table)
-    *(.gcc_except_table)
-    *(.gnu.linkonce.e.*)
-    *(.gnu.version_r)
-    *(.eh_frame)
-    . = (. + 3) & ~ 3;
-    *(.dynamic)
-    *(.gnu.version_d)
-    . = ALIGN(4);		/* this table MUST be 4-byte aligned */
-    _bss_table_start = ABSOLUTE(.);
-    LONG(_bss_start)
-    LONG(_bss_end)
-    _bss_table_end = ABSOLUTE(.);
+
+    /* Store all of core, libc, freertos .rodata in RAM by default
+       (some parts are necessary, some parts for performance reasons.)
+    */
+    *core.a:*(.rodata.* .rodata) *libc.a:*.o(.rodata.* .rodata)
+    *freertos.a:*(.rodata.* .rodata)
+
+    /* spi flash management rodata needs to be accessed
+       while flash is unmapped. */
+    *libmain.a:spi_flash.o(.rodata.* .rodata)
+
+    /* libpp wdev.o has the NMI handler (sdk_wDev_ProcessFiq)
+       which runs at all times, flash mapped or not. */
+    *libpp.a:wdev.o(.rodata.* .rodata)
+
     _rodata_end = ABSOLUTE(.);
-  } >dram0_0_seg :dram0_0_phdr
+  } > dram0_0_seg :dram0_0_phdr
 
   .bss ALIGN(8) (NOLOAD) : ALIGN(4)
   {
@@ -233,6 +204,71 @@ SECTIONS
 /*    _stack_sentry = ALIGN(0x8); */
   } >dram0_0_seg :dram0_0_bss_phdr
 /* __stack = 0x3ffc8000; <-- this value seems a bit odd, stack on sdk_user_start is ~0x3ffffce9 */
+
+
+   /* All data that goes to flash (IROM) ends up in this section */
+  .irom0.text : ALIGN(4)
+  {
+    /*****************************
+     * Actual irom0 text section *
+     *****************************/
+
+    _irom0_text_start = ABSOLUTE(.);
+    /* esp-open-rtos compiled code goes into IROM by default
+       (except for libgcc which is matched above.)
+
+       We also link .rodata here in the hope that data is stored near
+       its code on the flash (in practice this doesn't quite happen. :/)
+    */
+    *(.literal .text .literal.* .text.* .rodata .rodata.*)
+    /* Anything explicitly marked as "irom" or "irom0" should go here */
+    *(.irom.* .irom.*.* .irom0.*)
+    _irom0_text_end = ABSOLUTE(.);
+
+    /**************************************************************
+      C++ constructor and destructor tables, properly ordered:
+     **************************************************************/
+    __init_array_start = ABSOLUTE(.);
+    KEEP (*crtbegin.o(.ctors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+    KEEP (*(SORT(.ctors.*)))
+    KEEP (*(.ctors))
+    __init_array_end = ABSOLUTE(.);
+    KEEP (*crtbegin.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+    KEEP (*(SORT(.dtors.*)))
+    KEEP (*(.dtors))
+
+    /***********************************
+       C++ exception handlers table:  *
+     **********************************/
+    __XT_EXCEPTION_DESCS__ = ABSOLUTE(.);
+    *(.xt_except_desc)
+    *(.gnu.linkonce.h.*)
+    __XT_EXCEPTION_DESCS_END__ = ABSOLUTE(.);
+    *(.xt_except_desc_end)
+
+    /***********************************
+     Additional .rodata special sections
+     stored in flash
+     ************************************/
+    . = ALIGN(4);
+    *(.gnu.linkonce.r.*)
+    __XT_EXCEPTION_TABLE__ = ABSOLUTE(.);
+    *(.xt_except_table)
+    *(.gcc_except_table)
+    *(.gnu.linkonce.e.*)
+    *(.gnu.version_r)
+    *(.eh_frame)
+    . = ALIGN(4);
+    *(.dynamic)
+    *(.gnu.version_d)
+    . = ALIGN(4);       /* this table MUST be 4-byte aligned */
+    _bss_table_start = ABSOLUTE(.);
+    LONG(_bss_start)
+    LONG(_bss_end)
+    _bss_table_end = ABSOLUTE(.);
+  } > irom0_0_seg :irom0_0_phdr
 
   .lit4 : ALIGN(4)
   {
