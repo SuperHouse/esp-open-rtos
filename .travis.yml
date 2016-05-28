@@ -5,15 +5,12 @@ env:
   OPENSDK_COMMIT=a48b12f
   CROSS_ROOT="${HOME}/toolchain-${OPENSDK_COMMIT}"
   CROSS_BINDIR="${CROSS_ROOT}/bin"
-  ESPTOOL2_COMMIT=ec0e2c7
-  ESPTOOL2_DIR="${HOME}/esptool2-${ESPTOOL2_COMMIT}"
-  PATH=${PATH}:${CROSS_BINDIR}:${ESPTOOL2_DIR}
   CROSS="ccache xtensa-lx106-elf-"
   MAKE_CMD="make WARNINGS_AS_ERRORS=1 -C examples/ build-examples"
+  PATH=${PATH}:${CROSS_BINDIR}
 cache:
   directories:
     - ${CROSS_ROOT}
-    - ${ESPTOOL2_DIR}
 addons:
   apt:
     packages:
@@ -35,9 +32,9 @@ addons:
     - python-serial
     - sed
     - git
+    - vim-common
 
 before_install:
-  - utils/travis_build/install_esptool2.sh
   - travis_wait 30 utils/travis_build/install_toolchain.sh
 
 script:
@@ -46,3 +43,5 @@ script:
   - sed -i "s%#error%//#error%" include/ssid_config.h
   # Don't verbose-build all examples (too much output), only verbose-build errors
   - ( ${MAKE_CMD} ) || ( ${MAKE_CMD} V=1 )
+  # build bootloader
+  - make -C bootloader/

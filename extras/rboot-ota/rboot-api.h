@@ -12,6 +12,7 @@
  *  @{
 */
 
+#include <rboot-integration.h>
 #include <rboot.h>
 
 #ifdef __cplusplus
@@ -127,6 +128,49 @@ bool ICACHE_FLASH_ATTR rboot_get_last_boot_rom(uint8 *rom);
 */
 bool ICACHE_FLASH_ATTR rboot_get_last_boot_mode(uint8 *mode);
 #endif
+
+/* ADDITIONS TO RBOOT-API FOR ESP-OPEN-RTOS FOLLOW */
+
+/* Returns offset of given rboot slot, or (uint32_t)-1 if slot is invalid.
+ */
+uint32_t rboot_get_slot_offset(uint8_t slot);
+
+/** @description Verify basic image parameters - headers, CRC8 checksum.
+
+    @param Offset of image to verify. Can use rboot_get_slot_offset() to find.
+    @param Optional pointer will return the total valid length of the image.
+    @param Optional pointer to a static human-readable error message if fails.
+
+    @return True for valid, False for invalid.
+**/
+bool rboot_verify_image(uint32_t offset, uint32_t *image_length, const char **error_message);
+
+
+/* @description Digest callback prototype, designed to be compatible with
+   mbedtls digest functions (SHA, MD5, etc.)
+
+   See the ota_basic example to see an example of calculating the
+   SHA256 digest of an OTA image.
+*/
+typedef void (*rboot_digest_update_fn)(void * ctx, void *data, size_t data_len);
+
+/** @description Calculate a digest over the image at the offset specified
+
+    @note This function is actually a generic function that hashes SPI
+   flash contents, doesn't know anything about rboot image format. Use
+   rboot_verify_image to ensure a well-formed OTA image.
+
+   @param offset - Starting offset of image to hash (should be 4 byte aligned.)
+
+   @param image_length - Length of image to hash (should be 4 byte aligned.)
+
+   @param update_fn - Function to update digest (see rboot_digest_update_fn for details)
+
+   @param update_ctx - Context argument for digest update function.
+
+   @return True if digest completes successfully, false if digest function failed part way through
+**/
+bool rboot_digest_image(uint32_t offset, uint32_t image_length, rboot_digest_update_fn update_fn, void *update_ctx);
 
 #ifdef __cplusplus
 }

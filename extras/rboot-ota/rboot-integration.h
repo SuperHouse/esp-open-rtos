@@ -9,6 +9,10 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
+/***************************************************
+ * Platform configuration definitions              *
+ ***************************************************/
+
 #define uint8 uint8_t
 #define uint16 uint16_t
 #define uint32 uint32_t
@@ -28,7 +32,11 @@
 #define RBOOT_DEBUG(f_, ...)
 #endif
 
-// Check that a valid-looking rboot image is found at this offset on the flash, and
-// takes up 'expected_length' bytes.
-bool rboot_verify_image(uint32_t offset, uint32_t expected_length, const char **error_message);
+/* Enable checksumming when writing out the config,
+   so if the bootloader is built with checksumming then
+   it will still work.
+*/
+#define BOOT_CONFIG_CHKSUM
+
+
 #endif // __RBOOT_INTEGRATION_H__

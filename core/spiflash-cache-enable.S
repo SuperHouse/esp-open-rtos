@@ -12,8 +12,6 @@
  * Copyright (C) 2015 Superhouse Automation Pty Ltd
  * BSD Licensed as described in the file LICENSE
 */
-#ifdef OTA
-
 #define RBOOT_CONFIG_BASE (0x40200000 + 0x1000)
 #define RBOOT_ROMS_OFFS 0x8 /* offset of rboot_config_t.roms array in config */
 
@@ -74,5 +72,3 @@ Cache_Read_Enable:
 	movi a0, cache_return_save /* restore a0 return address */
 	l32i a0, a0, 0
 	ret.n
-
-#endif
