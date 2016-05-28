@@ -32,6 +32,7 @@ addons:
     - python-serial
     - sed
     - git
+    - vim-common
 
 before_install:
   - travis_wait 30 utils/travis_build/install_toolchain.sh
@@ -42,3 +43,5 @@ script:
   - sed -i "s%#error%//#error%" include/ssid_config.h
   # Don't verbose-build all examples (too much output), only verbose-build errors
   - ( ${MAKE_CMD} ) || ( ${MAKE_CMD} V=1 )
+  # build bootloader
+  - make -C bootloader/
