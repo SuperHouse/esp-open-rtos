@@ -13,9 +13,9 @@
 
 #define TESTSTRING "O hai there! %d %d %d"
 
-const char *dramtest = TESTSTRING;
-const __attribute__((section(".iram1.notrodata"))) char iramtest[] = TESTSTRING;
-const __attribute__((section(".text.notrodata"))) char iromtest[] = TESTSTRING;
+const RAM char dramtest[] = TESTSTRING;
+const char *iromtest = TESTSTRING;
+const IRAM_DATA char iramtest[] = TESTSTRING;
 
 static inline uint32_t get_ccount (void)
 {
