@@ -345,7 +345,8 @@
 /**
  * LWIP_SO_RCVBUF==1: Enable SO_RCVBUF processing.
  */
-#define LWIP_SO_RCVBUF                  0
+#define LWIP_SO_RCVBUF                  1
+#define INT_MAX __INT_MAX__
 
 /**
  * SO_REUSE==1: Enable SO_REUSEADDR option.
