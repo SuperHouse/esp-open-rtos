@@ -157,6 +157,7 @@ static void  mqtt_task(void *pvParameters)
                 break;
         }
         printf("Connection dropped, request restart\n\r");
+        DisconnectNetwork(&network);
         taskYIELD();
     }
 }
