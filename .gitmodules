@@ -11,3 +11,6 @@
 	path = bootloader/rboot
 	url = https://github.com/raburton/rboot.git
 
+[submodule "extras/spiffs/spiffs"]
+	path = extras/spiffs/spiffs
+	url = https://github.com/pellepl/spiffs.git
