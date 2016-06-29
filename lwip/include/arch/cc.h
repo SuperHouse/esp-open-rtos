@@ -50,6 +50,8 @@
 #include <sys/time.h>
 #include <sys/errno.h>
 
+#define ERRNO
+
 #define BYTE_ORDER LITTLE_ENDIAN
 
 /** @todo fix some warnings: don't use #pragma if compiling with cygwin gcc */

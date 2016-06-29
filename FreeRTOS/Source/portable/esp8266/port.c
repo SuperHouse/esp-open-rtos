@@ -73,6 +73,7 @@
 #include <malloc.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <xtensa_ops.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -81,13 +82,14 @@
 unsigned cpu_sr;
 char level1_int_disabled;
 
-/* Supervisor stack pointer entry. This is the "high water mark" of how far the
-   supervisor stack grew down before task started.
+/* Supervisor stack pointer entry. This is the "high water mark" of
+   how far the supervisor stack grew down before task started. Is zero
+   before the scheduler starts.
 
-   After tasks start, task stacks are all allocated from the heap and
-   FreeRTOS checks for stack overflow.
+ After the scheduler starts, task stacks are all allocated from the
+ heap and FreeRTOS checks for stack overflow.
 */
-static uint32_t xPortSupervisorStackPointer;
+void *xPortSupervisorStackPointer;
 
 /*
  * Stack initialization
@@ -218,9 +220,9 @@ size_t xPortGetFreeHeapSize( void )
     struct mallinfo mi = mallinfo();
     uint32_t brk_val = (uint32_t) sbrk(0);
 
-    uint32_t sp = xPortSupervisorStackPointer;
+    intptr_t sp = (intptr_t)xPortSupervisorStackPointer;
     if(sp == 0) /* scheduler not started */
-        __asm__ __volatile__ ("mov %0, a1\n" : "=a"(sp));
+        SP(sp);
     return sp - brk_val + mi.fordblks;
 }
 

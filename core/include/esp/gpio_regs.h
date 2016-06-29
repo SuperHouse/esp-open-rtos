@@ -61,6 +61,21 @@ struct GPIO_REGS {
 
 _Static_assert(sizeof(struct GPIO_REGS) == 0x74, "GPIO_REGS is the wrong size");
 
+/* Details for additional OUT register fields */
+
+/* Bottom 16 bits of GPIO.OUT are for GPIOs 0-15, but upper 16 bits
+   are used to configure the input signalling pins for Bluetooth
+   Coexistence config (see esp/phy.h for a wrapper function).
+*/
+#define GPIO_OUT_PIN_MASK 0x0000FFFF
+#define GPIO_OUT_BT_COEXIST_MASK 0x03FF0000
+#define GPIO_OUT_BT_ACTIVE_ENABLE BIT(24)
+#define GPIO_OUT_BT_PRIORITY_ENABLE BIT(25)
+#define GPIO_OUT_BT_ACTIVE_PIN_M 0x0F
+#define GPIO_OUT_BT_ACTIVE_PIN_S 16
+#define GPIO_OUT_BT_PRIORITY_PIN_M 0x0F
+#define GPIO_OUT_BT_PRIORITY_PIN_S 20
+
 /* Details for CONF[i] registers */
 
 /* GPIO.CONF[i] control the pin behavior for the corresponding GPIO in/output.

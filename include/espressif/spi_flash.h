@@ -33,7 +33,7 @@ sdk_SpiFlashOpResult sdk_spi_flash_erase_sector(uint16_t sec);
 /* Write data to flash.
 
    des_addr is byte offset to write to. Should be 4-byte aligned.
-   src is pointer to a buffer to read bytes from.
+   src is pointer to a buffer to read bytes from. Should be 4-byte aligned.
    size is length of buffer in bytes. Should be a multiple of 4.
 */
 sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, uint32_t *src, uint32_t size);
@@ -41,7 +41,7 @@ sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, uint32_t *src, uint3
 /* Read data from flash.
 
    src_addr is byte offset to read from. Should be 4-byte aligned.
-   des is pointer to a buffer to read bytes into.
+   des is pointer to a buffer to read bytes into. Should be 4-byte aligned.
    size is number of bytes to read. Should be a multiple of 4.
 */
 sdk_SpiFlashOpResult sdk_spi_flash_read(uint32_t src_addr, uint32_t *des, uint32_t size);

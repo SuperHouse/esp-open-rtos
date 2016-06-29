@@ -81,9 +81,9 @@ static inline void gpio_set_output_on_sleep(const uint8_t gpio_num, bool enabled
 static inline void gpio_write(const uint8_t gpio_num, const bool set)
 {
     if (set)
-        GPIO.OUT_SET = BIT(gpio_num);
+        GPIO.OUT_SET = BIT(gpio_num) & GPIO_OUT_PIN_MASK;
     else
-        GPIO.OUT_CLEAR = BIT(gpio_num);
+        GPIO.OUT_CLEAR = BIT(gpio_num) & GPIO_OUT_PIN_MASK;
 }
 
 /* Toggle output of a pin
@@ -102,9 +102,9 @@ static inline void gpio_toggle(const uint8_t gpio_num)
        task's pins, without needing to disable/enable interrupts.
     */
     if(GPIO.OUT & BIT(gpio_num))
-        GPIO.OUT_CLEAR = BIT(gpio_num);
+        GPIO.OUT_CLEAR = BIT(gpio_num) & GPIO_OUT_PIN_MASK;
     else
-        GPIO.OUT_SET = BIT(gpio_num);
+        GPIO.OUT_SET = BIT(gpio_num) & GPIO_OUT_PIN_MASK;
 }
 
 /* Read input value of a GPIO pin.

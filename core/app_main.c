@@ -24,6 +24,7 @@
 #include "os_version.h"
 
 #include "espressif/esp_common.h"
+#include "espressif/phy_info.h"
 #include "sdk_internal.h"
 #include "esplibs/libmain.h"
 
@@ -32,8 +33,6 @@
 void user_init(void);
 
 #define BOOT_INFO_SIZE 28
-//TODO: phy_info should probably be a struct (no idea about its organization, though)
-#define PHY_INFO_SIZE 128
 
 // These are the offsets of these values within the RTCMEM regions.  It appears
 // that the ROM saves them to RTCMEM before calling us, and we pull them out of
@@ -43,26 +42,6 @@ void user_init(void);
 
 extern uint32_t _bss_start;
 extern uint32_t _bss_end;
-
-// .Ldata003 -- .irom.text+0x0
-static const uint8_t IROM default_phy_info[PHY_INFO_SIZE] = {
-    0x05, 0x00, 0x04, 0x02, 0x05, 0x05, 0x05, 0x02,
-    0x05, 0x00, 0x04, 0x05, 0x05, 0x04, 0x05, 0x05,
-    0x04, 0xfe, 0xfd, 0xff, 0xf0, 0xf0, 0xf0, 0xe0,
-    0xe0, 0xe0, 0xe1, 0x0a, 0xff, 0xff, 0xf8, 0x00,
-    0xf8, 0xf8, 0x52, 0x4e, 0x4a, 0x44, 0x40, 0x38,
-    0x00, 0x00, 0x01, 0x01, 0x02, 0x03, 0x04, 0x05,
-    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0xe1, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x01, 0x93, 0x43, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
 
 // user_init_flag -- .bss+0x0
 uint8_t sdk_user_init_flag;
@@ -81,7 +60,7 @@ xTaskHandle sdk_xWatchDogTaskHandle;
 static void IRAM get_otp_mac_address(uint8_t *buf);
 static void IRAM set_spi0_divisor(uint32_t divisor);
 static void zero_bss(void);
-static void init_networking(uint8_t *phy_info, uint8_t *mac_addr);
+static void init_networking(sdk_phy_info_t *phy_info, uint8_t *mac_addr);
 static void init_g_ic(void);
 static void user_start_phase2(void);
 static void dump_flash_sector(uint32_t start_sector, uint32_t length);
@@ -254,7 +233,7 @@ static void zero_bss(void) {
 }
 
 // .Lfunc006 -- .irom0.text+0x70
-static void init_networking(uint8_t *phy_info, uint8_t *mac_addr) {
+static void init_networking(sdk_phy_info_t *phy_info, uint8_t *mac_addr) {
     if (sdk_register_chipv6_phy(phy_info)) {
         printf("FATAL: sdk_register_chipv6_phy failed");
         abort();
@@ -361,9 +340,9 @@ extern void (*__init_array_start)(void);
 extern void (*__init_array_end)(void);
 
 // .Lfunc009 -- .irom0.text+0x5b4
-static void user_start_phase2(void) {
+static __attribute__((noinline)) void user_start_phase2(void) {
     uint8_t *buf;
-    uint8_t *phy_info;
+    sdk_phy_info_t phy_info, default_phy_info;
 
     sdk_system_rtc_mem_read(0, &sdk_rst_if, sizeof(sdk_rst_if));
     if (sdk_rst_if.reason > 3) {
@@ -381,8 +360,16 @@ static void user_start_phase2(void) {
     sdk_info._unknown4 = 0x00ffffff;
     sdk_info._unknown8 = 0x0104a8c0;
     init_g_ic();
-    phy_info = malloc(PHY_INFO_SIZE);
-    sdk_spi_flash_read(sdk_flashchip.chip_size - sdk_flashchip.sector_size * 4, (uint32_t *)phy_info, PHY_INFO_SIZE);
+
+    read_saved_phy_info(&phy_info);
+    get_default_phy_info(&default_phy_info);
+
+    if (phy_info.version != default_phy_info.version) {
+        /* Versions don't match, use default for PHY info
+           (may be a blank config sector, or a new default version.)
+         */
+        memcpy(&phy_info, &default_phy_info, sizeof(sdk_phy_info_t));
+    }
 
     // Disable default buffering on stdout
     setbuf(stdout, NULL);
@@ -390,13 +377,7 @@ static void user_start_phase2(void) {
     uart_flush_txfifo(0);
     uart_flush_txfifo(1);
 
-    if (phy_info[0] != 5) {
-        // Bad version byte.  Discard what we read and use default values
-        // instead.
-        memcpy(phy_info, default_phy_info, PHY_INFO_SIZE);
-    }
-    init_networking(phy_info, sdk_info.sta_mac_addr);
-    free(phy_info);
+    init_networking(&phy_info, sdk_info.sta_mac_addr);
 
     // Call gcc constructor functions
     void (**ctor)(void);
@@ -433,11 +414,11 @@ static void dump_flash_sector(uint32_t start_sector, uint32_t length) {
 }
 
 // .Lfunc011 -- .irom0.text+0x790
-static void dump_flash_config_sectors(uint32_t start_sector) {
+static __attribute__((noinline)) void dump_flash_config_sectors(uint32_t start_sector) {
     printf("system param error\n");
     // Note: original SDK code didn't dump PHY info
     printf("phy_info:\n");
-    dump_flash_sector(start_sector, PHY_INFO_SIZE);
+    dump_flash_sector(start_sector, sizeof(sdk_phy_info_t));
     printf("\ng_ic saved 0:\n");
     dump_flash_sector(start_sector + 1, sizeof(struct sdk_g_ic_saved_st));
     printf("\ng_ic saved 1:\n");

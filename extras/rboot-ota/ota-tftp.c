@@ -22,12 +22,12 @@
 #include <espressif/esp_system.h>
 
 #include "ota-tftp.h"
-#include "rboot.h"
 #include "rboot-api.h"
 
 #define TFTP_FIRMWARE_FILE "firmware.bin"
 #define TFTP_OCTET_MODE "octet" /* non-case-sensitive */
 
+#define TFTP_OP_RRQ 1
 #define TFTP_OP_WRQ 2
 #define TFTP_OP_DATA 3
 #define TFTP_OP_ACK 4
@@ -43,14 +43,71 @@
 
 static void tftp_task(void *port_p);
 static char *tftp_get_field(int field, struct netbuf *netbuf);
-static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t limit_offs, size_t *received_len);
+static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t limit_offs, size_t *received_len, ip_addr_t *peer_addr, int peer_port, tftp_receive_cb receive_cb);
 static err_t tftp_send_ack(struct netconn *nc, int block);
+static err_t tftp_send_rrq(struct netconn *nc, const char *filename);
 static void tftp_send_error(struct netconn *nc, int err_code, const char *err_msg);
 
 void ota_tftp_init_server(int listen_port)
 {
     xTaskCreate(tftp_task, (signed char *)"tftpOTATask", 512, (void *)listen_port, 2, NULL);
 }
+
+err_t ota_tftp_download(const char *server, int port, const char *filename,
+                        int timeout, int ota_slot, tftp_receive_cb receive_cb)
+{
+    rboot_config rboot_config = rboot_get_config();
+    /* Validate the OTA slot parameter */
+    if(rboot_config.current_rom == ota_slot || rboot_config.count <= ota_slot)
+    {
+        return ERR_VAL;
+    }
+    /* This is all we need to know from the rboot config - where we need
+       to write data to.
+    */
+    uint32_t flash_offset = rboot_config.roms[ota_slot];
+
+    struct netconn *nc = netconn_new (NETCONN_UDP);
+    err_t err;
+    if(!nc) {
+        return ERR_IF;
+    }
+
+    netconn_set_recvtimeout(nc, timeout);
+
+    /* try to bind our client port as our local port,
+       or keep trying the next 10 ports after it */
+    int local_port = port-1;
+    do {
+        err = netconn_bind(nc, IP_ADDR_ANY, ++local_port);
+    } while(err == ERR_USE && local_port < port + 10);
+    if(err) {
+        netconn_delete(nc);
+        return err;
+    }
+
+    ip_addr_t addr;
+    err = netconn_gethostbyname(server, &addr);
+    if(err) {
+        netconn_delete(nc);
+        return err;
+    }
+
+    netconn_connect(nc, &addr, port);
+
+    err = tftp_send_rrq(nc, filename);
+    if(err) {
+        netconn_delete(nc);
+        return err;
+    }
+
+    size_t received_len;
+    err = tftp_receive_data(nc, flash_offset, flash_offset+MAX_IMAGE_SIZE,
+                            &received_len, &addr, port, receive_cb);
+    netconn_delete(nc);
+    return err;
+}
+
 
 static void tftp_task(void *listen_port)
 {
@@ -100,7 +157,7 @@ static void tftp_task(void *listen_port)
 
         /* check mode */
         char *mode = tftp_get_field(1, netbuf);
-        if(!mode || strcmp("octet", mode)) {
+        if(!mode || strcmp(TFTP_OCTET_MODE, mode)) {
             tftp_send_error(nc, TFTP_ERR_ILLEGAL, "Mode must be octet/binary");
             free(mode);
             netbuf_delete(netbuf);
@@ -133,7 +190,8 @@ static void tftp_task(void *listen_port)
 
         /* Finished WRQ phase, start TFTP data transfer */
         size_t received_len;
-        int recv_err = tftp_receive_data(nc, conf.roms[slot], conf.roms[slot]+MAX_IMAGE_SIZE, &received_len);
+        netconn_set_recvtimeout(nc, 10000);
+        int recv_err = tftp_receive_data(nc, conf.roms[slot], conf.roms[slot]+MAX_IMAGE_SIZE, &received_len, NULL, 0, NULL);
 
         netconn_disconnect(nc);
         printf("OTA TFTP receive data result %d bytes %d\r\n", recv_err, received_len);
@@ -182,20 +240,48 @@ static char *tftp_get_field(int field, struct netbuf *netbuf)
     return result;
 }
 
-static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t limit_offs, size_t *received_len)
+#define TFTP_TIMEOUT_RETRANSMITS 10
+
+static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t limit_offs, size_t *received_len, ip_addr_t *peer_addr, int peer_port, tftp_receive_cb receive_cb)
 {
     *received_len = 0;
     const int DATA_PACKET_SZ = 512 + 4; /*( packet size plus header */
     uint32_t start_offs = write_offs;
     int block = 1;
 
-    struct netbuf *netbuf;
+    struct netbuf *netbuf = 0;
+    int retries = TFTP_TIMEOUT_RETRANSMITS;
 
     while(1)
     {
-        netconn_set_recvtimeout(nc, 10000);
+        if(peer_addr) {
+            netconn_disconnect(nc);
+        }
+
         err_t err = netconn_recv(nc, &netbuf);
+
+        if(peer_addr) {
+            if(netbuf) {
+                /* For TFTP server, the UDP connection is already established. But for client,
+                   we don't know what port the server is using until we see the first data
+                   packet - so we connect here.
+                */
+                netconn_connect(nc, netbuf_fromaddr(netbuf), netbuf_fromport(netbuf));
+                peer_addr = 0;
+            } else {
+                /* Otherwise, temporarily re-connect so we can send errors */
+                netconn_connect(nc, peer_addr, peer_port);
+            }
+        }
+
         if(err == ERR_TIMEOUT) {
+            if(retries-- > 0 && block > 1) {
+                /* Retransmit the last ACK, wait for repeat data block.
+
+                 This doesn't work for the first block, have to time out and start again. */
+                tftp_send_ack(nc, block-1);
+                continue;
+            }
             tftp_send_error(nc, TFTP_ERR_ILLEGAL, "Timeout");
             return ERR_TIMEOUT;
         }
@@ -224,6 +310,9 @@ static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t lim
                 return ERR_VAL;
             }
         }
+
+        /* Reset retry count if we got valid data */
+        retries = TFTP_TIMEOUT_RETRANSMITS;
 
         if(write_offs % SECTOR_SIZE == 0) {
             sdk_spi_flash_erase_sector(write_offs / SECTOR_SIZE);
@@ -281,7 +370,9 @@ static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t lim
                it so the client gets an indication if things were successful.
             */
             const char *err = "Unknown validation error";
-            if(!rboot_verify_image(start_offs, *received_len, &err)) {
+            uint32_t image_length;
+            if(!rboot_verify_image(start_offs, &image_length, &err)
+               || image_length != *received_len) {
                 tftp_send_error(nc, TFTP_ERR_ILLEGAL, err);
                 return ERR_VAL;
             }
@@ -291,6 +382,11 @@ static err_t tftp_receive_data(struct netconn *nc, size_t write_offs, size_t lim
         if(ack_err != ERR_OK) {
             printf("OTA TFTP failed to send ACK.\r\n");
             return ack_err;
+        }
+
+        // Make sure ack was successful before calling callback.
+        if(receive_cb) {
+            receive_cb(*received_len);
         }
 
         if(len < DATA_PACKET_SZ) {
@@ -324,4 +420,18 @@ static void tftp_send_error(struct netconn *nc, int err_code, const char *err_ms
     strcpy((char *)&err_buf[2], err_msg);
     netconn_send(nc, err);
     netbuf_delete(err);
+}
+
+static err_t tftp_send_rrq(struct netconn *nc, const char *filename)
+{
+    struct netbuf *rrqbuf = netbuf_new();
+    uint16_t *rrqdata = (uint16_t *)netbuf_alloc(rrqbuf, 4 + strlen(filename) + strlen(TFTP_OCTET_MODE));
+    rrqdata[0] = htons(TFTP_OP_RRQ);
+    char *rrq_filename = (char *)&rrqdata[1];
+    strcpy(rrq_filename, filename);
+    strcpy(rrq_filename + strlen(filename) + 1, TFTP_OCTET_MODE);
+
+    err_t err = netconn_send(nc, rrqbuf);
+    netbuf_delete(rrqbuf);
+    return err;
 }

@@ -50,7 +50,7 @@ def main():
         default=74880)
     parser.add_argument(
         '--reset-on-connect', '-r',
-        help='Reset ESP8266 (via DTR) on serial connect',
+        help='Reset ESP8266 (via DTR) on serial connect. (Linux resets even if not set, except when using NodeMCU-style auto-reset circuit.)',
         action='store_true')
 
     args = parser.parse_args()

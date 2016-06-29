@@ -4,6 +4,7 @@
 #include "espressif/esp_wifi.h"
 #include "espressif/spi_flash.h"
 #include "etstimer.h"
+#include "espressif/phy_info.h"
 #include "lwip/netif.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -224,7 +225,7 @@ void sdk_phy_enable_agc(void);
 void sdk_pm_attach(void);
 void sdk_pp_attach(void);
 void sdk_pp_soft_wdt_init(void);
-int sdk_register_chipv6_phy(uint8_t *);
+int sdk_register_chipv6_phy(sdk_phy_info_t *);
 void sdk_sleep_reset_analog_rtcreg_8266(void);
 uint32_t sdk_system_get_checksum(uint8_t *, uint32_t);
 void sdk_wDevEnableRx(void);

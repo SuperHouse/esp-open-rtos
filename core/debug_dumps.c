@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <FreeRTOS.h>
 #include <task.h>
+#include <malloc.h>
+#include <unistd.h>
 
 #include "debug_dumps.h"
 #include "common_macros.h"
@@ -19,12 +21,18 @@
 #include "esp/uart.h"
 #include "espressif/esp_common.h"
 #include "sdk_internal.h"
+#include "esplibs/libmain.h"
 
 /* Forward declarations */
 static void IRAM fatal_handler_prelude(void);
-/* Inner parts of crash handlers marked noinline to ensure they don't inline into IRAM. */
-static void __attribute__((noinline)) __attribute__((noreturn)) fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack);
+
+/* Inner parts of crash handlers */
+typedef void __attribute__((noreturn)) (*fatal_exception_handler_fn)(uint32_t *sp, bool registers_saved_on_stack);
+static void __attribute__((noreturn)) standard_fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack);
+static void __attribute__((noreturn)) second_fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack);
 static void __attribute__((noinline)) __attribute__((noreturn)) abort_handler_inner(uint32_t *caller, uint32_t *sp);
+
+static IRAM_DATA fatal_exception_handler_fn fatal_exception_handler_inner = standard_fatal_exception_handler_inner;
 
 /* fatal_exception_handler called from any unhandled user exception
  *
@@ -36,7 +44,8 @@ static void __attribute__((noinline)) __attribute__((noreturn)) abort_handler_in
  */
 void IRAM __attribute__((noreturn)) fatal_exception_handler(uint32_t *sp, bool registers_saved_on_stack) {
     fatal_handler_prelude();
-    fatal_exception_handler_inner(sp, registers_saved_on_stack);
+    fatal_exception_handler_fn inner_fn = fatal_exception_handler_inner;
+    inner_fn(sp, registers_saved_on_stack);
 }
 
 /* Abort implementation
@@ -130,6 +139,12 @@ void dump_registers_in_exception_handler(uint32_t *sp) {
     printf("SAR %08x\n", saved[0x13]);
 }
 
+static void __attribute__((noreturn)) post_crash_reset(void) {
+    uart_flush_txfifo(0);
+    uart_flush_txfifo(1);
+    sdk_system_restart_in_nmi();
+    while(1) {}
+}
 
 /* Prelude ensures exceptions/NMI off and flash is mapped, allowing
    calls to non-IRAM functions.
@@ -148,7 +163,10 @@ static void IRAM fatal_handler_prelude(void) {
 /* Main part of fatal exception handler, is run from flash to save
    some IRAM.
 */
-static void fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack) {
+static void standard_fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack) {
+    /* Replace the fatal exception handler 'inner' function so we
+       don't end up in a crash loop if this handler crashes. */
+    fatal_exception_handler_inner = second_fatal_exception_handler_inner;
     dump_excinfo();
     if (sp) {
         if (registers_saved_on_stack) {
@@ -156,10 +174,52 @@ static void fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_
         }
         dump_stack(sp);
     }
-    uart_flush_txfifo(0);
-    uart_flush_txfifo(1);
-    sdk_system_restart_in_nmi();
-    while(1) {}
+    dump_heapinfo();
+    post_crash_reset();
+}
+
+/* This is the exception handler that gets called if a crash occurs inside the standard handler,
+   so we don't end up in a crash loop. It doesn't rely on contents of stack or heap.
+*/
+static void second_fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_stack) {
+    dump_excinfo();
+    printf("Second fatal exception occured inside fatal exception handler. Can't continue.\n");
+    post_crash_reset();
+}
+
+void dump_heapinfo(void)
+{
+    extern char _heap_start;
+    extern uint32_t xPortSupervisorStackPointer;
+    struct mallinfo mi = mallinfo();
+    uint32_t brk_val = (uint32_t) sbrk(0);
+    uint32_t sp = xPortSupervisorStackPointer;
+    if(sp == 0) {
+        SP(sp);
+    }
+
+    /* Total free heap is all memory that could be allocated via
+       malloc (assuming fragmentation doesn't become a problem) */
+    printf("\nFree Heap: %d\n", sp - brk_val + mi.fordblks);
+
+    /* delta between brk & supervisor sp is the contiguous memory
+       region that is available to be put into heap space via
+       brk(). */
+    printf("_heap_start %p brk 0x%08x supervisor sp 0x%08x sp-brk %d bytes\n",
+           &_heap_start, brk_val, sp, sp-brk_val);
+
+    /* arena/fordblks/uordblks determines the amount of free space
+      inside the heap region already added via brk(). May be
+      fragmented.
+
+       The values in parentheses are the values used internally by
+       nano-mallocr.c, the field names outside parentheses are the
+       POSIX compliant field names of the mallinfo structure.
+
+       "arena" should be equal to brk-_heap_start ie total size available.
+     */
+    printf("arena (total_size) %d fordblks (free_size) %d uordblocks (used_size) %d\n",
+           mi.arena, mi.fordblks, mi.uordblks);
 }
 
 /* Main part of abort handler, can be run from flash to save some
@@ -168,8 +228,6 @@ static void fatal_exception_handler_inner(uint32_t *sp, bool registers_saved_on_
 static void abort_handler_inner(uint32_t *caller, uint32_t *sp) {
     printf("abort() invoked at %p.\n", caller);
     dump_stack(sp);
-    uart_flush_txfifo(0);
-    uart_flush_txfifo(1);
-    sdk_system_restart_in_nmi();
-    while(1) {}
+    dump_heapinfo();
+    post_crash_reset();
 }

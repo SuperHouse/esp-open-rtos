@@ -20,156 +20,10 @@
 # assume the 'root' directory (ie top of the tree) is the directory common.mk is in
 ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 
-# include optional local overrides at the root level, then in program directory
-#
-# Create either of these files for local system overrides if possible,
-# instead of editing this makefile directly.
--include $(ROOT)local.mk
--include local.mk
-
-# Flash size in megabits
-# Valid values are same as for esptool.py - 2,4,8,16,32
-FLASH_SIZE ?= 16
-
-# Flash mode, valid values are same as for esptool.py - qio,qout,dio.dout
-FLASH_MODE ?= qio
-
-# Flash speed in MHz, valid values are same as for esptool.py - 80, 40, 26, 20
-FLASH_SPEED ?= 40
-
-# Output directories to store intermediate compiled files
-# relative to the program directory
-BUILD_DIR ?= $(PROGRAM_DIR)build/
-FIRMWARE_DIR ?= $(PROGRAM_DIR)firmware/
-
-# esptool.py from https://github.com/themadinventor/esptool
-ESPTOOL ?= esptool.py
-# serial port settings for esptool.py
-ESPPORT ?= /dev/ttyUSB0
-ESPBAUD ?= 115200
-
-# set this to 0 if you don't need floating point support in printf/scanf
-# this will save approx 14.5KB flash space and 448 bytes of statically allocated
-# data RAM
-#
-# NB: Setting the value to 0 requires a recent esptool.py (Feb 2016 / commit ebf02c9)
-PRINTF_SCANF_FLOAT_SUPPORT ?= 1
-
-# Set OTA to 1 to build an image that supports rBoot OTA bootloader
-#
-# Currently only works with 16mbit or more flash sizes, with 8mbit
-# images for each "slot"
-OTA ?= 0
-
-ifeq ($(OTA),1)
-# for OTA, we build a "SDK v1.2 bootloader" compatible image where everything is in
-# one file (should work with the v1.2 binary bootloader, and the FOSS rBoot bootloader).
-IMGTOOL ?= esptool2
-
-# Tell C preprocessor that we're building for OTA
-CPPFLAGS = -DOTA
-endif
-
-FLAVOR ?= release # or debug
-
-# Compiler names, etc. assume gdb
-CROSS ?= xtensa-lx106-elf-
-
-# Path to the filteroutput.py tool
-FILTEROUTPUT ?= $(ROOT)/utils/filteroutput.py
-
-AR = $(CROSS)ar
-CC = $(CROSS)gcc
-CPP = $(CROSS)cpp
-LD = $(CROSS)gcc
-NM = $(CROSS)nm
-C++ = $(CROSS)g++
-SIZE = $(CROSS)size
-OBJCOPY = $(CROSS)objcopy
-OBJDUMP = $(CROSS)objdump
-
-# Source components to compile and link. Each of these are subdirectories
-# of the root, with a 'component.mk' file.
-COMPONENTS     ?= $(EXTRA_COMPONENTS) FreeRTOS lwip core open_esplibs
-
-# binary esp-iot-rtos SDK libraries to link. These are pre-processed prior to linking.
-SDK_LIBS		?= main net80211 phy pp wpa
-
-# open source libraries linked in
-LIBS ?= hal gcc c
-
-# set to 0 if you want to use the toolchain libc instead of esp-open-rtos newlib
-OWN_LIBC ?= 1
-
-# Note: you will need a recent esp
-ENTRY_SYMBOL ?= call_user_start
-
-# Set this to zero if you don't want individual function & data sections
-# (some code may be slightly slower, linking will be slighty slower,
-# but compiled code size will come down a small amount.)
-SPLIT_SECTIONS ?= 1
-
-# Set this to 1 to have all compiler warnings treated as errors (and stop the
-# build).  This is recommended whenever you are working on code which will be
-# submitted back to the main project, as all submitted code will be expected to
-# compile without warnings to be accepted.
-WARNINGS_AS_ERRORS ?= 0
-
-# Common flags for both C & C++_
-C_CXX_FLAGS ?= -Wall -Wl,-EL -nostdlib $(EXTRA_C_CXX_FLAGS)
-# Flags for C only
-CFLAGS		?= $(C_CXX_FLAGS) -std=gnu99 $(EXTRA_CFLAGS)
-# Flags for C++ only
-CXXFLAGS	?= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti $(EXTRA_CXXFLAGS)
-
-# these aren't technically preprocesor args, but used by all 3 of C, C++, assembler
-CPPFLAGS	+= -mlongcalls -mtext-section-literals
-
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -L$(BUILD_DIR)sdklib -L$(ROOT)lib -u $(ENTRY_SYMBOL) -Wl,-static -Wl,-Map=$(BUILD_DIR)$(PROGRAM).map $(EXTRA_LDFLAGS)
-
-ifeq ($(WARNINGS_AS_ERRORS),1)
-    C_CXX_FLAGS += -Werror
-endif
-
-ifeq ($(SPLIT_SECTIONS),1)
-  C_CXX_FLAGS += -ffunction-sections -fdata-sections
-  LDFLAGS += -Wl,-gc-sections
-endif
-
-ifeq ($(FLAVOR),debug)
-    C_CXX_FLAGS += -g -O0
-    LDFLAGS += -g -O0
-else ifeq ($(FLAVOR),sdklike)
-    # These are flags intended to produce object code as similar as possible to
-    # the output of the compiler used to build the SDK libs (for comparison of
-    # disassemblies when coding replacement routines).  It is not normally
-    # intended to be used otherwise.
-    CFLAGS += -O2 -Os -fno-inline -fno-ipa-cp -fno-toplevel-reorder -fno-caller-saves -fconserve-stack
-    LDFLAGS += -O2
-else
-    C_CXX_FLAGS += -g -O2
-    LDFLAGS += -g -O2
-endif
-
-GITSHORTREV=\"$(shell cd $(ROOT); git rev-parse --short -q HEAD 2> /dev/null)\"
-ifeq ($(GITSHORTREV),\"\")
-  GITSHORTREV="\"(nogit)\"" # (same length as a short git hash)
-endif
-CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV)
-
-ifeq ($(OTA),0)
-LINKER_SCRIPTS  = $(ROOT)ld/nonota.ld
-else
-LINKER_SCRIPTS = $(ROOT)ld/ota.ld
-endif
-LINKER_SCRIPTS += $(ROOT)ld/common.ld $(ROOT)ld/rom.ld
-
-####
-#### no user configurable options below here
-####
+include $(ROOT)parameters.mk
 
 ifndef PROGRAM
-	$(error "Set the PROGRAM environment variable in your Makefile before including common.mk"
+$(error "Set the PROGRAM environment variable in your Makefile before including common.mk")
 endif
 
 # hacky way to get a single space value
@@ -188,28 +42,7 @@ LIB_ARGS      = $(addprefix -l,$(LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
 LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS))
 
-ifeq ($(OTA),0)
-# for non-OTA, we create two different files for uploading into the flash
-# these are the names and options to generate them
-FW_ADDR_1	= 0x00000
-FW_ADDR_2	= 0x20000
-FW_FILE_1    = $(addprefix $(FIRMWARE_DIR),$(FW_ADDR_1).bin)
-FW_FILE_2    = $(addprefix $(FIRMWARE_DIR),$(FW_ADDR_2).bin)
-else
-# for OTA, it's a single monolithic image
 FW_FILE = $(addprefix $(FIRMWARE_DIR),$(PROGRAM).bin)
-endif
-
-# firmware tool arguments
-ESPTOOL_ARGS=-fs $(FLASH_SIZE)m -fm $(FLASH_MODE) -ff $(FLASH_SPEED)m
-
-IMGTOOL_FLASH_SIZE_2=256
-IMGTOOL_FLASH_SIZE_4=512
-IMGTOOL_FLASH_SIZE_8=1024
-IMGTOOL_FLASH_SIZE_16=2048
-IMGTOOL_FLASH_SIZE_32=4096
-IMGTOOL_FLASH_SIZE=$(value IMGTOOL_FLASH_SIZE_$(FLASH_SIZE))
-IMGTOOL_ARGS=-$(IMGTOOL_FLASH_SIZE) -$(FLASH_MODE) -$(FLASH_SPEED)
 
 # Common include directories, shared across all "components"
 # components will add their include directories to this argument
@@ -235,7 +68,7 @@ Q := @
 vecho := @echo
 endif
 
-.PHONY: all clean debug_print
+.PHONY: all clean flash erase_flash
 
 all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 
@@ -373,16 +206,14 @@ $(FW_FILE_1) $(FW_FILE_2): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(Q) $(ESPTOOL) elf2image $(ESPTOOL_ARGS) $< -o $(FIRMWARE_DIR)
 
 $(FW_FILE): $(PROGRAM_OUT) $(FIRMWARE_DIR)
-	$(Q) $(IMGTOOL) $(IMGTOOL_ARGS) -bin -boot2 $(PROGRAM_OUT) $(FW_FILE) .text .data .rodata
+	$(vecho) "FW $@"
+	$(Q) $(ESPTOOL) elf2image --version=2 $(ESPTOOL_ARGS) $< -o $(FW_FILE)
 
-ifeq ($(OTA),0)
-flash: $(FW_FILE_1) $(FW_FILE_2)
-	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) $(FW_ADDR_2) $(FW_FILE_2) $(FW_ADDR_1) $(FW_FILE_1)
-else
 flash: $(FW_FILE)
-	$(vecho) "Flashing OTA image slot 0 (bootloader not updated)"
-	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) 0x2000 $(FW_FILE)
-endif
+	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) 0x0 $(RBOOT_BIN) 0x1000 $(RBOOT_CONF) 0x2000 $(FW_FILE)
+
+erase_flash:
+	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) erase_flash
 
 size: $(PROGRAM_OUT)
 	$(Q) $(CROSS)size --format=sysv $(PROGRAM_OUT)
