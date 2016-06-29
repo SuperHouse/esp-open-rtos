@@ -379,6 +379,10 @@ static __attribute__((noinline)) void user_start_phase2(void) {
 
     init_networking(&phy_info, sdk_info.sta_mac_addr);
 
+    // Set intial CPU clock speed to 160MHz if necessary
+    _Static_assert(configCPU_CLOCK_HZ == 80000000 || configCPU_CLOCK_HZ == 160000000, "FreeRTOSConfig must define initial clock speed as either 80MHz or 160MHz");
+    sdk_system_update_cpu_freq(configCPU_CLOCK_HZ / 1000000);
+
     // Call gcc constructor functions
     void (**ctor)(void);
     for ( ctor = &__init_array_start; ctor != &__init_array_end; ++ctor) {
