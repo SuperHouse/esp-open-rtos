@@ -1,3 +1,4 @@
+#include "sdk_internal.h"
 #ifndef _ESPLIBS_LIBMAIN_H
 #define _ESPLIBS_LIBMAIN_H
 
@@ -5,6 +6,9 @@
 
 // misc.c
 int sdk_os_get_cpu_frequency(void);
+
+/* Don't call this function from user code, it doesn't change the CPU
+ * speed. Call sdk_system_update_cpu_freq() instead. */
 void sdk_os_update_cpu_frequency(int freq);
 
 // user_interface.c
