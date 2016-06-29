@@ -21,6 +21,7 @@
 #include "esp/spi_regs.h"
 #include "esp/dport_regs.h"
 #include "esp/wdev_regs.h"
+#include "esp/hwrand.h"
 #include "os_version.h"
 
 #include "espressif/esp_common.h"
@@ -377,6 +378,8 @@ static __attribute__((noinline)) void user_start_phase2(void) {
     uart_flush_txfifo(1);
 
     init_networking(&phy_info, sdk_info.sta_mac_addr);
+
+    srand(hwrand()); /* seed libc rng */
 
     // Call gcc constructor functions
     void (**ctor)(void);
