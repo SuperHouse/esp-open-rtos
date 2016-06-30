@@ -9,6 +9,7 @@
 #include "spiffs.h"
 #include <espressif/spi_flash.h>
 #include <stdbool.h>
+#include <esp/uart.h>
 
 spiffs fs;
 
@@ -184,4 +185,54 @@ void esp_spiffs_unmount()
     work_buf = 0;
     fds_buf = 0;
     cache_buf = 0;
+}
+
+/* syscall implementation for stdio write to UART */
+long _write_r(struct _reent *r, int fd, const char *ptr, int len )
+{
+    if(fd != r->_stdout->_file) {
+        return SPIFFS_write(&fs, (spiffs_file)fd, (char*)ptr, len);
+    }
+    for(int i = 0; i < len; i++) {
+        /* Auto convert CR to CRLF, ignore other LFs (compatible with Espressif SDK behaviour) */
+        if(ptr[i] == '\r')
+            continue;
+        if(ptr[i] == '\n')
+            uart_putc(0, '\r');
+        uart_putc(0, ptr[i]);
+    }
+    return len;
+}
+
+/* syscall implementation for stdio read from UART */
+long _read_r( struct _reent *r, int fd, char *ptr, int len )
+{
+    int ch, i;
+
+    if(fd != r->_stdin->_file) {
+        return SPIFFS_read(&fs, (spiffs_file)fd, ptr, len);
+    }
+    uart_rxfifo_wait(0, 1);
+    for(i = 0; i < len; i++) {
+        ch = uart_getc_nowait(0);
+        if (ch < 0) break;
+        ptr[i] = ch;
+    }
+    return i;
+}
+
+/* syscall implementation for stdio write to UART */
+int _open_r(struct _reent *r, const char *pathname, int flags, int mode)
+{
+    return SPIFFS_open(&fs, pathname, flags, mode);
+}
+
+int _close_r(struct _reent *r, int fd)
+{
+    return SPIFFS_close(&fs, (spiffs_file)fd);
+}
+
+int _unlink_r(struct _reent *r, const char *path)
+{
+    return SPIFFS_remove(&fs, path);
 }
