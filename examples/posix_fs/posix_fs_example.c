@@ -25,7 +25,7 @@ void test_task(void *pvParameters)
     while (1) {
         vTaskDelay(5000 / portTICK_RATE_MS);
 
-        if (fs_test_run(10000)) {
+        if (fs_test_run(1000)) {
             printf("PASS\n");
         } else {
             printf("FAIL\n");

@@ -10,6 +10,7 @@
 #include <espressif/spi_flash.h>
 #include <stdbool.h>
 #include <esp/uart.h>
+#include <fcntl.h>
 
 spiffs fs;
 
@@ -187,11 +188,15 @@ void esp_spiffs_unmount()
     cache_buf = 0;
 }
 
-/* syscall implementation for stdio write to UART */
+#define FD_OFFSET 3
+
+// This implementation replaces implementation in core/newlib_syscals.c
 long _write_r(struct _reent *r, int fd, const char *ptr, int len )
 {
     if(fd != r->_stdout->_file) {
-        return SPIFFS_write(&fs, (spiffs_file)fd, (char*)ptr, len);
+        long ret = SPIFFS_write(&fs, (spiffs_file)(fd - FD_OFFSET), 
+                (char*)ptr, len);
+        return ret;
     }
     for(int i = 0; i < len; i++) {
         /* Auto convert CR to CRLF, ignore other LFs (compatible with Espressif SDK behaviour) */
@@ -204,13 +209,14 @@ long _write_r(struct _reent *r, int fd, const char *ptr, int len )
     return len;
 }
 
-/* syscall implementation for stdio read from UART */
+// This implementation replaces implementation in core/newlib_syscals.c
 long _read_r( struct _reent *r, int fd, char *ptr, int len )
 {
     int ch, i;
 
     if(fd != r->_stdin->_file) {
-        return SPIFFS_read(&fs, (spiffs_file)fd, ptr, len);
+        long ret = SPIFFS_read(&fs, (spiffs_file)(fd - FD_OFFSET), ptr, len);
+        return ret;
     }
     uart_rxfifo_wait(0, 1);
     for(i = 0; i < len; i++) {
@@ -221,15 +227,26 @@ long _read_r( struct _reent *r, int fd, char *ptr, int len )
     return i;
 }
 
-/* syscall implementation for stdio write to UART */
 int _open_r(struct _reent *r, const char *pathname, int flags, int mode)
 {
-    return SPIFFS_open(&fs, pathname, flags, mode);
+    uint32_t spiffs_flags = SPIFFS_RDONLY;
+
+    if (flags & O_CREAT)    spiffs_flags |= SPIFFS_CREAT;
+    if (flags & O_APPEND)   spiffs_flags |= SPIFFS_APPEND;
+    if (flags & O_TRUNC)    spiffs_flags |= SPIFFS_TRUNC;
+    if (flags & O_RDONLY)   spiffs_flags |= SPIFFS_RDONLY;
+    if (flags & O_WRONLY)   spiffs_flags |= SPIFFS_WRONLY;
+
+    int ret = SPIFFS_open(&fs, pathname, spiffs_flags, mode);
+    if (ret > 0) {
+        return ret + FD_OFFSET;
+    }
+    return ret;
 }
 
 int _close_r(struct _reent *r, int fd)
 {
-    return SPIFFS_close(&fs, (spiffs_file)fd);
+    return SPIFFS_close(&fs, (spiffs_file)(fd - FD_OFFSET));
 }
 
 int _unlink_r(struct _reent *r, const char *path)
