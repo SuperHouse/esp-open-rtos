@@ -57,7 +57,9 @@ void sntp_initialize(const struct timezone *tz) {
     // To avoid div by 0 exceptions if requesting time before SNTP config
     cal = 1;
     tim_ref = TIMER_COUNT;
-    vSemaphoreCreateBinary(sntp_sem);
+    sntp_sem = xSemaphoreCreateMutex();
+    if (sntp_sem == NULL)
+        printf("sntp: mutex creation failed\n");
     sntp_init();
 }
 
