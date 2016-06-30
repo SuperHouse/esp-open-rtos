@@ -1,3 +1,8 @@
+/* Recreated Espressif libmain user_interface.o contents.
+
+   Copyright (C) 2015 Espressif Systems. Derived from MIT Licensed SDK libraries.
+   BSD Licensed as described in the file LICENSE
+*/
 #include "open_esplibs.h"
 #if OPEN_LIBMAIN_USER_INTERFACE
 // The contents of this file are only built if OPEN_LIBMAIN_USER_INTERFACE is set to true

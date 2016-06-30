@@ -1,3 +1,11 @@
+/* Internal function declarations for Espressif SDK libmain functions.
+
+   These are internal-facing declarations, it is not recommended to include these headers in your program.
+   (look at the headers in include/espressif/ instead and use these whenever possible.)
+
+   Copyright (C) 2015 Espressif Systems. Derived from MIT Licensed SDK libraries.
+   BSD Licensed as described in the file LICENSE.
+*/
 #include "sdk_internal.h"
 #ifndef _ESPLIBS_LIBMAIN_H
 #define _ESPLIBS_LIBMAIN_H
