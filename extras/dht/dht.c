@@ -64,13 +64,14 @@ static bool dht_await_pin_state(uint8_t pin, uint32_t timeout,
         bool expected_pin_state, uint32_t *duration)
 {
     for (uint32_t i = 0; i < timeout; i += DHT_TIMER_INTERVAL) {
+        // need to wait at least a single interval to prevent reading a jitter
+        sdk_os_delay_us(DHT_TIMER_INTERVAL);
         if (gpio_read(pin) == expected_pin_state) {
             if (duration) {
                 *duration = i;
             }
             return true;
         }
-        sdk_os_delay_us(DHT_TIMER_INTERVAL);
     }
 
     return false;
@@ -135,7 +136,7 @@ static inline int16_t dht_convert_data(uint8_t msb, uint8_t lsb)
     data = msb & 0x7F;
     data <<= 8;
     data |= lsb;
-    if (msb & BIT(15)) {
+    if (msb & BIT(7)) {
         data = 0 - data;       // convert it to negative
     }
 #elif DHT_TYPE == DHT11
@@ -169,7 +170,7 @@ bool dht_read_data(uint8_t pin, int16_t *humidity, int16_t *temperature)
         data[i/8] |= bits[i];
     }
 
-    if (data[4] != (data[0] + data[1] + data[2] + data[3])) {
+    if (data[4] != ((data[0] + data[1] + data[2] + data[3]) & 0xFF)) {
         debug("Checksum failed, invalid data received from sensor\n");
         return false;
     }

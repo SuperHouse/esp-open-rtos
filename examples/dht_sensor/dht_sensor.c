@@ -15,7 +15,7 @@
  * to read and print a new temperature and humidity measurement
  * from a sensor attached to GPIO pin 4.
  */
-uint8_t const dht_gpio = 12;
+uint8_t const dht_gpio = 4;
 
 void dhtMeasurementTask(void *pvParameters)
 {
@@ -29,9 +29,9 @@ void dhtMeasurementTask(void *pvParameters)
 
     while(1) {
         if (dht_read_data(dht_gpio, &humidity, &temperature)) {
-            printf("Humidity: %d.%d%% Temp: %d.%dC\n", 
-                    humidity / 10, humidity % 10, 
-                    temperature / 10, abs(temperature) % 10);
+            printf("Humidity: %d%% Temp: %dC\n", 
+                    humidity / 10, 
+                    temperature / 10);
         } else {
             printf("Could not read data from sensor\n");
         }
