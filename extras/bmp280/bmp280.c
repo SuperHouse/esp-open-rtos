@@ -163,6 +163,10 @@ bool bmp280_init(bmp280_params_t *params, uint8_t scl_pin, uint8_t sda_pin)
     uint8_t oversampling_temp =
         (params->oversampling == BMP280_ULTRA_HIGH_RES) ? 2 : 1;
 
+    if (params->mode == BMP280_MODE_FORCED) {
+        params->mode = BMP280_MODE_SLEEP;  // initial mode for forced is sleep
+    }
+
     uint8_t ctrl = (oversampling_temp << 5) | (params->oversampling << 2)
         | (params->mode);
 
@@ -176,7 +180,25 @@ bool bmp280_init(bmp280_params_t *params, uint8_t scl_pin, uint8_t sda_pin)
 
 bool bmp280_force_measurement()
 {
-    // TODO: implement
+    uint8_t ctrl = read_register8(BMP280_REG_CTRL);
+    ctrl &= ~0b11;  // clear two lower bits
+    ctrl |= BMP280_MODE_FORCED;
+    debug("Writing ctrl reg=%x", ctrl);
+    if (!write_register8(BMP280_REG_CTRL, ctrl)) {
+        debug("Failed starting forced mode");
+        return false;
+    }
+    return true;
+}
+
+bool bmp280_is_measuring()
+{
+    uint8_t status = read_register8(BMP280_REG_STATUS);
+    if (status & (1<<3)) {
+        debug("Status: measuring");
+        return true;
+    }
+    debug("Status: idle");
     return false;
 }
 
@@ -253,5 +275,14 @@ bool bmp280_read(float *temperature, float *pressure)
     *temperature = compensate_temperature(raw_temp, &fine_temp);
     *pressure = compensate_pressure(raw_pressure, fine_temp);
 
+    return true;
+}
+
+bool bmp280_soft_reset()
+{
+    if (!write_register8(BMP280_REG_RESET, BMP280_RESET_VALUE)) {
+        debug("Failed resetting sensor");
+        return false;
+    }
     return true;
 }

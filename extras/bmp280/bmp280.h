@@ -30,7 +30,7 @@
 /**
  * Uncomment to enable debug output.
  */
-#define BMP280_DEBUG
+// #define BMP280_DEBUG
 
 /**
  * BMP280 address is 0x77 if SDO pin is high,
@@ -44,6 +44,7 @@
  * Normal - Continues measurement.
  */
 typedef enum {
+    BMP280_MODE_SLEEP = 0,
     BMP280_MODE_FORCED = 1,
     BMP280_MODE_NORMAL = 3
 } BMP280_Mode;
@@ -95,7 +96,11 @@ typedef struct {
 
 /**
  * Initialize default parameters.
- * Default configuration is NORMAL mode.
+ * Default configuration:
+ *      mode: NORAML
+ *      filter: OFF
+ *      oversampling: x4
+ *      standby time: 250ms
  */
 void bmp280_init_default_params(bmp280_params_t *params);
 
@@ -112,8 +117,21 @@ bool bmp280_init(bmp280_params_t *params, uint8_t scl_pin, uint8_t sda_pin);
 bool bmp280_force_measurement();
 
 /**
+ * Check if BMP280 is busy with measuring temperature/pressure.
+ * Return true if BMP280 is busy.
+ */
+bool bmp280_is_measuring();
+
+/**
  * Read compensated temperature and pressure data.
+ * Temperature in degrees Celsius.
+ * Pressure in Pascals.
  */
 bool bmp280_read(float *temperature, float *pressure);
+
+/**
+ * Restart BMP280 module.
+ */
+bool bmp280_soft_reset();
 
 #endif  // __BMP280_H__
