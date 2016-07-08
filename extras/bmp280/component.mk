@@ -1,4 +1,4 @@
-# Component makefile for extras/bmp1280
+# Component makefile for extras/bmp280
 
 # expected anyone using bmp driver includes it as 'bmp280/bmp280.h'
 INC_DIRS += $(bmp280_ROOT)..
