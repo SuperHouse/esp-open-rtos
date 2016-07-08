@@ -57,12 +57,14 @@ bmp280_init_default_params(&params);
 params.mode = BMP280_MODE_FORCED;
 bmp280_init(&params, scl_pin, sda_pin);
 
-bmp280_force_measurement();
+while (1) {
+    bmp280_force_measurement();
+    while (bmp280_is_measuring()) {}; // wait for measurement to complete
 
-while (bmp280_is_measuring()) {}; // wait for measurement to complete
-
-bmp280_read(&temperature, &pressure);
-printf("Pressure: %.2f Pa, Temperature: %.2f C\n", pressure, temperature);
+    bmp280_read(&temperature, &pressure);
+    printf("Pressure: %.2f Pa, Temperature: %.2f C\n", pressure, temperature);
+    vTaskDelay(1000 / portTICK_RATE_MS);
+}
 ```
 
 ### Normal mode
@@ -74,12 +76,15 @@ float pressure, temperature;
 bmp280_init_default_params(&params);
 bmp280_init(&params, scl_pin, sda_pin);
 
-bmp280_read(&temperature, &pressure);
-printf("Pressure: %.2f Pa, Temperature: %.2f C\n", pressure, temperature);
-
+while (1) {
+    bmp280_read(&temperature, &pressure);
+    printf("Pressure: %.2f Pa, Temperature: %.2f C\n", pressure, temperature);
+    vTaskDelay(1000 / portTICK_RATE_MS);
+}
 ```
 
 ## License
 
 The driver is released under MIT license.
+
 Copyright (c) 2016 sheinz (https://github.com/sheinz)
