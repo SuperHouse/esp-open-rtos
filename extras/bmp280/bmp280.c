@@ -48,7 +48,7 @@
 #define BMP280_REG_STATUS      0xF3 /* bits: 3 measuring; 0 im_update */
 #define BMP280_REG_RESET       0xE0
 #define BMP280_REG_ID          0xD0
-#define BMP280_REG_CALLIB      0x88
+#define BMP280_REG_CALIB       0x88
 
 
 #define BMP280_CHIP_ID         0x58 /* BMP280 has chip-id 0x58 */
@@ -67,9 +67,9 @@ typedef struct __attribute__((packed)) {
     int16_t  dig_P7;
     int16_t  dig_P8;
     int16_t  dig_P9;
-} BMP280_Callib;
+} BMP280_Calib;
 
-static BMP280_Callib callib_data;
+static BMP280_Calib calib_data;
 
 void bmp280_init_default_params(bmp280_params_t *params)
 {
@@ -111,25 +111,25 @@ static bool check_chip_id()
     return (read_register8(BMP280_REG_ID)==BMP280_CHIP_ID);
 }
 
-static bool read_callibration_data()
+static bool read_calibration_data()
 {
-    if (!i2c_slave_read(BMP280_ADDRESS, BMP280_REG_CALLIB,
-                (uint8_t*)&callib_data, sizeof(callib_data))) {
+    if (!i2c_slave_read(BMP280_ADDRESS, BMP280_REG_CALIB,
+                (uint8_t*)&calib_data, sizeof(calib_data))) {
         return false;
     }
     debug("Calibration data received:");
-    debug("dig_T1=%d", callib_data.dig_T1);
-    debug("dig_T2=%d", callib_data.dig_T2);
-    debug("dig_T3=%d", callib_data.dig_T3);
-    debug("dig_P1=%d", callib_data.dig_P1);
-    debug("dig_P2=%d", callib_data.dig_P2);
-    debug("dig_P3=%d", callib_data.dig_P3);
-    debug("dig_P4=%d", callib_data.dig_P4);
-    debug("dig_P5=%d", callib_data.dig_P5);
-    debug("dig_P6=%d", callib_data.dig_P6);
-    debug("dig_P7=%d", callib_data.dig_P7);
-    debug("dig_P8=%d", callib_data.dig_P8);
-    debug("dig_P9=%d", callib_data.dig_P9);
+    debug("dig_T1=%d", calib_data.dig_T1);
+    debug("dig_T2=%d", calib_data.dig_T2);
+    debug("dig_T3=%d", calib_data.dig_T3);
+    debug("dig_P1=%d", calib_data.dig_P1);
+    debug("dig_P2=%d", calib_data.dig_P2);
+    debug("dig_P3=%d", calib_data.dig_P3);
+    debug("dig_P4=%d", calib_data.dig_P4);
+    debug("dig_P5=%d", calib_data.dig_P5);
+    debug("dig_P6=%d", calib_data.dig_P6);
+    debug("dig_P7=%d", calib_data.dig_P7);
+    debug("dig_P8=%d", calib_data.dig_P8);
+    debug("dig_P9=%d", calib_data.dig_P9);
     return true;
 }
 
@@ -148,7 +148,7 @@ bool bmp280_init(bmp280_params_t *params, uint8_t scl_pin, uint8_t sda_pin)
         return false;
     }
 
-    if (!read_callibration_data()) {
+    if (!read_calibration_data()) {
         debug("Failed to read calibration data");
         return false;
     }
@@ -211,12 +211,12 @@ static inline float compensate_temperature(int32_t raw_temp, int32_t *fine_temp)
 {
     int32_t var1, var2, T;
 
-    var1 = ((((raw_temp>>3) - ((int32_t)callib_data.dig_T1<<1)))
-            * ((int32_t)callib_data.dig_T2)) >> 11;
+    var1 = ((((raw_temp>>3) - ((int32_t)calib_data.dig_T1<<1)))
+            * ((int32_t)calib_data.dig_T2)) >> 11;
 
-    var2 = (((((raw_temp>>4) - ((int32_t)callib_data.dig_T1))
-                    * ((raw_temp>>4) - ((int32_t)callib_data.dig_T1))) >> 12)
-            * ((int32_t)callib_data.dig_T3)) >> 14;
+    var2 = (((((raw_temp>>4) - ((int32_t)calib_data.dig_T1))
+                    * ((raw_temp>>4) - ((int32_t)calib_data.dig_T1))) >> 12)
+            * ((int32_t)calib_data.dig_T3)) >> 14;
 
     *fine_temp = var1 + var2;
     T = (*fine_temp * 5 + 128) >> 8;
@@ -233,12 +233,12 @@ static inline float compensate_pressure(int32_t raw_press, int32_t fine_temp)
     int64_t var1, var2, p;
 
     var1 = ((int64_t)fine_temp) - 128000;
-    var2 = var1 * var1 * (int64_t)callib_data.dig_P6;
-    var2 = var2 + ((var1*(int64_t)callib_data.dig_P5)<<17);
-    var2 = var2 + (((int64_t)callib_data.dig_P4)<<35);
-    var1 = ((var1 * var1 * (int64_t)callib_data.dig_P3)>>8) +
-        ((var1 * (int64_t)callib_data.dig_P2)<<12);
-    var1 = (((((int64_t)1)<<47)+var1))*((int64_t)callib_data.dig_P1)>>33;
+    var2 = var1 * var1 * (int64_t)calib_data.dig_P6;
+    var2 = var2 + ((var1*(int64_t)calib_data.dig_P5)<<17);
+    var2 = var2 + (((int64_t)calib_data.dig_P4)<<35);
+    var1 = ((var1 * var1 * (int64_t)calib_data.dig_P3)>>8) +
+        ((var1 * (int64_t)calib_data.dig_P2)<<12);
+    var1 = (((((int64_t)1)<<47)+var1))*((int64_t)calib_data.dig_P1)>>33;
 
     if (var1 == 0) {
         return 0;  // avoid exception caused by division by zero
@@ -246,10 +246,10 @@ static inline float compensate_pressure(int32_t raw_press, int32_t fine_temp)
 
     p = 1048576 - raw_press;
     p = (((p<<31) - var2)*3125) / var1;
-    var1 = (((int64_t)callib_data.dig_P9) * (p>>13) * (p>>13)) >> 25;
-    var2 = (((int64_t)callib_data.dig_P8) * p) >> 19;
+    var1 = (((int64_t)calib_data.dig_P9) * (p>>13) * (p>>13)) >> 25;
+    var2 = (((int64_t)calib_data.dig_P8) * p) >> 19;
 
-    p = ((p + var1 + var2) >> 8) + (((int64_t)callib_data.dig_P7)<<4);
+    p = ((p + var1 + var2) >> 8) + (((int64_t)calib_data.dig_P7)<<4);
     return (float)p/256;
 }
 
