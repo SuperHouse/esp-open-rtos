@@ -14,4 +14,37 @@ spiffs_CFLAGS = $(CFLAGS)
 spiffs_CFLAGS += -DSPIFFS_BASE_ADDR=$(SPIFFS_BASE_ADDR)
 spiffs_CFLAGS += -DSPIFFS_SIZE=$(SPIFFS_SIZE)
 
+
+# Create an SPIFFS image of specified directory and flash it with
+# the rest of the firmware.
+#
+# Argumens:
+#   $(1) - directory with files which go into spiffs image
+# 
+# Example:
+#  $(eval $(call make_spiffs_image,files))
+define make_spiffs_image
+SPIFFS_IMAGE = $(addprefix $(FIRMWARE_DIR),spiffs.bin)
+MKSPIFFS_DIR = $(ROOT)/extras/spiffs/mkspiffs
+MKSPIFFS = $$(MKSPIFFS_DIR)/mkspiffs
+
+all: $$(SPIFFS_IMAGE)
+
+clean: clean_spiffs_img clean_mkspiffs
+
+$$(SPIFFS_IMAGE): $$(MKSPIFFS) $(1)
+	$$< $(1) $$@
+
+$$(MKSPIFFS):
+	$$(MAKE) -C $$(MKSPIFFS_DIR) SPIFFS_SIZE=$(SPIFFS_SIZE)
+
+clean_spiffs_img:
+	$$(Q) rm -f spiffs.img
+
+clean_mkspiffs:
+	$$(Q) $$(MAKE) -C $$(MKSPIFFS_DIR) clean
+
+SPIFFS_ESPTOOL_ARGS = $(SPIFFS_BASE_ADDR) $$(SPIFFS_IMAGE)
+endef
+
 $(eval $(call component_compile_rules,spiffs))
