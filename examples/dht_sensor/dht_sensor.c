@@ -2,6 +2,8 @@
  *
  * This sample code is in the public domain.
  */
+#include <stdio.h>
+#include <stdlib.h>
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 #include "FreeRTOS.h"
@@ -13,29 +15,30 @@
  * to read and print a new temperature and humidity measurement
  * from a sensor attached to GPIO pin 4.
  */
-int const dht_gpio = 4;
+uint8_t const dht_gpio = 4;
 
 void dhtMeasurementTask(void *pvParameters)
 {
-  int8_t temperature = 0;
-  int8_t humidity = 0;
+    int16_t temperature = 0;
+    int16_t humidity = 0;
 
-  // DHT sensors that come mounted on a PCB generally have
-  // pull-up resistors on the data pin.  It is recommended
-  // to provide an external pull-up resistor otherwise...
-  gpio_set_pullup(dht_gpio, false, false);
+    // DHT sensors that come mounted on a PCB generally have
+    // pull-up resistors on the data pin.  It is recommended
+    // to provide an external pull-up resistor otherwise...
+    gpio_set_pullup(dht_gpio, false, false);
 
-  while(1) {
+    while(1) {
+        if (dht_read_data(dht_gpio, &humidity, &temperature)) {
+            printf("Humidity: %d%% Temp: %dC\n", 
+                    humidity / 10, 
+                    temperature / 10);
+        } else {
+            printf("Could not read data from sensor\n");
+        }
 
-    if (dht_fetch_data(dht_gpio, &humidity, &temperature)) {
-      printf("Humidity: %i%% Temp: %iC\n", humidity, temperature);
-    } else {
-      printf("Could not read data from sensor...");
+        // Three second delay...
+        vTaskDelay(3000 / portTICK_RATE_MS);
     }
-
-    // Three second delay...
-    vTaskDelay(3000 / portTICK_RATE_MS);
-  }
 }
 
 void user_init(void)
