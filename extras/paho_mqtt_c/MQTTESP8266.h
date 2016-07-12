@@ -1,15 +1,8 @@
 /**
-  ******************************************************************************
-  * @file    MQTTESP8266.h
-  * @author  Baoshi <mail(at)ba0sh1(dot)com>
-  * @version 0.1
-  * @date    Sep 9, 2015
-  * @brief   Eclipse Paho ported to ESP8266 RTOS
+  * Paho Embedded MQTT client, esp-open-rtos support. 
   *
-  ******************************************************************************
-  * @copyright
-  *
-  * Copyright (c) 2015, Baoshi Zhu. All rights reserved.
+  * Copyright (c) 2015, Baoshi Zhu & 2016, Angus Gratton.
+  * All rights reserved.
   * Use of this source code is governed by a BSD-style license that can be
   * found in the LICENSE.txt file.
   *
@@ -24,20 +17,22 @@
 #include <FreeRTOS.h>
 #include <portmacro.h>
 
+#include <lwip/api.h>
+
 typedef struct Timer Timer;
+
+typedef struct Network Network;
 
 struct Timer
 {
     portTickType end_time;
 };
 
-typedef struct Network Network;
-
 struct Network
 {
-	int my_socket;
-	int (*mqttread) (Network*, unsigned char*, int, int);
-	int (*mqttwrite) (Network*, unsigned char*, int, int);
+    int socket;
+    int (*mqttread) (Network*, unsigned char*, int, int);
+    int (*mqttwrite) (Network*, unsigned char*, int, int);
 };
 
 char expired(Timer*);
@@ -46,10 +41,6 @@ void countdown(Timer*, unsigned int);
 int left_ms(Timer*);
 
 void InitTimer(Timer*);
-
-int mqtt_esp_read(Network*, unsigned char*, int, int);
-int mqtt_esp_write(Network*, unsigned char*, int, int);
-void mqtt_esp_disconnect(Network*);
 
 void NewNetwork(Network* n);
 int ConnectNetwork(Network* n, const char* host, int port);

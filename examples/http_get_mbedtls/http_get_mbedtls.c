@@ -14,6 +14,8 @@
 
 #include <string.h>
 
+#include <xtensa_ops.h>
+
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -91,6 +93,10 @@ void http_get_task(void *pvParameters)
     uint32_t flags;
     unsigned char buf[1024];
     const char *pers = "ssl_client1";
+
+    uint64_t total_delta = 0;
+    uint32_t delta_count = 0;
+    uint32_t min_delta = UINT32_MAX;
 
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
@@ -210,6 +216,9 @@ void http_get_task(void *pvParameters)
          */
         printf("  . Performing the SSL/TLS handshake...");
 
+        uint32_t before, after;
+        before = xTaskGetTickCount();
+
         while((ret = mbedtls_ssl_handshake(&ssl)) != 0)
         {
             if(ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
@@ -218,6 +227,15 @@ void http_get_task(void *pvParameters)
                 goto exit;
             }
         }
+
+        after = xTaskGetTickCount();
+        uint32_t delta = after - before;
+        total_delta += delta;
+        delta_count += 1;
+        if(delta < min_delta) {
+            min_delta = delta;
+        }
+    printf("\n\n**** %d tick handshake - average %d min %d ***\n\n", delta, (uint32_t)(total_delta/delta_count), min_delta);
 
         printf(" ok\n");
 
