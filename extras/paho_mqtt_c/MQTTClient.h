@@ -27,7 +27,7 @@
 enum QoS { QOS0, QOS1, QOS2 };
 
 // all failure return codes must be negative
-enum returnCode {DISCONNECTED = -3, BUFFER_OVERFLOW = -2, FAILURE = -1, SUCCESS = 0 };
+enum returnCode {READ_ERROR = -4, DISCONNECTED = -3, BUFFER_OVERFLOW = -2, FAILURE = -1, SUCCESS = 0 };
 
 void NewTimer(Timer*);
 
