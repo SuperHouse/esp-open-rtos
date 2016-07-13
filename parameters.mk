@@ -60,7 +60,7 @@ OBJDUMP = $(CROSS)objdump
 
 # Source components to compile and link. Each of these are subdirectories
 # of the root, with a 'component.mk' file.
-COMPONENTS     ?= $(EXTRA_COMPONENTS) FreeRTOS lwip core
+COMPONENTS     ?= $(EXTRA_COMPONENTS) FreeRTOS lwip core open_esplibs
 
 # binary esp-iot-rtos SDK libraries to link. These are pre-processed prior to linking.
 SDK_LIBS		?= main net80211 phy pp wpa
@@ -114,7 +114,7 @@ else ifeq ($(FLAVOR),sdklike)
     # the output of the compiler used to build the SDK libs (for comparison of
     # disassemblies when coding replacement routines).  It is not normally
     # intended to be used otherwise.
-    CFLAGS += -O2 -Os -fno-inline -fno-ipa-cp -fno-toplevel-reorder
+    CFLAGS += -O2 -Os -fno-inline -fno-ipa-cp -fno-toplevel-reorder -fno-caller-saves -fconserve-stack
     LDFLAGS += -O2
 else
     C_CXX_FLAGS += -g -O2

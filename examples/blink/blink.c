@@ -2,6 +2,7 @@
  *
  * This sample code is in the public domain.
  */
+#include <stdlib.h>
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 #include "FreeRTOS.h"

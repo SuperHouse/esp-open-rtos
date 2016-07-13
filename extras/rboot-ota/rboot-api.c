@@ -249,7 +249,7 @@ bool rboot_verify_image(uint32_t initial_offset, uint32_t *image_length, const c
     /* sanity limit on how far we can read */
     uint32_t end_limit = offset + 0x100000;
     image_header_t image_header __attribute__((aligned(4)));
-    if(sdk_spi_flash_read(offset, &image_header, sizeof(image_header_t))) {
+    if(sdk_spi_flash_read(offset, (uint32_t *)&image_header, sizeof(image_header_t))) {
         error = "Flash fail";
         goto fail;
     }
@@ -271,7 +271,7 @@ bool rboot_verify_image(uint32_t initial_offset, uint32_t *image_length, const c
     {
         /* read section header */
         section_header_t header __attribute__((aligned(4)));
-        if(sdk_spi_flash_read(offset, &header, sizeof(section_header_t))) {
+        if(sdk_spi_flash_read(offset, (uint32_t *)&header, sizeof(section_header_t))) {
             error = "Flash fail";
             goto fail;
         }
@@ -359,7 +359,7 @@ bool rboot_digest_image(uint32_t offset, uint32_t image_length, rboot_digest_upd
 {
     uint8_t buf[32] __attribute__((aligned(4)));
     for(int i = 0; i < image_length; i += sizeof(buf)) {
-        if(sdk_spi_flash_read(offset+i, buf, sizeof(buf)))
+        if(sdk_spi_flash_read(offset+i, (uint32_t *)buf, sizeof(buf)))
             return false;
         uint32_t digest_len = sizeof(buf);
         if(i + digest_len  > image_length)

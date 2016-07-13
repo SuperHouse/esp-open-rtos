@@ -178,7 +178,7 @@ static void _spi_buf_prepare(uint8_t bus, size_t len, spi_endianness_t e, spi_wo
     if (e == SPI_LITTLE_ENDIAN || word_size == SPI_32BIT) return;
 
     size_t count = word_size == SPI_16BIT ? (len + 1) / 2 : (len + 3) / 4;
-    uint32_t *data = (uint32_t *)&SPI(bus).W0;
+    uint32_t *data = (uint32_t *)SPI(bus).W;
     for (size_t i = 0; i < count; i ++)
     {
         data[i] = word_size == SPI_16BIT
@@ -193,14 +193,14 @@ static void _spi_buf_transfer(uint8_t bus, const void *out_data, void *in_data,
     _wait(bus);
     size_t bytes = len * (uint8_t)word_size;
     _set_size(bus, bytes);
-    memcpy((void *)&SPI(bus).W0, out_data, bytes);
+    memcpy((void *)SPI(bus).W, out_data, bytes);
     _spi_buf_prepare(bus, len, e, word_size);
     _start(bus);
     _wait(bus);
     if (in_data)
     {
         _spi_buf_prepare(bus, len, e, word_size);
-        memcpy(in_data, (void *)&SPI(bus).W0, bytes);
+        memcpy(in_data, (void *)SPI(bus).W, bytes);
     }
 }
 

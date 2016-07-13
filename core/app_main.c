@@ -27,6 +27,7 @@
 #include "espressif/esp_common.h"
 #include "espressif/phy_info.h"
 #include "sdk_internal.h"
+#include "esplibs/libmain.h"
 
 /* This is not declared in any header file (but arguably should be) */
 
@@ -345,8 +346,8 @@ static __attribute__((noinline)) void user_start_phase2(void) {
     sdk_phy_info_t phy_info, default_phy_info;
 
     sdk_system_rtc_mem_read(0, &sdk_rst_if, sizeof(sdk_rst_if));
-    if (sdk_rst_if.version > 3) {
-        // Bad version number. Probably garbage.
+    if (sdk_rst_if.reason > 3) {
+        // Bad reason. Probably garbage.
         bzero(&sdk_rst_if, sizeof(sdk_rst_if));
     }
     buf = malloc(sizeof(sdk_rst_if));
@@ -357,8 +358,8 @@ static __attribute__((noinline)) void user_start_phase2(void) {
     get_otp_mac_address(sdk_info.sta_mac_addr);
     sdk_wifi_softap_cacl_mac(sdk_info.softap_mac_addr, sdk_info.sta_mac_addr);
     sdk_info._unknown0 = 0x0104a8c0;
-    sdk_info._unknown1 = 0x00ffffff;
-    sdk_info._unknown2 = 0x0104a8c0;
+    sdk_info._unknown4 = 0x00ffffff;
+    sdk_info._unknown8 = 0x0104a8c0;
     init_g_ic();
 
     read_saved_phy_info(&phy_info);
@@ -380,6 +381,10 @@ static __attribute__((noinline)) void user_start_phase2(void) {
     init_networking(&phy_info, sdk_info.sta_mac_addr);
 
     srand(hwrand()); /* seed libc rng */
+
+    // Set intial CPU clock speed to 160MHz if necessary
+    _Static_assert(configCPU_CLOCK_HZ == 80000000 || configCPU_CLOCK_HZ == 160000000, "FreeRTOSConfig must define initial clock speed as either 80MHz or 160MHz");
+    sdk_system_update_cpu_freq(configCPU_CLOCK_HZ / 1000000);
 
     // Call gcc constructor functions
     void (**ctor)(void);
