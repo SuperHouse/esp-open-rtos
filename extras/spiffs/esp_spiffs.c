@@ -253,3 +253,30 @@ int _unlink_r(struct _reent *r, const char *path)
 {
     return SPIFFS_remove(&fs, path);
 }
+
+int _fstat_r(struct _reent *r, int fd, void *buf)
+{
+    spiffs_stat s;
+    struct stat *sb = (struct stat*)buf;
+
+    int result = SPIFFS_fstat(&fs, (spiffs_file)(fd - FD_OFFSET), &s);
+    sb->st_size = s.size;
+
+    return result;
+}
+
+int _stat_r(struct _reent *r, const char *pathname, void *buf)
+{
+    spiffs_stat s;
+    struct stat *sb = (struct stat*)buf;
+
+    int result = SPIFFS_stat(&fs, pathname, &s);
+    sb->st_size = s.size;
+
+    return result;
+}
+
+off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence)
+{   
+    return SPIFFS_lseek(&fs, (spiffs_file)(fd - FD_OFFSET), offset, whence);
+}

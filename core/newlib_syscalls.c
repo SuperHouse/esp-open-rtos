@@ -88,10 +88,13 @@ int _close_r(struct _reent *r, int fd);
 __attribute__((weak, alias("syscall_returns_enosys"))) 
 int _unlink_r(struct _reent *r, const char *path);
 
-__attribute__((alias("syscall_returns_enosys"))) 
+__attribute__((weak, alias("syscall_returns_enosys"))) 
 int _fstat_r(struct _reent *r, int fd, void *buf);
 
-__attribute__((alias("syscall_returns_enosys"))) 
+__attribute__((weak, alias("syscall_returns_enosys"))) 
+int _stat_r(struct _reent *r, const char *pathname, void *buf);
+
+__attribute__((weak, alias("syscall_returns_enosys"))) 
 off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence);
 
 /* Generic stub for any newlib syscall that fails with errno ENOSYS
