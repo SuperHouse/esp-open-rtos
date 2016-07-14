@@ -20,26 +20,29 @@ spiffs_CFLAGS += -DSPIFFS_SIZE=$(SPIFFS_SIZE)
 #
 # Argumens:
 #   $(1) - directory with files which go into spiffs image
-# 
+#
 # Example:
 #  $(eval $(call make_spiffs_image,files))
 define make_spiffs_image
 SPIFFS_IMAGE = $(addprefix $(FIRMWARE_DIR),spiffs.bin)
 MKSPIFFS_DIR = $(ROOT)/extras/spiffs/mkspiffs
 MKSPIFFS = $$(MKSPIFFS_DIR)/mkspiffs
+SPIFFS_FILE_LIST = $(shell find $(1))
 
 all: $$(SPIFFS_IMAGE)
 
 clean: clean_spiffs_img clean_mkspiffs
 
-$$(SPIFFS_IMAGE): $$(MKSPIFFS) $(1)
+$$(SPIFFS_IMAGE): $$(MKSPIFFS) $$(SPIFFS_FILE_LIST)
 	$$< $(1) $$@
 
-$$(MKSPIFFS):
+# if SPIFFS_SIZE in Makefile is changed rebuild mkspiffs
+$$(MKSPIFFS): Makefile
+	$$(MAKE) -C $$(MKSPIFFS_DIR) clean
 	$$(MAKE) -C $$(MKSPIFFS_DIR) SPIFFS_SIZE=$(SPIFFS_SIZE)
 
 clean_spiffs_img:
-	$$(Q) rm -f spiffs.img
+	$$(Q) rm -f $$(SPIFFS_IMAGE)
 
 clean_mkspiffs:
 	$$(Q) $$(MAKE) -C $$(MKSPIFFS_DIR) clean
