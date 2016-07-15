@@ -41,7 +41,7 @@ IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
 }
 
 /* syscall implementation for stdio write to UART */
-long _write_r(struct _reent *r, int fd, const char *ptr, int len )
+__attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, int len )
 {
     if(fd != r->_stdout->_file) {
         r->_errno = EBADF;
@@ -79,10 +79,23 @@ __attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len
 /* Stub syscall implementations follow, to allow compiling newlib functions that
    pull these in via various codepaths
 */
-__attribute__((alias("syscall_returns_enosys"))) int _open_r(struct _reent *r, const char *pathname, int flags, int mode);
-__attribute__((alias("syscall_returns_enosys"))) int _fstat_r(struct _reent *r, int fd, void *buf);
-__attribute__((alias("syscall_returns_enosys"))) int _close_r(struct _reent *r, int fd);
-__attribute__((alias("syscall_returns_enosys"))) off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence);
+__attribute__((weak, alias("syscall_returns_enosys"))) 
+int _open_r(struct _reent *r, const char *pathname, int flags, int mode);
+
+__attribute__((weak, alias("syscall_returns_enosys"))) 
+int _close_r(struct _reent *r, int fd);
+
+__attribute__((weak, alias("syscall_returns_enosys"))) 
+int _unlink_r(struct _reent *r, const char *path);
+
+__attribute__((weak, alias("syscall_returns_enosys"))) 
+int _fstat_r(struct _reent *r, int fd, void *buf);
+
+__attribute__((weak, alias("syscall_returns_enosys"))) 
+int _stat_r(struct _reent *r, const char *pathname, void *buf);
+
+__attribute__((weak, alias("syscall_returns_enosys"))) 
+off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence);
 
 /* Generic stub for any newlib syscall that fails with errno ENOSYS
    ("Function not implemented") and a return value equivalent to

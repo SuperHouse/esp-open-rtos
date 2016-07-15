@@ -5,13 +5,34 @@
  *
  */
 
-#ifndef __DTH_H__
+#ifndef __DHT_H__
 #define __DHT_H__
 
-#include "FreeRTOS.h"
+#include <stdint.h>
+#include <stdbool.h>
 
-bool dht_wait_for_pin_state(uint8_t pin, uint8_t interval, uint8_t timeout, bool expected_pin_sate, uint8_t * counter);
-bool dht_fetch_data(int8_t pin, int8_t * humidity, int8_t * temperature);
+#define DHT11       11
+#define DHT22       22
 
-#endif
+// Type of sensor to use
+#define DHT_TYPE    DHT22
 
+/**
+ * Read data from sensor on specified pin.
+ *
+ * Humidity and temperature is returned as integers.
+ * For example: humidity=625 is 62.5 %
+ *              temperature=24.4 is 24.4 degrees Celsius
+ *
+ */
+bool dht_read_data(uint8_t pin, int16_t *humidity, int16_t *temperature);
+
+
+/**
+ * Float version of dht_read_data.
+ *
+ * Return values as floating point values.
+ */
+bool dht_read_float_data(uint8_t pin, float *humidity, float *temperature);
+
+#endif  // __DHT_H__

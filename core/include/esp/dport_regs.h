@@ -90,6 +90,10 @@ _Static_assert(sizeof(struct DPORT_REGS) == 0x60, "DPORT_REGS is the wrong size"
 
 /* Details for CLOCKGATE_WATCHDOG register */
 
+// Set and then cleared during sdk_system_restart_in_nmi().
+// Not sure what this does.  May be related to ESPSAR.UNKNOWN_48
+#define DPORT_CLOCKGATE_WATCHDOG_UNKNOWN_8  BIT(8)
+
 /* Comment found in pvvx/mp3_decode headers: "use clockgate_watchdog(flg) { if(flg) 0x3FF00018 &= 0x77; else 0x3FF00018 |= 8; }".  Not sure what this means or does. */
 
 #define DPORT_CLOCKGATE_WATCHDOG_DISABLE  BIT(3)

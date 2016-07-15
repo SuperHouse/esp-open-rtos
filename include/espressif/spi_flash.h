@@ -6,6 +6,8 @@
 #ifndef __SPI_FLASH_H__
 #define __SPI_FLASH_H__
 
+#include "flashchip.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -34,7 +36,7 @@ sdk_SpiFlashOpResult sdk_spi_flash_erase_sector(uint16_t sec);
    src is pointer to a buffer to read bytes from. Should be 4-byte aligned.
    size is length of buffer in bytes. Should be a multiple of 4.
 */
-sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, const void *src, uint32_t size);
+sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, uint32_t *src, uint32_t size);
 
 /* Read data from flash.
 
@@ -42,30 +44,13 @@ sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, const void *src, uin
    des is pointer to a buffer to read bytes into. Should be 4-byte aligned.
    size is number of bytes to read. Should be a multiple of 4.
 */
-sdk_SpiFlashOpResult sdk_spi_flash_read(uint32_t src_addr, void *des, uint32_t size);
-
+sdk_SpiFlashOpResult sdk_spi_flash_read(uint32_t src_addr, uint32_t *des, uint32_t size);
 
 /* SDK uses this structure internally to account for flash size.
 
-   chip_size field is initialised during startup from the flash size
-   saved in the image header (on the first 8 bytes of SPI flash).
-
-   Other field are initialised to hardcoded values by the SDK.
-
-   Based on RE work by @foogod at
-   http://esp8266-re.foogod.com/wiki/Flashchip_%28IoT_RTOS_SDK_0.9.9%29
+   See flashchip.h for more info.
 */
-typedef struct {
-    uint32_t device_id;
-    uint32_t chip_size;   /* in bytes */
-    uint32_t block_size;  /* in bytes */
-    uint32_t sector_size; /* in bytes */
-    uint32_t page_size;   /* in bytes */
-    uint32_t status_mask;
-} sdk_flashchip_t;
-
 extern sdk_flashchip_t sdk_flashchip;
-
 
 #ifdef	__cplusplus
 }

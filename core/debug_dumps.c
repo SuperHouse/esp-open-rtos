@@ -20,7 +20,7 @@
 #include "esp/rom.h"
 #include "esp/uart.h"
 #include "espressif/esp_common.h"
-#include "sdk_internal.h"
+#include "esplibs/libmain.h"
 
 /* Forward declarations */
 static void IRAM fatal_handler_prelude(void);

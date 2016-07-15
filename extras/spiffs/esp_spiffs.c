@@ -12,12 +12,26 @@
 #include "common_macros.h"
 #include "FreeRTOS.h"
 #include "esp/rom.h"
+#include <esp/uart.h>
+#include <fcntl.h>
 
 spiffs fs;
 
-static void *work_buf = 0;
-static void *fds_buf = 0;
-static void *cache_buf = 0;
+typedef struct {
+    void *buf;
+    uint32_t size;
+} fs_buf_t;
+
+static fs_buf_t work_buf = {0};
+static fs_buf_t fds_buf = {0};
+static fs_buf_t cache_buf = {0};
+
+/**
+ * Number of file descriptors opened at the same time
+ */
+#define ESP_SPIFFS_FD_NUMBER       5
+
+#define ESP_SPIFFS_CACHE_PAGES     5
 
 
 // ROM functions
@@ -286,6 +300,29 @@ static s32_t esp_spiffs_erase(u32_t addr, u32_t size)
     return SPIFFS_OK;
 }
 
+void esp_spiffs_init()
+{
+    work_buf.size = 2 * SPIFFS_CFG_LOG_PAGE_SZ();
+    fds_buf.size = SPIFFS_buffer_bytes_for_filedescs(&fs, ESP_SPIFFS_FD_NUMBER);
+    cache_buf.size= SPIFFS_buffer_bytes_for_cache(&fs, ESP_SPIFFS_CACHE_PAGES);
+
+    work_buf.buf = malloc(work_buf.size);
+    fds_buf.buf = malloc(fds_buf.size);
+    cache_buf.buf = malloc(cache_buf.size);
+}
+
+void esp_spiffs_deinit()
+{
+    free(work_buf.buf);
+    work_buf.buf = 0;
+
+    free(fds_buf.buf);
+    fds_buf.buf = 0;
+
+    free(cache_buf.buf);
+    cache_buf.buf = 0;
+}
+
 int32_t esp_spiffs_mount()
 {
     spiffs_config config = {0};
@@ -294,18 +331,13 @@ int32_t esp_spiffs_mount()
     config.hal_write_f = esp_spiffs_write;
     config.hal_erase_f = esp_spiffs_erase;
 
-    size_t workBufSize = 2 * SPIFFS_CFG_LOG_PAGE_SZ();
-    size_t fdsBufSize = SPIFFS_buffer_bytes_for_filedescs(&fs, 5);
-    size_t cacheBufSize = SPIFFS_buffer_bytes_for_cache(&fs, 5);
+    printf("SPIFFS size: %d\n", SPIFFS_SIZE);
+    printf("SPIFFS memory, work_buf_size=%d, fds_buf_size=%d, cache_buf_size=%d\n",
+            work_buf.size, fds_buf.size, cache_buf.size);
 
-    work_buf = malloc(workBufSize);
-    fds_buf = malloc(fdsBufSize);
-    cache_buf = malloc(cacheBufSize);
-    printf("spiffs memory, work_buf_size=%d, fds_buf_size=%d, cache_buf_size=%d\n",
-            workBufSize, fdsBufSize, cacheBufSize);
-
-    int32_t err = SPIFFS_mount(&fs, &config, work_buf, fds_buf, fdsBufSize,
-            cache_buf, cacheBufSize, 0);
+    int32_t err = SPIFFS_mount(&fs, &config, (uint8_t*)work_buf.buf, 
+            (uint8_t*)fds_buf.buf, fds_buf.size, 
+            cache_buf.buf, cache_buf.size, 0);
 
     if (err != SPIFFS_OK) {
         printf("Error spiffs mount: %d\n", err);
@@ -314,15 +346,95 @@ int32_t esp_spiffs_mount()
     return err;
 }
 
-void esp_spiffs_unmount()
+#define FD_OFFSET 3
+
+// This implementation replaces implementation in core/newlib_syscals.c
+long _write_r(struct _reent *r, int fd, const char *ptr, int len )
 {
-    SPIFFS_unmount(&fs);
+    if(fd != r->_stdout->_file) {
+        long ret = SPIFFS_write(&fs, (spiffs_file)(fd - FD_OFFSET), 
+                (char*)ptr, len);
+        return ret;
+    }
+    for(int i = 0; i < len; i++) {
+        /* Auto convert CR to CRLF, ignore other LFs (compatible with Espressif SDK behaviour) */
+        if(ptr[i] == '\r')
+            continue;
+        if(ptr[i] == '\n')
+            uart_putc(0, '\r');
+        uart_putc(0, ptr[i]);
+    }
+    return len;
+}
 
-    free(work_buf);
-    free(fds_buf);
-    free(cache_buf);
+// This implementation replaces implementation in core/newlib_syscals.c
+long _read_r( struct _reent *r, int fd, char *ptr, int len )
+{
+    int ch, i;
 
-    work_buf = 0;
-    fds_buf = 0;
-    cache_buf = 0;
+    if(fd != r->_stdin->_file) {
+        long ret = SPIFFS_read(&fs, (spiffs_file)(fd - FD_OFFSET), ptr, len);
+        return ret;
+    }
+    uart_rxfifo_wait(0, 1);
+    for(i = 0; i < len; i++) {
+        ch = uart_getc_nowait(0);
+        if (ch < 0) break;
+        ptr[i] = ch;
+    }
+    return i;
+}
+
+int _open_r(struct _reent *r, const char *pathname, int flags, int mode)
+{
+    uint32_t spiffs_flags = SPIFFS_RDONLY;
+
+    if (flags & O_CREAT)    spiffs_flags |= SPIFFS_CREAT;
+    if (flags & O_APPEND)   spiffs_flags |= SPIFFS_APPEND;
+    if (flags & O_TRUNC)    spiffs_flags |= SPIFFS_TRUNC;
+    if (flags & O_RDONLY)   spiffs_flags |= SPIFFS_RDONLY;
+    if (flags & O_WRONLY)   spiffs_flags |= SPIFFS_WRONLY;
+
+    int ret = SPIFFS_open(&fs, pathname, spiffs_flags, mode);
+    if (ret > 0) {
+        return ret + FD_OFFSET;
+    }
+    return ret;
+}
+
+int _close_r(struct _reent *r, int fd)
+{
+    return SPIFFS_close(&fs, (spiffs_file)(fd - FD_OFFSET));
+}
+
+int _unlink_r(struct _reent *r, const char *path)
+{
+    return SPIFFS_remove(&fs, path);
+}
+
+int _fstat_r(struct _reent *r, int fd, void *buf)
+{
+    spiffs_stat s;
+    struct stat *sb = (struct stat*)buf;
+
+    int result = SPIFFS_fstat(&fs, (spiffs_file)(fd - FD_OFFSET), &s);
+    sb->st_size = s.size;
+
+    return result;
+}
+
+int _stat_r(struct _reent *r, const char *pathname, void *buf)
+{
+    spiffs_stat s;
+    struct stat *sb = (struct stat*)buf;
+
+    int result = SPIFFS_stat(&fs, pathname, &s);
+    sb->st_size = s.size;
+
+    return result;
+}
+
+off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence)
+{   
+    return SPIFFS_lseek(&fs, (spiffs_file)(fd - FD_OFFSET), offset, whence);
 }

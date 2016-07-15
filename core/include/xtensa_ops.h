@@ -11,9 +11,6 @@
 #ifndef _XTENSA_OPS_H
 #define _XTENSA_OPS_H
 
-// GCC macros for reading, writing, and exchanging Xtensa processor special
-// registers:
-
 /* Read stack pointer to variable.
  *
  * Note that the compiler will push a stack frame (minimum 16 bytes)
@@ -28,8 +25,18 @@
  */
 #define RETADDR(var) asm volatile ("mov %0, a0" : "=r" (var))
 
+// GCC macros for reading, writing, and exchanging Xtensa processor special
+// registers:
+
 #define RSR(var, reg) asm volatile ("rsr %0, " #reg : "=r" (var));
 #define WSR(var, reg) asm volatile ("wsr %0, " #reg : : "r" (var));
 #define XSR(var, reg) asm volatile ("xsr %0, " #reg : "+r" (var));
+
+// GCC macros for performing associated "*sync" opcodes
+
+#define ISYNC() asm volatile ( "isync" )
+#define RSYNC() asm volatile ( "rsync" )
+#define ESYNC() asm volatile ( "esync" )
+#define DSYNC() asm volatile ( "dsync" )
 
 #endif /* _XTENSA_OPS_H */
