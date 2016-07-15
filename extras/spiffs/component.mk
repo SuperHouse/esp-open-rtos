@@ -36,6 +36,10 @@ clean: clean_spiffs_img clean_mkspiffs
 $$(SPIFFS_IMAGE): $$(MKSPIFFS) $$(SPIFFS_FILE_LIST)
 	$$< $(1) $$@
 
+# Rebuild SPIFFS if Makefile is changed, where SPIFF_SIZE is defined
+$$(spiffs_ROOT)spiffs_config.h: Makefile
+	$$(Q) touch $$@
+
 # if SPIFFS_SIZE in Makefile is changed rebuild mkspiffs
 $$(MKSPIFFS): Makefile
 	$$(MAKE) -C $$(MKSPIFFS_DIR) clean
