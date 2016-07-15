@@ -18,8 +18,9 @@ static fs_time_t get_current_time()
 
 void test_task(void *pvParameters)
 {
+    esp_spiffs_init();
     esp_spiffs_mount();
-    esp_spiffs_unmount();  // FS must be unmounted before formating
+    SPIFFS_unmount(&fs);  // FS must be unmounted before formating
     if (SPIFFS_format(&fs) == SPIFFS_OK) {
         printf("Format complete\n");
     } else {

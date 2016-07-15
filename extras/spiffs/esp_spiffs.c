@@ -14,9 +14,21 @@
 
 spiffs fs;
 
-static void *work_buf = 0;
-static void *fds_buf = 0;
-static void *cache_buf = 0;
+typedef struct {
+    void *buf;
+    uint32_t size;
+} fs_buf_t;
+
+static fs_buf_t work_buf = {0};
+static fs_buf_t fds_buf = {0};
+static fs_buf_t cache_buf = {0};
+
+/**
+ * Number of file descriptors opened at the same time
+ */
+#define ESP_SPIFFS_FD_NUMBER       5
+
+#define ESP_SPIFFS_CACHE_PAGES     5
 
 /*
  * Flash addresses and size alignment is a rip-off of Arduino implementation.
@@ -147,6 +159,29 @@ static s32_t esp_spiffs_erase(u32_t addr, u32_t size)
     return SPIFFS_OK;
 }
 
+void esp_spiffs_init()
+{
+    work_buf.size = 2 * SPIFFS_CFG_LOG_PAGE_SZ();
+    fds_buf.size = SPIFFS_buffer_bytes_for_filedescs(&fs, ESP_SPIFFS_FD_NUMBER);
+    cache_buf.size= SPIFFS_buffer_bytes_for_cache(&fs, ESP_SPIFFS_CACHE_PAGES);
+
+    work_buf.buf = malloc(work_buf.size);
+    fds_buf.buf = malloc(fds_buf.size);
+    cache_buf.buf = malloc(cache_buf.size);
+}
+
+void esp_spiffs_deinit()
+{
+    free(work_buf.buf);
+    work_buf.buf = 0;
+
+    free(fds_buf.buf);
+    fds_buf.buf = 0;
+
+    free(cache_buf.buf);
+    cache_buf.buf = 0;
+}
+
 int32_t esp_spiffs_mount()
 {
     spiffs_config config = {0};
@@ -155,37 +190,19 @@ int32_t esp_spiffs_mount()
     config.hal_write_f = esp_spiffs_write;
     config.hal_erase_f = esp_spiffs_erase;
 
-    size_t workBufSize = 2 * SPIFFS_CFG_LOG_PAGE_SZ();
-    size_t fdsBufSize = SPIFFS_buffer_bytes_for_filedescs(&fs, 5);
-    size_t cacheBufSize = SPIFFS_buffer_bytes_for_cache(&fs, 5);
+    printf("SPIFFS size: %d\n", SPIFFS_SIZE);
+    printf("SPIFFS memory, work_buf_size=%d, fds_buf_size=%d, cache_buf_size=%d\n",
+            work_buf.size, fds_buf.size, cache_buf.size);
 
-    work_buf = malloc(workBufSize);
-    fds_buf = malloc(fdsBufSize);
-    cache_buf = malloc(cacheBufSize);
-    printf("spiffs memory, work_buf_size=%d, fds_buf_size=%d, cache_buf_size=%d\n",
-            workBufSize, fdsBufSize, cacheBufSize);
-
-    int32_t err = SPIFFS_mount(&fs, &config, work_buf, fds_buf, fdsBufSize,
-            cache_buf, cacheBufSize, 0);
+    int32_t err = SPIFFS_mount(&fs, &config, (uint8_t*)work_buf.buf, 
+            (uint8_t*)fds_buf.buf, fds_buf.size, 
+            cache_buf.buf, cache_buf.size, 0);
 
     if (err != SPIFFS_OK) {
         printf("Error spiffs mount: %d\n", err);
     }
 
     return err;
-}
-
-void esp_spiffs_unmount()
-{
-    SPIFFS_unmount(&fs);
-
-    free(work_buf);
-    free(fds_buf);
-    free(cache_buf);
-
-    work_buf = 0;
-    fds_buf = 0;
-    cache_buf = 0;
 }
 
 #define FD_OFFSET 3

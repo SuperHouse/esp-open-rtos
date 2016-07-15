@@ -13,16 +13,27 @@
 extern spiffs fs;
 
 /**
- * Provide SPIFFS with all necessary configuration, allocate memory buffers
- * and mount SPIFFS.
+ * Prepare for SPIFFS mount.
+ * 
+ * The function allocates all the necessary buffers.
+ */
+void esp_spiffs_init();
+
+/**
+ * Free all memory buffers that were used by SPIFFS.
+ *
+ * The function should be called after SPIFFS unmount if the file system is not
+ * going to need any more.
+ */
+void esp_spiffs_deinit();
+
+/**
+ * Mount SPIFFS.
+ *
+ * esp_spiffs_init must be called first.
  *
  * Return SPIFFS return code.
  */
 int32_t esp_spiffs_mount();
-
-/**
- * Unmount SPIFFS and free all allocated buffers.
- */
-void esp_spiffs_unmount();
 
 #endif  // __ESP_SPIFFS_H__
