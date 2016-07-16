@@ -44,6 +44,19 @@ void i2c_init(uint8_t scl_pin, uint8_t sda_pin)
     started = false;
     g_scl_pin = scl_pin;
     g_sda_pin = sda_pin;
+
+    // Just to prevent these pins floating too much if not connected.
+    gpio_set_pullup(g_scl_pin, 1, 1);
+    gpio_set_pullup(g_sda_pin, 1, 1);
+
+    // I2C bus idle state.
+    gpio_enable(g_scl_pin, GPIO_INPUT);
+    gpio_enable(g_scl_pin, GPIO_INPUT);
+
+    // Set the pins to a low output state for when they are configured
+    // as outputs.
+    gpio_write(g_scl_pin, 0);
+    gpio_write(g_sda_pin, 0);
 }
 
 static void i2c_delay(void)
@@ -51,7 +64,8 @@ static void i2c_delay(void)
     sdk_os_delay_us(CLK_HALF_PERIOD_US);
 }
 
-// Set SCL as input and return current level of line, 0 or 1
+// Set SCL as input, allowing it to float high, and return current
+// level of line, 0 or 1
 static bool read_scl(void)
 {
     gpio_enable(g_scl_pin, GPIO_INPUT);
@@ -70,15 +84,13 @@ static bool read_sda(void)
 // Actively drive SCL signal low
 static void clear_scl(void)
 {
-    gpio_enable(g_scl_pin, GPIO_OUTPUT);
-    gpio_write(g_scl_pin, 0);
+    gpio_enable(g_scl_pin, GPIO_OUT_OPEN_DRAIN);
 }
 
 // Actively drive SDA signal low
 static void clear_sda(void)
 {
-    gpio_enable(g_sda_pin, GPIO_OUTPUT);
-    gpio_write(g_sda_pin, 0);
+    gpio_enable(g_sda_pin, GPIO_OUT_OPEN_DRAIN);
 }
 
 // Output start condition
