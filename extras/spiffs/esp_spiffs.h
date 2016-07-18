@@ -14,7 +14,7 @@ extern spiffs fs;
 
 /**
  * Prepare for SPIFFS mount.
- * 
+ *
  * The function allocates all the necessary buffers.
  */
 void esp_spiffs_init();
