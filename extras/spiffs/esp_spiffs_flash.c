@@ -27,25 +27,45 @@
 #include "FreeRTOS.h"
 #include "esp/rom.h"
 #include "esp/spi_regs.h"
+#include <string.h>
 
+/**
+ * Note about Wait_SPI_Idle.
+ *
+ * Each write/erase flash operation sets BUSY bit in flash status register.
+ * If attempt to access flash while BUSY bit is set operation will fail.
+ * Function Wait_SPI_Idle loops until this bit is not cleared.
+ *
+ * The approach in the following code is that each write function that is
+ * accessible from the outside should leave flash in Idle state.
+ * The read operations doesn't set BUSY bit in a flash. So they do not wait.
+ * They relay that previous operation is completely finished.
+ *
+ * This approach is different from ESP8266 bootrom where Wait_SPI_Idle is
+ * called where it needed and not.
+ */
 
 #define SPI_WRITE_MAX_SIZE  32
 #define SPI_READ_MAX_SIZE   32
 
 /**
- * Low level SPI flash write. Write block of data up to SPI_WRITE_MAX_SIZE.
+ * Low level SPI flash write. Write block of data up to 64 bytes.
  */
 static inline uint32_t IRAM spi_write_data(sdk_flashchip_t *chip, uint32_t addr,
         uint8_t *buf, uint32_t size)
 {
+    Wait_SPI_Idle(chip);  // wait for previous write to finish
+
     SPI(0).ADDR = (addr & 0x00FFFFFF) | (size << 24);
 
+    uint32_t words = size >> 2;
+    if (size & 0b11) {
+        words++;
+    }
     uint32_t data = 0;
-    // Copy more than size, in order not to handle unaligned size.
-    // The exact size will be written to flash
-    for (uint32_t i = 0; i != SPI_WRITE_MAX_SIZE; i++) { data >>= 8;
+    for (uint32_t i = 0; i < (words << 2); i++) {
+        data >>= 8;
         data |= (uint32_t)buf[i] << 24;
-
         if (i & 0b11) {
             SPI(0).W[i >> 2] = data;
         }
@@ -57,13 +77,12 @@ static inline uint32_t IRAM spi_write_data(sdk_flashchip_t *chip, uint32_t addr,
 
     SPI(0).CMD = SPI_CMD_PP;
     while (SPI(0).CMD) {}
-    Wait_SPI_Idle(chip);
 
     return ESP_SPIFFS_FLASH_OK;
 }
 
 /**
- * Write a page of flash. Data block should bot cross page boundary.
+ * Write a page of flash. Data block should not cross page boundary.
  */
 static uint32_t IRAM spi_write_page(sdk_flashchip_t *flashchip, uint32_t dest_addr,
     uint8_t *buf, uint32_t size)
@@ -76,8 +95,6 @@ static uint32_t IRAM spi_write_page(sdk_flashchip_t *flashchip, uint32_t dest_ad
     if (size < 1) {
         return ESP_SPIFFS_FLASH_OK;
     }
-
-    Wait_SPI_Idle(flashchip);
 
     while (size >= SPI_WRITE_MAX_SIZE) {
         if (spi_write_data(flashchip, dest_addr, buf, SPI_WRITE_MAX_SIZE)) {
@@ -96,6 +113,7 @@ static uint32_t IRAM spi_write_page(sdk_flashchip_t *flashchip, uint32_t dest_ad
     if (spi_write_data(flashchip, dest_addr, buf, size)) {
         return ESP_SPIFFS_FLASH_ERROR;
     }
+
     return ESP_SPIFFS_FLASH_OK;
 }
 
@@ -115,27 +133,27 @@ static uint32_t IRAM spi_write(uint32_t addr, uint8_t *dst, uint32_t size)
         if (spi_write_page(&sdk_flashchip, addr, dst, size)) {
             return ESP_SPIFFS_FLASH_ERROR;
         }
-        return ESP_SPIFFS_FLASH_OK;
-    }
-
-    if (spi_write_page(&sdk_flashchip, addr, dst, write_bytes_to_page)) {
-        return ESP_SPIFFS_FLASH_ERROR;
-    }
-
-    uint32_t offset = write_bytes_to_page;
-    uint32_t pages_to_write = (size - offset) / sdk_flashchip.page_size;
-    for (uint8_t i = 0; i != pages_to_write; i++) {
-        if (spi_write_page(&sdk_flashchip, addr + offset,
-                    dst + offset, sdk_flashchip.page_size)) {
+    } else {
+        if (spi_write_page(&sdk_flashchip, addr, dst, write_bytes_to_page)) {
             return ESP_SPIFFS_FLASH_ERROR;
         }
-        offset += sdk_flashchip.page_size;
+
+        uint32_t offset = write_bytes_to_page;
+        uint32_t pages_to_write = (size - offset) / sdk_flashchip.page_size;
+        for (uint8_t i = 0; i != pages_to_write; i++) {
+            if (spi_write_page(&sdk_flashchip, addr + offset,
+                        dst + offset, sdk_flashchip.page_size)) {
+                return ESP_SPIFFS_FLASH_ERROR;
+            }
+            offset += sdk_flashchip.page_size;
+        }
+
+        if (spi_write_page(&sdk_flashchip, addr + offset,
+                    dst + offset, size - offset)) {
+            return ESP_SPIFFS_FLASH_ERROR;
+        }
     }
 
-    if (spi_write_page(&sdk_flashchip, addr + offset,
-                dst + offset, size - offset)) {
-        return ESP_SPIFFS_FLASH_ERROR;
-    }
     return ESP_SPIFFS_FLASH_OK;
 }
 
@@ -149,6 +167,9 @@ uint32_t IRAM esp_spiffs_flash_write(uint32_t addr, uint8_t *buf, uint32_t size)
 
         result = spi_write(addr, buf, size);
 
+        // make sure all write operations is finished before exiting
+        Wait_SPI_Idle(&sdk_flashchip);
+
         Cache_Read_Enable(0, 0, 1);
         vPortExitCritical();
     }
@@ -157,7 +178,7 @@ uint32_t IRAM esp_spiffs_flash_write(uint32_t addr, uint8_t *buf, uint32_t size)
 }
 
 /**
- * Read SPI flash up to SPI_READ_MAX_SIZE size.
+ * Read SPI flash up to 64 bytes.
  */
 static inline void IRAM read_block(sdk_flashchip_t *chip, uint32_t addr,
         uint8_t *buf, uint32_t size)
@@ -188,8 +209,6 @@ static inline uint32_t IRAM read_data(sdk_flashchip_t *flashchip, uint32_t addr,
     if ((addr + size) > flashchip->chip_size) {
         return ESP_SPIFFS_FLASH_ERROR;
     }
-
-    Wait_SPI_Idle(flashchip);
 
     while (size >= SPI_READ_MAX_SIZE) {
         read_block(flashchip, addr, dst, SPI_READ_MAX_SIZE);
@@ -237,10 +256,10 @@ uint32_t IRAM esp_spiffs_flash_erase_sector(uint32_t addr)
 
     SPI_write_enable(&sdk_flashchip);
 
-    Wait_SPI_Idle(&sdk_flashchip);
     SPI(0).ADDR = addr & 0x00FFFFFF;
     SPI(0).CMD = SPI_CMD_SE;
     while (SPI(0).CMD) {};
+
     Wait_SPI_Idle(&sdk_flashchip);
 
     Cache_Read_Enable(0, 0, 1);
