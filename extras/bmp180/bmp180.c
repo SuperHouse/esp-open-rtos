@@ -39,71 +39,6 @@
 //
 #define BMP180_RESET_VALUE        0xB6
 
-
-// BMP180_Event_Command
-typedef struct
-{
-    uint8_t cmd;
-    const xQueueHandle* resultQueue;
-} bmp180_command_t;
-
-// Just works due to the fact that xQueueHandle is a "void *"
-static xQueueHandle bmp180_rx_queue = NULL;
-static xTaskHandle  bmp180_task_handle = NULL;
-
-//
-// Forward declarations
-//
-static bool bmp180_informUser_Impl(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
-
-// Set default implementation .. User gets result as bmp180_result_t event
-bool (*bmp180_informUser)(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure) = bmp180_informUser_Impl;
-
-// I2C Driver Task
-static void bmp180_driver_task(void *pvParameters)
-{
-    // Data to be received from user
-    bmp180_command_t current_command;
-    bmp180_constants_t bmp180_constants;
-
-#ifdef BMP180_DEBUG
-    // Wait for commands from the outside
-    printf("%s: Started Task\n", __FUNCTION__);
-#endif
-
-    // Initialize all internal constants.
-    if (!bmp180_fillInternalConstants(&bmp180_constants)) {
-        printf("%s: reading internal constants failed\n", __FUNCTION__);
-        vTaskDelete(NULL);
-    }
-
-    while(1) {
-        // Wait for user to insert commands
-        if (xQueueReceive(bmp180_rx_queue, &current_command, portMAX_DELAY) == pdTRUE) {
-#ifdef BMP180_DEBUG
-            printf("%s: Received user command %d 0x%p\n", __FUNCTION__, current_command.cmd, current_command.resultQueue);
-#endif
-            // use user provided queue
-            if (current_command.resultQueue != NULL) {
-                // Work on it ...
-                int32_t T = 0;
-                uint32_t P = 0;
-
-                if (bmp180_measure(&bmp180_constants, &T, (current_command.cmd & BMP180_PRESSURE) ? &P : NULL, 3)) {
-                    // Inform the user ...
-                    if (!bmp180_informUser(current_command.resultQueue,
-                                           current_command.cmd,
-                                           ((bmp180_temp_t)T)/10.0,
-                                           (bmp180_press_t)P)) {
-                        // Failed to send info to user
-                        printf("%s: Unable to inform user bmp180_informUser returned \"false\"\n", __FUNCTION__);
-                    }
-                }
-            }
-        }
-    }
-}
-
 static bool bmp180_readRegister16(uint8_t reg, int16_t *r)
 {
     uint8_t d[] = { 0, 0 };
@@ -202,31 +137,11 @@ bool bmp180_fillInternalConstants(bmp180_constants_t *c)
              c->MB == 0xffff || c->MC == 0xffff || c->MD == 0xffff);
 }
 
-static bool bmp180_create_communication_queues()
-{
-    // Just create them once
-    if (bmp180_rx_queue == NULL)
-        bmp180_rx_queue = xQueueCreate(BMP180_RX_QUEUE_SIZE, sizeof(bmp180_result_t));
-
-    return bmp180_rx_queue != NULL;
-}
-
 bool bmp180_is_available()
 {
     uint8_t id;
     return i2c_slave_read(BMP180_DEVICE_ADDRESS, BMP180_VERSION_REG, &id, 1) &&
         id == BMP180_CHIP_ID;
-}
-
-static bool bmp180_createTask()
-{
-    // We already have a task
-    portBASE_TYPE x = pdPASS;
-
-    if (bmp180_task_handle == NULL) {
-        x = xTaskCreate(bmp180_driver_task, (signed char *)"bmp180_driver_task", 256, NULL, BMP180_TASK_PRIORITY, &bmp180_task_handle);
-    }
-    return x == pdPASS;
 }
 
 bool bmp180_measure(bmp180_constants_t *c, int32_t *temperature,
@@ -291,6 +206,92 @@ bool bmp180_measure(bmp180_constants_t *c, int32_t *temperature,
 #endif
     }
     return true;
+}
+
+
+
+// BMP180_Event_Command
+typedef struct
+{
+    uint8_t cmd;
+    const xQueueHandle* resultQueue;
+} bmp180_command_t;
+
+// Just works due to the fact that xQueueHandle is a "void *"
+static xQueueHandle bmp180_rx_queue = NULL;
+static xTaskHandle  bmp180_task_handle = NULL;
+
+//
+// Forward declarations
+//
+static bool bmp180_informUser_Impl(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
+
+// Set default implementation .. User gets result as bmp180_result_t event
+bool (*bmp180_informUser)(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure) = bmp180_informUser_Impl;
+
+// I2C Driver Task
+static void bmp180_driver_task(void *pvParameters)
+{
+    // Data to be received from user
+    bmp180_command_t current_command;
+    bmp180_constants_t bmp180_constants;
+
+#ifdef BMP180_DEBUG
+    // Wait for commands from the outside
+    printf("%s: Started Task\n", __FUNCTION__);
+#endif
+
+    // Initialize all internal constants.
+    if (!bmp180_fillInternalConstants(&bmp180_constants)) {
+        printf("%s: reading internal constants failed\n", __FUNCTION__);
+        vTaskDelete(NULL);
+    }
+
+    while(1) {
+        // Wait for user to insert commands
+        if (xQueueReceive(bmp180_rx_queue, &current_command, portMAX_DELAY) == pdTRUE) {
+#ifdef BMP180_DEBUG
+            printf("%s: Received user command %d 0x%p\n", __FUNCTION__, current_command.cmd, current_command.resultQueue);
+#endif
+            // use user provided queue
+            if (current_command.resultQueue != NULL) {
+                // Work on it ...
+                int32_t T = 0;
+                uint32_t P = 0;
+
+                if (bmp180_measure(&bmp180_constants, &T, (current_command.cmd & BMP180_PRESSURE) ? &P : NULL, 3)) {
+                    // Inform the user ...
+                    if (!bmp180_informUser(current_command.resultQueue,
+                                           current_command.cmd,
+                                           ((bmp180_temp_t)T)/10.0,
+                                           (bmp180_press_t)P)) {
+                        // Failed to send info to user
+                        printf("%s: Unable to inform user bmp180_informUser returned \"false\"\n", __FUNCTION__);
+                    }
+                }
+            }
+        }
+    }
+}
+
+static bool bmp180_create_communication_queues()
+{
+    // Just create them once
+    if (bmp180_rx_queue == NULL)
+        bmp180_rx_queue = xQueueCreate(BMP180_RX_QUEUE_SIZE, sizeof(bmp180_result_t));
+
+    return bmp180_rx_queue != NULL;
+}
+
+static bool bmp180_createTask()
+{
+    // We already have a task
+    portBASE_TYPE x = pdPASS;
+
+    if (bmp180_task_handle == NULL) {
+        x = xTaskCreate(bmp180_driver_task, (signed char *)"bmp180_driver_task", 256, NULL, BMP180_TASK_PRIORITY, &bmp180_task_handle);
+    }
+    return x == pdPASS;
 }
 
 // Default user inform implementation
