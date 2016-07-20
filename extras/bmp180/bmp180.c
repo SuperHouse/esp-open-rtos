@@ -197,7 +197,7 @@ static bool bmp180_createTask()
 
     if (bmp180_task_handle==NULL)
     {
-        x = xTaskCreate(bmp180_driver_task, (signed char *)"bmp180_driver_task", 256, NULL, BMP180_TASK_PRIORITY, &bmp180_task_handle);
+        x = xTaskCreate(bmp180_driver_task, (const char * const)"bmp180_driver_task", 256, NULL, BMP180_TASK_PRIORITY, &bmp180_task_handle);
     }
     return (x==pdPASS);
 }

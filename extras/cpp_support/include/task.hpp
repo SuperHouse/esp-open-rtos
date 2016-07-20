@@ -56,7 +56,7 @@ public:
      */
     int task_create(const char* const pcName, unsigned short usStackDepth = 256, unsigned portBASE_TYPE uxPriority = 2)
     {
-        return xTaskCreate(task_t::_task, (signed char *)pcName, usStackDepth, this, uxPriority, NULL);
+        return xTaskCreate(task_t::_task, (const char * const)pcName, usStackDepth, this, uxPriority, NULL);
     }
     
 protected:

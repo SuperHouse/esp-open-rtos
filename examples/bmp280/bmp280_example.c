@@ -81,8 +81,8 @@ void user_init(void)
     printf("GIT version : %s\n", GITSHORTREV);
 
 #ifdef MODE_FORCED
-    xTaskCreate(bmp280_task_forced, (signed char *)"bmp280_task", 256, NULL, 2, NULL);
+    xTaskCreate(bmp280_task_forced, (const char * const)"bmp280_task", 256, NULL, 2, NULL);
 #else
-    xTaskCreate(bmp280_task_normal, (signed char *)"bmp280_task", 256, NULL, 2, NULL);
+    xTaskCreate(bmp280_task_normal, (const char * const)"bmp280_task", 256, NULL, 2, NULL);
 #endif
 }

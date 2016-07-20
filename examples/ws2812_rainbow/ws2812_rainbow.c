@@ -148,6 +148,6 @@ void user_init(void)
     // notice the glitches due to NMI.
 
     printf("Starting a task. There may be glitches!\r\n");
-    xTaskCreate(&demo, (signed char *)"strip demo", 256, NULL, 10, NULL);
+    xTaskCreate(&demo, (const char * const)"strip demo", 256, NULL, 10, NULL);
 #endif
 }
