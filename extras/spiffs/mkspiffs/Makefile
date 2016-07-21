@@ -11,6 +11,10 @@ $(error $(ERROR_MSG))
 endif
 endif
 
+# explicitly use gcc as in xtensa build environment it might be set to
+# cross compiler
+CC = gcc
+
 SOURCES := spiffs_hydrogen.c
 SOURCES += spiffs_cache.c
 SOURCES += spiffs_gc.c

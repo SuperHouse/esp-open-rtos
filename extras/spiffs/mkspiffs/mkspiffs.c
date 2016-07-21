@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/dir.h>
-#include <sys/dirent.h>
+#include <dirent.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
