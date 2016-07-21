@@ -45,40 +45,53 @@
  * called where it needed and not.
  */
 
-#define SPI_WRITE_MAX_SIZE  32
-#define SPI_READ_MAX_SIZE   32
+#define SPI_WRITE_MAX_SIZE  64
+
+// 64 bytes read causes hang
+// http://bbs.espressif.com/viewtopic.php?f=6&t=2439
+#define SPI_READ_MAX_SIZE   60
+
+
+/**
+ * Copy unaligned data to 4-byte aligned destination buffer.
+ *
+ * @param words Number of 4-byte words to write.
+ *
+ * @see unaligned_memcpy.S
+ */
+void memcpy_unaligned_src(volatile uint32_t *dst, uint8_t *src, uint8_t words);
+
+/**
+ * Copy 4-byte aligned source data to unaligned destination buffer.
+ *
+ * @param bytes Number of byte to copy to dst.
+ *
+ * @see unaligned_memcpy.S
+ */
+void memcpy_unaligned_dst(uint8_t *dst, volatile uint32_t *src, uint8_t bytes);
+
 
 /**
  * Low level SPI flash write. Write block of data up to 64 bytes.
  */
-static inline uint32_t IRAM spi_write_data(sdk_flashchip_t *chip, uint32_t addr,
+static inline void IRAM spi_write_data(sdk_flashchip_t *chip, uint32_t addr,
         uint8_t *buf, uint32_t size)
 {
-    Wait_SPI_Idle(chip);  // wait for previous write to finish
-
-    SPI(0).ADDR = (addr & 0x00FFFFFF) | (size << 24);
-
     uint32_t words = size >> 2;
     if (size & 0b11) {
         words++;
     }
-    uint32_t data = 0;
-    for (uint32_t i = 0; i < (words << 2); i++) {
-        data >>= 8;
-        data |= (uint32_t)buf[i] << 24;
-        if (i & 0b11) {
-            SPI(0).W[i >> 2] = data;
-        }
-    }
 
-    if (SPI_write_enable(chip)) {
-        return ESP_SPIFFS_FLASH_ERROR;
-    }
+    Wait_SPI_Idle(chip);  // wait for previous write to finish
+
+    SPI(0).ADDR = (addr & 0x00FFFFFF) | (size << 24);
+
+    memcpy_unaligned_src(SPI(0).W, buf, words);
+
+    SPI_write_enable(chip);
 
     SPI(0).CMD = SPI_CMD_PP;
     while (SPI(0).CMD) {}
-
-    return ESP_SPIFFS_FLASH_OK;
 }
 
 /**
@@ -97,9 +110,7 @@ static uint32_t IRAM spi_write_page(sdk_flashchip_t *flashchip, uint32_t dest_ad
     }
 
     while (size >= SPI_WRITE_MAX_SIZE) {
-        if (spi_write_data(flashchip, dest_addr, buf, SPI_WRITE_MAX_SIZE)) {
-            return ESP_SPIFFS_FLASH_ERROR;
-        }
+        spi_write_data(flashchip, dest_addr, buf, SPI_WRITE_MAX_SIZE);
 
         size -= SPI_WRITE_MAX_SIZE;
         dest_addr += SPI_WRITE_MAX_SIZE;
@@ -110,9 +121,7 @@ static uint32_t IRAM spi_write_page(sdk_flashchip_t *flashchip, uint32_t dest_ad
         }
     }
 
-    if (spi_write_data(flashchip, dest_addr, buf, size)) {
-        return ESP_SPIFFS_FLASH_ERROR;
-    }
+    spi_write_data(flashchip, dest_addr, buf, size);
 
     return ESP_SPIFFS_FLASH_OK;
 }
@@ -185,15 +194,10 @@ static inline void IRAM read_block(sdk_flashchip_t *chip, uint32_t addr,
 {
     SPI(0).ADDR = (addr & 0x00FFFFFF) | (size << 24);
     SPI(0).CMD = SPI_CMD_READ;
+
     while (SPI(0).CMD) {};
-    uint32_t data = 0;
-    for (uint32_t i = 0; i < size; i++) {
-        if (!(i & 0b11)) {
-            data = SPI(0).W[i>>2];
-        }
-        buf[i] = 0xFF & data;
-        data >>= 8;
-    }
+
+    memcpy_unaligned_dst(buf, SPI(0).W, size);
 }
 
 /**
