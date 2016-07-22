@@ -32,6 +32,10 @@ CFLAGS += -DSPIFFS_SIZE=$(SPIFFS_SIZE)
 
 all: mkspiffs
 
+$(OBJECTS): $(SOURCES)
+
+$(OBJECTS): ../spiffs_config.h
+
 mkspiffs: $(OBJECTS)
 
 clean:

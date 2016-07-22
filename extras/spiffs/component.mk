@@ -40,6 +40,9 @@ $$(SPIFFS_IMAGE): $$(MKSPIFFS) $$(SPIFFS_FILE_LIST)
 $$(spiffs_ROOT)spiffs_config.h: Makefile
 	$$(Q) touch $$@
 
+$$(MKSPIFFS)_MAKE:
+	$$(MAKE) -C $$(MKSPIFFS_DIR) SPIFFS_SIZE=$(SPIFFS_SIZE)
+
 # if SPIFFS_SIZE in Makefile is changed rebuild mkspiffs
 $$(MKSPIFFS): Makefile
 	$$(MAKE) -C $$(MKSPIFFS_DIR) clean
@@ -50,6 +53,11 @@ clean_spiffs_img:
 
 clean_mkspiffs:
 	$$(Q) $$(MAKE) -C $$(MKSPIFFS_DIR) clean
+
+# run make for mkspiffs always
+all: $$(MKSPIFFS)_MAKE
+
+.PHONY: $$(MKSPIFFS)_MAKE
 
 SPIFFS_ESPTOOL_ARGS = $(SPIFFS_BASE_ADDR) $$(SPIFFS_IMAGE)
 endef

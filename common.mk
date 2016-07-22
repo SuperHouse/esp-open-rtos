@@ -68,7 +68,7 @@ Q := @
 vecho := @echo
 endif
 
-.PHONY: all clean flash erase_flash
+.PHONY: all clean flash erase_flash test size rebuild
 
 all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 
@@ -209,7 +209,7 @@ $(FW_FILE): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(vecho) "FW $@"
 	$(Q) $(ESPTOOL) elf2image --version=2 $(ESPTOOL_ARGS) $< -o $(FW_FILE)
 
-flash: $(FW_FILE)
+flash: all
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) \
 		0x0 $(RBOOT_BIN) 0x1000 $(RBOOT_CONF) 0x2000 $(FW_FILE) $(SPIFFS_ESPTOOL_ARGS)
 

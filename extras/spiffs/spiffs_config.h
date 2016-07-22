@@ -125,7 +125,7 @@ typedef unsigned char u8_t;
 // not on mount point. If not, SPIFFS_format must be called prior to mounting
 // again.
 #ifndef SPIFFS_USE_MAGIC
-#define SPIFFS_USE_MAGIC                (0)
+#define SPIFFS_USE_MAGIC                (1)
 #endif
 
 #if SPIFFS_USE_MAGIC
@@ -135,7 +135,7 @@ typedef unsigned char u8_t;
 // be accepted for mounting with a configuration defining the filesystem as 2
 // megabytes.
 #ifndef SPIFFS_USE_MAGIC_LENGTH
-#define SPIFFS_USE_MAGIC_LENGTH         (0)
+#define SPIFFS_USE_MAGIC_LENGTH         (1)
 #endif
 #endif
 
@@ -174,7 +174,7 @@ typedef unsigned char u8_t;
 #define SPIFFS_CFG_LOG_PAGE_SZ(ignore)    (256)
 #endif
 #ifndef SPIFFS_CFG_LOG_BLOCK_SZ
-#define SPIFFS_CFG_LOG_BLOCK_SZ(ignore)   (4*1024)
+#define SPIFFS_CFG_LOG_BLOCK_SZ(ignore)   (8*1024)
 #endif
 #endif
 
@@ -195,7 +195,7 @@ typedef unsigned char u8_t;
 // NB: This adds config field fh_ix_offset in the configuration struct when
 // mounting, which must be defined.
 #ifndef SPIFFS_FILEHDL_OFFSET
-#define SPIFFS_FILEHDL_OFFSET                 0
+#define SPIFFS_FILEHDL_OFFSET                 1
 #endif
 
 // Enable this to compile a read only version of spiffs.
