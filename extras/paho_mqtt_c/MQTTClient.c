@@ -94,8 +94,13 @@ int  readPacket(MQTTClient* c, Timer* timer)
         goto exit;
     len = 1;
     /* 2. read the remaining length.  This is variable in itself */
-    decodePacket(c, &rem_len, left_ms(timer));
-    len += MQTTPacket_encode(c->readbuf + 1, rem_len); /* put the original remaining length back into the buffer */
+    len += decodePacket(c, &rem_len, left_ms(timer));
+    if (len <= 1 || len + rem_len > c->readbuf_size) /* if packet is too big to fit in our readbuf, abort */
+    {
+        rc = READ_ERROR;
+        goto exit;
+    }
+    MQTTPacket_encode(c->readbuf + 1, rem_len); /* put the original remaining length back into the buffer */
     /* 3. read the rest of the buffer using a callback to supply the rest of the data */
     if (rem_len > 0 && (c->ipstack->mqttread(c->ipstack, c->readbuf + len, rem_len, left_ms(timer)) != rem_len))
     {
