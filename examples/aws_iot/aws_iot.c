@@ -1,6 +1,6 @@
 /*
  * Derived from examples/mqtt_client/mqtt_client.c - added TLS1.2 support and some minor modifications.
-*/
+ */
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 
@@ -29,6 +29,7 @@
 extern char *ca_cert, *client_endpoint, *client_cert, *client_key;
 
 static int wifi_alive = 0;
+static int ssl_reset;
 static SSLConnection *ssl_conn;
 static xQueueHandle publish_queue;
 
@@ -102,12 +103,27 @@ static const char *get_my_id(void) {
 
 static int mqtt_ssl_read(Network* n, unsigned char* buffer, int len,
         int timeout_ms) {
-    return ssl_read(ssl_conn, buffer, len, timeout_ms);
+    int r = ssl_read(ssl_conn, buffer, len, timeout_ms);
+    if (r <= 0
+            && (r != MBEDTLS_ERR_SSL_WANT_READ
+                    && r != MBEDTLS_ERR_SSL_WANT_WRITE
+                    && r != MBEDTLS_ERR_SSL_TIMEOUT)) {
+        printf("%s: TLS read error (%d), resetting\n\r", __func__, r);
+        ssl_reset = 1;
+    };
+    return r;
 }
 
 static int mqtt_ssl_write(Network* n, unsigned char* buffer, int len,
         int timeout_ms) {
-    return ssl_write(ssl_conn, buffer, len, timeout_ms);
+    int r = ssl_write(ssl_conn, buffer, len, timeout_ms);
+    if (r <= 0
+            && (r != MBEDTLS_ERR_SSL_WANT_READ
+                    && r != MBEDTLS_ERR_SSL_WANT_WRITE)) {
+        printf("%s: TLS write error (%d), resetting\n\r", __func__, r);
+        ssl_reset = 1;
+    }
+    return r;
 }
 
 static void mqtt_task(void *pvParameters) {
@@ -131,6 +147,7 @@ static void mqtt_task(void *pvParameters) {
         }
 
         printf("%s: started\n\r", __func__);
+        ssl_reset = 0;
         ssl_init(ssl_conn);
         ssl_conn->ca_cert_str = ca_cert;
         ssl_conn->client_cert_str = client_cert;
@@ -171,7 +188,7 @@ static void mqtt_task(void *pvParameters) {
         MQTTSubscribe(&client, MQTT_SUB_TOPIC, QOS1, topic_received);
         xQueueReset(publish_queue);
 
-        while (wifi_alive) {
+        while (wifi_alive && !ssl_reset) {
             char msg[64];
             while (xQueueReceive(publish_queue, (void *) msg, 0) == pdTRUE) {
                 portTickType task_tick = xTaskGetTickCount();
