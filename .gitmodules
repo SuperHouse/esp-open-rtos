@@ -10,4 +10,9 @@
 [submodule "bootloader/rboot"]
 	path = bootloader/rboot
 	url = https://github.com/raburton/rboot.git
-
+[submodule "extras/spiffs/spiffs"]
+	path = extras/spiffs/spiffs
+	url = https://github.com/pellepl/spiffs.git
+[submodule "examples/posix_fs/fs-test"]
+	path = examples/posix_fs/fs-test
+	url = https://github.com/sheinz/fs-test
