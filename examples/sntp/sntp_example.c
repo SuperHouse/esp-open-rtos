@@ -74,6 +74,6 @@ void user_init(void)
     sdk_wifi_set_opmode(STATION_MODE);
     sdk_wifi_station_set_config(&config);
 
-    xTaskCreate(sntp_tsk, (signed char *)"SNTP", 1024, NULL, 1, NULL);
+    xTaskCreate(sntp_tsk, (const char * const)"SNTP", 1024, NULL, 1, NULL);
 }
 

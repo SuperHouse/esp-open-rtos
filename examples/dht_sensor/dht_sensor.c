@@ -44,6 +44,6 @@ void dhtMeasurementTask(void *pvParameters)
 void user_init(void)
 {
     uart_set_baud(0, 115200);
-    xTaskCreate(dhtMeasurementTask, (signed char *)"dhtMeasurementTask", 256, NULL, 2, NULL);
+    xTaskCreate(dhtMeasurementTask, (const char * const)"dhtMeasurementTask", 256, NULL, 2, NULL);
 }
 

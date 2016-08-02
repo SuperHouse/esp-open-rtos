@@ -216,7 +216,7 @@ void user_init(void)
 
     vSemaphoreCreateBinary(wifi_alive);
     publish_queue = xQueueCreate(3, PUB_MSG_LEN);
-    xTaskCreate(&wifi_task, (int8_t *)"wifi_task",  256, NULL, 2, NULL);
-    xTaskCreate(&beat_task, (int8_t *)"beat_task", 256, NULL, 3, NULL);
-    xTaskCreate(&mqtt_task, (int8_t *)"mqtt_task", 1024, NULL, 4, NULL);
+    xTaskCreate(&wifi_task, (const char * const)"wifi_task",  256, NULL, 2, NULL);
+    xTaskCreate(&beat_task, (const char * const)"beat_task", 256, NULL, 3, NULL);
+    xTaskCreate(&mqtt_task, (const char * const)"mqtt_task", 1024, NULL, 4, NULL);
 }

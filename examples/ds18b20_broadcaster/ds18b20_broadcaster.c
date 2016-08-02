@@ -119,6 +119,6 @@ void user_init(void)
     sdk_wifi_set_opmode(STATION_MODE);
     sdk_wifi_station_set_config(&config);
 
-    xTaskCreate(&broadcast_temperature, (signed char *)"broadcast_temperature", 256, NULL, 2, NULL);
+    xTaskCreate(&broadcast_temperature, (const char * const)"broadcast_temperature", 256, NULL, 2, NULL);
 }
 

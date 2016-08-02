@@ -79,6 +79,6 @@ void user_init(void)
     gpio_enable(gpio, GPIO_INPUT);
 
     tsqueue = xQueueCreate(2, sizeof(uint32_t));
-    xTaskCreate(buttonIntTask, (signed char *)"buttonIntTask", 256, &tsqueue, 2, NULL);
-    xTaskCreate(buttonPollTask, (signed char*)"buttonPollTask", 256, NULL, 1, NULL);
+    xTaskCreate(buttonIntTask, (const char * const)"buttonIntTask", 256, &tsqueue, 2, NULL);
+    xTaskCreate(buttonPollTask, (const char * const)"buttonPollTask", 256, NULL, 1, NULL);
 }
