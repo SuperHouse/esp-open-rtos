@@ -27,6 +27,7 @@
 #include "espressif/esp_common.h"
 #include "espressif/phy_info.h"
 #include "sdk_internal.h"
+#include "esplibs/libmain.h"
 #include "sysparam.h"
 
 /* This is not declared in any header file (but arguably should be) */

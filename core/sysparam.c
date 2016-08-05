@@ -1,3 +1,9 @@
+/*
+ * Part of esp-open-rtos
+ * Copyright (C) 2016 Alex Stewart
+ * BSD Licensed as described in the file LICENSE
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -111,7 +117,7 @@ static struct {
 /***************************** Internal routines *****************************/
 
 static inline IRAM sysparam_status_t _do_write(uint32_t addr, const void *data, size_t data_size) {
-    CHECK_FLASH_OP(sdk_spi_flash_write(addr, data, data_size));
+    CHECK_FLASH_OP(sdk_spi_flash_write(addr, (void*) data, data_size));
     return SYSPARAM_OK;
 }
 
@@ -203,7 +209,7 @@ static sysparam_status_t init_write_context(struct sysparam_context *ctx) {
     memset(ctx, 0, sizeof(*ctx));
     ctx->addr = _sysparam_info.end_addr;
     debug(3, "read entry header @ 0x%08x", ctx->addr);
-    CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr, &ctx->entry, ENTRY_HEADER_SIZE));
+    CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
     return SYSPARAM_OK;
 }
 
@@ -242,7 +248,7 @@ static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint16_t matc
         }
 
         debug(3, "read entry header @ 0x%08x", ctx->addr);
-        CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr, &ctx->entry, ENTRY_HEADER_SIZE));
+        CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
         debug(3, "  idflags = 0x%04x", ctx->entry.idflags);
         if (ctx->entry.idflags == 0xffff) {
             // 0xffff is never a valid id field, so this means we've hit the
@@ -288,7 +294,7 @@ static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint16_t matc
 /** Read the payload from the current entry pointed to by `ctx` */
 static inline sysparam_status_t _read_payload(struct sysparam_context *ctx, uint8_t *buffer, size_t buffer_size) {
     debug(3, "read payload (%d) @ 0x%08x", min(buffer_size, ctx->entry.len), ctx->addr);
-    CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr + ENTRY_HEADER_SIZE, buffer, min(buffer_size, ctx->entry.len)));
+    CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr + ENTRY_HEADER_SIZE, (void*) buffer, min(buffer_size, ctx->entry.len)));
     return SYSPARAM_OK;
 }
 
@@ -385,11 +391,11 @@ static inline sysparam_status_t _delete_entry(uint32_t addr) {
 
     debug(2, "Deleting entry @ 0x%08x", addr);
     debug(3, "read entry header @ 0x%08x", addr);
-    CHECK_FLASH_OP(sdk_spi_flash_read(addr, &entry, ENTRY_HEADER_SIZE));
+    CHECK_FLASH_OP(sdk_spi_flash_read(addr, (void*) &entry, ENTRY_HEADER_SIZE));
     // Set the ID to zero to mark it as "deleted"
     entry.idflags &= ~ENTRY_FLAG_ALIVE;
     debug(3, "write entry header @ 0x%08x", addr);
-    CHECK_FLASH_OP(sdk_spi_flash_write(addr, &entry, ENTRY_HEADER_SIZE));
+    CHECK_FLASH_OP(sdk_spi_flash_write(addr, (void*) &entry, ENTRY_HEADER_SIZE));
 
     return SYSPARAM_OK;
 }
@@ -494,7 +500,7 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
         top_addr = base_addr + sdk_flashchip.sector_size;
     }
     for (addr0 = base_addr; addr0 < top_addr; addr0 += sdk_flashchip.sector_size) {
-        CHECK_FLASH_OP(sdk_spi_flash_read(addr0, &header0, REGION_HEADER_SIZE));
+        CHECK_FLASH_OP(sdk_spi_flash_read(addr0, (void*) &header0, REGION_HEADER_SIZE));
         if (header0.magic == SYSPARAM_MAGIC) {
             // Found a starting point...
             break;
@@ -512,7 +518,7 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
     } else {
         addr1 = addr0 + num_sectors * sdk_flashchip.sector_size;
     }
-    CHECK_FLASH_OP(sdk_spi_flash_read(addr1, &header1, REGION_HEADER_SIZE));
+    CHECK_FLASH_OP(sdk_spi_flash_read(addr1, (void*) &header1, REGION_HEADER_SIZE));
 
     if (header1.magic == SYSPARAM_MAGIC) {
         // Yay! Found the other one.  Sanity-check it..

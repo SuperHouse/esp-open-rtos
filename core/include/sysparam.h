@@ -1,3 +1,9 @@
+/*
+ * Part of esp-open-rtos
+ * Copyright (C) 2016 Alex Stewart
+ * BSD Licensed as described in the file LICENSE
+ */
+
 #ifndef _SYSPARAM_H_
 #define _SYSPARAM_H_
 
@@ -12,9 +18,9 @@
  *  Read/write "system parameters" to persistent flash.
  *
  *  System parameters are stored as key/value pairs.  Keys are string values
- *  between 1 and 255 characters long.  Values can be any data up to 255 bytes
- *  in length (but are most commonly also text strings).  Up to 126 key/value
- *  pairs can be stored at a time.
+ *  between 1 and 65535 characters long.  Values can be any data up to 65535
+ *  bytes in length (but are most commonly also text strings). Up to 126 key/
+ *  value pairs can be stored at a time.
  *
  *  Keys and values are stored in flash using a progressive list structure
  *  which allows space-efficient storage and minimizes flash erase cycles,
