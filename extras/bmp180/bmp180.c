@@ -27,12 +27,7 @@
 // Values for BMP180_CONTROL_REG
 //
 #define BMP180_MEASURE_TEMP       0x2E
-#define BMP180_MEASURE_PRESS_OSS0 0x34
-#define BMP180_MEASURE_PRESS_OSS1 0x74
-#define BMP180_MEASURE_PRESS_OSS2 0xB4
-#define BMP180_MEASURE_PRESS_OSS3 0xF4
-
-#define BMP180_DEFAULT_CONV_TIME  5000
+#define BMP180_MEASURE_PRESS      0x34
 
 //
 // CHIP ID stored in BMP180_VERSION_REG
@@ -44,6 +39,176 @@
 //
 #define BMP180_RESET_VALUE        0xB6
 
+static bool bmp180_readRegister16(uint8_t reg, int16_t *r)
+{
+    uint8_t d[] = { 0, 0 };
+
+    if (!i2c_slave_read(BMP180_DEVICE_ADDRESS, reg, d, 2))
+        return false;
+
+    *r = ((int16_t)d[0] << 8) | (d[1]);
+    return true;
+}
+
+static bool bmp180_start_Messurement(uint8_t cmd)
+{
+    uint8_t d[] = { BMP180_CONTROL_REG, cmd };
+
+    return i2c_slave_write(BMP180_DEVICE_ADDRESS, d, 2);
+}
+
+static bool bmp180_get_uncompensated_temperature(int32_t *ut)
+{
+    // Write Start Code into reg 0xF4.
+    if (!bmp180_start_Messurement(BMP180_MEASURE_TEMP))
+        return false;
+
+    // Wait 5ms, datasheet states 4.5ms
+    sdk_os_delay_us(5000);
+
+    int16_t v;
+    if (!bmp180_readRegister16(BMP180_OUT_MSB_REG, &v))
+        return false;
+
+    *ut = v;
+    return true;
+}
+
+static bool bmp180_get_uncompensated_pressure(uint8_t oss, uint32_t *up)
+{
+    uint16_t us;
+
+    // Limit oss and set the measurement wait time. The datasheet
+    // states 4.5, 7.5, 13.5, 25.5ms for oss 0 to 3.
+    switch (oss) {
+      case 0: us = 5000; break;
+      case 1: us = 8000; break;
+      case 2: us = 14000; break;
+      default: oss = 3; us = 26000; break;
+    }
+
+    // Write Start Code into reg 0xF4
+    if (!bmp180_start_Messurement(BMP180_MEASURE_PRESS | (oss << 6)))
+        return false;
+
+    sdk_os_delay_us(us);
+
+    uint8_t d[] = { 0, 0, 0 };
+    if (!i2c_slave_read(BMP180_DEVICE_ADDRESS, BMP180_OUT_MSB_REG, d, 3))
+        return false;
+
+    uint32_t r = ((uint32_t)d[0] << 16) | ((uint32_t)d[1] << 8) | d[2];
+    r >>= 8 - oss;
+    *up = r;
+    return true;
+}
+
+// Returns true of success else false.
+bool bmp180_fillInternalConstants(bmp180_constants_t *c)
+{
+    if (!bmp180_readRegister16(BMP180_CALIBRATION_REG+0, &c->AC1) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+2, &c->AC2) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+4, &c->AC3) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+6, (int16_t *)&c->AC4) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+8, (int16_t *)&c->AC5) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+10, (int16_t *)&c->AC6) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+12, &c->B1) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+14, &c->B2) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+16, &c->MB) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+18, &c->MC) ||
+        !bmp180_readRegister16(BMP180_CALIBRATION_REG+20, &c->MD)) {
+        return false;
+    }
+
+#ifdef BMP180_DEBUG
+    printf("%s: AC1:=%d AC2:=%d AC3:=%d AC4:=%u AC5:=%u AC6:=%u \n", __FUNCTION__, c->AC1, c->AC2, c->AC3, c->AC4, c->AC5, c->AC6);
+    printf("%s: B1:=%d B2:=%d\n", __FUNCTION__, c->B1, c->B2);
+    printf("%s: MB:=%d MC:=%d MD:=%d\n", __FUNCTION__, c->MB, c->MC, c->MD);
+#endif
+
+    // Error if any read as 0x0000 or 0xffff.
+    return !(c->AC1 == 0x0000 || c->AC2 == 0x0000 || c->AC3 == 0x0000 ||
+             c->AC4 == 0x0000 || c->AC5 == 0x0000 || c->AC6 == 0x0000 ||
+             c->B1 == 0x0000 || c->B2 == 0x0000 ||
+             c->MB == 0x0000 || c->MC == 0x0000 || c->MD == 0x0000 ||
+             c->AC1 == 0xffff || c->AC2 == 0xffff || c->AC3 == 0xffff ||
+             c->AC4 == 0xffff || c->AC5 == 0xffff || c->AC6 == 0xffff ||
+             c->B1 == 0xffff || c->B2 == 0xffff ||
+             c->MB == 0xffff || c->MC == 0xffff || c->MD == 0xffff);
+}
+
+bool bmp180_is_available()
+{
+    uint8_t id;
+    return i2c_slave_read(BMP180_DEVICE_ADDRESS, BMP180_VERSION_REG, &id, 1) &&
+        id == BMP180_CHIP_ID;
+}
+
+bool bmp180_measure(bmp180_constants_t *c, int32_t *temperature,
+                    uint32_t *pressure, uint8_t oss)
+{
+    int32_t T, P;
+
+    if (!temperature && !pressure)
+        return false;
+
+    // Temperature is always needed, allso required for pressure only.
+    //
+    // Calculation taken from BMP180 Datasheet
+    int32_t UT, X1, X2, B5;
+    if (!bmp180_get_uncompensated_temperature(&UT))
+        return false;
+
+    X1 = ((UT - (int32_t)c->AC6) * (int32_t)c->AC5) >> 15;
+    X2 = ((int32_t)c->MC << 11) / (X1 + (int32_t)c->MD);
+    B5 = X1 + X2;
+    T = (B5 + 8) >> 4;
+    if (temperature)
+        *temperature = T;
+#ifdef BMP180_DEBUG
+    printf("%s: T:= %ld.%d\n", __FUNCTION__, T/10, abs(T%10));
+#endif
+
+    if (pressure) {
+        int32_t X3, B3, B6;
+        uint32_t B4, B7, UP;
+
+        if (!bmp180_get_uncompensated_pressure(oss, &UP))
+            return false;
+
+        // Calculation taken from BMP180 Datasheet
+        B6 = B5 - 4000;
+        X1 = ((int32_t)c->B2 * ((B6 * B6) >> 12)) >> 11;
+        X2 = ((int32_t)c->AC2 * B6) >> 11;
+        X3 = X1 + X2;
+
+        B3 = ((((int32_t)c->AC1 * 4 + X3) << oss) + 2) >> 2;
+        X1 = ((int32_t)c->AC3 * B6) >> 13;
+        X2 = ((int32_t)c->B1 * ((B6 * B6) >> 12)) >> 16;
+        X3 = ((X1 + X2) + 2) >> 2;
+        B4 = ((uint32_t)c->AC4 * (uint32_t)(X3 + 32768)) >> 15;
+        B7 = ((uint32_t)UP - B3) * (uint32_t)(50000UL >> oss);
+
+        if (B7 < 0x80000000UL) {
+            P = (B7 * 2) / B4;
+        } else {
+            P = (B7 / B4) * 2;
+        }
+
+        X1 = (P >> 8) * (P >> 8);
+        X1 = (X1 * 3038) >> 16;
+        X2 = (-7357 * P) >> 16;
+        P = P + ((X1 + X2 + (int32_t)3791) >> 4);
+        if (pressure)
+            *pressure = P;
+#ifdef BMP180_DEBUG
+        printf("%s: P:= %ld\n", __FUNCTION__, P);
+#endif
+    }
+    return true;
+}
+
+
 
 // BMP180_Event_Command
 typedef struct
@@ -56,25 +221,9 @@ typedef struct
 static xQueueHandle bmp180_rx_queue = NULL;
 static xTaskHandle  bmp180_task_handle = NULL;
 
-// Calibration constants
-static int16_t  AC1;
-static int16_t  AC2;
-static int16_t  AC3;
-static uint16_t AC4;
-static uint16_t AC5;
-static uint16_t AC6;
-
-static int16_t  B1;
-static int16_t  B2;
-
-static int16_t  MB;
-static int16_t  MC;
-static int16_t  MD;
-
 //
 // Forward declarations
 //
-static void bmp180_meassure(const bmp180_command_t* command);
 static bool bmp180_informUser_Impl(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
 
 // Set default implementation .. User gets result as bmp180_result_t event
@@ -85,109 +234,53 @@ static void bmp180_driver_task(void *pvParameters)
 {
     // Data to be received from user
     bmp180_command_t current_command;
+    bmp180_constants_t bmp180_constants;
 
 #ifdef BMP180_DEBUG
     // Wait for commands from the outside
     printf("%s: Started Task\n", __FUNCTION__);
 #endif
 
-    while(1)
-    {
+    // Initialize all internal constants.
+    if (!bmp180_fillInternalConstants(&bmp180_constants)) {
+        printf("%s: reading internal constants failed\n", __FUNCTION__);
+        vTaskDelete(NULL);
+    }
+
+    while(1) {
         // Wait for user to insert commands
-        if (xQueueReceive(bmp180_rx_queue, &current_command, portMAX_DELAY) == pdTRUE)
-        {
+        if (xQueueReceive(bmp180_rx_queue, &current_command, portMAX_DELAY) == pdTRUE) {
 #ifdef BMP180_DEBUG
             printf("%s: Received user command %d 0x%p\n", __FUNCTION__, current_command.cmd, current_command.resultQueue);
 #endif
             // use user provided queue
-            if (current_command.resultQueue != NULL)
-            {
+            if (current_command.resultQueue != NULL) {
                 // Work on it ...
-                bmp180_meassure(&current_command);
+                int32_t T = 0;
+                uint32_t P = 0;
+
+                if (bmp180_measure(&bmp180_constants, &T, (current_command.cmd & BMP180_PRESSURE) ? &P : NULL, 3)) {
+                    // Inform the user ...
+                    if (!bmp180_informUser(current_command.resultQueue,
+                                           current_command.cmd,
+                                           ((bmp180_temp_t)T)/10.0,
+                                           (bmp180_press_t)P)) {
+                        // Failed to send info to user
+                        printf("%s: Unable to inform user bmp180_informUser returned \"false\"\n", __FUNCTION__);
+                    }
+                }
             }
         }
     }
 }
 
-static uint8_t bmp180_readRegister8(uint8_t reg)
-{
-    uint8_t r = 0;
-
-    if (!i2c_slave_read(BMP180_DEVICE_ADDRESS, reg, &r, 1))
-    {
-        r = 0;
-    }
-    return r;
-}
-
-
-static int16_t bmp180_readRegister16(uint8_t reg)
-{
-    uint8_t d[] = { 0, 0 };
-    int16_t r = 0;
-
-    if (i2c_slave_read(BMP180_DEVICE_ADDRESS, reg, d, 2))
-    {
-        r = ((int16_t)d[0]<<8) | (d[1]);
-    }
-    return r;
-}
-
-static void bmp180_start_Messurement(uint8_t cmd)
-{
-    uint8_t d[] = { BMP180_CONTROL_REG, cmd };
-
-    i2c_slave_write(BMP180_DEVICE_ADDRESS, d, 2);
-}
-
-static int16_t bmp180_getUncompensatedMessurement(uint8_t cmd)
-{
-    // Write Start Code into reg 0xF4 (Currently without oversampling ...)
-    bmp180_start_Messurement((cmd==BMP180_TEMPERATURE)?BMP180_MEASURE_TEMP:BMP180_MEASURE_PRESS_OSS0);
-
-    // Wait 5ms Datasheet states 4.5ms
-    sdk_os_delay_us(BMP180_DEFAULT_CONV_TIME);
-
-    return (int16_t)bmp180_readRegister16(BMP180_OUT_MSB_REG);
-}
-
-static void bmp180_fillInternalConstants(void)
-{
-    AC1 = bmp180_readRegister16(BMP180_CALIBRATION_REG+0);
-    AC2 = bmp180_readRegister16(BMP180_CALIBRATION_REG+2);
-    AC3 = bmp180_readRegister16(BMP180_CALIBRATION_REG+4);
-    AC4 = bmp180_readRegister16(BMP180_CALIBRATION_REG+6);
-    AC5 = bmp180_readRegister16(BMP180_CALIBRATION_REG+8);
-    AC6 = bmp180_readRegister16(BMP180_CALIBRATION_REG+10);
-
-    B1 = bmp180_readRegister16(BMP180_CALIBRATION_REG+12);
-    B2 = bmp180_readRegister16(BMP180_CALIBRATION_REG+14);
-
-    MB = bmp180_readRegister16(BMP180_CALIBRATION_REG+16);
-    MC = bmp180_readRegister16(BMP180_CALIBRATION_REG+18);
-    MD = bmp180_readRegister16(BMP180_CALIBRATION_REG+20);
-
-#ifdef BMP180_DEBUG
-    printf("%s: AC1:=%d AC2:=%d AC3:=%d AC4:=%u AC5:=%u AC6:=%u \n", __FUNCTION__, AC1, AC2, AC3, AC4, AC5, AC6);
-    printf("%s: B1:=%d B2:=%d\n", __FUNCTION__, B1, B2);
-    printf("%s: MB:=%d MC:=%d MD:=%d\n", __FUNCTION__, MB, MC, MD);
-#endif
-}
-
 static bool bmp180_create_communication_queues()
 {
     // Just create them once
-    if (bmp180_rx_queue==NULL)
-    {
+    if (bmp180_rx_queue == NULL)
         bmp180_rx_queue = xQueueCreate(BMP180_RX_QUEUE_SIZE, sizeof(bmp180_result_t));
-    }
 
-    return (bmp180_rx_queue!=NULL);
-}
-
-static bool bmp180_is_avaialble()
-{
-    return (bmp180_readRegister8(BMP180_VERSION_REG)==BMP180_CHIP_ID);
+    return bmp180_rx_queue != NULL;
 }
 
 static bool bmp180_createTask()
@@ -195,87 +288,10 @@ static bool bmp180_createTask()
     // We already have a task
     portBASE_TYPE x = pdPASS;
 
-    if (bmp180_task_handle==NULL)
-    {
+    if (bmp180_task_handle == NULL) {
         x = xTaskCreate(bmp180_driver_task, (signed char *)"bmp180_driver_task", 256, NULL, BMP180_TASK_PRIORITY, &bmp180_task_handle);
     }
-    return (x==pdPASS);
-}
-
-static void bmp180_meassure(const bmp180_command_t* command)
-{
-    int32_t T, P;
-
-    // Init result to 0
-    T = P = 0;
-
-    if (command->resultQueue != NULL)
-    {
-        int32_t UT, X1, X2, B5;
-
-        //
-        // Temperature is always needed ... Also required for pressure only
-        //
-        // Calculation taken from BMP180 Datasheet
-        UT = (int32_t)bmp180_getUncompensatedMessurement(BMP180_TEMPERATURE);
-
-        X1 = (UT - (int32_t)AC6) * ((int32_t)AC5) >> 15;
-        X2 = ((int32_t)MC << 11) / (X1 + (int32_t)MD);
-        B5 = X1 + X2;
-
-        T = (B5 + 8) >> 4;
-
-#ifdef BMP180_DEBUG
-        printf("%s: T:= %ld.%d\n", __FUNCTION__, T/10, abs(T%10));
-#endif
-
-        // Do we also need pressure?
-        if (command->cmd & BMP180_PRESSURE)
-        {
-            int32_t X3, B3, B6;
-            uint32_t B4, B7, UP;
-
-            UP = ((uint32_t)bmp180_getUncompensatedMessurement(BMP180_PRESSURE) & 0xFFFF);
-
-            // Calculation taken from BMP180 Datasheet
-            B6 = B5 - 4000;
-            X1 = ((int32_t)B2 * ((B6 * B6) >> 12)) >> 11;
-            X2 = ((int32_t)AC2 * B6) >> 11;
-            X3 = X1 + X2;
-
-            B3 = (((int32_t)AC1 * 4 + X3) + 2) >> 2;
-            X1 = ((int32_t)AC3 * B6) >> 13;
-            X2 = ((int32_t)B1 * ((B6 * B6) >> 12)) >> 16;
-            X3 = ((X1 + X2) + 2) >> 2;
-            B4 = ((uint32_t)AC4 * (uint32_t)(X3 + 32768)) >> 15;
-            B7 = (UP - B3) * (uint32_t)(50000UL);
-
-            if (B7 < 0x80000000)
-            {
-                P = (B7 * 2) / B4;
-            }
-            else
-            {
-                P = (B7 / B4) * 2;
-            }
-
-            X1 = (P >> 8) * (P >> 8);
-            X1 = (X1 * 3038) >> 16;
-            X2 = (-7357 * P) >> 16;
-            P = P + ((X1 + X2 + (int32_t)3791) >> 4);
-
-#ifdef BMP180_DEBUG
-            printf("%s: P:= %ld\n", __FUNCTION__, P);
-#endif
-        }
-
-        // Inform the user ...
-        if (!bmp180_informUser(command->resultQueue, command->cmd, ((bmp180_temp_t)T)/10.0, (bmp180_press_t)P))
-        {
-            // Failed to send info to user
-            printf("%s: Unable to inform user bmp180_informUser returned \"false\"\n", __FUNCTION__);
-        }
-    }
+    return x == pdPASS;
 }
 
 // Default user inform implementation
@@ -296,20 +312,13 @@ bool bmp180_init(uint8_t scl, uint8_t sda)
     // 1. Create required queues
     bool result = false;
 
-    if (bmp180_create_communication_queues())
-    {
+    if (bmp180_create_communication_queues()) {
         // 2. Init i2c driver
         i2c_init(scl, sda);
-
         // 3. Check for bmp180 ...
-        if (bmp180_is_avaialble())
-        {
-            // 4. Init all internal constants ...
-            bmp180_fillInternalConstants();
-
-            // 5. Start driver task
-            if (bmp180_createTask())
-            {
+        if (bmp180_is_available()) {
+            // 4. Start driver task
+            if (bmp180_createTask()) {
                 // We are finished
                 result = true;
             }

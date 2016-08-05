@@ -52,4 +52,31 @@ void bmp180_trigger_pressure_measurement(const xQueueHandle* resultQueue);
 // Give the user the chance to create it's own handler
 extern bool (*bmp180_informUser)(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
 
+// Calibration constants
+typedef struct
+{
+    int16_t  AC1;
+    int16_t  AC2;
+    int16_t  AC3;
+    uint16_t AC4;
+    uint16_t AC5;
+    uint16_t AC6;
+
+    int16_t  B1;
+    int16_t  B2;
+
+    int16_t  MB;
+    int16_t  MC;
+    int16_t  MD;
+} bmp180_constants_t;
+
+// Returns true if the bmp180 is detected.
+bool bmp180_is_available();
+// Reads all the internal constants, returning true on success.
+bool bmp180_fillInternalConstants(bmp180_constants_t *c);
+// Reads an optional temperature and pressure. The over sampling
+// setting, oss, may be 0 to 3. Returns true on success.
+bool bmp180_measure(bmp180_constants_t *c, int32_t *temperature,
+                    uint32_t *pressure, uint8_t oss);
+
 #endif /* DRIVER_BMP180_H_ */

@@ -73,7 +73,7 @@ void bmp180_task(void *pvParameters)
             bmp180_trigger_measurement(com_queue);
             break;
         case MY_EVT_BMP180:
-            printf("%s: Received BMP180 Event temp:=%d.%d°C press=%d.%02dhPa\n", __FUNCTION__, \
+            printf("%s: Received BMP180 Event temp:=%d.%dC press=%d.%02dhPa\n", __FUNCTION__, \
                        (int32_t)ev.bmp180_data.temperature, abs((int32_t)(ev.bmp180_data.temperature*10)%10), \
                        ev.bmp180_data.pressure/100, ev.bmp180_data.pressure%100 );
             break;
