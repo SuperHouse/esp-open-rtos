@@ -11,15 +11,29 @@ of a flash memory.
  * SPIFFS - embedded file system for NOR flash memory.
  * POSIX file operations.
  * Static files upload to ESP8266 file system within build process.
- * SPIFFS singleton configuration. Only one instance of FS on a device.
+ * SPIFFS singleton or run-time configuration. Selectable by
+`SPIFFS_SINGLETON` variable in Makefile.
 
 ## Usage
+
+### Configuration
+
+SPIFFS can be configured in two ways. As a SINGLETON with configuration 
+parameters provided at compile-time. And during run-time. The default
+configuration is a SINGLETON. The desired configuration can be selected in
+program's Makefile with variable `SPIFFS_SINGLETON = 0`.
+
+If SPIFFS is configured in runtime (SPIFFS_SINGLETON = 0) the method 
+`esp_spiffs_init` accepts two arguments: address and size. Where address 
+and size is the location of SPIFFS region in SPI flash and its size.
 
 In order to use file system in a project the following steps should be made:
  * Add SPIFFS component in a project Makefile `EXTRA_COMPONENTS = extras/spiffs`
  * Specify your flash size in the Makefile `FLASH_SIZE = 32`
  * Specify the start address of file system region on the flash memory
-`SPIFFS_BASE_ADDR = 0x200000`
+`SPIFFS_BASE_ADDR = 0x200000`. It still needed even for `SPIFFS_SINGLETON = 0`
+in order to flash SPIFFS image to the right location during `make flash`.
+If no SPIFFS image is going to be flashed this variable can be omitted.
  * If you want to upload files to a file system during flash process specify
 the directory with files `$(eval $(call make_spiffs_image,files))`
 
@@ -63,8 +77,6 @@ with SPIFFS on a device.
 
 The build process will catch any changes in files directory and rebuild the
 image each time `make` is run.
-The build process will handle SPIFFS_SIZE change and rebuild **mkspiffs**
-utility and the image.
 
 ## Example
 
