@@ -14,21 +14,22 @@ $(eval $(call make_spiffs_image,files))
 
 where *files* is the directory with files that should go into SPIFFS image.
 
-Or you can build mkspiffs manually with:
+mkspiffs can be built separately. Simply run `make` in the mkspiffs directory.
+
+To manually generate SPIFFS image from a directory SPIFFS configuration must be
+provided as command line arguments.
+
+Arguments:
+ * -D Directory with files that will be put in SPIFFS image.
+ * -f SPIFFS image file name.
+ * -s SPIFFS size.
+ * -p Logical page size.
+ * -b Logical block size.
+
+All arguments are mandatory.
+
+For example:
 
 ```
-make SPIFFS_SIZE=0x100000
-```
-
-mkspiffs cannot be built without specifying SPIFFS size because it uses the
-same SPIFFS sources as the firmware. And for the firmware SPIFFS size is
-compile time defined.
-
-Please note that if you change SPIFFS_SIZE you need to rebuild mkspiffs.
-The easiest way is to run `make clean` for you project.
-
-To manually generate SPIFFS image from directory, run:
-
-```
-mkspiffs DIRECTORY IMAGE_NAME
+mkspiffs -D ./my_files -f spiffs.img -s 0x10000 -p 256 -b 8192
 ```

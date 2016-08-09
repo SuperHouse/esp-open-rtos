@@ -10,6 +10,14 @@
 #include "spiffs.h"
 #include "esp_spiffs.h"
 
+/**
+ * This example shows the default SPIFFS configuration when SPIFFS is
+ * configured in compile-time (SPIFFS_SINGLETON = 1).
+ *
+ * To configure SPIFFS in run-time uncomment SPIFFS_SINGLETON in the Makefile
+ * and replace the commented esp_spiffs_init in the code below.
+ *
+ */
 
 static void example_read_file_posix()
 {
@@ -76,7 +84,13 @@ static void example_fs_info()
 
 void test_task(void *pvParameters)
 {
+#if SPIFFS_SINGLETON == 1
     esp_spiffs_init();
+#else
+    // for run-time configuration when SPIFFS_SINGLETON = 0
+    esp_spiffs_init(0x200000, 0x10000);
+#endif
+
     if (esp_spiffs_mount() != SPIFFS_OK) {
         printf("Error mount SPIFFS\n");
     }

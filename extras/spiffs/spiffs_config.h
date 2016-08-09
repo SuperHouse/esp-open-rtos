@@ -158,23 +158,26 @@ typedef unsigned char u8_t;
 #define SPIFFS_SINGLETON 1
 #endif
 
+// ESP8266 supports only sector erase, which is 4096 bytes
+#define SPIFFS_ESP_ERASE_SIZE       (4096)
+
 #if SPIFFS_SINGLETON
 // Instead of giving parameters in config struct, singleton build must
 // give parameters in defines below.
 #ifndef SPIFFS_CFG_PHYS_SZ
-#define SPIFFS_CFG_PHYS_SZ(ignore)        (SPIFFS_SIZE)
+#define SPIFFS_CFG_PHYS_SZ(ignore)          (SPIFFS_SIZE)
 #endif
 #ifndef SPIFFS_CFG_PHYS_ERASE_SZ
-#define SPIFFS_CFG_PHYS_ERASE_SZ(ignore)  (4*1024)
+#define SPIFFS_CFG_PHYS_ERASE_SZ(ignore)    (SPIFFS_ESP_ERASE_SIZE)
 #endif
 #ifndef SPIFFS_CFG_PHYS_ADDR
-#define SPIFFS_CFG_PHYS_ADDR(ignore)      (SPIFFS_BASE_ADDR)
+#define SPIFFS_CFG_PHYS_ADDR(ignore)        (SPIFFS_BASE_ADDR)
 #endif
 #ifndef SPIFFS_CFG_LOG_PAGE_SZ
-#define SPIFFS_CFG_LOG_PAGE_SZ(ignore)    (256)
+#define SPIFFS_CFG_LOG_PAGE_SZ(ignore)      (SPIFFS_LOG_PAGE_SIZE)
 #endif
 #ifndef SPIFFS_CFG_LOG_BLOCK_SZ
-#define SPIFFS_CFG_LOG_BLOCK_SZ(ignore)   (8*1024)
+#define SPIFFS_CFG_LOG_BLOCK_SZ(ignore)     (SPIFFS_LOG_BLOCK_SIZE)
 #endif
 #endif
 

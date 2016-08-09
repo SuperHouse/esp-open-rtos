@@ -31,6 +31,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include "spiffs_config.h"
 #include "../spiffs/src/spiffs.h"
 
@@ -40,15 +41,23 @@ static void *work_buf = 0;
 static void *fds_buf = 0;
 static void *cache_buf = 0;
 
+typedef struct {
+    uint32_t fs_size;
+    uint32_t log_page_size;
+    uint32_t log_block_size;
+} fs_config_t;
+
 static void print_usage(const char *prog_name, const char *error_msg)
 {
     if (error_msg) {
         printf("Error: %s\n", error_msg);
     }
     printf("Usage: ");
-    printf("\t%s DIRECTORY IMAGE_NAME\n\n", prog_name);
+    printf("%s [-D directory] [-f image-name] [-s size]\n", prog_name);
+    printf("\t[-p page-size] [-b block-size]\n\n");
     printf("Example:\n");
-    printf("\t%s ./my_files spiffs.img\n\n", prog_name);
+    printf("\t%s -D ./my_files -f spiffs.img -s 0x10000 -p 256 -b 8192\n\n", 
+            prog_name);
 }
 
 static s32_t _read_data(u32_t addr, u32_t size, u8_t *dst)
@@ -74,21 +83,30 @@ static s32_t _erase_data(u32_t addr, u32_t size)
     return SPIFFS_OK;
 }
 
-static bool init_spiffs(bool allocate_mem)
+static bool init_spiffs(bool allocate_mem, const fs_config_t *fs_config)
 {
     spiffs_config config = {0};
-    printf("Initializing SPIFFS, size=%d\n", SPIFFS_SIZE);
+    printf("Initializing SPIFFS, size=%d\n", fs_config->fs_size);
 
     config.hal_read_f = _read_data;
     config.hal_write_f = _write_data;
     config.hal_erase_f = _erase_data;
 
-    int workBufSize = 2 * SPIFFS_CFG_LOG_PAGE_SZ();
+    config.phys_addr = 0;
+    config.phys_size = fs_config->fs_size;
+    config.log_page_size = fs_config->log_page_size;
+    config.log_block_size = fs_config->log_block_size;
+    config.phys_erase_block = SPIFFS_ESP_ERASE_SIZE;
+
+    // initialize fs.cfg so the following helper functions work correctly
+    memcpy(&fs.cfg, &config, sizeof(spiffs_config));
+
+    int workBufSize = 2 * fs_config->log_page_size;
     int fdsBufSize = SPIFFS_buffer_bytes_for_filedescs(&fs, 5);
     int cacheBufSize = SPIFFS_buffer_bytes_for_cache(&fs, 5);
 
     if (allocate_mem) {
-        image = malloc(SPIFFS_SIZE);
+        image = malloc(fs_config->fs_size);
         work_buf = malloc(workBufSize);
         fds_buf = malloc(fdsBufSize);
         cache_buf = malloc(cacheBufSize);
@@ -107,22 +125,18 @@ static bool format_spiffs()
     SPIFFS_unmount(&fs);
 
     if (SPIFFS_format(&fs) == SPIFFS_OK) {
-        printf("Format complete\n"); 
+        printf("Format complete\n");
     } else {
         printf("Failed to format SPIFFS\n");
         return false;
     }
 
-    if (!init_spiffs(false)) {
-        printf("Failed to mount SPIFFS\n");
-        return false;
-    }
     return true;
 }
 
 static void spiffs_free()
 {
-    free(image); 
+    free(image);
     image = NULL;
 
     free(work_buf);
@@ -141,19 +155,19 @@ static bool process_file(const char *src_file, const char *dst_file)
     const int buf_size = 256;
     uint8_t buf[buf_size];
     int data_len;
-    
+
     fd = open(src_file, O_RDONLY);
     if (fd < 0) {
         printf("Error openning file: %s\n", src_file);
     }
-    
-    spiffs_file out_fd = SPIFFS_open(&fs, dst_file, 
+
+    spiffs_file out_fd = SPIFFS_open(&fs, dst_file,
             SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
     while ((data_len = read(fd, buf, buf_size)) != 0) {
         if (SPIFFS_write(&fs, out_fd, buf, data_len) != data_len) {
             printf("Error writing to SPIFFS file\n");
             break;
-        }       
+        }
     }
     SPIFFS_close(&fs, out_fd);
     close(fd);
@@ -169,7 +183,7 @@ static bool process_directory(const char *direcotry)
     dp = opendir(direcotry);
     if (dp != NULL) {
         while ((ep = readdir(dp)) != 0) {
-            if (!strcmp(ep->d_name, ".") || 
+            if (!strcmp(ep->d_name, ".") ||
                 !strcmp(ep->d_name, "..")) {
                 continue;
             }
@@ -179,7 +193,7 @@ static bool process_directory(const char *direcotry)
             sprintf(path, "%s/%s", direcotry, ep->d_name);
             printf("Processing file %s\n", path);
             if (!process_file(path, ep->d_name)) {
-                printf("Error processing file\n");   
+                printf("Error processing file\n");
                 break;
             }
         }
@@ -190,10 +204,10 @@ static bool process_directory(const char *direcotry)
     return true;
 }
 
-static bool write_image(const char *out_file)
+static bool write_image(const char *out_file, const fs_config_t *fs_config)
 {
     int fd;
-    int size = SPIFFS_SIZE;
+    int size = fs_config->fs_size;
     uint8_t *p = (uint8_t*)image;
     fd = open(out_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
     if (fd < 0) {
@@ -204,9 +218,9 @@ static bool write_image(const char *out_file)
     printf("Writing image to file: %s\n", out_file);
 
     while (size != 0) {
-        write(fd, p, SPIFFS_CFG_LOG_PAGE_SZ());
-        p += SPIFFS_CFG_LOG_PAGE_SZ();
-        size -= SPIFFS_CFG_LOG_PAGE_SZ();
+        write(fd, p, fs_config->log_page_size);
+        p += fs_config->log_page_size;
+        size -= fs_config->log_page_size;
     }
 
     close(fd);
@@ -216,26 +230,59 @@ static bool write_image(const char *out_file)
 int main(int argc, char *argv[])
 {
     int result = 0;
-    
-    if (argc != 3) {
+    int option = 0;
+    fs_config_t fs_config = {0};
+    char *image_file_name = 0;
+    char *directory = 0;
+
+    while ((option = getopt(argc, argv, "D:f:s:p:b:e:")) != -1) {
+        switch (option) {
+            case 'D':  // directory
+                directory = optarg;
+                break;
+            case 'f':  // image file name
+                image_file_name = optarg;
+                break;
+            case 's':  // file system size
+                fs_config.fs_size = (uint32_t)strtol(optarg, NULL, 0);
+                break;
+            case 'p':  // logical page size
+                fs_config.log_page_size = (uint32_t)strtol(optarg, NULL, 0);
+                break;
+            case 'b':  // logical block size
+                fs_config.log_block_size = (uint32_t)strtol(optarg, NULL, 0);
+                break;
+            default:
+                print_usage(argv[0], NULL);
+                return -1;
+        }
+    }
+
+    if (!image_file_name || !directory || !fs_config.fs_size
+            || !fs_config.log_page_size || !fs_config.log_block_size) {
         print_usage(argv[0], NULL);
         return -1;
     }
 
-    init_spiffs(/*allocate_mem=*/true);
+    init_spiffs(/*allocate_mem=*/true, &fs_config);
 
     if (format_spiffs()) {
-        if (process_directory(argv[1])) {
-            if (!write_image(argv[2])) {
-                printf("Error writing image\n");
-            }       
+        if (init_spiffs(/*allocate_mem=*/false, &fs_config)) {
+            if (process_directory(directory)) {
+                SPIFFS_unmount(&fs);
+                if (!write_image(image_file_name, &fs_config)) {
+                    printf("Error writing image\n");
+                }
+            } else {
+                printf("Error processing direcotry\n");
+            }
         } else {
-            printf("Error processing direcotry\n");
+            printf("Failed to mount SPIFFS\n");
         }
     } else {
         printf("Error formating spiffs\n");
     }
-      
+
     spiffs_free();
     return result;
 }

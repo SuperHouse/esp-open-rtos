@@ -20,6 +20,7 @@ typedef struct {
     uint32_t size;
 } fs_buf_t;
 
+static spiffs_config config = {0};
 static fs_buf_t work_buf = {0};
 static fs_buf_t fds_buf = {0};
 static fs_buf_t cache_buf = {0};
@@ -63,15 +64,36 @@ static s32_t esp_spiffs_erase(u32_t addr, u32_t size)
     return SPIFFS_OK;
 }
 
+#if SPIFFS_SINGLETON == 1
 void esp_spiffs_init()
 {
-    work_buf.size = 2 * SPIFFS_CFG_LOG_PAGE_SZ();
+#else
+void esp_spiffs_init(uint32_t addr, uint32_t size)
+{
+    config.phys_addr = addr;
+    config.phys_size = size;
+
+    config.phys_erase_block = SPIFFS_ESP_ERASE_SIZE;
+    config.log_page_size = SPIFFS_LOG_PAGE_SIZE;
+    config.log_block_size = SPIFFS_LOG_BLOCK_SIZE;
+
+    // Initialize fs.cfg so the following helper functions work correctly
+    memcpy(&fs.cfg, &config, sizeof(spiffs_config));
+#endif
+    work_buf.size = 2 * SPIFFS_LOG_PAGE_SIZE;
     fds_buf.size = SPIFFS_buffer_bytes_for_filedescs(&fs, ESP_SPIFFS_FD_NUMBER);
     cache_buf.size= SPIFFS_buffer_bytes_for_cache(&fs, ESP_SPIFFS_CACHE_PAGES);
 
     work_buf.buf = malloc(work_buf.size);
     fds_buf.buf = malloc(fds_buf.size);
     cache_buf.buf = malloc(cache_buf.size);
+
+    config.hal_read_f = esp_spiffs_read;
+    config.hal_write_f = esp_spiffs_write;
+    config.hal_erase_f = esp_spiffs_erase;
+
+    config.fh_ix_offset = 3;
+
 }
 
 void esp_spiffs_deinit()
@@ -88,15 +110,6 @@ void esp_spiffs_deinit()
 
 int32_t esp_spiffs_mount()
 {
-    spiffs_config config = {0};
-
-    config.hal_read_f = esp_spiffs_read;
-    config.hal_write_f = esp_spiffs_write;
-    config.hal_erase_f = esp_spiffs_erase;
-
-    config.fh_ix_offset = 3;
-
-    printf("SPIFFS size: %d\n", SPIFFS_SIZE);
     printf("SPIFFS memory, work_buf_size=%d, fds_buf_size=%d, cache_buf_size=%d\n",
             work_buf.size, fds_buf.size, cache_buf.size);
 
@@ -154,7 +167,7 @@ int _open_r(struct _reent *r, const char *pathname, int flags, int mode)
     if (flags & O_TRUNC)    spiffs_flags |= SPIFFS_TRUNC;
     if (flags & O_RDONLY)   spiffs_flags |= SPIFFS_RDONLY;
     if (flags & O_WRONLY)   spiffs_flags |= SPIFFS_WRONLY;
-    if (flags & O_EXCL)     spiffs_flags |= SPIFFS_EXCL; 
+    if (flags & O_EXCL)     spiffs_flags |= SPIFFS_EXCL;
     /* if (flags & O_DIRECT)   spiffs_flags |= SPIFFS_DIRECT; no support in newlib */
 
     return SPIFFS_open(&fs, pathname, spiffs_flags, mode);

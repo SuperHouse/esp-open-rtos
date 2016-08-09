@@ -12,12 +12,25 @@
 
 extern spiffs fs;
 
+#if SPIFFS_SINGLETON == 1
 /**
  * Prepare for SPIFFS mount.
  *
  * The function allocates all the necessary buffers.
  */
 void esp_spiffs_init();
+#else
+/**
+ * Prepare for SPIFFS mount.
+ *
+ * The function allocates all the necessary buffers.
+ *
+ * @param addr Base address for spiffs in flash memory.
+ * @param size File sistem size.
+ */
+void esp_spiffs_init(uint32_t addr, uint32_t size);
+#endif
+
 
 /**
  * Free all memory buffers that were used by SPIFFS.
