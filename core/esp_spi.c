@@ -30,32 +30,27 @@
 
 static bool _minimal_pins[2] = {false, false};
 
-inline static void _set_pin_function(uint8_t pin, uint32_t function)
-{
-    iomux_set_function(gpio_to_iomux(pin), function);
-}
-
 bool spi_init(uint8_t bus, spi_mode_t mode, uint32_t freq_divider, bool msb, spi_endianness_t endianness, bool minimal_pins)
 {
     switch (bus)
     {
         case 0:
-            _set_pin_function(_SPI0_MISO_GPIO, _SPI0_FUNC);
-            _set_pin_function(_SPI0_MOSI_GPIO, _SPI0_FUNC);
-            _set_pin_function(_SPI0_SCK_GPIO, _SPI0_FUNC);
+            gpio_set_iomux_function(_SPI0_MISO_GPIO, _SPI0_FUNC);
+            gpio_set_iomux_function(_SPI0_MOSI_GPIO, _SPI0_FUNC);
+            gpio_set_iomux_function(_SPI0_SCK_GPIO, _SPI0_FUNC);
             if (!minimal_pins)
             {
-                _set_pin_function(_SPI0_HD_GPIO, _SPI0_FUNC);
-                _set_pin_function(_SPI0_WP_GPIO, _SPI0_FUNC);
-                _set_pin_function(_SPI0_CS0_GPIO, _SPI0_FUNC);
+                gpio_set_iomux_function(_SPI0_HD_GPIO, _SPI0_FUNC);
+                gpio_set_iomux_function(_SPI0_WP_GPIO, _SPI0_FUNC);
+                gpio_set_iomux_function(_SPI0_CS0_GPIO, _SPI0_FUNC);
             }
             break;
         case 1:
-            _set_pin_function(_SPI1_MISO_GPIO, _SPI1_FUNC);
-            _set_pin_function(_SPI1_MOSI_GPIO, _SPI1_FUNC);
-            _set_pin_function(_SPI1_SCK_GPIO, _SPI1_FUNC);
+            gpio_set_iomux_function(_SPI1_MISO_GPIO, _SPI1_FUNC);
+            gpio_set_iomux_function(_SPI1_MOSI_GPIO, _SPI1_FUNC);
+            gpio_set_iomux_function(_SPI1_SCK_GPIO, _SPI1_FUNC);
             if (!minimal_pins)
-                _set_pin_function(_SPI1_CS0_GPIO, _SPI1_FUNC);
+                gpio_set_iomux_function(_SPI1_CS0_GPIO, _SPI1_FUNC);
             break;
         default:
             return false;
