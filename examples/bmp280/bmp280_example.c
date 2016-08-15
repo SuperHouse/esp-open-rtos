@@ -6,43 +6,55 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "i2c/i2c.h"
 #include "bmp280/bmp280.h"
 
 // In forced mode user initiate measurement each time.
 // In normal mode measurement is done continuously with specified standby time. 
 // #define MODE_FORCED
 
-const uint8_t scl_pin = 5;
-const uint8_t sda_pin = 4;
+const uint8_t scl_pin = 0;
+const uint8_t sda_pin = 2;
 
 #ifdef MODE_FORCED
 static void bmp280_task_forced(void *pvParameters)
 {
     bmp280_params_t  params;
-    float pressure, temperature;
+    float pressure, temperature, humidity;
 
     bmp280_init_default_params(&params);
     params.mode = BMP280_MODE_FORCED;
 
+    bmp280_t bmp280_dev;
+    bmp280_dev.i2c_addr = BMP280_I2C_ADDRESS_0;
+
     while (1) {
-        while (!bmp280_init(&params, scl_pin, sda_pin)) {
+        while (!bmp280_init(&bmp280_dev, &params)) {
             printf("BMP280 initialization failed\n");
             vTaskDelay(1000 / portTICK_RATE_MS);
         }
 
+        bool bme280p = bmp280_dev.id == BME280_CHIP_ID;
+        printf("BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
+
         while(1) {
             vTaskDelay(1000 / portTICK_RATE_MS);
-            if (!bmp280_force_measurement()) {
+            if (!bmp280_force_measurement(&bmp280_dev)) {
                 printf("Failed initiating measurement\n");
                 break;
             }
-            while (bmp280_is_measuring()) {}; // wait for measurement to complete
+            // wait for measurement to complete
+            while (bmp280_is_measuring(&bmp280_dev)) {};
 
-            if (!bmp280_read(&temperature, &pressure)) {
+            if (!bmp280_read_float(&bmp280_dev, &temperature, &pressure, &humidity)) {
                 printf("Temperature/pressure reading failed\n");
                 break;
             }
-            printf("Pressure: %.2f Pa, Temperature: %.2f C\n", pressure, temperature);
+            printf("Pressure: %.2f Pa, Temperature: %.2f C", pressure, temperature);
+            if (bme280p)
+                printf(", Humidity: %.2f\n", humidity);
+            else
+                printf("\n");
         }
     }
 }
@@ -50,22 +62,33 @@ static void bmp280_task_forced(void *pvParameters)
 static void bmp280_task_normal(void *pvParameters)
 {
     bmp280_params_t  params;
-    float pressure, temperature;
+    float pressure, temperature, humidity;
 
     bmp280_init_default_params(&params);
+
+    bmp280_t bmp280_dev;
+    bmp280_dev.i2c_addr = BMP280_I2C_ADDRESS_0;
+
     while (1) {
-        while (!bmp280_init(&params, scl_pin, sda_pin)) {
+        while (!bmp280_init(&bmp280_dev, &params)) {
             printf("BMP280 initialization failed\n");
             vTaskDelay(1000 / portTICK_RATE_MS);
         }
 
+        bool bme280p = bmp280_dev.id == BME280_CHIP_ID;
+        printf("BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
+
         while(1) {
             vTaskDelay(1000 / portTICK_RATE_MS);
-            if (!bmp280_read(&temperature, &pressure)) {
+            if (!bmp280_read_float(&bmp280_dev, &temperature, &pressure, &humidity)) {
                 printf("Temperature/pressure reading failed\n");
                 break;
             }
-            printf("Pressure: %.2f Pa, Temperature: %.2f C\n", pressure, temperature);
+            printf("Pressure: %.2f Pa, Temperature: %.2f C", pressure, temperature);
+            if (bme280p)
+                printf(", Humidity: %.2f\n", humidity);
+            else
+                printf("\n");
         }
     }
 }
@@ -79,6 +102,8 @@ void user_init(void)
     printf("\n");
     printf("SDK version : %s\n", sdk_system_get_sdk_version());
     printf("GIT version : %s\n", GITSHORTREV);
+
+    i2c_init(scl_pin, sda_pin);
 
 #ifdef MODE_FORCED
     xTaskCreate(bmp280_task_forced, (signed char *)"bmp280_task", 256, NULL, 2, NULL);
