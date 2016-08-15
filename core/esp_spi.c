@@ -23,8 +23,8 @@
 #define _SPI1_SCK_GPIO  14
 #define _SPI1_CS0_GPIO  15
 
-#define _SPI0_FUNC 1
-#define _SPI1_FUNC 2
+#define _SPI0_FUNC IOMUX_FUNC(1)
+#define _SPI1_FUNC IOMUX_FUNC(2)
 
 #define _SPI_BUF_SIZE 64
 
