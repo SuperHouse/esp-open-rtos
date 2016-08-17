@@ -43,10 +43,17 @@ inline static esp_reg_t gpio_iomux_reg(const uint8_t gpio_number)
     return &(IOMUX.PIN[gpio_to_iomux(gpio_number)]);
 }
 
-inline static void iomux_set_function(uint8_t iomux_num, uint32_t func)
+/**
+ * Set IOMUX function.
+ *
+ * @param iomux_num Index of IOMUX register. Can be converted from GPIO number
+ * with gpio_to_iomux.
+ * @param iomux_func GPIO function definition IOMUX_GPIOn_FUNC_* 
+ */
+inline static void iomux_set_function(uint8_t iomux_num, uint32_t iomux_func)
 {
     uint32_t prev = IOMUX.PIN[iomux_num] & ~IOMUX_PIN_FUNC_MASK;
-    IOMUX.PIN[iomux_num] = IOMUX_FUNC(func) | prev;
+    IOMUX.PIN[iomux_num] = iomux_func | prev;
 }
 
 inline static void iomux_set_direction_flags(uint8_t iomux_num, uint32_t dir_flags)
@@ -76,7 +83,7 @@ inline static void iomux_set_gpio_function(uint8_t gpio_number, bool output_enab
 {
     const uint8_t iomux_num = gpio_to_iomux(gpio_number);
     const uint32_t func = iomux_num > 11 ? 0 : 3;
-    iomux_set_function(iomux_num, func);
+    iomux_set_function(iomux_num, IOMUX_FUNC(func));
     iomux_set_direction_flags(iomux_num, output_enable ? IOMUX_PIN_OUTPUT_ENABLE : 0);
 }
 

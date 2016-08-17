@@ -37,6 +37,14 @@
 #define VAL2FIELD_M(fieldname, value) (((value) & fieldname##_M) << fieldname##_S)
 #define SET_FIELD_M(regbits, fieldname, value) (((regbits) & ~FIELD_MASK(fieldname)) | VAL2FIELD_M(fieldname, value))
 
+/* Set bits in reg with specified mask.
+ */
+#define SET_MASK_BITS(reg, mask) (reg) |= (mask)
+
+/* Clear bits in reg with specified mask
+ */
+#define CLEAR_MASK_BITS(reg, mask) (reg) &= ~(mask)
+
 /* Use the IRAM macro to place functions into Instruction RAM (IRAM)
    instead of flash (aka irom).
 
