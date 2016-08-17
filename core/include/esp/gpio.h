@@ -143,6 +143,16 @@ static inline gpio_inttype_t gpio_get_interrupt(const uint8_t gpio_num)
     return (gpio_inttype_t)FIELD2VAL(GPIO_CONF_INTTYPE, GPIO.CONF[gpio_num]);
 }
 
+/* Set GPIO I/O Mux function.
+ * The 'func' is an IOMUX_GPIO<n>_FUNC_<function> value, see iomux_regs.h
+ */
+inline static void gpio_set_iomux_function(const uint8_t gpio_num, uint32_t func)
+{
+    uint8_t iomux_num = gpio_to_iomux(gpio_num);
+    uint32_t prev = IOMUX.PIN[iomux_num] & ~IOMUX_PIN_FUNC_MASK;
+    IOMUX.PIN[iomux_num] = func | prev;
+}
+
 #ifdef	__cplusplus
 }
 #endif

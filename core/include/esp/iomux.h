@@ -82,8 +82,8 @@ inline static void iomux_set_pullup_flags(uint8_t iomux_num, uint32_t pullup_fla
 inline static void iomux_set_gpio_function(uint8_t gpio_number, bool output_enable)
 {
     const uint8_t iomux_num = gpio_to_iomux(gpio_number);
-    const uint32_t func = iomux_num > 11 ? 0 : 3;
-    iomux_set_function(iomux_num, IOMUX_FUNC(func));
+    const uint32_t func = iomux_num > 11 ? IOMUX_FUNC(0) : IOMUX_FUNC(3);
+    iomux_set_function(iomux_num, func);
     iomux_set_direction_flags(iomux_num, output_enable ? IOMUX_PIN_OUTPUT_ENABLE : 0);
 }
 

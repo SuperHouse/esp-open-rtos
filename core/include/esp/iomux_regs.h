@@ -47,11 +47,6 @@ _Static_assert(sizeof(struct IOMUX_REGS) == 0x44, "IOMUX_REGS is the wrong size"
 /* WARNING: Macro evaluates argument twice */
 #define IOMUX_FUNC(val) (VAL2FIELD_M(IOMUX_PIN_FUNC_LOW, val) | VAL2FIELD_M(IOMUX_PIN_FUNC_HIGH, val))
 
-/* WARNING: Macro evaluates argument twice */
-#define IOMUX_FUNC_VALUE(regbits) (FIELD2VAL(IOMUX_PIN_FUNC_LOW, regbits) | FIELD2VAL(IOMUX_PIN_FUNC_HIGH, regbits))
-
-#define IOMUX_SET_FUNC(regbits, funcval) (((regbits) & ~IOMUX_PIN_FUNC_MASK) | (funcval))
-
 #define IOMUX_GPIO0   IOMUX.PIN[12]
 #define IOMUX_GPIO1   IOMUX.PIN[5]
 #define IOMUX_GPIO2   IOMUX.PIN[13]
