@@ -55,6 +55,9 @@ sdk_wifi_promiscuous_cb_t sdk_promiscuous_cb;
 
 static uint8_t _system_upgrade_flag; // Ldata009
 
+// Timer to execute a second phase of switching to a deep sleep
+static ETSTimer deep_sleep_timer;
+
 // Prototypes for static functions
 static bool _check_boot_version(void);
 static void _deep_sleep_phase2(void *timer_arg);
@@ -407,8 +410,13 @@ void sdk_system_deep_sleep(uint32_t time_in_us) {
         sdk_wifi_softap_stop();
     }
     sdk_os_timer_disarm(&sdk_sta_con_timer);
-    sdk_os_timer_setfn(&sdk_sta_con_timer, _deep_sleep_phase2, (void *)time_in_us);
-    sdk_os_timer_arm(&sdk_sta_con_timer, 100, 0);
+
+    // Originally deep sleep function reused sdk_sta_con_timer
+    // but we can't mix functions sdk_ets_timer_ with sdk_os_timer_ for the
+    // same timer. So now deep sleep function uses a separate timer.
+    sdk_ets_timer_disarm(&deep_sleep_timer);
+    sdk_ets_timer_setfn(&deep_sleep_timer, _deep_sleep_phase2, (void *)time_in_us);
+    sdk_ets_timer_arm(&deep_sleep_timer, 100, 0);
 }
 
 bool sdk_system_update_cpu_freq(uint8_t freq) {

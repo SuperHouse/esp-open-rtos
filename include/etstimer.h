@@ -36,4 +36,8 @@ typedef struct ETSTimer_st {
     void *timer_arg;
 } ETSTimer;
 
+void sdk_ets_timer_setfn(ETSTimer *ptimer, ETSTimerFunc *pfunction, void *parg);
+void sdk_ets_timer_arm(ETSTimer *ptimer, uint32_t milliseconds, bool repeat_flag);
+void sdk_ets_timer_disarm(ETSTimer *ptimer);
+
 #endif /* _ETSTIMER_H */
