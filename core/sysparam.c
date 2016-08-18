@@ -116,16 +116,18 @@ static struct {
 
 /***************************** Internal routines *****************************/
 
-static inline IRAM sysparam_status_t _do_write(uint32_t addr, const void *data, size_t data_size) {
-    CHECK_FLASH_OP(sdk_spi_flash_write(addr, (void*) data, data_size));
+/* The buffer is needed in case the source is in the flash. */
+static inline IRAM sysparam_status_t _do_write(uint32_t addr, const void *data, void *buffer, size_t data_size) {
+    memcpy(buffer, data, data_size);
+    CHECK_FLASH_OP(sdk_spi_flash_write(addr, buffer, data_size));
     return SYSPARAM_OK;
 }
 
 static inline IRAM sysparam_status_t _do_verify(uint32_t addr, const void *data, void *buffer, size_t len) {
     CHECK_FLASH_OP(sdk_spi_flash_read(addr, buffer, len));
-    if (memcmp(data, buffer, len)) {
+    if (memcmp(data, buffer, len))
         return SYSPARAM_ERR_IO;
-    }
+
     return SYSPARAM_OK;
 }
 
@@ -134,22 +136,20 @@ static IRAM sysparam_status_t _write_and_verify(uint32_t addr, const void *data,
     int i;
     size_t count;
     sysparam_status_t status = SYSPARAM_OK;
-    uint8_t *verify_buf = malloc(VERIFY_BUF_SIZE);
+    uint8_t *buf = malloc(VERIFY_BUF_SIZE);
 
-    if (!verify_buf) return SYSPARAM_ERR_NOMEM;
-    do {
-        status = _do_write(addr, data, data_size);
+    if (!buf) return SYSPARAM_ERR_NOMEM;
+    for (i = 0; i < data_size; i += VERIFY_BUF_SIZE) {
+        count = min(data_size - i, VERIFY_BUF_SIZE);
+        status = _do_write(addr + i, data + i, buf, count);
         if (status != SYSPARAM_OK) break;
-        for (i = 0; i < data_size; i += VERIFY_BUF_SIZE) {
-            count = min(data_size - i, VERIFY_BUF_SIZE);
-            status = _do_verify(addr + i, data + i, verify_buf, count);
-            if (status != SYSPARAM_OK) {
-                debug(1, "Flash write (@ 0x%08x) verify failed!", addr);
-                break;
-            }
+        status = _do_verify(addr + i, data + i, buf, count);
+        if (status != SYSPARAM_OK) {
+            debug(1, "Flash write (@ 0x%08x) verify failed!", addr);
+            break;
         }
-    } while (false);
-    free(verify_buf);
+    }
+    free(buf);
     return status;
 }
 
