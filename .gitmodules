@@ -13,6 +13,6 @@
 [submodule "extras/spiffs/spiffs"]
 	path = extras/spiffs/spiffs
 	url = https://github.com/pellepl/spiffs.git
-[submodule "examples/posix_fs/fs-test"]
-	path = examples/posix_fs/fs-test
+[submodule "tests/spiffs/fs-test"]
+	path = tests/spiffs/fs-test
 	url = https://github.com/sheinz/fs-test
