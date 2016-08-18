@@ -44,16 +44,15 @@ inline static esp_reg_t gpio_iomux_reg(const uint8_t gpio_number)
 }
 
 /**
- * Set IOMUX function.
+ * Set the I/O Mux function. The iomux_num is an IOMUX register number, see
+ * gpio_to_iomux to obtain the IOMUX register number of a GPIO number.
+ * The 'func' is an IOMUX_GPIO<n>_FUNC_<function> value, see iomux_regs.h
  *
- * @param iomux_num Index of IOMUX register. Can be converted from GPIO number
- * with gpio_to_iomux.
- * @param iomux_func GPIO function definition IOMUX_GPIOn_FUNC_* 
  */
-inline static void iomux_set_function(uint8_t iomux_num, uint32_t iomux_func)
+inline static void iomux_set_function(uint8_t iomux_num, uint32_t func)
 {
     uint32_t prev = IOMUX.PIN[iomux_num] & ~IOMUX_PIN_FUNC_MASK;
-    IOMUX.PIN[iomux_num] = iomux_func | prev;
+    IOMUX.PIN[iomux_num] = func | prev;
 }
 
 inline static void iomux_set_direction_flags(uint8_t iomux_num, uint32_t dir_flags)
