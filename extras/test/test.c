@@ -23,5 +23,35 @@
  */
 
 #include "test.h"
+#include <string.h>
+#include "task.h"
+#include "esp/uart.h"
 
 bool test_result = true;
+
+void test_init(uint32_t timeout)
+{
+    char buf[256];
+    int data_len = 0;
+    buf[data_len] = 0;
+
+    uart_set_baud(0, 115200);
+
+    while (true) {
+        int c = getchar();
+        if (c == EOF || c == '\n' || c == '\r') {
+            if (strcmp(buf, "START") == 0) {
+                break;
+            } else {
+                data_len = 0;
+                buf[data_len] = 0;
+            }
+        } else{
+            buf[data_len++] = c;
+            buf[data_len] = 0;
+        }
+        taskYIELD();
+    }
+
+    printf("TEST_INIT: TIMEOUT=%ds\n", timeout); \
+}

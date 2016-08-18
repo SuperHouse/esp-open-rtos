@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "esp/uart.h"
 #include "FreeRTOS.h"
 
 extern bool test_result;
@@ -56,12 +55,8 @@ extern bool test_result;
         printf("TEST_FINISH: FAIL\n"); \
     }
 
-#define TEST_INIT(timeout) \
-    if (true) { \
-        test_result = true; \
-        uart_set_baud(0, 115200); \
-        printf("TEST_INIT: TIMEOUT=%ds\n", timeout); \
-    }
+#define TEST_INIT(timeout) test_init(timeout)
 
+void test_init(uint32_t timeout);
 
 #endif  // __TEST_H__

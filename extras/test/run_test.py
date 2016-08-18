@@ -34,6 +34,7 @@ class Test(threading.Thread):
     def wait_start(self):
         skip_lines = 100
         while skip_lines > 0:
+            self._port.write('START\n'.encode())
             l = self._port.readline()
             if 'TEST_INIT: TIMEOUT=' in l:
                 res = re.findall(r'\d+', l)

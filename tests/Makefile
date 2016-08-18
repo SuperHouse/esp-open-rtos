@@ -11,8 +11,12 @@ $(TESTS_TEST): $(TESTS_BUILD)
 
 test: $(TESTS_TEST)
 
+clean: $(TESTS_BUILD)
+
+clean: GOAL=clean
+
 %.dummybuild:
-	$(MAKE) -C $(dir $@)
+	$(MAKE) -C $(dir $@) $(GOAL)
 
 %.dummytest:
 	$(MAKE) -C $(dir $@) flash
