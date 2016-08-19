@@ -1,8 +1,6 @@
-/* http_get - Retrieves a web page over HTTP GET.
- *
- * See http_get_ssl for a TLS-enabled version.
- *
- * This sample code is in the public domain.,
+/**
+ * This test connects to an access point and connects to a server on port 23.
+ * It waits for a server data and responds with another data.
  */
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
@@ -18,14 +16,12 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
-#include "ssid_config.h"
-
 #include "test/test.h"
 
-#define AP_SSID "esp-open-rtos-ap"
-#define AP_PSK "esp-open-rtos"
-#define SERVER "172.16.0.1"
-#define PORT 23
+#define AP_SSID     "esp-open-rtos-ap"
+#define AP_PSK      "esp-open-rtos"
+#define SERVER      "172.16.0.1"
+#define PORT        23
 
 void connect_task(void *pvParameters)
 {
@@ -35,29 +31,25 @@ void connect_task(void *pvParameters)
         struct sockaddr_in serv_addr;
         uint8_t buf[256];
 
-        int s = socket(AF_INET, SOCK_STREAM, 0);
-        if(s < 0) {
-            printf("failed to allocate socket.\n");
-            vTaskDelay(1000 / portTICK_RATE_MS);
-            continue;
+        // wait for wifi connection
+        while (sdk_wifi_station_get_connect_status() != STATION_GOT_IP) {
+            vTaskDelay(100 / portTICK_RATE_MS);
         }
 
+        int s = socket(AF_INET, SOCK_STREAM, 0);
+        TEST_ASSERT(s > 0, "failed to allocate socket.");
+
         bzero(&serv_addr, sizeof(serv_addr));
-        serv_addr.sin_port = htons(23);
+        serv_addr.sin_port = htons(PORT);
         serv_addr.sin_family = AF_INET;
-        if (inet_aton(SERVER, &serv_addr.sin_addr.s_addr) == 0) {
-            printf("failed to set IP address\n");
-            continue;
-        }
+
+        TEST_ASSERT(inet_aton(SERVER, &serv_addr.sin_addr.s_addr),
+                "failed to set IP address\n");
 
         printf("allocated socket\n");
 
-        if(connect(s, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) != 0) {
-            close(s);
-            printf("socket connect failed.\n");
-            vTaskDelay(4000 / portTICK_RATE_MS);
-            continue;
-        }
+        TEST_ASSERT(connect(s, (struct sockaddr*)&serv_addr, sizeof(serv_addr)),
+                "socket connect failed");
 
         printf("connected\n");
 
@@ -71,10 +63,9 @@ void connect_task(void *pvParameters)
             }
             vTaskDelay(1000 / portTICK_RATE_MS);
         }
-        printf("data: %s\n", buf);
         TEST_CHECK(r > 0, "no data received");
 
-        TEST_CHECK(strcmp((const char*)buf, "test ping\r\n") == 0, 
+        TEST_CHECK(strcmp((const char*)buf, "test ping\r\n") == 0,
                 "received wrong data");
 
         close(s);

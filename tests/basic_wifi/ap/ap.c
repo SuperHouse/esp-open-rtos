@@ -1,11 +1,8 @@
-/* Very basic example showing usage of access point mode and the DHCP server.
-
-   The ESP in the example runs a telnet server on 172.16.0.1 (port 23) that
-   outputs some status information if you connect to it, then closes
-   the connection.
-
-   This example code is in the public domain.
-*/
+/**
+ * This test creates a WiFi access point and listens on port 23 for incomming
+ * connection. When incomming connection occurs it sends a string and waits for
+ * a response.
+ */
 #include <string.h>
 
 #include <espressif/esp_common.h>
@@ -19,12 +16,37 @@
 
 #include "test/test.h"
 
-#define AP_SSID "esp-open-rtos-ap"
-#define AP_PSK "esp-open-rtos"
+#define AP_SSID         "esp-open-rtos-ap"
+#define AP_PSK          "esp-open-rtos"
+#define SERVER_PORT     23
 
-#define TELNET_PORT 23
 
-static void telnetTask(void *pvParameters);
+static void server_task(void *pvParameters)
+{
+    struct netconn *nc = netconn_new(NETCONN_TCP);
+    TEST_ASSERT(nc, "failed to allocate socket.")
+
+    netconn_bind(nc, IP_ADDR_ANY, SERVER_PORT);
+    netconn_listen(nc);
+
+    struct netconn *client = NULL;
+    err_t err = netconn_accept(nc, &client);
+    TEST_ASSERT(err == ERR_OK, "Error accepting connection");
+
+    ip_addr_t client_addr;
+    uint16_t port_ignore;
+    netconn_peer(client, &client_addr, &port_ignore);
+
+    char buf[80];
+    snprintf(buf, sizeof(buf), "test ping\r\n");
+    printf("writing data to socket: %s\n", buf);
+    netconn_write(client, buf, strlen(buf), NETCONN_COPY);
+    vTaskDelay(1000 / portTICK_RATE_MS);
+
+    netconn_delete(client);
+
+    TEST_FINISH();
+}
 
 void user_init(void)
 {
@@ -55,42 +77,5 @@ void user_init(void)
     IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
     dhcpserver_start(&first_client_ip, 4);
 
-    xTaskCreate(telnetTask, (signed char *)"telnetTask", 512, NULL, 2, NULL);
-}
-
-/* Telnet task listens on port 23, returns some status information and then closes
-   the connection if you connect to it.
-*/
-static void telnetTask(void *pvParameters)
-{
-    struct netconn *nc = netconn_new (NETCONN_TCP);
-    if(!nc) {
-        printf("failed to allocate socket.\n");
-        return;
-    }
-    netconn_bind(nc, IP_ADDR_ANY, TELNET_PORT);
-    netconn_listen(nc);
-
-    struct netconn *client = NULL;
-    err_t err = netconn_accept(nc, &client);
-
-    if ( err != ERR_OK ) {
-        if(client)
-            netconn_delete(client);
-        TEST_FAIL("Error accepting connection");
-    }
-
-    ip_addr_t client_addr;
-    uint16_t port_ignore;
-    netconn_peer(client, &client_addr, &port_ignore);
-
-    char buf[80];
-    snprintf(buf, sizeof(buf), "test ping\r\n");
-    printf("writing data to socket: %s\n", buf);
-    netconn_write(client, buf, strlen(buf), NETCONN_COPY);
-    vTaskDelay(1000 / portTICK_RATE_MS);
-
-    netconn_delete(client);
-
-    TEST_FINISH();
+    xTaskCreate(server_task, (signed char *)"setver_task", 512, NULL, 2, NULL);
 }
