@@ -25,7 +25,9 @@ struct WDT_REGS {
     uint32_t volatile CTRL;        // 0x00
     uint32_t volatile REG1;        // 0x04
     uint32_t volatile REG2;        // 0x08
-    uint32_t volatile _unused[2];  // 0x0c - 0x10
+    // Current value, decrementing
+    uint32_t volatile VAL;         // 0x0c
+    uint32_t volatile _unused[1];  // 0x10
     uint32_t volatile FEED;        // 0x14
 };
 
