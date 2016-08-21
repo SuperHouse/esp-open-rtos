@@ -10,6 +10,8 @@
 #include <sysparam.h>
 #include <espressif/spi_flash.h>
 #include <common_macros.h>
+#include "FreeRTOS.h"
+#include "semphr.h"
 
 //TODO: make this properly threadsafe
 //TODO: reduce stack usage
@@ -112,6 +114,7 @@ static struct {
     uint32_t end_addr;
     size_t region_size;
     bool force_compact;
+    xSemaphoreHandle sem;
 } _sysparam_info;
 
 /***************************** Internal routines *****************************/
@@ -571,6 +574,8 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
         _sysparam_info.end_addr = ctx.addr;
     }
 
+    _sysparam_info.sem = xSemaphoreCreateMutex();
+
     return SYSPARAM_OK;
 }
 
@@ -788,6 +793,8 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
     if (key_len > MAX_KEY_LEN) return SYSPARAM_ERR_BADVALUE;
     if (value_len > MAX_VALUE_LEN) return SYSPARAM_ERR_BADVALUE;
 
+    xSemaphoreTake(_sysparam_info.sem, portMAX_DELAY);
+
     if (!value) value_len = 0;
 
     debug(1, "updating value for '%s' (%d bytes)", key, value_len);
@@ -795,7 +802,10 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
         // The passed value isn't word-aligned.  This will be a problem later
         // when calling `sdk_spi_flash_write`, so make a word-aligned copy.
         buffer = malloc(value_len);
-        if (!buffer) return SYSPARAM_ERR_NOMEM;
+        if (!buffer) {
+            status = SYSPARAM_ERR_NOMEM;
+            goto done;
+        }
         memcpy(buffer, value, value_len);
         value = buffer;
         free_value = true;
@@ -804,7 +814,8 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
     buffer = malloc(key_len);
     if (!buffer) {
         if (free_value) free((void *)value);
-        return SYSPARAM_ERR_NOMEM;
+        status = SYSPARAM_ERR_NOMEM;
+        goto done;
     }
 
     do {
@@ -945,6 +956,10 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
 
     if (free_value) free((void *)value);
     free(buffer);
+
+ done:
+    xSemaphoreGive(_sysparam_info.sem);
+
     return status;
 }
 
