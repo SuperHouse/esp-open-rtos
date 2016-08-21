@@ -131,9 +131,6 @@ SECTIONS
     *libc.a:*findfp.o(.literal .text .literal.* .text.*)
     *libc.a:*fputwc.o(.literal .text .literal.* .text.*)
 
-    /* xthal_set_intset() called from PendSV in NMI context */
-    *libhal.a:*set_intset.o(.literal .text .literal.* .text.*)
-
     *(.stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
     *(.fini.literal)
     *(.fini)
