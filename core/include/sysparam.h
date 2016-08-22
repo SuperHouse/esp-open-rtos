@@ -169,24 +169,20 @@ sysparam_status_t sysparam_get_info(uint32_t *base_addr, uint32_t *num_sectors);
  */
 sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length, bool *is_binary);
 
-/** Get the value associate with a key (static buffers only)
+/** Get the value associated with a key (static value buffer)
  *
  *  This performs the same function as sysparam_get_data() but without
- *  performing any memory allocations.  It can thus be used before the heap has
- *  been configured or in other cases where using the heap would be a problem
- *  (i.e. in an OOM handler, etc).  It requires that the caller pass in a
- *  suitably sized buffer for the value to be read (if the supplied buffer is
- *  not large enough, the returned value will be truncated and the full
- *  required length will be returned in `actual_length`).
- *
- *  NOTE: In addition to being large enough for the value, the supplied buffer
- *  must also be at least as large as the length of the key being requested.
- *  If it is not, an error will be returned.
+ *  allocating memory for the result value.  It can thus be used before the heap
+ *  has been configured or in other cases where using the heap would be a
+ *  problem (i.e. in an OOM handler, etc).  It requires that the caller pass in
+ *  a suitably sized buffer for the value to be read (if the supplied buffer is
+ *  not large enough, the returned value will be truncated and the full required
+ *  length will be returned in `actual_length`).
  *
  *  @param[in]  key            Key name (zero-terminated string)
- *  @param[in]  buffer         Pointer to a buffer to hold the returned value
- *  @param[in]  buffer_size    Length of the supplied buffer in bytes
- *  @param[out] actual_length  pointer to a location to hold the actual length
+ *  @param[in]  dest           Pointer to a buffer to hold the returned value.
+ *  @param[in]  dest_size      Length of the supplied buffer in bytes.
+ *  @param[out] actual_length  Pointer to a location to hold the actual length
  *                             of the data which was associated with the key
  *                             (may be NULL).
  *  @param[out] is_binary      Pointer to a bool to hold whether the returned
@@ -199,7 +195,7 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *buffer, size_t buffer_size, size_t *actual_length, bool *is_binary);
+sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *dest, size_t dest_size, size_t *actual_length, bool *is_binary);
 
 /** Get the string value associated with a key
  * 
@@ -231,8 +227,8 @@ sysparam_status_t sysparam_get_string(const char *key, char **destptr);
 /** Get the int32_t value associated with a key
  * 
  *  This routine can be used if you know that the value in a key will (or at
- *  least should) be an integer value.  It will parse the stored data as a
- *  number (in standard decimal or "0x" hex notation) and return the result.
+ *  least should) be an int32_t value. This is done without allocating any
+ *  memory.
  *
  *  Note: If the status result is anything other than ::SYSPARAM_OK, the value
  *  in `result` is not changed.  This means it is possible to set a default
@@ -251,17 +247,13 @@ sysparam_status_t sysparam_get_string(const char *key, char **destptr);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_int(const char *key, int32_t *result);
+sysparam_status_t sysparam_get_int32(const char *key, int32_t *result);
 
 /** Get the boolean value associated with a key
  * 
  *  This routine can be used if you know that the value in a key will (or at
- *  least should) be a boolean setting.  It will read the specified value as a
- *  text string and attempt to parse it as a boolean value.
- *
- *  It will recognize the following (case-insensitive) strings:
- *    * True: "yes", "y", "true", "t", "1"
- *    * False: "no", "n", "false", "f", "0"
+ *  least should) be a uint8_t binary value. This is done without allocating any
+ *  memory.
  *
  *  Note: If the status result is anything other than ::SYSPARAM_OK, the value
  *  in `result` is not changed.  This means it is possible to set a default
@@ -280,13 +272,13 @@ sysparam_status_t sysparam_get_int(const char *key, int32_t *result);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_bool(const char *key, bool *result);
+sysparam_status_t sysparam_get_int8(const char *key, int8_t *result);
 
 /** Set the value associated with a key
  *
  *  The supplied value can be any data, up to 255 bytes in length.  If `value`
  *  is NULL or `value_len` is 0, this is treated as a request to delete any
- *  current entry matching `key`.
+ *  current entry matching `key`. This is done without allocating any memory.
  *
  *  If `binary` is true, the data will be considered binary (unprintable) data,
  *  and this will be annotated in the saved entry.  This does not affect the
@@ -310,7 +302,7 @@ sysparam_status_t sysparam_get_bool(const char *key, bool *result);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_t value_len, bool binary);
+sysparam_status_t sysparam_set_data(const char *key, uint8_t *value, size_t value_len, bool binary);
 
 /** Set a key's value from a string
  *
@@ -329,13 +321,13 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_string(const char *key, const char *value);
+sysparam_status_t sysparam_set_string(const char *key, char *value);
 
 /** Set a key's value as a number
  *
- *  Converts an int32_t value to a decimal number and writes it to the
- *  specified key.  This does the inverse of the sysparam_get_int()
- *  function.
+ *  Write an int32_t binary value to the specified key. This does the inverse of
+ *  the sysparam_get_int32() function. This is done without allocating any
+ *  memory.
  *
  *  @param[in] key        Key name (zero-terminated string)
  *  @param[in] value      Value to set
@@ -348,13 +340,13 @@ sysparam_status_t sysparam_set_string(const char *key, const char *value);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_int(const char *key, int32_t value);
+sysparam_status_t sysparam_set_int32(const char *key, int32_t value);
 
-/** Set a key's value as a boolean (yes/no) string
+/** Set a key's value as a number
  *
- *  Converts a bool value to a corresponding text string and writes it to the
- *  specified key.  This does the inverse of the sysparam_get_bool()
- *  function.
+ *  Write an int8_t binary value to the specified key. This does the inverse of
+ *  the sysparam_get_int8() function. This is done without allocating any
+ *  memory.
  *
  *  Note that if the key already contains a value which parses to the same
  *  boolean (true/false) value, it is left unchanged.
@@ -370,7 +362,7 @@ sysparam_status_t sysparam_set_int(const char *key, int32_t value);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_bool(const char *key, bool value);
+sysparam_status_t sysparam_set_int8(const char *key, int8_t value);
 
 /** Begin iterating through all key/value pairs
  *
