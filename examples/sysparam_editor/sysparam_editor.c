@@ -6,6 +6,8 @@
 #include <sysparam.h>
 
 #include <espressif/spi_flash.h>
+#include "espressif/esp_common.h"
+#include "esp/uart.h"
 
 #define CMD_BUF_SIZE 5000
 
@@ -30,6 +32,8 @@ void usage(void) {
         "  <key>:<hexdata> -- Set <key> to binary value represented as hex\n"
         "  dump            -- Show all currently set keys/values\n"
         "  reformat        -- Reinitialize (clear) the sysparam area\n"
+        "  echo-off        -- Disable input echo\n"
+        "  echo-on         -- Enable input echo\n"
         "  help            -- Show this help screen\n"
         );
 }
@@ -150,6 +154,7 @@ void sysparam_editor_task(void *pvParameters) {
     size_t len;
     uint8_t *data;
     uint32_t base_addr, num_sectors;
+    bool echo = true;
 
     if (!cmd_buffer) {
         printf("ERROR: Cannot allocate command buffer!\n");
@@ -171,7 +176,7 @@ void sysparam_editor_task(void *pvParameters) {
     }
     while (true) {
         printf("==> ");
-        len = tty_readline(cmd_buffer, CMD_BUF_SIZE, true);
+        len = tty_readline(cmd_buffer, CMD_BUF_SIZE, echo);
         status = 0;
         if (!len) continue;
         if (cmd_buffer[len - 1] == '?') {
@@ -214,6 +219,12 @@ void sysparam_editor_task(void *pvParameters) {
                 // using.
                 status = sysparam_init(base_addr, 0);
             }
+        } else if (!strcmp(cmd_buffer, "echo-on")) {
+            echo = true;
+            printf("Echo on\n");
+        } else if (!strcmp(cmd_buffer, "echo-off")) {
+            echo = false;
+            printf("Echo off\n");
         } else if (!strcmp(cmd_buffer, "help")) {
             usage();
         } else {
@@ -229,5 +240,7 @@ void sysparam_editor_task(void *pvParameters) {
 
 void user_init(void)
 {
+    uart_set_baud(0, 115200);
+
     xTaskCreate(sysparam_editor_task, (signed char *)"sysparam_editor_task", 512, NULL, 2, NULL);
 }
