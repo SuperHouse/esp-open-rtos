@@ -45,6 +45,15 @@ LoadStoreErrorHandlerStack:
         .word   0       # a3
         .word   0       # a4
 
+        .balign 4
+        .global debug_saved_ctx
+debug_saved_ctx:
+        .word   0       # a0
+        .word   0       # a1
+        .word   0       # a2
+        .word   0       # a3
+        .word   0       # a4
+
 /***************************** Exception Vectors *****************************/
 
         .section .vecbase.text, "x"
@@ -66,12 +75,7 @@ VecBase:
         .org    VecBase + 0x10
 DebugExceptionVector:
         .type   DebugExceptionVector, @function
-
-        wsr     a0, excsave2
-        mov     a2, a1
-        movi    a3, 0
-        call0   fatal_exception_handler
-        rfi     2
+        j       DebugExceptionHandler
 
         .org    VecBase + 0x20
 NMIExceptionVector:
@@ -362,6 +366,32 @@ LoadStoreErrorHandler:
         rsr     a1, excsave1
         rfe
 
+/*************************** Debug exception handler *************************/
+
+        .section .vecbase.text, "x"
+        .literal_position
+        .balign 4
+
+DebugExceptionHandler:
+        wsr     a0, excsave2
+        // Save context in case an actual debugger is running
+        movi    a0, debug_saved_ctx
+        // Save a1 - a4 as we are going to use them later
+        s32i    a1, a0, 0x04
+        s32i    a2, a0, 0x08
+        s32i    a3, a0, 0x0C
+        s32i    a4, a0, 0x10
+        // Save a0
+        rsr     a4, excsave2
+        s32i    a4, a0, 0x00
+        // Default handler is fatal_exception_handler(uint32_t * sp, bool registers_saved_on_stack)
+        // sp
+        mov     a2, a1
+        // registers_saved_on_stack
+        movi    a3, 0
+        call0   debug_exception_handler
+        rfi     2
+
 /****************************** call_user_start ******************************/
 
         .section .vecbase.text, "x"
@@ -491,7 +521,15 @@ NMIExceptionHandler:
         .balign  4
 UserExceptionHandler:
         .type   UserExceptionHandler, @function
-        xsr     a0, excsave1    # a0 now contains sp
+        // save a0, a1 to debug_saved_ctx before stack pointer is affected
+        // excsave1 contains a1
+        // a1 was changed earlier
+        movi    a1, debug_saved_ctx
+        // store a0
+        s32i    a0, a1, 0x00
+        xsr     a0, excsave1
+        // store a1
+        s32i    a0, a1, 0x04
         mov     sp, a0
         addi    sp, sp, -0x50
         s32i    a0, sp, 0x10
