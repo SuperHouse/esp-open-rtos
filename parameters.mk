@@ -10,7 +10,7 @@
 
 # Flash size in megabits
 # Valid values are same as for esptool.py - 2,4,8,16,32
-FLASH_SIZE ?= 16
+FLASH_SIZE ?= 32
 
 # Flash mode, valid values are same as for esptool.py - qio,qout,dio.dout
 FLASH_MODE ?= qio
