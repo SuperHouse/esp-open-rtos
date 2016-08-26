@@ -24,7 +24,7 @@
   * @param options the options to be used to build the connect packet
   * @return the length of buffer needed to contain the serialized version of the packet
   */
-int  MQTTSerialize_connectLength(MQTTPacket_connectData* options)
+static int connect_length(mqtt_packet_connect_data_t* options)
 {
 	int len = 0;
 
@@ -35,13 +35,13 @@ int  MQTTSerialize_connectLength(MQTTPacket_connectData* options)
 	else if (options->MQTTVersion == 4)
 		len = 10;
 
-	len += MQTTstrlen(options->clientID)+2;
+	len += mqtt_strlen(options->clientID)+2;
 	if (options->willFlag)
-		len += MQTTstrlen(options->will.topicName)+2 + MQTTstrlen(options->will.message)+2;
+		len += mqtt_strlen(options->will.topicName)+2 + mqtt_strlen(options->will.message)+2;
 	if (options->username.cstring || options->username.lenstring.data)
-		len += MQTTstrlen(options->username)+2;
+		len += mqtt_strlen(options->username)+2;
 	if (options->password.cstring || options->password.lenstring.data)
-		len += MQTTstrlen(options->password)+2;
+		len += mqtt_strlen(options->password)+2;
 
 	FUNC_EXIT_RC(len);
 	return len;
@@ -55,36 +55,36 @@ int  MQTTSerialize_connectLength(MQTTPacket_connectData* options)
   * @param options the options to be used to build the connect packet
   * @return serialized length, or error if 0
   */
-int  MQTTSerialize_connect(unsigned char* buf, int buflen, MQTTPacket_connectData* options)
+int mqtt_serialize_connect(unsigned char* buf, int buflen, mqtt_packet_connect_data_t* options)
 {
 	unsigned char *ptr = buf;
-	MQTTHeader header = {0};
-	MQTTConnectFlags flags = {0};
+	mqtt_header_t header = {0};
+	mqtt_connect_flags_t flags = {0};
 	int len = 0;
 	int rc = -1;
 
 	FUNC_ENTRY;
-	if (MQTTPacket_len(len = MQTTSerialize_connectLength(options)) > buflen)
+	if (mqtt_packet_len(len = connect_length(options)) > buflen)
 	{
 		rc = MQTTPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}
 
 	header.byte = 0;
-	header.bits.type = CONNECT;
-	writeChar(&ptr, header.byte); /* write header */
+	header.bits.type = MQTTPACKET_CONNECT;
+	mqtt_write_char(&ptr, header.byte); /* write header */
 
-	ptr += MQTTPacket_encode(ptr, len); /* write remaining length */
+	ptr += mqtt_packet_encode(ptr, len); /* write remaining length */
 
 	if (options->MQTTVersion == 4)
 	{
-		writeCString(&ptr, "MQTT");
-		writeChar(&ptr, (char) 4);
+		mqtt_write_cstr(&ptr, "MQTT");
+		mqtt_write_char(&ptr, (char) 4);
 	}
 	else
 	{
-		writeCString(&ptr, "MQIsdp");
-		writeChar(&ptr, (char) 3);
+		mqtt_write_cstr(&ptr, "MQIsdp");
+		mqtt_write_char(&ptr, (char) 3);
 	}
 
 	flags.all = 0;
@@ -101,18 +101,18 @@ int  MQTTSerialize_connect(unsigned char* buf, int buflen, MQTTPacket_connectDat
 	if (options->password.cstring || options->password.lenstring.data)
 		flags.bits.password = 1;
 
-	writeChar(&ptr, flags.all);
-	writeInt(&ptr, options->keepAliveInterval);
-	writeMQTTString(&ptr, options->clientID);
+	mqtt_write_char(&ptr, flags.all);
+	mqtt_write_int(&ptr, options->keepAliveInterval);
+	mqtt_write_mqqt_str(&ptr, options->clientID);
 	if (options->willFlag)
 	{
-		writeMQTTString(&ptr, options->will.topicName);
-		writeMQTTString(&ptr, options->will.message);
+		mqtt_write_mqqt_str(&ptr, options->will.topicName);
+		mqtt_write_mqqt_str(&ptr, options->will.message);
 	}
 	if (flags.bits.username)
-		writeMQTTString(&ptr, options->username);
+		mqtt_write_mqqt_str(&ptr, options->username);
 	if (flags.bits.password)
-		writeMQTTString(&ptr, options->password);
+		mqtt_write_mqqt_str(&ptr, options->password);
 
 	rc = ptr - buf;
 
@@ -129,28 +129,28 @@ int  MQTTSerialize_connect(unsigned char* buf, int buflen, MQTTPacket_connectDat
   * @param len the length in bytes of the data in the supplied buffer
   * @return error code.  1 is success, 0 is failure
   */
-int  MQTTDeserialize_connack(unsigned char* sessionPresent, unsigned char* connack_rc, unsigned char* buf, int buflen)
+int mqtt_deserialize_connack(unsigned char* sessionPresent, unsigned char* connack_rc, unsigned char* buf, int buflen)
 {
-	MQTTHeader header = {0};
+	mqtt_header_t header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;
 	int rc = 0;
 	int mylen;
-	MQTTConnackFlags flags = {0};
+	mqtt_conn_ack_flags_t flags = {0};
 
 	FUNC_ENTRY;
-	header.byte = readChar(&curdata);
-	if (header.bits.type != CONNACK)
+	header.byte = mqtt_read_char(&curdata);
+	if (header.bits.type != MQTTPACKET_CONNACK)
 		goto exit;
 
-	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
+	curdata += (rc = mqtt_packet_decode_buf(curdata, &mylen)); /* read remaining length */
 	enddata = curdata + mylen;
 	if (enddata - curdata < 2)
 		goto exit;
 
-	flags.all = readChar(&curdata);
+	flags.all = mqtt_read_char(&curdata);
 	*sessionPresent = flags.bits.sessionpresent;
-	*connack_rc = readChar(&curdata);
+	*connack_rc = mqtt_read_char(&curdata);
 
 	rc = 1;
 exit:
@@ -166,9 +166,9 @@ exit:
   * @param packettype the message type
   * @return serialized length, or error if 0
   */
-int  MQTTSerialize_zero(unsigned char* buf, int buflen, unsigned char packettype)
+int mqtt_serialize_zero(unsigned char* buf, int buflen, unsigned char packettype)
 {
-	MQTTHeader header = {0};
+	mqtt_header_t header = {0};
 	int rc = -1;
 	unsigned char *ptr = buf;
 
@@ -180,9 +180,9 @@ int  MQTTSerialize_zero(unsigned char* buf, int buflen, unsigned char packettype
 	}
 	header.byte = 0;
 	header.bits.type = packettype;
-	writeChar(&ptr, header.byte); /* write header */
+	mqtt_write_char(&ptr, header.byte); /* write header */
 
-	ptr += MQTTPacket_encode(ptr, 0); /* write remaining length */
+	ptr += mqtt_packet_encode(ptr, 0); /* write remaining length */
 	rc = ptr - buf;
 exit:
 	FUNC_EXIT_RC(rc);
@@ -196,9 +196,9 @@ exit:
   * @param buflen the length in bytes of the supplied buffer, to avoid overruns
   * @return serialized length, or error if 0
   */
-int  MQTTSerialize_disconnect(unsigned char* buf, int buflen)
+int mqtt_serialize_disconnect(unsigned char* buf, int buflen)
 {
-	return MQTTSerialize_zero(buf, buflen, DISCONNECT);
+	return mqtt_serialize_zero(buf, buflen, MQTTPACKET_DISCONNECT);
 }
 
 
@@ -208,7 +208,7 @@ int  MQTTSerialize_disconnect(unsigned char* buf, int buflen)
   * @param buflen the length in bytes of the supplied buffer, to avoid overruns
   * @return serialized length, or error if 0
   */
-int  MQTTSerialize_pingreq(unsigned char* buf, int buflen)
+int mqtt_serialize_pingreq(unsigned char* buf, int buflen)
 {
-	return MQTTSerialize_zero(buf, buflen, PINGREQ);
+	return mqtt_serialize_zero(buf, buflen, MQTTPACKET_PINGREQ);
 }

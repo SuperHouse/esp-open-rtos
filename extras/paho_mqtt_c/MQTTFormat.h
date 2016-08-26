@@ -20,18 +20,18 @@
 #include "StackTrace.h"
 #include "MQTTPacket.h"
 
-const char* MQTTPacket_getName(unsigned short packetid);
-int MQTTStringFormat_connect(char* strbuf, int strbuflen, MQTTPacket_connectData* data);
-int MQTTStringFormat_connack(char* strbuf, int strbuflen, unsigned char connack_rc, unsigned char sessionPresent);
-int MQTTStringFormat_publish(char* strbuf, int strbuflen, unsigned char dup, int qos, unsigned char retained,
-		unsigned short packetid, MQTTString topicName, unsigned char* payload, int payloadlen);
-int MQTTStringFormat_ack(char* strbuf, int strbuflen, unsigned char packettype, unsigned char dup, unsigned short packetid);
-int MQTTStringFormat_subscribe(char* strbuf, int strbuflen, unsigned char dup, unsigned short packetid, int count,
-		MQTTString topicFilters[], int requestedQoSs[]);
-int MQTTStringFormat_suback(char* strbuf, int strbuflen, unsigned short packetid, int count, int* grantedQoSs);
-int MQTTStringFormat_unsubscribe(char* strbuf, int strbuflen, unsigned char dup, unsigned short packetid,
-		int count, MQTTString topicFilters[]);
-char* MQTTFormat_toClientString(char* strbuf, int strbuflen, unsigned char* buf, int buflen);
-char* MQTTFormat_toServerString(char* strbuf, int strbuflen, unsigned char* buf, int buflen);
+const char* mqtt_packet_get_name(unsigned short packetid);
+int mqtt_string_format_connect(char* strbuf, int strbuflen, mqtt_packet_connect_data_t* data);
+int mqtt_string_format_connack(char* strbuf, int strbuflen, unsigned char connack_rc, unsigned char sessionPresent);
+int mqtt_string_format_publish(char* strbuf, int strbuflen, unsigned char dup, int qos, unsigned char retained,
+		unsigned short packetid, mqtt_string_t topicName, unsigned char* payload, int payloadlen);
+int mqtt_string_format_ack(char* strbuf, int strbuflen, unsigned char packettype, unsigned char dup, unsigned short packetid);
+int mqtt_string_format_subscribe(char* strbuf, int strbuflen, unsigned char dup, unsigned short packetid, int count,
+		mqtt_string_t topicFilters[], int requestedQoSs[]);
+int mqtt_string_format_suback(char* strbuf, int strbuflen, unsigned short packetid, int count, int* grantedQoSs);
+int mqtt_string_format_unsubscribe(char* strbuf, int strbuflen, unsigned char dup, unsigned short packetid,
+		int count, mqtt_string_t topicFilters[]);
+char* mqtt_format_to_client_string(char* strbuf, int strbuflen, unsigned char* buf, int buflen);
+char* mqtt_format_to_server_string(char* strbuf, int strbuflen, unsigned char* buf, int buflen);
 
 #endif

@@ -52,7 +52,7 @@ typedef union
 		unsigned int username : 1;			/**< 3.1 user name */
 	} bits;
 #endif
-} MQTTConnectFlags;	/**< connect flags byte */
+} mqtt_connect_flags_t;	/**< connect flags byte */
 
 
 
@@ -67,9 +67,9 @@ typedef struct
 	/** The version number of this structure.  Must be 0 */
 	int struct_version;
 	/** The LWT topic to which the LWT message will be published. */
-	MQTTString topicName;
+	mqtt_string_t topicName;
 	/** The LWT payload. */
-	MQTTString message;
+	mqtt_string_t message;
 	/**
       * The retained flag for the LWT message (see MQTTAsync_message.retained).
       */
@@ -79,10 +79,10 @@ typedef struct
       * MQTTAsync_message.qos and @ref qos).
       */
 	char qos;
-} MQTTPacket_willOptions;
+} mqtt_packet_will_options_t;
 
 
-#define MQTTPacket_willOptions_initializer { {'M', 'Q', 'T', 'W'}, 0, {NULL, {0, NULL}}, {NULL, {0, NULL}}, 0, 0 }
+#define mqtt_packet_will_options_initializer { {'M', 'Q', 'T', 'W'}, 0, {NULL, {0, NULL}}, {NULL, {0, NULL}}, 0, 0 }
 
 
 typedef struct
@@ -94,14 +94,14 @@ typedef struct
 	/** Version of MQTT to be used.  3 = 3.1 4 = 3.1.1
 	  */
 	unsigned char MQTTVersion;
-	MQTTString clientID;
+	mqtt_string_t clientID;
 	unsigned short keepAliveInterval;
 	unsigned char cleansession;
 	unsigned char willFlag;
-	MQTTPacket_willOptions will;
-	MQTTString username;
-	MQTTString password;
-} MQTTPacket_connectData;
+	mqtt_packet_will_options_t will;
+	mqtt_string_t username;
+	mqtt_string_t password;
+} mqtt_packet_connect_data_t;
 
 typedef union
 {
@@ -119,18 +119,18 @@ typedef union
 		unsigned int sessionpresent : 1;    /**< session present flag */
 	} bits;
 #endif
-} MQTTConnackFlags;	/**< connack flags byte */
+} mqtt_conn_ack_flags_t;	/**< connack flags byte */
 
-#define MQTTPacket_connectData_initializer { {'M', 'Q', 'T', 'C'}, 0, 4, {NULL, {0, NULL}}, 60, 1, 0, \
-		MQTTPacket_willOptions_initializer, {NULL, {0, NULL}}, {NULL, {0, NULL}} }
+#define mqtt_packet_connect_data_initializer { {'M', 'Q', 'T', 'C'}, 0, 4, {NULL, {0, NULL}}, 60, 1, 0, \
+		mqtt_packet_will_options_initializer, {NULL, {0, NULL}}, {NULL, {0, NULL}} }
 
-DLLExport int MQTTSerialize_connect(unsigned char* buf, int buflen, MQTTPacket_connectData* options);
-DLLExport int MQTTDeserialize_connect(MQTTPacket_connectData* data, unsigned char* buf, int len);
+DLLExport int mqtt_serialize_connect(unsigned char* buf, int buflen, mqtt_packet_connect_data_t* options);
+DLLExport int mqtt_deserialize_connect(mqtt_packet_connect_data_t* data, unsigned char* buf, int len);
 
-DLLExport int MQTTSerialize_connack(unsigned char* buf, int buflen, unsigned char connack_rc, unsigned char sessionPresent);
-DLLExport int MQTTDeserialize_connack(unsigned char* sessionPresent, unsigned char* connack_rc, unsigned char* buf, int buflen);
+DLLExport int mqtt_serialize_connack(unsigned char* buf, int buflen, unsigned char connack_rc, unsigned char sessionPresent);
+DLLExport int mqtt_deserialize_connack(unsigned char* sessionPresent, unsigned char* connack_rc, unsigned char* buf, int buflen);
 
-DLLExport int MQTTSerialize_disconnect(unsigned char* buf, int buflen);
-DLLExport int MQTTSerialize_pingreq(unsigned char* buf, int buflen);
+DLLExport int mqtt_serialize_disconnect(unsigned char* buf, int buflen);
+DLLExport int mqtt_serialize_pingreq(unsigned char* buf, int buflen);
 
 #endif /* MQTTCONNECT_H_ */

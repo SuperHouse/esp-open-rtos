@@ -33,32 +33,32 @@
   * @param buflen the length in bytes of the data in the supplied buffer
   * @return error code.  1 is success
   */
-int  MQTTDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retained, unsigned short* packetid, MQTTString* topicName,
+int  mqtt_deserialize_publish(unsigned char* dup, int* qos, unsigned char* retained, unsigned short* packetid, mqtt_string_t* topicName,
 		unsigned char** payload, int* payloadlen, unsigned char* buf, int buflen)
 {
-	MQTTHeader header = {0};
+	mqtt_header_t header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;
 	int rc = 0;
 	int mylen = 0;
 
 	FUNC_ENTRY;
-	header.byte = readChar(&curdata);
-	if (header.bits.type != PUBLISH)
+	header.byte = mqtt_read_char(&curdata);
+	if (header.bits.type != MQTTPACKET_PUBLISH)
 		goto exit;
 	*dup = header.bits.dup;
 	*qos = header.bits.qos;
 	*retained = header.bits.retain;
 
-	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
+	curdata += (rc = mqtt_packet_decode_buf(curdata, &mylen)); /* read remaining length */
 	enddata = curdata + mylen;
 
-	if (!readMQTTLenString(topicName, &curdata, enddata) ||
+	if (!mqtt_read_str_len(topicName, &curdata, enddata) ||
 		enddata - curdata < 0) /* do we have enough data to read the protocol version byte? */
 		goto exit;
 
 	if (*qos > 0)
-		*packetid = readInt(&curdata);
+		*packetid = mqtt_read_int(&curdata);
 
 	*payloadlen = enddata - curdata;
 	*payload = curdata;
@@ -79,25 +79,25 @@ exit:
   * @param buflen the length in bytes of the data in the supplied buffer
   * @return error code.  1 is success, 0 is failure
   */
-int  MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen)
+int  mqtt_deserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen)
 {
-	MQTTHeader header = {0};
+	mqtt_header_t header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;
 	int rc = 0;
 	int mylen;
 
 	FUNC_ENTRY;
-	header.byte = readChar(&curdata);
+	header.byte = mqtt_read_char(&curdata);
 	*dup = header.bits.dup;
 	*packettype = header.bits.type;
 
-	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
+	curdata += (rc = mqtt_packet_decode_buf(curdata, &mylen)); /* read remaining length */
 	enddata = curdata + mylen;
 
 	if (enddata - curdata < 2)
 		goto exit;
-	*packetid = readInt(&curdata);
+	*packetid = mqtt_read_int(&curdata);
 
 	rc = 1;
 exit:
