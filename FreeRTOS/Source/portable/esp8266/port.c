@@ -143,7 +143,7 @@ void IRAM PendSV(enum SVC_ReqType req)
 	else if(req == SVC_MACLayer)
 		pending_maclayer_sv= 1;
 
-	xthal_set_intset(BIT(INUM_SOFT));
+	WSR(BIT(INUM_SOFT), interrupt);
 	vPortExitCritical();
 }
 
