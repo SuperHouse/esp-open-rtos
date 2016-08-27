@@ -558,4 +558,38 @@ enum sdk_dhcp_status sdk_wifi_station_dhcpc_status(void) {
     return sdk_dhcpc_flag;
 }
 
+void sdk_system_uart_swap()
+{
+    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS)) {};
+    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(1).STATUS)) {};
+
+    /* Disable pullup IO_MUX_MTDO, Alt TX. GPIO15. */
+    iomux_set_pullup_flags(3, 0);
+    /* IO_MUX_MTDO to function UART0_RTS. */
+    iomux_set_function(3, IOMUX_GPIO15_FUNC_UART0_RTS);
+    /* Enable pullup MUX_MTCK. Alt RX. GPIO13. */
+    iomux_set_pullup_flags(1, IOMUX_PIN_PULLUP);
+    /* IO_MUX_MTCK to function UART0_CTS. */
+    iomux_set_function(1, IOMUX_GPIO13_FUNC_UART0_CTS);
+
+    DPORT.PERI_IO |= DPORT_PERI_IO_SWAP_UART0_PINS;
+}
+
+void sdk_system_uart_de_swap()
+{
+    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS)) {};
+    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(1).STATUS)) {};
+
+    /* Disable pullup IO_MUX_U0TXD, TX. GPIO 1. */
+    iomux_set_pullup_flags(5, 0);
+    /* IO_MUX_U0TXD to function UART0_TXD. */
+    iomux_set_function(5, IOMUX_GPIO1_FUNC_UART0_TXD);
+    /* Enable pullup IO_MUX_U0RXD. RX. GPIO 3. */
+    iomux_set_pullup_flags(4, IOMUX_PIN_PULLUP);
+    /* IO_MUX_U0RXD to function UART0_RXD. */
+    iomux_set_function(4, IOMUX_GPIO3_FUNC_UART0_RXD);
+
+    DPORT.PERI_IO &= ~DPORT_PERI_IO_SWAP_UART0_PINS;
+}
+
 #endif /* OPEN_LIBMAIN_USER_INTERFACE */
