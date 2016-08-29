@@ -724,7 +724,7 @@ sysparam_status_t sysparam_get_string(const char *key, char **destptr) {
     return SYSPARAM_OK;
 }
 
-sysparam_status_t sysparam_get_int(const char *key, int32_t *result) {
+sysparam_status_t sysparam_get_int32(const char *key, int32_t *result) {
     char *buffer;
     char *endptr;
     int32_t value;
@@ -742,6 +742,17 @@ sysparam_status_t sysparam_get_int(const char *key, int32_t *result) {
     *result = value;
     free(buffer);
     return SYSPARAM_OK;
+}
+
+sysparam_status_t sysparam_get_int8(const char *key, int8_t *result) {
+    int32_t value;
+    sysparam_status_t status;
+
+    status = sysparam_get_int32(key, &value);
+    if (status == SYSPARAM_OK) {
+        *result = value;
+    }
+    return status;
 }
 
 sysparam_status_t sysparam_get_bool(const char *key, bool *result) {
@@ -967,12 +978,16 @@ sysparam_status_t sysparam_set_string(const char *key, const char *value) {
     return sysparam_set_data(key, (const uint8_t *)value, strlen(value), false);
 }
 
-sysparam_status_t sysparam_set_int(const char *key, int32_t value) {
+sysparam_status_t sysparam_set_int32(const char *key, int32_t value) {
     uint8_t buffer[12];
     int len;
     
     len = snprintf((char *)buffer, 12, "%d", value);
     return sysparam_set_data(key, buffer, len, false);
+}
+
+sysparam_status_t sysparam_set_int8(const char *key, int8_t value) {
+    return sysparam_set_int32(key, value);
 }
 
 sysparam_status_t sysparam_set_bool(const char *key, bool value) {

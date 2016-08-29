@@ -169,7 +169,7 @@ sysparam_status_t sysparam_get_info(uint32_t *base_addr, uint32_t *num_sectors);
  */
 sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length, bool *is_binary);
 
-/** Get the value associate with a key (static buffers only)
+/** Get the value associated with a key (static buffers only)
  *
  *  This performs the same function as sysparam_get_data() but without
  *  performing any memory allocations.  It can thus be used before the heap has
@@ -231,8 +231,7 @@ sysparam_status_t sysparam_get_string(const char *key, char **destptr);
 /** Get the int32_t value associated with a key
  * 
  *  This routine can be used if you know that the value in a key will (or at
- *  least should) be an integer value.  It will parse the stored data as a
- *  number (in standard decimal or "0x" hex notation) and return the result.
+ *  least should) be an int32_t value.
  *
  *  Note: If the status result is anything other than ::SYSPARAM_OK, the value
  *  in `result` is not changed.  This means it is possible to set a default
@@ -251,7 +250,31 @@ sysparam_status_t sysparam_get_string(const char *key, char **destptr);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_int(const char *key, int32_t *result);
+sysparam_status_t sysparam_get_int32(const char *key, int32_t *result);
+
+/** Get the int8_t value associated with a key
+ *
+ *  This routine can be used if you know that the value in a key will (or at
+ *  least should) be a uint8_t binary value.
+ *
+ *  Note: If the status result is anything other than ::SYSPARAM_OK, the value
+ *  in `result` is not changed.  This means it is possible to set a default
+ *  value before calling this function which will be left as-is if a sysparam
+ *  value could not be successfully read.
+ *
+ *  @param[in]  key     Key name (zero-terminated string)
+ *  @param[out] result  Pointer to a location to hold returned boolean value
+ *
+ *  @retval ::SYSPARAM_OK           Value successfully retrieved.
+ *  @retval ::SYSPARAM_NOTFOUND     Key/value not found.
+ *  @retval ::SYSPARAM_PARSEFAILED  The retrieved value could not be parsed as a
+ *                                  boolean setting.
+ *  @retval ::SYSPARAM_ERR_NOINIT   sysparam_init() must be called first
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
+ */
+sysparam_status_t sysparam_get_int8(const char *key, int8_t *result);
 
 /** Get the boolean value associated with a key
  * 
@@ -333,9 +356,8 @@ sysparam_status_t sysparam_set_string(const char *key, const char *value);
 
 /** Set a key's value as a number
  *
- *  Converts an int32_t value to a decimal number and writes it to the
- *  specified key.  This does the inverse of the sysparam_get_int()
- *  function.
+ *  Write an int32_t binary value to the specified key. This does the inverse of
+ *  the sysparam_get_int32() function.
  *
  *  @param[in] key        Key name (zero-terminated string)
  *  @param[in] value      Value to set
@@ -348,16 +370,34 @@ sysparam_status_t sysparam_set_string(const char *key, const char *value);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_int(const char *key, int32_t value);
+sysparam_status_t sysparam_set_int32(const char *key, int32_t value);
+
+/** Set a key's value as a number
+ *
+ *  Write an int8_t binary value to the specified key. This does the inverse of
+ *  the sysparam_get_int8() function.
+ *
+ *  Note that if the key already contains a value which parses to the same
+ *  boolean (true/false) value, it is left unchanged.
+ *
+ *  @param[in] key        Key name (zero-terminated string)
+ *  @param[in] value      Value to set
+ *
+ *  @retval ::SYSPARAM_OK           Value successfully set.
+ *  @retval ::SYSPARAM_ERR_BADVALUE An empty key was provided.
+ *  @retval ::SYSPARAM_ERR_FULL     No space left in sysparam area
+ *                                  (or too many keys in use)
+ *  @retval ::SYSPARAM_ERR_NOMEM    Unable to allocate memory
+ *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
+ *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
+ */
+sysparam_status_t sysparam_set_int8(const char *key, int8_t value);
 
 /** Set a key's value as a boolean (yes/no) string
  *
  *  Converts a bool value to a corresponding text string and writes it to the
  *  specified key.  This does the inverse of the sysparam_get_bool()
  *  function.
- *
- *  Note that if the key already contains a value which parses to the same
- *  boolean (true/false) value, it is left unchanged.
  *
  *  @param[in] key        Key name (zero-terminated string)
  *  @param[in] value      Value to set
