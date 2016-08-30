@@ -20,6 +20,7 @@ typedef enum {
     INUM_WDEV_FIQ = 0,
     INUM_SLC = 1,
     INUM_SPI = 2,
+    INUM_RTC = 3,
     INUM_GPIO = 4,
     INUM_UART = 5,
     INUM_TICK = 6, /* RTOS timer tick, possibly xtensa CPU CCOMPARE0(?) */
