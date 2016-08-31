@@ -407,7 +407,7 @@ static inline sysparam_status_t _delete_entry(uint32_t addr) {
  *  the result to the alternate region, then make the new alternate region the
  *  active one.
  *
- *  @param key_id  A pointer to the "current" key ID.
+ *  @param key_id  A pointer to the "current" key ID, or NULL if none.
  *
  *  NOTE: The value corresponding to the passed key ID will not be written to
  *  the output (because it is assumed it will be overwritten as the next step
@@ -424,7 +424,7 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, int *key_
     uint16_t binary_flag;
     uint16_t num_sectors = _sysparam_info.region_size / sdk_flashchip.sector_size;
 
-    debug(1, "compacting region (current size %d, expect to recover %d%s bytes)...", _sysparam_info.end_addr - _sysparam_info.cur_base, ctx->compactable, (ctx->unused_keys > 0) ? "+ (unused keys present)" : "");
+    debug(1, "compacting region (current size %d, expect to recover %d%s bytes)...", _sysparam_info.end_addr - _sysparam_info.cur_base, ctx ? ctx->compactable : 0, (ctx && ctx->unused_keys > 0) ? "+ (unused keys present)" : "");
     status = _format_region(new_base, num_sectors);
     if (status < 0) return status;
     status = sysparam_iter_start(&iter);
@@ -442,7 +442,7 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, int *key_
         if (status < 0) break;
         addr += ENTRY_SIZE(iter.key_len);
 
-        if ((iter.ctx->entry.idflags & ENTRY_MASK_ID) == *key_id) {
+        if (key_id && (iter.ctx->entry.idflags & ENTRY_MASK_ID) == *key_id) {
             // Update key_id to have the correct id for the compacted result
             *key_id = current_key_id;
             // Don't copy the old value, since we'll just be deleting it
@@ -476,10 +476,12 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, int *key_
     _sysparam_info.end_addr = addr;
     _sysparam_info.force_compact = false;
 
-    // Fix up ctx so it doesn't point to invalid stuff
-    memset(ctx, 0, sizeof(*ctx));
-    ctx->addr = addr;
-    ctx->max_key_id = current_key_id;
+    if (ctx) {
+        // Fix up ctx so it doesn't point to invalid stuff
+        memset(ctx, 0, sizeof(*ctx));
+        ctx->addr = addr;
+        ctx->max_key_id = current_key_id;
+    }
 
     debug(1, "done compacting (current size %d)", _sysparam_info.end_addr - _sysparam_info.cur_base);
 
@@ -632,6 +634,20 @@ sysparam_status_t sysparam_get_info(uint32_t *base_addr, uint32_t *num_sectors) 
     *base_addr = min(_sysparam_info.cur_base, _sysparam_info.alt_base);
     *num_sectors = (_sysparam_info.region_size / sdk_flashchip.sector_size) * 2;
     return SYSPARAM_OK;
+}
+
+sysparam_status_t sysparam_compact() {
+    xSemaphoreTake(_sysparam_info.sem, portMAX_DELAY);
+    sysparam_status_t status;
+
+    if (_sysparam_info.cur_base) {
+        status = _compact_params(NULL, NULL);
+    } else {
+        status = SYSPARAM_ERR_NOINIT;
+    }
+
+    xSemaphoreGive(_sysparam_info.sem);
+    return status;
 }
 
 sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length, bool *is_binary) {
