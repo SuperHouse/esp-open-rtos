@@ -110,9 +110,9 @@ uint8_t i2c_read(uint8_t ack) {
 	}
 	_SCL0;
 	if (ack)
-		_SDA0;  // ACK
-	else
 		_SDA1;  // NACK
+	else
+		_SDA0;  // ACK
 	_DELAY;
 	// Send clock
 	_SCL1;
@@ -134,9 +134,9 @@ bool i2c_slave_read(uint8_t slave_addr, uint8_t data, uint8_t *buf, uint16_t len
 	if(!i2c_write((slave_addr<<1) | 1)) goto fail_send; // adress + R
 
 	while(--len) {
-		*(buf++) = i2c_read(1);
+		*(buf++) = i2c_read(0);
 	}
-	*buf = i2c_read(0);
+	*buf = i2c_read(1);
 	i2c_stop();
 	return true;
 
