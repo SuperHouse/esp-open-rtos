@@ -1,0 +1,6 @@
+"HTTP/1.0 200 \r\n"
+"Content-Type: text/javascript\r\n"
+"Cache-Control: max-age=900\r\n"
+"\r\n"
+"function myFunction() { var x = document.getElementById(\"myTopnav\");"
+"if (x.className === \"topnav\") { x.className += \" responsive\"; } else { x.className = \"topnav\"; } }"
