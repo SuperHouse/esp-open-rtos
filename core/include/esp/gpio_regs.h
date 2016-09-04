@@ -40,6 +40,22 @@
  * be reset by writing to STATUS or STATUS_CLEAR.
  *
  * (_SET/_CLEAR function similarly to OUT registers)
+ *
+ * IN:
+ *
+ * Low 16 bits represent GPIO0-15 state (see also above).
+ *
+ * High 16 bits represent "strapping pins" values captured at reset time:
+ * bit 31 - GPIO10 (SD_DATA3)
+ * bit 30 - GPIO9 (SD_DATA2)
+ * bit 29 - GPIO7 (SD_DATA0)
+ * bit 18 - GPIO15 (MTDO)
+ * bit 17 - GPIO0
+ * bit 16 - GPIO2
+ * (In other words, highest 3 and lowest 3 bits of 16-bit half-word are used).
+ * BootROM uses strapping pin values to determine boot mode.
+ *
+ * Source and more information: 0D-ESP8266__Pin_List*.xlsx document
  */
 
 struct GPIO_REGS {
