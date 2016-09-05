@@ -10,6 +10,7 @@
 #define _ESP_GPIO_H
 #include <stdbool.h>
 #include "esp/gpio_regs.h"
+#include "esp/rtc_regs.h"
 #include "esp/iomux.h"
 #include "esp/interrupts.h"
 
@@ -23,7 +24,7 @@ typedef enum {
     GPIO_OUT_OPEN_DRAIN, /* Open drain output */
 } gpio_direction_t;
 
-/* Enable GPIO on the specified pin, and set it to input or output mode
+/* Enable GPIO on the specified pin, and set it to input or output mode.
  */
 void gpio_enable(const uint8_t gpio_num, const gpio_direction_t direction);
 
@@ -80,7 +81,9 @@ static inline void gpio_set_output_on_sleep(const uint8_t gpio_num, bool enabled
  */
 static inline void gpio_write(const uint8_t gpio_num, const bool set)
 {
-    if (set)
+    if (gpio_num == 16) {
+        RTC.GPIO_OUT = (RTC.GPIO_OUT & 0xfffffffe) | (set ? 1 : 0);
+    } else if (set)
         GPIO.OUT_SET = BIT(gpio_num) & GPIO_OUT_PIN_MASK;
     else
         GPIO.OUT_CLEAR = BIT(gpio_num) & GPIO_OUT_PIN_MASK;
@@ -101,7 +104,7 @@ static inline void gpio_toggle(const uint8_t gpio_num)
        get an invalid value. Prevents one task from clobbering another
        task's pins, without needing to disable/enable interrupts.
     */
-    if(GPIO.OUT & BIT(gpio_num))
+    if (GPIO.OUT & BIT(gpio_num))
         GPIO.OUT_CLEAR = BIT(gpio_num) & GPIO_OUT_PIN_MASK;
     else
         GPIO.OUT_SET = BIT(gpio_num) & GPIO_OUT_PIN_MASK;
@@ -118,7 +121,10 @@ static inline void gpio_toggle(const uint8_t gpio_num)
  */
 static inline bool gpio_read(const uint8_t gpio_num)
 {
-    return GPIO.IN & BIT(gpio_num);
+    if (gpio_num == 16)
+        return RTC.GPIO_IN & 1;
+    else
+        return GPIO.IN & BIT(gpio_num);
 }
 
 extern void gpio_interrupt_handler(void);
