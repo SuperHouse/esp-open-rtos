@@ -61,6 +61,7 @@ void bmp280_init_default_params(bmp280_params_t *params)
     params->mode = BMP280_MODE_NORMAL;
     params->filter = BMP280_FILTER_OFF;
     params->oversampling = BMP280_STANDARD;
+    params->oversampling_temperature = BMP280_STANDARD ;
     params->oversampling_humidity = BMP280_STANDARD;
     params->standby = BMP280_STANDBY_250;
 }
@@ -194,14 +195,11 @@ bool bmp280_init(bmp280_t *dev, bmp280_params_t *params)
         return false;
     }
 
-    uint8_t oversampling_temp =
-        (params->oversampling == BMP280_ULTRA_HIGH_RES) ? 2 : 1;
-
     if (params->mode == BMP280_MODE_FORCED) {
         params->mode = BMP280_MODE_SLEEP;  // initial mode for forced is sleep
     }
 
-    uint8_t ctrl = (oversampling_temp << 5) | (params->oversampling << 2)
+    uint8_t ctrl = (params->oversampling_temperature << 5) | (params->oversampling << 2)
         | (params->mode);
 
 
