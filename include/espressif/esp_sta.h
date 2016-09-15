@@ -15,10 +15,10 @@ extern "C" {
 #endif
 
 struct sdk_station_config {
-    uint8_t ssid[32];
-    uint8_t password[64];
-    uint8_t bssid_set;
-    uint8_t bssid[6];
+    uint8_t ssid[32];     /* Null terminated string */
+    uint8_t password[64]; /* Null terminated string */
+    uint8_t bssid_set;    /* One if bssid is used, otherwise zero. */
+    uint8_t bssid[6];     /* The BSSID bytes */
 };
 
 bool sdk_wifi_station_get_config(struct sdk_station_config *config);
