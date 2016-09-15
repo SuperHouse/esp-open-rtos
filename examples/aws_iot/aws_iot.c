@@ -54,8 +54,8 @@ static void beat_task(void *pvParameters) {
     }
 }
 
-static void topic_received(MessageData *md) {
-    MQTTMessage *message = md->message;
+static void topic_received(mqtt_message_data_t *md) {
+    mqtt_message_t *message = md->message;
     int i;
 
     printf("Received: ");
@@ -101,7 +101,7 @@ static const char *get_my_id(void) {
     return my_id;
 }
 
-static int mqtt_ssl_read(Network* n, unsigned char* buffer, int len,
+static int mqtt_ssl_read(mqtt_network_t * n, unsigned char* buffer, int len,
         int timeout_ms) {
     int r = ssl_read(ssl_conn, buffer, len, timeout_ms);
     if (r <= 0
@@ -114,7 +114,7 @@ static int mqtt_ssl_read(Network* n, unsigned char* buffer, int len,
     return r;
 }
 
-static int mqtt_ssl_write(Network* n, unsigned char* buffer, int len,
+static int mqtt_ssl_write(mqtt_network_t* n, unsigned char* buffer, int len,
         int timeout_ms) {
     int r = ssl_write(ssl_conn, buffer, len, timeout_ms);
     if (r <= 0
@@ -128,12 +128,12 @@ static int mqtt_ssl_write(Network* n, unsigned char* buffer, int len,
 
 static void mqtt_task(void *pvParameters) {
     int ret = 0;
-    struct Network network;
-    MQTTClient client = DefaultClient;
+    struct mqtt_network network;
+    mqtt_client_t client = mqtt_client_default;
     char mqtt_client_id[20];
     uint8_t mqtt_buf[100];
     uint8_t mqtt_readbuf[100];
-    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+    mqtt_packet_connect_data_t data = mqtt_packet_connect_data_initializer;
 
     memset(mqtt_client_id, 0, sizeof(mqtt_client_id));
     strcpy(mqtt_client_id, "ESP-");
@@ -153,7 +153,7 @@ static void mqtt_task(void *pvParameters) {
         ssl_conn->client_cert_str = client_cert;
         ssl_conn->client_key_str = client_key;
 
-        NewNetwork(&network);
+        mqtt_network_new(&network);
         network.mqttread = mqtt_ssl_read;
         network.mqttwrite = mqtt_ssl_write;
 
@@ -167,7 +167,7 @@ static void mqtt_task(void *pvParameters) {
             continue;
         }
         printf("done\n\r");
-        NewMQTTClient(&client, &network, 5000, mqtt_buf, 100, mqtt_readbuf,
+        mqtt_client_new(&client, &network, 5000, mqtt_buf, 100, mqtt_readbuf,
                 100);
 
         data.willFlag = 0;
@@ -178,14 +178,14 @@ static void mqtt_task(void *pvParameters) {
         data.password.cstring = NULL;
         data.keepAliveInterval = 1000;
         printf("Send MQTT connect ... ");
-        ret = MQTTConnect(&client, &data);
+        ret = mqtt_connect(&client, &data);
         if (ret) {
             printf("error: %d\n\r", ret);
             ssl_destroy(ssl_conn);
             continue;
         }
         printf("done\r\n");
-        MQTTSubscribe(&client, MQTT_SUB_TOPIC, QOS1, topic_received);
+        mqtt_subscribe(&client, MQTT_SUB_TOPIC, MQTT_QOS1, topic_received);
         xQueueReset(publish_queue);
 
         while (wifi_alive && !ssl_reset) {
@@ -198,21 +198,21 @@ static void mqtt_task(void *pvParameters) {
                         task_tick, free_heap, free_stack * 4);
                 printf("Publishing: %s\r\n", msg);
 
-                MQTTMessage message;
+                mqtt_message_t message;
                 message.payload = msg;
                 message.payloadlen = strlen(msg);
                 message.dup = 0;
-                message.qos = QOS1;
+                message.qos = MQTT_QOS1;
                 message.retained = 0;
-                ret = MQTTPublish(&client, MQTT_PUB_TOPIC, &message);
-                if (ret != SUCCESS) {
+                ret = mqtt_publish(&client, MQTT_PUB_TOPIC, &message);
+                if (ret != MQTT_SUCCESS) {
                     printf("error while publishing message: %d\n", ret);
                     break;
                 }
             }
 
-            ret = MQTTYield(&client, 1000);
-            if (ret == DISCONNECTED)
+            ret = mqtt_yield(&client, 1000);
+            if (ret == MQTT_DISCONNECTED)
                 break;
         }
         printf("Connection dropped, request restart\n\r");
