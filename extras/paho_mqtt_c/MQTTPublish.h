@@ -25,14 +25,14 @@
   #define DLLExport
 #endif
 
-DLLExport int MQTTSerialize_publish(unsigned char* buf, int buflen, unsigned char dup, int qos, unsigned char retained, unsigned short packetid,
-		MQTTString topicName, unsigned char* payload, int payloadlen);
+DLLExport int mqtt_serialize_publish(unsigned char* buf, int buflen, unsigned char dup, int qos, unsigned char retained, unsigned short packetid,
+		mqtt_string_t topicName, unsigned char* payload, int payloadlen);
 
-DLLExport int MQTTDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retained, unsigned short* packetid, MQTTString* topicName,
+DLLExport int mqtt_deserialize_publish(unsigned char* dup, int* qos, unsigned char* retained, unsigned short* packetid, mqtt_string_t* topicName,
 		unsigned char** payload, int* payloadlen, unsigned char* buf, int len);
 
-DLLExport int MQTTSerialize_puback(unsigned char* buf, int buflen, unsigned short packetid);
-DLLExport int MQTTSerialize_pubrel(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid);
-DLLExport int MQTTSerialize_pubcomp(unsigned char* buf, int buflen, unsigned short packetid);
+DLLExport int mqtt_serialize_puback(unsigned char* buf, int buflen, unsigned short packetid);
+DLLExport int mqtt_serialize_pubrel(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid);
+DLLExport int mqtt_serialize_pubcomp(unsigned char* buf, int buflen, unsigned short packetid);
 
 #endif /* MQTTPUBLISH_H_ */

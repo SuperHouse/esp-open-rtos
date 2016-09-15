@@ -24,36 +24,34 @@
 #include <FreeRTOS.h>
 #include <portmacro.h>
 
-typedef struct Timer Timer;
+typedef struct mqtt_timer mqtt_timer_t;
 
-struct Timer
+struct mqtt_timer
 {
     portTickType end_time;
 };
 
-typedef struct Network Network;
+typedef struct mqtt_network mqtt_network_t;
 
-struct Network
+struct mqtt_network
 {
 	int my_socket;
-	int (*mqttread) (Network*, unsigned char*, int, int);
-	int (*mqttwrite) (Network*, unsigned char*, int, int);
+	int (*mqttread) (mqtt_network_t*, unsigned char*, int, int);
+	int (*mqttwrite) (mqtt_network_t*, unsigned char*, int, int);
 };
 
-char expired(Timer*);
-void countdown_ms(Timer*, unsigned int);
-void countdown(Timer*, unsigned int);
-int left_ms(Timer*);
+char mqtt_timer_expired(mqtt_timer_t*);
+void mqtt_timer_countdown_ms(mqtt_timer_t*, unsigned int);
+void mqtt_timer_countdown(mqtt_timer_t*, unsigned int);
+int mqtt_timer_left_ms(mqtt_timer_t*);
+void mqtt_timer_init(mqtt_timer_t*);
 
-void InitTimer(Timer*);
+int mqtt_esp_read(mqtt_network_t*, unsigned char*, int, int);
+int mqtt_esp_write(mqtt_network_t*, unsigned char*, int, int);
+void mqtt_esp_disconnect(mqtt_network_t*);
 
-int mqtt_esp_read(Network*, unsigned char*, int, int);
-int mqtt_esp_write(Network*, unsigned char*, int, int);
-void mqtt_esp_disconnect(Network*);
-
-void NewNetwork(Network* n);
-int ConnectNetwork(Network* n, const char* host, int port);
-int DisconnectNetwork(Network* n);
-
+void mqtt_network_new(mqtt_network_t* n);
+int mqtt_network_connect(mqtt_network_t* n, const char* host, int port);
+int mqtt_network_disconnect(mqtt_network_t* n);
 
 #endif /* _MQTT_ESP8266_H_ */

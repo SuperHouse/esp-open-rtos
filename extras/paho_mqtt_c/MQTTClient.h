@@ -20,36 +20,44 @@
 #include "MQTTPacket.h"
 #include "MQTTESP8266.h"
 
-#define MAX_PACKET_ID 65535
-#define MAX_MESSAGE_HANDLERS 5
-#define MAX_FAIL_ALLOWED  2
+#define MQTT_MAX_PACKET_ID 65535
+#define MQTT_MAX_MESSAGE_HANDLERS 5
+#define MQTT_MAX_FAIL_ALLOWED  2
 
-enum QoS { QOS0, QOS1, QOS2 };
+enum mqtt_qos {
+	MQTT_QOS0,
+	MQTT_QOS1,
+	MQTT_QOS2
+};
 
 // all failure return codes must be negative
-enum returnCode {READ_ERROR = -4, DISCONNECTED = -3, BUFFER_OVERFLOW = -2, FAILURE = -1, SUCCESS = 0 };
+enum mqtt_return_code {
+	MQTT_READ_ERROR = -4,
+	MQTT_DISCONNECTED = -3,
+	MQTT_BUFFER_OVERFLOW = -2,
+	MQTT_FAILURE = -1,
+	MQTT_SUCCESS = 0
+};
 
-void NewTimer(Timer*);
-
-typedef struct _MQTTMessage
+typedef struct mqtt_message
 {
-    enum QoS qos;
+    enum mqtt_qos qos;
     char retained;
     char dup;
     unsigned short id;
     void *payload;
     size_t payloadlen;
-} MQTTMessage;
+} mqtt_message_t;
 
-typedef struct _MessageData
+typedef struct mqtt_message_data
 {
-    MQTTString* topic;
-    MQTTMessage* message;
-} MessageData;
+    mqtt_string_t* topic;
+    mqtt_message_t* message;
+} mqtt_message_data_t;
 
-typedef void (*messageHandler)(MessageData*);
+typedef void (*mqtt_message_handler_t)(mqtt_message_data_t*);
 
-struct _MQTTClient
+struct mqtt_client
 {
     unsigned int next_packetid;
     unsigned int command_timeout_ms;
@@ -64,28 +72,26 @@ struct _MQTTClient
     struct MessageHandlers
     {
         const char* topicFilter;
-        void (*fp) (MessageData*);
-    } messageHandlers[MAX_MESSAGE_HANDLERS];      // Message handlers are indexed by subscription topic
+        void (*fp) (mqtt_message_data_t*);
+    } messageHandlers[MQTT_MAX_MESSAGE_HANDLERS];      // Message handlers are indexed by subscription topic
 
-    void (*defaultMessageHandler) (MessageData*);
+    void (*defaultMessageHandler) (mqtt_message_data_t*);
 
-    Network* ipstack;
-    Timer ping_timer;
+    mqtt_network_t* ipstack;
+    mqtt_timer_t ping_timer;
 };
 
+typedef struct mqtt_client mqtt_client_t;
 
-typedef struct _MQTTClient MQTTClient;
+int mqtt_connect(mqtt_client_t* c, mqtt_packet_connect_data_t* options);
+int mqtt_publish(mqtt_client_t* c, const char* topic, mqtt_message_t* message);
+int mqtt_subscribe(mqtt_client_t* c, const char* topic, enum mqtt_qos qos, mqtt_message_handler_t handler);
+int mqtt_unsubscribe(mqtt_client_t* c, const char* topic);
+int mqtt_disconnect(mqtt_client_t* c);
+int mqtt_yield(mqtt_client_t* c, int timeout_ms);
 
+void mqtt_client_new(mqtt_client_t*, mqtt_network_t*, unsigned int, unsigned char*, size_t, unsigned char*, size_t);
 
-int MQTTConnect(MQTTClient* c, MQTTPacket_connectData* options);
-int MQTTPublish(MQTTClient* c, const char* topic, MQTTMessage* message);
-int MQTTSubscribe(MQTTClient* c, const char* topic, enum QoS qos, messageHandler handler);
-int MQTTUnsubscribe(MQTTClient* c, const char* topic);
-int MQTTDisconnect(MQTTClient* c);
-int MQTTYield(MQTTClient* c, int timeout_ms);
-
-void NewMQTTClient(MQTTClient*, Network*, unsigned int, unsigned char*, size_t, unsigned char*, size_t);
-
-#define DefaultClient {0, 0, 0, 0, NULL, NULL, 0, 0, 0}
+#define mqtt_client_default {0, 0, 0, 0, NULL, NULL, 0, 0, 0}
 
 #endif

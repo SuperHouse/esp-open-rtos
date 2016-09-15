@@ -42,9 +42,20 @@ enum errors
 
 enum msgTypes
 {
-	CONNECT = 1, CONNACK, PUBLISH, PUBACK, PUBREC, PUBREL,
-	PUBCOMP, SUBSCRIBE, SUBACK, UNSUBSCRIBE, UNSUBACK,
-	PINGREQ, PINGRESP, DISCONNECT
+	MQTTPACKET_CONNECT = 1,
+	MQTTPACKET_CONNACK,
+	MQTTPACKET_PUBLISH,
+	MQTTPACKET_PUBACK,
+	MQTTPACKET_PUBREC,
+	MQTTPACKET_PUBREL,
+	MQTTPACKET_PUBCOMP,
+	MQTTPACKET_SUBSCRIBE,
+	MQTTPACKET_SUBACK,
+	MQTTPACKET_UNSUBSCRIBE,
+	MQTTPACKET_UNSUBACK,
+	MQTTPACKET_PINGREQ,
+	MQTTPACKET_PINGRESP,
+	MQTTPACKET_DISCONNECT
 };
 
 /**
@@ -70,23 +81,23 @@ typedef union
 		unsigned int type : 4;			/**< message type nibble */
 	} bits;
 #endif
-} MQTTHeader;
+} mqtt_header_t;
 
 typedef struct
 {
 	int len;
 	char* data;
-} MQTTLenString;
+} mqtt_string_len_t;
 
 typedef struct
 {
 	char* cstring;
-	MQTTLenString lenstring;
-} MQTTString;
+	mqtt_string_len_t lenstring;
+} mqtt_string_t;
 
-#define MQTTString_initializer {NULL, {0, NULL}}
+#define mqtt_string_initializer {NULL, {0, NULL}}
 
-int MQTTstrlen(MQTTString mqttstring);
+int mqtt_strlen(mqtt_string_t mqttstring);
 
 #include "MQTTConnect.h"
 #include "MQTTPublish.h"
@@ -94,25 +105,25 @@ int MQTTstrlen(MQTTString mqttstring);
 #include "MQTTUnsubscribe.h"
 #include "MQTTFormat.h"
 
-int MQTTSerialize_ack(unsigned char* buf, int buflen, unsigned char type, unsigned char dup, unsigned short packetid);
-int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen);
+int mqtt_serialize_ack(unsigned char* buf, int buflen, unsigned char type, unsigned char dup, unsigned short packetid);
+int mqtt_deserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen);
 
-int MQTTPacket_len(int rem_len);
-int MQTTPacket_equals(MQTTString* a, char* b);
+int mqtt_packet_len(int rem_len);
+int mqtt_packet_equals(mqtt_string_t* a, char* b);
 
-int MQTTPacket_encode(unsigned char* buf, int length);
-int MQTTPacket_decode(int (*getcharfn)(unsigned char*, int), int* value);
-int MQTTPacket_decodeBuf(unsigned char* buf, int* value);
+int mqtt_packet_encode(unsigned char* buf, int length);
+int mqtt_packet_decode(int (*getcharfn)(unsigned char*, int), int* value);
+int mqtt_packet_decode_buf(unsigned char* buf, int* value);
 
-int readInt(unsigned char** pptr);
-char readChar(unsigned char** pptr);
-void writeChar(unsigned char** pptr, char c);
-void writeInt(unsigned char** pptr, int anInt);
-int readMQTTLenString(MQTTString* mqttstring, unsigned char** pptr, unsigned char* enddata);
-void writeCString(unsigned char** pptr, const char* string);
-void writeMQTTString(unsigned char** pptr, MQTTString mqttstring);
+int mqtt_read_int(unsigned char** pptr);
+char mqtt_read_char(unsigned char** pptr);
+void mqtt_write_char(unsigned char** pptr, char c);
+void mqtt_write_int(unsigned char** pptr, int anInt);
+int mqtt_read_str_len(mqtt_string_t* mqttstring, unsigned char** pptr, unsigned char* enddata);
+void mqtt_write_cstr(unsigned char** pptr, const char* string);
+void mqtt_write_mqqt_str(unsigned char** pptr, mqtt_string_t mqttstring);
 
-DLLExport int MQTTPacket_read(unsigned char* buf, int buflen, int (*getfn)(unsigned char*, int));
+DLLExport int mqtt_packet_read(unsigned char* buf, int buflen, int (*getfn)(unsigned char*, int));
 
 typedef struct {
 	int (*getfn)(void *, unsigned char*, int); /* must return -1 for error, 0 for call again, or the number of bytes read */
@@ -121,9 +132,9 @@ typedef struct {
 	int rem_len;
 	int len;
 	char state;
-}MQTTTransport;
+} mqtt_transport_t;
 
-int MQTTPacket_readnb(unsigned char* buf, int buflen, MQTTTransport *trp);
+int mqtt_packet_readnb(unsigned char* buf, int buflen, mqtt_transport_t *trp);
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
 }

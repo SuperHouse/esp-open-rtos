@@ -25,15 +25,17 @@
   #define DLLExport
 #endif
 
-DLLExport int MQTTSerialize_subscribe(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid,
-		int count, MQTTString topicFilters[], int requestedQoSs[]);
+#include "MQTTPacket.h"
 
-DLLExport int MQTTDeserialize_subscribe(unsigned char* dup, unsigned short* packetid,
-		int maxcount, int* count, MQTTString topicFilters[], int requestedQoSs[], unsigned char* buf, int len);
+DLLExport int mqtt_serialize_subscribe(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid,
+		int count, mqtt_string_t topicFilters[], int requestedQoSs[]);
 
-DLLExport int MQTTSerialize_suback(unsigned char* buf, int buflen, unsigned short packetid, int count, int* grantedQoSs);
+DLLExport int mqtt_deserialize_subscribe(unsigned char* dup, unsigned short* packetid,
+		int maxcount, int* count, mqtt_string_t topicFilters[], int requestedQoSs[], unsigned char* buf, int len);
 
-DLLExport int MQTTDeserialize_suback(unsigned short* packetid, int maxcount, int* count, int grantedQoSs[], unsigned char* buf, int len);
+DLLExport int mqtt_serialize_suback(unsigned char* buf, int buflen, unsigned short packetid, int count, int* grantedQoSs);
+
+DLLExport int mqtt_deserialize_suback(unsigned short* packetid, int maxcount, int* count, int grantedQoSs[], unsigned char* buf, int len);
 
 
 #endif /* MQTTSUBSCRIBE_H_ */
