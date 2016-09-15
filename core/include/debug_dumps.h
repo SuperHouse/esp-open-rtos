@@ -21,5 +21,7 @@ void dump_heapinfo(void);
    Probably not useful to be called in other contexts.
 */
 void __attribute__((noreturn)) fatal_exception_handler(uint32_t *sp, bool registers_saved_on_stack);
+void __attribute__((weak, alias("fatal_exception_handler")))
+	debug_exception_handler(uint32_t *sp, bool registers_saved_on_stack);
 
 #endif
