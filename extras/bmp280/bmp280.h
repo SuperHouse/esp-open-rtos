@@ -94,7 +94,7 @@ typedef enum {
 typedef struct {
     BMP280_Mode mode;
     BMP280_Filter filter;
-    BMP280_Oversampling oversampling;  // pressure oversampling
+    BMP280_Oversampling oversampling_pressure;  // pressure oversampling
     BMP280_Oversampling oversampling_temperature;  // temperature oversampling
     BMP280_Oversampling oversampling_humidity;
     BMP280_StandbyTime standby;
