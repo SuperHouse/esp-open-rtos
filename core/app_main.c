@@ -451,3 +451,18 @@ static __attribute__((noinline)) void dump_flash_config_sectors(uint32_t start_s
     dump_flash_sector(start_sector + 3, BOOT_INFO_SIZE);
 }
 
+
+/*
+ * Hack references to dummy functions in open_esplibs object files to
+ * ensure that the linker uses the open definitions rather than the
+ * sdk definitions.
+ */
+
+void libnet80211_hostap_linker_hack();
+void libnet80211_wl_cnx_linker_hack();
+
+void open_esplibs_refs()
+{
+    libnet80211_hostap_linker_hack();
+    libnet80211_wl_cnx_linker_hack();
+}

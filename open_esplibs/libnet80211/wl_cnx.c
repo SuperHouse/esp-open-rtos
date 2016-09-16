@@ -31,4 +31,7 @@ void *sdk_cnx_node_search(uint8_t mac[6])
     return NULL;
 }
 
+/* Needed to have the linker actually replace the above definitions. */
+void libnet80211_wl_cnx_linker_hack(){}
+
 #endif /* OPEN_LIBNET80211_WL_CNX */

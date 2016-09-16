@@ -28,4 +28,7 @@ void sdk_hostap_handle_timer(struct sdk_netif_conninfo *cnx_node)
     }
 }
 
+/* Needed to have the linker actually replace the above definitions. */
+void libnet80211_hostap_linker_hack(){}
+
 #endif /* OPEN_LIBNET80211_HOSTAP */
