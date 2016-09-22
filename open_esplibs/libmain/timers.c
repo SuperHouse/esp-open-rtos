@@ -60,11 +60,17 @@ void sdk_os_timer_setfn(ETSTimer *ptimer, ETSTimerFunc *pfunction, void *parg) {
     *tailptr = new_entry;
 }
 
+static void timer_tramp(xTimerHandle xTimer)
+{
+    ETSTimer *ptimer = pvTimerGetTimerID(xTimer);
+    ptimer->timer_func(ptimer->timer_arg);
+}
+
 void sdk_os_timer_arm(ETSTimer *ptimer, uint32_t milliseconds, bool repeat_flag) {
     if (!ptimer->timer_handle) {
         ptimer->timer_repeat = repeat_flag;
         ptimer->timer_ms = milliseconds;
-        ptimer->timer_handle = xTimerCreate(0, milliseconds/10, repeat_flag, ptimer->timer_arg, ptimer->timer_func);
+        ptimer->timer_handle = xTimerCreate(0, milliseconds/10, repeat_flag, ptimer, timer_tramp);
         armed_timer_count++;
         if (!ptimer->timer_handle) {
             //FIXME: should print an error? (original code doesn't)
