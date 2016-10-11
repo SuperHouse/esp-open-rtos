@@ -168,7 +168,7 @@ void tsl2561_init(tsl2561_t *device)
     disable(device->i2c_addr);
 }
 
-void tsl2561_set_integration_time(tsl2561_t *device, uint8_t integration_time_id)
+void tsl2561_set_integration_time(tsl2561_t *device, tsl2561_integration_time_t integration_time_id)
 {
     enable(device->i2c_addr);
     write_register(device->i2c_addr, TSL2561_REG_TIMING, integration_time_id | device->gain);
@@ -177,7 +177,7 @@ void tsl2561_set_integration_time(tsl2561_t *device, uint8_t integration_time_id
     device->integration_time = integration_time_id;
 }
 
-void tsl2561_set_gain(tsl2561_t *device, uint8_t gain)
+void tsl2561_set_gain(tsl2561_t *device, tsl2561_gain_t gain)
 {
     enable(device->i2c_addr);
     write_register(device->i2c_addr, TSL2561_REG_TIMING, gain | device->integration_time);
