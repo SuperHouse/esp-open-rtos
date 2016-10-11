@@ -10,6 +10,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // I2C Addresses
 typedef enum
 {
@@ -44,5 +48,9 @@ void tsl2561_init(tsl2561_t *device);
 void tsl2561_set_integration_time(tsl2561_t *device, tsl2561_integration_time_t integration_time_id);
 void tsl2561_set_gain(tsl2561_t *device, tsl2561_gain_t gain);
 bool tsl2561_read_lux(tsl2561_t *device, uint32_t *lux);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // __TSL2561_H__
