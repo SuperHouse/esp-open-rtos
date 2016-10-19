@@ -235,8 +235,8 @@ static sdio_error_t read_data(sdio_card_t *card, uint8_t *dst, size_t size)
 static sdio_error_t read_register(sdio_card_t *card, uint8_t cmd, void *dst)
 {
     if (command(card, cmd, 0))
-        return card->error;
-    return set_error(card, read_data(card, dst, 16));
+        return set_error(card, SDIO_ERR_IO);
+    return read_data(card, dst, 16);
 }
 
 static sdio_error_t write_data_block(sdio_card_t *card, uint8_t token, uint8_t *src)
