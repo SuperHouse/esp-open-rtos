@@ -113,10 +113,10 @@ void user_init(void)
     mainqueue = xQueueCreate(10, sizeof(my_event_t));
 
     // Create user interface task
-    xTaskCreate(bmp180_task, (signed char *)"bmp180_task", 256, &mainqueue, 2, NULL);
+    xTaskCreate(bmp180_task, "bmp180_task", 256, &mainqueue, 2, NULL);
 
     // Create Timer (Trigger a measurement every second)
-    timerHandle = xTimerCreate((signed char *)"BMP180 Trigger", 1000/portTICK_RATE_MS, pdTRUE, NULL, bmp180_i2c_timer_cb);
+    timerHandle = xTimerCreate("BMP180 Trigger", 1000/portTICK_RATE_MS, pdTRUE, NULL, bmp180_i2c_timer_cb);
 
     if (timerHandle != NULL)
     {

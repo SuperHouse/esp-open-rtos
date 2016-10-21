@@ -106,8 +106,8 @@ void user_init(void)
     i2c_init(scl_pin, sda_pin);
 
 #ifdef MODE_FORCED
-    xTaskCreate(bmp280_task_forced, (signed char *)"bmp280_task", 256, NULL, 2, NULL);
+    xTaskCreate(bmp280_task_forced, "bmp280_task", 256, NULL, 2, NULL);
 #else
-    xTaskCreate(bmp280_task_normal, (signed char *)"bmp280_task", 256, NULL, 2, NULL);
+    xTaskCreate(bmp280_task_normal, "bmp280_task", 256, NULL, 2, NULL);
 #endif
 }

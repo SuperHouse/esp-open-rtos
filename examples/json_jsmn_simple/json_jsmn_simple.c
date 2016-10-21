@@ -108,5 +108,5 @@ void user_init(void)
 {
     uart_set_baud(0, 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
-    xTaskCreate(json_test, (signed char *)"jsont", 1024, NULL, 2, NULL);
+    xTaskCreate(json_test, "jsont", 1024, NULL, 2, NULL);
 }
