@@ -230,7 +230,7 @@ void user_init(void)
     test_sign_extension();
 
     xTaskHandle taskHandle;
-    xTaskCreate(test_system_interaction, (signed char *)"interactionTask", 256, &taskHandle, 2, NULL);
+    xTaskCreate(test_system_interaction, "interactionTask", 256, &taskHandle, 2, NULL);
 }
 
 static volatile bool frc1_ran;

@@ -52,7 +52,7 @@ void user_init(void)
     IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
     dhcpserver_start(&first_client_ip, 4);
 
-    xTaskCreate(telnetTask, (signed char *)"telnetTask", 512, NULL, 2, NULL);
+    xTaskCreate(telnetTask, "telnetTask", 512, NULL, 2, NULL);
 }
 
 /* Telnet task listens on port 23, returns some status information and then closes

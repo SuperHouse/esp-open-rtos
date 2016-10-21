@@ -79,7 +79,7 @@ Current status is alpha quality, actively developed. AP STATION mode (ie wifi cl
 
 ## Open Source Components
 
-* [FreeRTOS](http://www.freertos.org/) V7.5.2
+* [FreeRTOS](http://www.freertos.org/) V9.0.0
 * [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki) v1.4.1, modified via the [esp-lwip project](https://github.com/kadamski/esp-lwip) by @kadamski.
 * [newlib](https://github.com/projectgus/newlib-xtensa) v2.2.0, with patches for xtensa support and locking stubs for thread-safe operation on FreeRTOS.
 

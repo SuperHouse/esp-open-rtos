@@ -50,7 +50,7 @@ static void tftp_send_error(struct netconn *nc, int err_code, const char *err_ms
 
 void ota_tftp_init_server(int listen_port)
 {
-    xTaskCreate(tftp_task, (signed char *)"tftpOTATask", 512, (void *)listen_port, 2, NULL);
+    xTaskCreate(tftp_task, "tftpOTATask", 512, (void *)listen_port, 2, NULL);
 }
 
 err_t ota_tftp_download(const char *server, int port, const char *filename,
