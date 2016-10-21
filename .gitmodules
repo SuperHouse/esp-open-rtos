@@ -16,3 +16,6 @@
 [submodule "examples/posix_fs/fs-test"]
 	path = examples/posix_fs/fs-test
 	url = https://github.com/sheinz/fs-test
+[submodule "tests/unity"]
+	path = tests/unity
+	url = https://github.com/ThrowTheSwitch/Unity.git
