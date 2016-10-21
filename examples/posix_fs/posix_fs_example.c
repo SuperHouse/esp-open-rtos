@@ -51,5 +51,5 @@ void user_init(void)
 {
     uart_set_baud(0, 115200);
 
-    xTaskCreate(test_task, (signed char *)"test_task", 1024, NULL, 2, NULL);
+    xTaskCreate(test_task, "test_task", 1024, NULL, 2, NULL);
 }

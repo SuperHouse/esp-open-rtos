@@ -73,6 +73,6 @@ void print_temperature(void *pvParameters) {
 void user_init(void) {
     uart_set_baud(0, 115200);
 
-    xTaskCreate(&print_temperature, (signed char *)"print_temperature", 256, NULL, 2, NULL);
+    xTaskCreate(&print_temperature, "print_temperature", 256, NULL, 2, NULL);
 }
 

@@ -89,7 +89,7 @@ void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases)
     // state->server_if is assigned once the task is running - see comment in dhcpserver_task()
     ip_addr_copy(state->first_client_addr, *first_client_addr);
 
-    xTaskCreate(dhcpserver_task, (signed char *)"DHCPServer", 768, NULL, 8, &dhcpserver_task_handle);
+    xTaskCreate(dhcpserver_task, "DHCPServer", 768, NULL, 8, &dhcpserver_task_handle);
 }
 
 void dhcpserver_stop(void)

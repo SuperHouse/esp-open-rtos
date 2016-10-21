@@ -126,6 +126,6 @@ void user_init(void)
     sdk_wifi_set_opmode(STATION_MODE);
     sdk_wifi_station_set_config(&config);
 
-    xTaskCreate(&http_get_task, (signed char *)"get_task", 256, NULL, 2, NULL);
+    xTaskCreate(&http_get_task, "get_task", 256, NULL, 2, NULL);
 }
 

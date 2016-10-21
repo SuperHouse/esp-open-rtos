@@ -242,5 +242,5 @@ void user_init(void)
 {
     uart_set_baud(0, 115200);
 
-    xTaskCreate(sysparam_editor_task, (signed char *)"sysparam_editor_task", 512, NULL, 2, NULL);
+    xTaskCreate(sysparam_editor_task, "sysparam_editor_task", 512, NULL, 2, NULL);
 }

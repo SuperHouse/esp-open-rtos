@@ -46,5 +46,5 @@ void user_init(void)
     printf("pwm_start()\n");
     pwm_start();
 
-    xTaskCreate(task1, (signed char *)"tsk1", 256, NULL, 2, NULL);
+    xTaskCreate(task1, "tsk1", 256, NULL, 2, NULL);
 }

@@ -254,5 +254,5 @@ void user_init(void)
     sdk_wifi_set_opmode(STATION_MODE);
     sdk_wifi_station_set_config(&config);
 
-    xTaskCreate(&tls_server_task, (signed char *)"server_task", 2048, NULL, 2, NULL);
+    xTaskCreate(&tls_server_task, "server_task", 2048, NULL, 2, NULL);
 }

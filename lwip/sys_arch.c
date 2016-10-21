@@ -514,7 +514,7 @@ xTaskHandle xCreatedTask;
 portBASE_TYPE xResult;
 sys_thread_t xReturn;
 
-    xResult = xTaskCreate( pxThread, ( signed char * ) pcName, iStackSize, pvArg, iPriority, &xCreatedTask );
+    xResult = xTaskCreate( pxThread, pcName, iStackSize, pvArg, iPriority, &xCreatedTask );
 
     if( xResult == pdPASS )
     {
