@@ -42,6 +42,9 @@ PRINTF_SCANF_FLOAT_SUPPORT ?= 1
 
 FLAVOR ?= release # or debug
 
+# Include source files into a static library. It improves error messages.
+INCLUDE_SRC_IN_AR ?= 1
+
 # Compiler names, etc. assume gdb
 CROSS ?= xtensa-lx106-elf-
 
