@@ -10,8 +10,9 @@ import time
 
 
 SHORT_OUTPUT_TIMEOUT = 0.25  # timeout for resetting and/or waiting for more lines of output
-TESTCASE_TIMEOUT = 30
+TESTCASE_TIMEOUT = 60
 TESTRUNNER_BANNER = "esp-open-rtos test runner."
+RESET_RETRIES = 10  # retries to receive test runner banner after reset
 
 
 def main():
@@ -213,13 +214,19 @@ class TestEnvironment(object):
 
     def reset(self):
         """ Resets the test board, and waits for the test runner program to start up """
-        self._port.setDTR(False)
-        self._port.setRTS(True)
-        time.sleep(0.05)
-        self._port.flushInput()
-        self._port.setRTS(False)
-        verbose_print("Waiting for test runner startup...")
-        if not self._port.wait_line(lambda line: line == TESTRUNNER_BANNER):
+        for i in range(RESET_RETRIES):
+            self._port.setDTR(False)
+            self._port.setRTS(True)
+            time.sleep(0.05)
+            self._port.flushInput()
+            self._port.setRTS(False)
+            verbose_print("Waiting for test runner startup...")
+            if self._port.wait_line(lambda line: line == TESTRUNNER_BANNER):
+                return
+            else:
+                verbose_print("Retrying to reset the test board, attempt=%d" %
+                              (i + 1))
+                continue
             raise TestRunnerError("Port %s failed to start test runner" % self._port)
 
     def get_testlist(self):
