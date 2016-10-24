@@ -35,6 +35,10 @@
 #include "espressif/esp_common.h" // sdk_os_delay_us
 #include "esp/gpio.h"
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Struct for easy manipulation of RGB colors.
  *
@@ -204,5 +208,8 @@ void ws2812_seq_end(void)
     sdk_os_delay_us(50); // display the loaded colors
 }
 
+#ifdef	__cplusplus
+}
+#endif
 
 #endif /* WS2812_DRV_H */

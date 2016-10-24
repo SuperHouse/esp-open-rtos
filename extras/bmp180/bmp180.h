@@ -20,6 +20,10 @@
 #define BMP180_TEMPERATURE (1<<0)
 #define BMP180_PRESSURE    (1<<1)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //
 // Create bmp180_types
 //
@@ -78,5 +82,9 @@ bool bmp180_fillInternalConstants(bmp180_constants_t *c);
 // setting, oss, may be 0 to 3. Returns true on success.
 bool bmp180_measure(bmp180_constants_t *c, int32_t *temperature,
                     uint32_t *pressure, uint8_t oss);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DRIVER_BMP180_H_ */

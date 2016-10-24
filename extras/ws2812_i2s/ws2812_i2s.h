@@ -27,6 +27,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     uint8_t red;
     uint8_t green;
@@ -49,5 +53,9 @@ void ws2812_i2s_init(uint32_t pixels_number);
  * the pixels.
  */
 void ws2812_i2s_update(ws2812_pixel_t *pixels);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif  // __WS2812_I2S_H__
