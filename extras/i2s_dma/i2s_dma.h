@@ -28,6 +28,10 @@
 #include <stdbool.h>
 #include "esp/slc_regs.h"
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 typedef void (*i2s_dma_isr_t)(void);
 
 typedef struct dma_descriptor {
@@ -112,5 +116,9 @@ inline dma_descriptor_t *i2s_dma_get_eof_descriptor()
 {
     return (dma_descriptor_t*)SLC.RX_EOF_DESCRIPTOR_ADDR;
 }
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif  // __I2S_DMA_H__

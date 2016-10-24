@@ -4,6 +4,10 @@
 #include <espressif/esp_misc.h> // sdk_os_delay_us
 #include "FreeRTOS.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @file onewire.h
  *
  *  Routines to access devices using the Dallas Semiconductor 1-Wire(tm)
@@ -232,4 +236,8 @@ bool onewire_check_crc16(const uint8_t* input, size_t len, const uint8_t* invert
  */
 uint16_t onewire_crc16(const uint8_t* input, size_t len, uint16_t crc_iv);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif  /* __ONEWIRE_H__ */

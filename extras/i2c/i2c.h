@@ -24,10 +24,13 @@
 
 #ifndef __I2C_H__
 #define __I2C_H__
-#endif
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
 // Init bitbanging I2C driver on given pins
 void i2c_init(uint8_t scl_pin, uint8_t sda_pin);
@@ -49,3 +52,9 @@ bool i2c_slave_read(uint8_t slave_addr, uint8_t data, uint8_t *buf, uint32_t len
 // devices where the i2c_slave_[read|write] functions above are of no use.
 void i2c_start(void);
 void i2c_stop(void);
+
+#ifdef	__cplusplus
+}
+#endif
+
+#endif /* __I2C_H__ */

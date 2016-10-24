@@ -17,6 +17,10 @@
 // Type of sensor to use
 #define DHT_TYPE    DHT22
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Read data from sensor on specified pin.
  *
@@ -34,5 +38,9 @@ bool dht_read_data(uint8_t pin, int16_t *humidity, int16_t *temperature);
  * Return values as floating point values.
  */
 bool dht_read_float_data(uint8_t pin, float *humidity, float *temperature);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // __DHT_H__

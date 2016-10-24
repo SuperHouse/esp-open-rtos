@@ -14,6 +14,10 @@
 #define DHCPSERVER_LEASE_TIME 3600
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Start DHCP server.
 
    Static IP of server should already be set and network interface enabled.
@@ -29,5 +33,9 @@ void dhcpserver_get_lease(const ip_addr_t *first_client_addr, uint8_t max_leases
 /* Stop DHCP server.
  */
 void dhcpserver_stop(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
