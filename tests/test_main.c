@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <esp/uart.h>
 #include <string.h>
+#include <FreeRTOS.h>
+#include <task.h>
+#include <espressif/esp_common.h>
 
 /* Convert requirement enum to a string we can print */
 static const char *get_requirements_name(const testcase_type_t arg) {
@@ -30,7 +33,8 @@ void testcase_register(const testcase_t *testcase)
         testcases_alloc += 1;
         testcases = realloc(testcases, testcases_alloc * sizeof(testcase_t));
         if(!testcases) {
-            printf("Failed to reallocate test case register length %d\n", testcases_alloc);
+            printf("Failed to reallocate test case register length %d\n", 
+                    testcases_alloc);
             testcases_count = 0;
             testcases_alloc = 0;
         }
@@ -38,13 +42,14 @@ void testcase_register(const testcase_t *testcase)
     memcpy(&testcases[testcases_count++], testcase, sizeof(testcase_t));
 }
 
-void user_init(void)
+static void test_task(void *pvParameters)
 {
     uart_set_baud(0, 115200);
     printf("esp-open-rtos test runner.\n");
     printf("%d test cases are defined:\n\n", testcases_count);
     for(int i = 0; i < testcases_count; i++) {
-        printf("CASE %d = %s %s\n", i, testcases[i].name, get_requirements_name(testcases[i].type));
+        printf("CASE %d = %s %s\n", i, testcases[i].name, 
+                get_requirements_name(testcases[i].type));
     }
 
     printf("Enter A or B then number of test case to run, ie A0.\n");
@@ -100,9 +105,11 @@ void user_init(void)
     testcases_alloc = 0;
     testcases_count = 0;
 
-    printf("\nRunning test case %d (%s %s) as instance %c \nDefinition at %s:%d\n***\n", case_idx,
+    printf("\nRunning test case %d (%s %s) as instance %c "
+                "\nDefinition at %s:%d\n***\n", case_idx,
            testcase.name, get_requirements_name(testcase.type), type,
            testcase.file, testcase.line);
+
     Unity.CurrentTestName = testcase.name;
     Unity.TestFile = testcase.file;
     Unity.CurrentTestLineNumber = testcase.line;
@@ -111,5 +118,13 @@ void user_init(void)
         testcase.a_fn();
     else
         testcase.b_fn();
-    TEST_FAIL_MESSAGE("\n\nTest initialisation routine returned without calling TEST_PASS. Buggy test?");
+    /* TEST_FAIL_MESSAGE("\n\nTest initialisation routine returned" */
+    /*         " without calling TEST_PASS. Buggy test?"); */
+}
+
+void user_init(void)
+{
+    sdk_wifi_set_opmode(NULL_MODE);
+    test_task(0);
+    /* xTaskCreate(test_task, (signed char *)"test_task", 512, NULL, 2, NULL); */
 }

@@ -1,8 +1,9 @@
-/* Unit tests to verify the "unaligned load handler" in core/exception_vectors.S that allows us to
-   complete byte loads from unaligned memory, etc.
-
-   Adapted from a test program in 'experiments' that did this.
-*/
+/**
+ * Unit tests to verify the "unaligned load handler" in core/exception_vectors.S 
+ * that allows us to complete byte loads from unaligned memory, etc.
+ *
+ * Adapted from a test program in 'experiments' that did this.
+ */
 #include "testcase.h"
 #include "esp/rom.h"
 #include "esp/timer.h"

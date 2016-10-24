@@ -41,7 +41,7 @@ void testcase_register(const testcase_t *testcase);
 #define DEFINE_TESTCASE(NAME, TYPE)                                     \
     static testcase_fn_t a_##NAME;                                      \
     static testcase_fn_t b_##NAME;                                      \
-    _DEFINE_TESTCASE_COMMON(NAME, TYPE, A_##NAME, B_##NAME)
+    _DEFINE_TESTCASE_COMMON(NAME, TYPE, a_##NAME, b_##NAME)
 
 
 #define _DEFINE_TESTCASE_COMMON(NAME, TYPE, A_FN, B_FN)                 \

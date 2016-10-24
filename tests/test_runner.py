@@ -7,11 +7,12 @@ import serial
 import threading
 import re
 import time
-import traceback
 
-SHORT_OUTPUT_TIMEOUT=0.25 # timeout for resetting and/or waiting for more lines of output
-TESTCASE_TIMEOUT=10
-TESTRUNNER_BANNER="esp-open-rtos test runner."
+
+SHORT_OUTPUT_TIMEOUT = 0.25  # timeout for resetting and/or waiting for more lines of output
+TESTCASE_TIMEOUT = 30
+TESTRUNNER_BANNER = "esp-open-rtos test runner."
+
 
 def main():
     global verbose
@@ -24,6 +25,7 @@ def main():
             flash_image(args.bport)
 
     env = TestEnvironment(args.aport, TestEnvironment.A)
+    env_b = None
     cases = env.get_testlist()
     if args.type != 'solo':
         env_b = TestEnvironment(args.bport, TestEnvironment.B)
@@ -31,10 +33,16 @@ def main():
         if cases != cases_b:
             raise TestRunnerError("Test cases on units A & B don't match")
 
-    counts = dict((status,0) for status in TestResult.STATUS_NAMES.keys())
+    counts = dict((status, 0) for status in TestResult.STATUS_NAMES.keys())
     failures = False
     for test in cases:
-        res = test.run(env)
+        if test.case_type == 'dual':
+            if env_b is None:
+                res = TestResult(TestResult.SKIPPED, 'Dual test case skipped')
+            else:
+                res = test.run(env, env_b)
+        else:
+            res = test.run(env)
         counts[res.status] += 1
         failures = failures or res.is_failure()
 
@@ -46,6 +54,7 @@ def main():
 
     sys.exit(1 if failures else 0)
 
+
 class TestCase(object):
     def __init__(self, index, name, case_type):
         self.name = name
@@ -56,11 +65,11 @@ class TestCase(object):
         return "#%d: %s (%s)" % (self.index, self.name, self.case_type)
 
     def __eq__(self, other):
-        return (self.index == other.index
-                and self.name == other.name
-                and self.case_type == other.case_type)
+        return (self.index == other.index and
+                self.name == other.name and
+                self.case_type == other.case_type)
 
-    def run(self, env_a, env_b = None):
+    def run(self, env_a, env_b=None):
         """
         Run the test represented by this instance, against the environment(s) passed in.
 
@@ -71,7 +80,7 @@ class TestCase(object):
         mon_b = env_b.start_testcase(self) if env_b else None
         while True:
             if mon_a.get_result() and (mon_b is None or mon_b.get_result()):
-                break # all running test environments have finished
+                break  # all running test environments have finished
 
             # or, in the case both are running, stop as soon as either environemnt shows a failure
             try:
@@ -93,14 +102,15 @@ class TestCase(object):
             res = max(mon_a.get_result(), mon_b.get_result())
         else:
             res = mon_a.get_result()
-        if not verbose: # finish the line after the ...
+        if not verbose:  # finish the line after the ...
             print(TestResult.STATUS_NAMES[res.status])
             if res.is_failure():
                 message = res.message
-                if "/" in res.message: # cut anything before the file name in the failure
+                if "/" in res.message:  # cut anything before the file name in the failure
                     message = message[message.index("/"):]
                 print("FAILURE MESSAGE:\n%s\n" % message)
         return res
+
 
 class TestResult(object):
     """ Class to wrap a test result code and a message """
@@ -112,11 +122,11 @@ class TestResult(object):
     ERROR = 4
 
     STATUS_NAMES = {
-        CANCELLED : "Cancelled",
-        SKIPPED : "Skipped",
-        PASSED : "Passed",
-        FAILED : "Failed",
-        ERROR : "Error"
+        CANCELLED: "Cancelled",
+        SKIPPED: "Skipped",
+        PASSED: "Passed",
+        FAILED: "Failed",
+        ERROR: "Error"
         }
 
     def __init__(self, status, message):
@@ -126,10 +136,18 @@ class TestResult(object):
     def is_failure(self):
         return self.status >= TestResult.FAILED
 
-    def __cmp__(self, other):
+    def __qe__(self, other):
         if other is None:
-            return 1
-        return self.status - other.status
+            return False
+        else:
+            return self.status == other.status
+
+    def __lt__(self, other):
+        if other is None:
+            return False
+        else:
+            return self.status < other.status
+
 
 class TestMonitor(object):
     """ Class to monitor a running test case in a separate thread, defer reporting of the result until it's done.
@@ -163,7 +181,7 @@ class TestMonitor(object):
             while not self._cancelled and time.time() < start_time + TESTCASE_TIMEOUT:
                 line = self._port.readline().decode("utf-8", "ignore")
                 if line == "":
-                    continue # timed out
+                    continue  # timed out
                 self.output += "%s+%4.2fs %s" % (self._instance, time.time()-start_time, line)
                 verbose_print(line.strip())
                 if line.endswith(":PASS\r\n"):
@@ -182,6 +200,7 @@ class TestMonitor(object):
 
         finally:
             self._port.timeout = None
+
 
 class TestEnvironment(object):
     A = "A"
@@ -211,7 +230,7 @@ class TestEnvironment(object):
 
         def collect_testcases(line):
                 if line.startswith(">"):
-                    return True # prompt means list of test cases is done, success
+                    return True  # prompt means list of test cases is done, success
                 m = re.match(r"CASE (\d+) = (.+?) ([A-Z]+)", line)
                 if m is not None:
                     t = TestCase(int(m.group(1)), m.group(2), m.group(3).lower())
@@ -223,7 +242,9 @@ class TestEnvironment(object):
         return tests
 
     def start_testcase(self, case):
-        """ Starts the specified test instance and returns an TestMonitor reader thread instance to monitor the output """
+        """ Starts the specified test instance and returns a TestMonitor reader thread instance
+        to monitor the output
+        """
         # synchronously start the test case
         self.reset()
         if not self._port.wait_line(lambda line: line.startswith(">")):
@@ -243,16 +264,18 @@ def get_testdir():
 
 
 def flash_image(serial_port):
-    # Bit hacky: rather than calling esptool directly, just use the Makefile flash target
-    # with the correct ESPPORT argument
+    # Bit hacky: rather than calling esptool directly,
+    # just use the Makefile flash target with the correct ESPPORT argument
     env = dict(os.environ)
     env["ESPPORT"] = serial_port
     verbose_print("Building and flashing test image to %s..." % serial_port)
     try:
         stdout = sys.stdout if verbose else None
-        output = subprocess.run(["make","flash"], check=True, cwd=get_testdir(), stdout=stdout, stderr=subprocess.STDOUT, env=env)
+        subprocess.run(["make", "flash"], check=True, cwd=get_testdir(),
+                       stdout=stdout, stderr=subprocess.STDOUT, env=env)
     except subprocess.CalledProcessError as e:
-        raise TestRunnerError("'make flash EPPORT=%s' failed with exit code %d" % (serial_port, e.returncode))
+        raise TestRunnerError("'make flash EPPORT=%s' failed with exit code %d" %
+                              (serial_port, e.returncode))
     verbose_print("Flashing successful.")
 
 
@@ -262,7 +285,7 @@ def parse_args():
     parser.add_argument(
         '--type', '-t',
         help='Type of test hardware attached to serial ports A & (optionally) B',
-        choices=['solo','dual','eyore_test'], default='solo')
+        choices=['solo', 'dual', 'eyore_test'], default='solo')
 
     parser.add_argument(
         '--aport', '-a',
@@ -296,11 +319,12 @@ class TestRunnerError(RuntimeError):
     def __init__(self, message):
         RuntimeError.__init__(self, message)
 
+
 class TestSerialPort(serial.Serial):
     def __init__(self, *args, **kwargs):
         super(TestSerialPort, self).__init__(*args, **kwargs)
 
-    def wait_line(self, callback, timeout = SHORT_OUTPUT_TIMEOUT):
+    def wait_line(self, callback, timeout=SHORT_OUTPUT_TIMEOUT):
         """ Wait for the port to output a particular piece of line content, as judged by callback
 
             Callback called as 'callback(line)' and returns not-True if non-match otherwise can return any value.
@@ -316,7 +340,7 @@ class TestSerialPort(serial.Serial):
             while not res:
                 line = self.readline()
                 if line == b"":
-                    break # timed out
+                    break  # timed out
                 line = line.decode("utf-8", "ignore").rstrip()
                 res = callback(line)
             return res
@@ -336,4 +360,3 @@ if __name__ == '__main__':
     except TestRunnerError as e:
         print(e)
         sys.exit(2)
-

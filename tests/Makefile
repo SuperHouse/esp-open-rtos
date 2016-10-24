@@ -1,5 +1,7 @@
 PROGRAM=tests
 
+EXTRA_COMPONENTS=extras/dhcpserver
+
 PROGRAM_SRC_DIR = . ./cases
 
 # Add unity test framework headers & core source file
