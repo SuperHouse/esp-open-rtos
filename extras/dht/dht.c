@@ -14,11 +14,10 @@
 #include <espressif/esp_misc.h> // sdk_os_delay_us
 
 // DHT timer precision in microseconds
-#define DHT_TIMER_INTERVAL   2
-#define DHT_DATA_BITS  40
+#define DHT_TIMER_INTERVAL 2
+#define DHT_DATA_BITS 40
 
 // #define DEBUG_DHT
-
 #ifdef DEBUG_DHT
 #define debug(fmt, ...) printf("%s" fmt "\n", "dht: ", ## __VA_ARGS__);
 #else
@@ -116,7 +115,7 @@ static inline bool dht_fetch_data(uint8_t pin, bool bits[DHT_DATA_BITS])
             debug("LOW bit timeout\n");
             return false;
         }
-        if (!dht_await_pin_state(pin, 75, false, &high_duration)){
+        if (!dht_await_pin_state(pin, 75, false, &high_duration)) {
             debug("HIGHT bit timeout\n");
             return false;
         }
@@ -128,27 +127,26 @@ static inline bool dht_fetch_data(uint8_t pin, bool bits[DHT_DATA_BITS])
 /**
  * Pack two data bytes into single value and take into account sign bit.
  */
-static inline int16_t dht_convert_data(uint8_t msb, uint8_t lsb)
+static inline int16_t dht_convert_data(dht_sensor_type_t sensor_type, uint8_t msb, uint8_t lsb)
 {
     int16_t data;
 
-#if DHT_TYPE == DHT22
-    data = msb & 0x7F;
-    data <<= 8;
-    data |= lsb;
-    if (msb & BIT(7)) {
-        data = 0 - data;       // convert it to negative
+    if (sensor_type == DHT_TYPE_DHT22) {
+        data = msb & 0x7F;
+        data <<= 8;
+        data |= lsb;
+        if (msb & BIT(7)) {
+            data = 0 - data;       // convert it to negative
+        }
     }
-#elif DHT_TYPE == DHT11
-    data = msb * 10;
-#else
-#error "Unsupported DHT type"
-#endif
+    else {
+        data = msb * 10;
+    }
 
     return data;
 }
 
-bool dht_read_data(uint8_t pin, int16_t *humidity, int16_t *temperature)
+bool dht_read_data(dht_sensor_type_t sensor_type, uint8_t pin, int16_t *humidity, int16_t *temperature)
 {
     bool bits[DHT_DATA_BITS];
     uint8_t data[DHT_DATA_BITS/8] = {0};
@@ -175,19 +173,19 @@ bool dht_read_data(uint8_t pin, int16_t *humidity, int16_t *temperature)
         return false;
     }
 
-    *humidity = dht_convert_data(data[0], data[1]);
-    *temperature = dht_convert_data(data[2], data[3]);
+    *humidity = dht_convert_data(sensor_type, data[0], data[1]);
+    *temperature = dht_convert_data(sensor_type, data[2], data[3]);
 
     debug("Sensor data: humidity=%d, temp=%d\n", *humidity, *temperature);
 
     return true;
 }
 
-bool dht_read_float_data(uint8_t pin, float *humidity, float *temperature)
+bool dht_read_float_data(dht_sensor_type_t sensor_type, uint8_t pin, float *humidity, float *temperature)
 {
     int16_t i_humidity, i_temp;
 
-    if (dht_read_data(pin, &i_humidity, &i_temp)) {
+    if (dht_read_data(sensor_type, pin, &i_humidity, &i_temp)) {
         *humidity = (float)i_humidity / 10;
         *temperature = (float)i_temp / 10;
         return true;
