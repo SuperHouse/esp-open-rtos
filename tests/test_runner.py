@@ -15,6 +15,29 @@ TESTRUNNER_BANNER = "esp-open-rtos test runner."
 RESET_RETRIES = 10  # retries to receive test runner banner after reset
 
 
+def run(env_a, env_b, cases):
+    counts = dict((status, 0) for status in TestResult.STATUS_NAMES.keys())
+    failures = False
+    for test in cases:
+        if test.case_type == 'dual':
+            if env_b is None:
+                res = TestResult(TestResult.SKIPPED, 'Dual test case skipped')
+            else:
+                res = test.run(env_a, env_b)
+        else:
+            res = test.run(env_a)
+        counts[res.status] += 1
+        failures = failures or res.is_failure()
+
+    print("%20s: %d" % ("Total tests", sum(c for c in counts.values())))
+    print()
+    # print status counts for tests
+    for c in sorted(counts.keys()):
+        print("%20s: %d" % (TestResult.STATUS_NAMES[c], counts[c]))
+
+    return failures == 0
+
+
 def main():
     global verbose
     args = parse_args()
@@ -34,26 +57,16 @@ def main():
         if cases != cases_b:
             raise TestRunnerError("Test cases on units A & B don't match")
 
-    counts = dict((status, 0) for status in TestResult.STATUS_NAMES.keys())
-    failures = False
-    for test in cases:
-        if test.case_type == 'dual':
-            if env_b is None:
-                res = TestResult(TestResult.SKIPPED, 'Dual test case skipped')
-            else:
-                res = test.run(env, env_b)
-        else:
-            res = test.run(env)
-        counts[res.status] += 1
-        failures = failures or res.is_failure()
+    if args.list:  # if list option is specified, do not run test cases
+        print("List of test cases:")
+        for test in cases:
+            print(test)
+        sys.exit(0)
 
-    print("%20s: %d" % ("Total tests", sum(c for c in counts.values())))
-    print()
-    # print status counts for tests
-    for c in sorted(counts.keys()):
-        print("%20s: %d" % (TestResult.STATUS_NAMES[c], counts[c]))
+    if args.testcases:  # if testcases is specified run only those cases
+        cases = [c for c in cases if str(c.index) in args.testcases]
 
-    sys.exit(1 if failures else 0)
+    sys.exit(0 if run(env, env_b, cases) else 1)
 
 
 class TestCase(object):
@@ -311,13 +324,20 @@ def parse_args():
         default=False)
 
     parser.add_argument(
+        '--list', '-l',
+        help='Display list of available test cases on a device',
+        action='store_true',
+        default=False)
+
+    parser.add_argument(
         '--verbose', '-v',
         help='Verbose test runner debugging output',
         action='store_true',
         default=False)
 
     parser.add_argument('testcases', nargs='*',
-                        help='Optional list of test cases to run. By default, all tests are run.')
+                        help='Optional list of test case numbers to run. '
+                             'By default, all tests are run.')
 
     return parser.parse_args()
 
