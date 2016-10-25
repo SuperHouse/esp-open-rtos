@@ -1,5 +1,5 @@
 /**
- * Unit tests to verify the "unaligned load handler" in core/exception_vectors.S 
+ * Unit tests to verify the "unaligned load handler" in core/exception_vectors.S
  * that allows us to complete byte loads from unaligned memory, etc.
  *
  * Adapted from a test program in 'experiments' that did this.
@@ -23,16 +23,16 @@
 
 static char dramtest[] = TESTSTRING;
 
-static const __attribute__((section(".iram1.notrodata"))) 
+static const __attribute__((section(".iram1.notrodata")))
     char iramtest[] = TESTSTRING;
 
-static const __attribute__((section(".text.notrodata"))) 
+static const __attribute__((section(".text.notrodata")))
     char iromtest[] = TESTSTRING;
 
-static const volatile __attribute__((section(".iram1.notliterals"))) 
+static const volatile __attribute__((section(".iram1.notliterals")))
     int16_t unsigned_shorts[] = { -3, -4, -5, -32767, 44 };
 
-static const __attribute__((section(".iram1.notrodata"))) 
+static const __attribute__((section(".iram1.notrodata")))
     char sanity_test_data[] = {
         0x01, 0x55, 0x7e, 0x2a, 0x81, 0xd5, 0xfe, 0xaa
     };
@@ -42,28 +42,28 @@ DEFINE_SOLO_TESTCASE(03_byte_load_verify_sections)
 #define PTR_IN_REGION(PTR, START, LEN) \
         ((START <= (intptr_t)(PTR)) && ((intptr_t)(PTR) < (START+LEN)))
 
-/* Sanity check, ensure the addresses of the various test strings 
+/* Sanity check, ensure the addresses of the various test strings
  * are in the correct address space regions. */
 static void a_03_byte_load_verify_sections()
 {
   printf("dramtest addr %p\n", dramtest);
-  TEST_ASSERT_MESSAGE(PTR_IN_REGION(dramtest, 0x3FFE8000, 0x14000), 
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(dramtest, 0x3FFE8000, 0x14000),
           "dramtest should be in DRAM region");
 
   printf("iramtest addr %p\n", iramtest);
-  TEST_ASSERT_MESSAGE(PTR_IN_REGION(iramtest, 0x40100000, 0x8000), 
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(iramtest, 0x40100000, 0x8000),
           "iramtest should be in IRAM region");
 
   printf("iromtest addr %p\n", iromtest);
-  TEST_ASSERT_MESSAGE(PTR_IN_REGION(iromtest, 0x40202010, (0x100000 - 0x2010)), 
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(iromtest, 0x40202010, (0x100000 - 0x2010)),
           "iromtest sohuld be in IROM region");
 
   printf("unsigned_shorts addr %p\n", unsigned_shorts);
-  TEST_ASSERT_MESSAGE(PTR_IN_REGION(unsigned_shorts, 0x40100000, 0x8000), 
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(unsigned_shorts, 0x40100000, 0x8000),
           "unsigned_shorts should be in IRAM region");
 
   printf("sanity_test_data addr %p\n", sanity_test_data);
-  TEST_ASSERT_MESSAGE(PTR_IN_REGION(sanity_test_data, 0x40100000, 0x8000), 
+  TEST_ASSERT_MESSAGE(PTR_IN_REGION(sanity_test_data, 0x40100000, 0x8000),
           "sanity_test_data should be in IRAM region");
 
   TEST_PASS();
@@ -224,8 +224,8 @@ static uint32_t IRAM inner_string_test(const char *string, test_with_fn_t testfn
       const char *expected = testfn(string);
       TEST_ASSERT_EQUAL_STRING_MESSAGE(expected, buf, testfn_label);
       if(evict_cache) {
-	Cache_Read_Disable();
-	Cache_Read_Enable(0,0,1);
+        Cache_Read_Disable();
+        Cache_Read_Enable(0,0,1);
       }
     }
     uint32_t after;

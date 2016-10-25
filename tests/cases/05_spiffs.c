@@ -36,8 +36,8 @@ static void test_task(void *pvParameters)
 
     float write_rate, read_rate;
     if (fs_speed_test_run(get_current_time, &write_rate, &read_rate)) {
-        printf("Read speed: %.0f bytes/s\n", read_rate * 1000); 
-        printf("Write speed: %.0f bytes/s\n", write_rate * 1000); 
+        printf("Read speed: %.0f bytes/s\n", read_rate * 1000);
+        printf("Write speed: %.0f bytes/s\n", write_rate * 1000);
     } else {
         TEST_FAIL();
     }

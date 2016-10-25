@@ -1,6 +1,6 @@
 # esp-open-rtos tests
 
-Testing is based on [Unity](https://github.com/ThrowTheSwitch/Unity) 
+Testing is based on [Unity](https://github.com/ThrowTheSwitch/Unity)
 C testing framework.
 
 ## Features
@@ -24,10 +24,10 @@ reset into flash mode.
 `--type` or `-t` - Type of test case to run. Can be 'solo' or 'dual'.
 If not specified 'solo' test will be run.
 
-`--aport` or `-a` - Serial port for device A. 
+`--aport` or `-a` - Serial port for device A.
 If not specified device `/dev/ttyUSB0` is used.
 
-`--bport` or `-b` - Serial port for device B. 
+`--bport` or `-b` - Serial port for device B.
 If not specified device `/dev/ttyUSB1` is used.
 
 `--no-flash` or `-n` - Do not flash the test firmware before running tests.
