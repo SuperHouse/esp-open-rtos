@@ -36,11 +36,11 @@
 #ifndef configCPU_CLOCK_HZ
 /* This is the _default_ clock speed for the CPU. Can be either 80MHz
  * or 160MHz, and the system will set the clock speed to match at startup.
-
-Note that it's possible to change the clock speed at runtime, so you
-can/should use sdk_system_get_cpu_frequency() in order to determine the
-current CPU frequency, in preference to this macro.
-*/
+ *
+ * Note that it's possible to change the clock speed at runtime, so you
+ * can/should use sdk_system_get_cpu_frequency() in order to determine the
+ * current CPU frequency, in preference to this macro.
+ */
 #define configCPU_CLOCK_HZ			( ( unsigned long ) 80000000 )
 #endif
 #ifndef configTICK_RATE_HZ
@@ -87,7 +87,6 @@ current CPU frequency, in preference to this macro.
 #ifndef configUSE_TIMERS
 #define configUSE_TIMERS    1
 #endif
-
 
 #if configUSE_TIMERS
 #ifndef configTIMER_TASK_PRIORITY

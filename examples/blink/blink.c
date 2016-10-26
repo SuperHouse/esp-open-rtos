@@ -54,6 +54,6 @@ void blinkenRegisterTask(void *pvParameters)
 void user_init(void)
 {
     uart_set_baud(0, 115200);
-    xTaskCreate(blinkenTask, (signed char *)"blinkenTask", 256, NULL, 2, NULL);
-    //xTaskCreate(blinkenRegisterTask, (signed char *)"blinkenRegisterTask", 256, NULL, 2, NULL);
+    xTaskCreate(blinkenTask, "blinkenTask", 256, NULL, 2, NULL);
+    //xTaskCreate(blinkenRegisterTask, "blinkenRegisterTask", 256, NULL, 2, NULL);
 }

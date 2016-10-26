@@ -39,6 +39,6 @@ void user_init(void)
     uart_set_baud(0, 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
     mainqueue = xQueueCreate(10, sizeof(uint32_t));
-    xTaskCreate(task1, (signed char *)"tsk1", 256, &mainqueue, 2, NULL);
-    xTaskCreate(task2, (signed char *)"tsk2", 256, &mainqueue, 2, NULL);
+    xTaskCreate(task1, "tsk1", 256, &mainqueue, 2, NULL);
+    xTaskCreate(task2, "tsk2", 256, &mainqueue, 2, NULL);
 }

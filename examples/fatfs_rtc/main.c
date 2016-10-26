@@ -129,5 +129,5 @@ void user_init(void)
 
     i2c_init (SCL_PIN, SDA_PIN);
 
-    xTaskCreate(rewrite_file_task, (signed char *)"task1", 512, NULL, 2, NULL);
+    xTaskCreate(rewrite_file_task, "task1", 512, NULL, 2, NULL);
 }

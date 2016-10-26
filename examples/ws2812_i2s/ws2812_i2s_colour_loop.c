@@ -79,5 +79,5 @@ void user_init(void)
 {
     uart_set_baud(0, 115200);
 
-    xTaskCreate(&demo, (signed char *)"ws2812_i2s", 256, NULL, 10, NULL);
+    xTaskCreate(&demo, "ws2812_i2s", 256, NULL, 10, NULL);
 }
