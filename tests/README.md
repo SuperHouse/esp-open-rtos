@@ -15,6 +15,13 @@ C testing framework.
 There's a test runner script `test_runner.py` written in Python3 that runs
 test cases on ESP8266 connected to a host.
 
+### Requirements and dependencies
+
+* Python3 version > 3.4 `sudo apt-get install python3 python3-pip`
+* pyserial `sudo pip3 install pyserial`
+* ESP8266 board with reset to boot mode support
+* Two ESP8266 for dual mode test cases
+
 Test runner is heavily relying on device reset using DTR and RTS signals.
 Popular ESP8266 boards such as **NodeMcu** and **Wemos D1** support device
 reset into flash mode.

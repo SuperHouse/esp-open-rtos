@@ -291,8 +291,8 @@ def flash_image(serial_port):
     verbose_print("Building and flashing test image to %s..." % serial_port)
     try:
         stdout = sys.stdout if verbose else None
-        subprocess.run(["make", "flash"], check=True, cwd=get_testdir(),
-                       stdout=stdout, stderr=subprocess.STDOUT, env=env)
+        subprocess.check_call(["make", "flash"], cwd=get_testdir(),
+                              stdout=stdout, stderr=subprocess.STDOUT, env=env)
     except subprocess.CalledProcessError as e:
         raise TestRunnerError("'make flash EPPORT=%s' failed with exit code %d" %
                               (serial_port, e.returncode))
