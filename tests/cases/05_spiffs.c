@@ -46,5 +46,5 @@ static void test_task(void *pvParameters)
 
 static void a_05_spiffs(void)
 {
-    xTaskCreate(test_task, (signed char *)"test_task", 1024, NULL, 2, NULL);
+    xTaskCreate(test_task, "test_task", 1024, NULL, 2, NULL);
 }

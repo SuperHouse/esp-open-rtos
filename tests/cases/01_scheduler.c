@@ -23,9 +23,9 @@ static void a_01_scheduler_basic()
     printf("top of scheduler...\n");
     uart_flush_txfifo(0);
 
-    xTaskCreate(set_variable, (signed char *)"set_a", 128, (void *)&a, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(set_variable, (signed char *)"set_b", 128, (void *)&b, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(set_variable, (signed char *)"set_c", 128, (void *)&c, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(set_variable, "set_a", 128, (void *)&a, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(set_variable, "set_b", 128, (void *)&b, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(set_variable, "set_c", 128, (void *)&c, tskIDLE_PRIORITY, NULL);
 
     TEST_ASSERT_FALSE_MESSAGE(a, "task set_a shouldn't run yet");
     TEST_ASSERT_FALSE_MESSAGE(b, "task set_b shouldn't run yet");
@@ -48,8 +48,8 @@ static void a_01_scheduler_priorities()
     bool lower = false, higher = false;
     xTaskHandle task_lower, task_higher;
 
-    xTaskCreate(set_variable, (signed char *)"high_prio", 128, (void *)&higher, tskIDLE_PRIORITY+1, &task_higher);
-    xTaskCreate(set_variable, (signed char *)"low_prio", 128, (void *)&lower, tskIDLE_PRIORITY, &task_lower);
+    xTaskCreate(set_variable, "high_prio", 128, (void *)&higher, tskIDLE_PRIORITY+1, &task_higher);
+    xTaskCreate(set_variable, "low_prio", 128, (void *)&lower, tskIDLE_PRIORITY, &task_lower);
 
     TEST_ASSERT_FALSE_MESSAGE(higher, "higher prio task should not have run yet");
     TEST_ASSERT_FALSE_MESSAGE(lower, "lower prio task should not have run yet");

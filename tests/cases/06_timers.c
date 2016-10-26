@@ -82,5 +82,5 @@ static void test_task(void *pvParameters)
 
 static void a_06_ets_timers(void)
 {
-    xTaskCreate(test_task, (signed char *)"test_task", 256, NULL, 2, NULL);
+    xTaskCreate(test_task, "test_task", 256, NULL, 2, NULL);
 }

@@ -353,7 +353,7 @@ static void task_load_test_system_interaction()
 
 static void a_03_byte_load_test_system_interaction()
 {
-    xTaskCreate(task_load_test_system_interaction, (signed char *)"interactionTask", 256, NULL, 2, NULL);
+    xTaskCreate(task_load_test_system_interaction, "interactionTask", 256, NULL, 2, NULL);
     while(1) {
       vTaskDelay(100);
     }

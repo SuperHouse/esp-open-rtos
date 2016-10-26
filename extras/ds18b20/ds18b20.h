@@ -3,6 +3,10 @@
 
 #include "onewire/onewire.h"
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 /** @file ds18b20.h
  *
  *  Communicate with the DS18B20 family of one-wire temperature sensor ICs.
@@ -147,4 +151,8 @@ uint8_t ds18b20_read_all(uint8_t pin, ds_sensor_t *result);
 // temperature from single dallas chip.
 float ds18b20_read_single(uint8_t pin);
 
+#ifdef	__cplusplus
+}
 #endif
+
+#endif  /* DRIVER_DS18B20_H_ */

@@ -65,5 +65,5 @@ void user_init(void)
     uart_set_baud(0, 115200);
     i2c_init(SCL_PIN, SDA_PIN);
 
-    xTaskCreate(tsl2561MeasurementTask, (signed char *)"tsl2561MeasurementTask", 256, NULL, 2, NULL);
+    xTaskCreate(tsl2561MeasurementTask, "tsl2561MeasurementTask", 256, NULL, 2, NULL);
 }

@@ -27,6 +27,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Uncomment to enable debug output.
  */
@@ -183,5 +187,9 @@ bool bmp280_read_fixed(bmp280_t *dev, int32_t *temperature,
  */
 bool bmp280_read_float(bmp280_t *dev, float *temperature,
                        float *pressure, float *humidity);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // __BMP280_H__

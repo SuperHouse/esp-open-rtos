@@ -411,7 +411,7 @@ static __attribute__((noinline)) void user_start_phase2(void) {
 
     tcpip_init(NULL, NULL);
     sdk_wdt_init();
-    xTaskCreate(sdk_user_init_task, (signed char *)"uiT", 1024, 0, 14, &sdk_xUserTaskHandle);
+    xTaskCreate(sdk_user_init_task, "uiT", 1024, 0, 14, &sdk_xUserTaskHandle);
     vTaskStartScheduler();
 }
 

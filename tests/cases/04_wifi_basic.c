@@ -107,7 +107,7 @@ static void a_04_wifi_basic(void)
     IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
     dhcpserver_start(&first_client_ip, 4);
 
-    xTaskCreate(server_task, (signed char *)"setver_task", 1024, NULL, 2, NULL);
+    xTaskCreate(server_task, "setver_task", 1024, NULL, 2, NULL);
 }
 
 
@@ -177,5 +177,5 @@ static void b_04_wifi_basic(void)
     sdk_wifi_set_opmode(STATION_MODE);
     sdk_wifi_station_set_config(&config);
 
-    xTaskCreate(&connect_task, (signed char *)"connect_task", 1024, NULL, 2, NULL);
+    xTaskCreate(&connect_task, "connect_task", 1024, NULL, 2, NULL);
 }
