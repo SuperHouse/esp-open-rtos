@@ -49,7 +49,7 @@ typedef struct {
 /* Only one DHCP server task can run at once, so we have global state
    for it.
 */
-static xTaskHandle dhcpserver_task_handle;
+static xTaskHandle dhcpserver_task_handle=NULL;
 static server_state_t *state;
 
 /* Handlers for various kinds of incoming DHCP messages */
@@ -108,7 +108,7 @@ static void dhcpserver_task(void *pxParameter)
 
     state->nc = netconn_new (NETCONN_UDP);
     if(!state->nc) {
-        printf("OTA TFTP: Failed to allocate socket.\r\n");
+        printf("DHCP Server Error: Failed to allocate socket.\r\n");
         return;
     }
 
