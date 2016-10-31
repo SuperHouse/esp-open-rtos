@@ -136,7 +136,7 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 
 $(1)_AR_IN_FILES = $$($(1)_OBJ_FILES)
 
-# the component is shown to depend on both obj and source files so we get 
+# the component is shown to depend on both obj and source files so we get
 # a meaningful error message for missing explicitly named source files
 ifeq ($(INCLUDE_SRC_INTO_AR),1)
    $(1)_SRC_IN_AR_FILES = $$($(1)_SRC_FILES)
@@ -215,9 +215,14 @@ $(FW_FILE): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(vecho) "FW $@"
 	$(Q) $(ESPTOOL) elf2image --version=2 $(ESPTOOL_ARGS) $< -o $(FW_FILE)
 
+ESPTOOL_FLASH_CMD ?= -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) \
+	0x0 $(RBOOT_BIN) 0x1000 $(RBOOT_CONF) 0x2000 $(FW_FILE) $(SPIFFS_ESPTOOL_ARGS)
+
 flash: all
-	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) \
-		0x0 $(RBOOT_BIN) 0x1000 $(RBOOT_CONF) 0x2000 $(FW_FILE) $(SPIFFS_ESPTOOL_ARGS)
+	$(Q) $(ESPTOOL) $(ESPTOOL_FLASH_CMD)
+
+print_flash_cmd:
+	$(Q) echo "$(ESPTOOL_FLASH_CMD)"
 
 erase_flash:
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) erase_flash
@@ -261,6 +266,9 @@ help:
 	@echo ""
 	@echo "test"
 	@echo "'flash', then start a GNU Screen session on the same serial port to see serial output."
+	@echo ""
+	@echo "print_flash_cmd"
+	@echo "Just print command line arguments for flashing with esptool.py"
 	@echo ""
 	@echo "size"
 	@echo "Build, then print a summary of built firmware size."

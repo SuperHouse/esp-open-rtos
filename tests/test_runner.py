@@ -44,9 +44,9 @@ def main():
     verbose = args.verbose
 
     if not args.no_flash:
-        flash_image(args.aport)
+        flash(args.aport, args)
         if args.type != 'solo':
-            flash_image(args.bport)
+            flash(args.bport, args)
 
     env = TestEnvironment(args.aport, TestEnvironment.A)
     env_b = None
@@ -279,11 +279,34 @@ def get_testdir():
     Return the 'tests' directory in the source tree
     (assuming the test_runner.py script is in that directory.
     """
-    res = os.path.dirname(__name__)
+    res = os.path.dirname(__file__)
     return "." if res == "" else res
 
 
-def flash_image(serial_port):
+def flash(serial_port, args):
+    if args.flash:
+        esptool_flash(serial_port, args.flash_cmd)
+    else:
+        make_flash(serial_port)
+
+
+def esptool_flash(serial_port, params):
+    env = dict(os.environ)
+    verbose_print("Flashing test image to %s..." % serial_port)
+    try:
+        stdout = sys.stdout if verbose else None
+        cmd = ["esptool.py", "-p", serial_port]
+        cmd.extend(params.split(' '))
+        cmd = [x for x in cmd if x]  # remove empty elements
+        subprocess.check_call(cmd, cwd=get_testdir(), stdout=stdout,
+                              stderr=subprocess.STDOUT, env=env)
+    except subprocess.CalledProcessError as e:
+        raise TestRunnerError("'esptool.py flash serial=%s' failed with exit code %d" %
+                              (serial_port, e.returncode))
+    verbose_print("Flashing successful.")
+
+
+def make_flash(serial_port):
     # Bit hacky: rather than calling esptool directly,
     # just use the Makefile flash target with the correct ESPPORT argument
     env = dict(os.environ)
@@ -328,6 +351,17 @@ def parse_args():
         help='Display list of available test cases on a device',
         action='store_true',
         default=False)
+
+    parser.add_argument(
+        '--flash', '-f',
+        help='Flash device directly with esptool',
+        action='store_true',
+        default=False)
+
+    parser.add_argument(
+        '--flash-cmd', '-c',
+        help='Flash command for esptool',
+        default='write_flash 0x2000 ./firmware/tests.bin')
 
     parser.add_argument(
         '--verbose', '-v',
