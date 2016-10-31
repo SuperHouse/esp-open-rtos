@@ -16,7 +16,7 @@ function build {
     echo "Building tests"
     make -C ./tests clean
     make -C ./tests -j8
-    FLASH_CMD=$(make -C ./tests print_flash_cmd)
+    FLASH_CMD=$(make -s -C ./tests print_flash_cmd)
 
     # Now we need to pack all files that are included in the flash cmd
     # so they can be transfered to the remote server and run there
