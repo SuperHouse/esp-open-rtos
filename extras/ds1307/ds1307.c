@@ -78,14 +78,14 @@ void ds1307_get_time(struct tm *time)
     if (buf[2] & HOUR12_BIT)
     {
         // RTC in 12-hour mode
-        time->tm_hour = bcd2dec(buf[2] & HOUR12_MASK);
+        time->tm_hour = bcd2dec(buf[2] & HOUR12_MASK) - 1;
         if (buf[2] & PM_BIT)
             time->tm_hour += 12;
     }
     else time->tm_hour = bcd2dec(buf[2] & HOUR24_MASK);
     time->tm_wday = bcd2dec(buf[3]) - 1;
     time->tm_mday = bcd2dec(buf[4]);
-    time->tm_mon  = bcd2dec(buf[5]);
+    time->tm_mon  = bcd2dec(buf[5]) - 1;
     time->tm_year = bcd2dec(buf[6]) + 2000;
 }
 
