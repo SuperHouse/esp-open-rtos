@@ -75,9 +75,9 @@ uint32_t uart0_num_char(void)
     return count;
 }
 
-// _read_r in core/newlib_syscalls.c will be skipped by the linker in favour
+// _read_stdin_r in core/newlib_syscalls.c will be skipped by the linker in favour
 // of this function
-long _read_r(struct _reent *r, int fd, char *ptr, int len)
+long _read_stdin_r(struct _reent *r, int fd, char *ptr, int len)
 {
     if (!inited) uart0_rx_init();
     for(int i = 0; i < len; i++) {
