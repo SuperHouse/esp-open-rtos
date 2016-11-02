@@ -40,7 +40,7 @@
 
 #define UART0_RX_SIZE  (128) // ESP8266 UART HW FIFO size
 
-static xSemaphoreHandle uart0_sem = NULL;
+static SemaphoreHandle_t uart0_sem = NULL;
 static bool inited = false;
 static void uart0_rx_init(void);
 

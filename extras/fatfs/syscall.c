@@ -13,7 +13,7 @@
  * synchronization object, such as semaphore and mutex. When a 0 is returned,
  * the f_mount() function fails with FR_INT_ERR.
  */
-int ff_cre_syncobj(BYTE vol, xSemaphoreHandle *sobj)
+int ff_cre_syncobj(BYTE vol, SemaphoreHandle_t *sobj)
 {
     int ret;
 
@@ -29,7 +29,7 @@ int ff_cre_syncobj(BYTE vol, xSemaphoreHandle *sobj)
  * object that created with ff_cre_syncobj() function. When a 0 is returned,
  * the f_mount() function fails with FR_INT_ERR.
  */
-int ff_del_syncobj(xSemaphoreHandle sobj)
+int ff_del_syncobj(SemaphoreHandle_t sobj)
 {
     vSemaphoreDelete(sobj);
     return 1;
@@ -40,7 +40,7 @@ int ff_del_syncobj(xSemaphoreHandle sobj)
  * This function is called on entering file functions to lock the volume.
  * When a 0 is returned, the file function fails with FR_TIMEOUT.
  */
-int ff_req_grant(xSemaphoreHandle sobj)
+int ff_req_grant(SemaphoreHandle_t sobj)
 {
     return (int)(xSemaphoreTake(sobj, _FS_TIMEOUT) == pdTRUE);
 }
@@ -49,7 +49,7 @@ int ff_req_grant(xSemaphoreHandle sobj)
  * Release Grant to Access the Volume
  * This function is called on leaving file functions to unlock the volume.
  */
-void ff_rel_grant(xSemaphoreHandle sobj)
+void ff_rel_grant(SemaphoreHandle_t sobj)
 {
     xSemaphoreGive(sobj);
 }

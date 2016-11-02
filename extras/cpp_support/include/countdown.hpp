@@ -35,7 +35,7 @@
 namespace esp_open_rtos {
 namespace timer {
 
-#define __millis()  (xTaskGetTickCount() * portTICK_RATE_MS)
+#define __millis()  (xTaskGetTickCount() * portTICK_PERIOD_MS)
 
 /******************************************************************************************************************
  * countdown_t
@@ -93,7 +93,7 @@ public:
     }
     
 private:
-    portTickType interval_end_ms;
+    TickType_t interval_end_ms;
 };
 
 } // namespace timer {

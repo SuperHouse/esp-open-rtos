@@ -59,7 +59,7 @@ static void cmd_help(uint32_t argc, char *argv[])
 static void cmd_sleep(uint32_t argc, char *argv[])
 {
     printf("Type away while I take a 2 second nap (ie. let you test the UART HW FIFO\n");
-    vTaskDelay(2000 / portTICK_RATE_MS);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
 }
 
 static void handle_command(char *cmd)

@@ -26,11 +26,11 @@ typedef struct
 } my_event_t;
 
 // Communication Queue
-static xQueueHandle mainqueue;
-static xTimerHandle timerHandle;
+static QueueHandle_t mainqueue;
+static TimerHandle_t timerHandle;
 
 // Own BMP180 User Inform Implementation
-bool bmp180_i2c_informUser(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure)
+bool bmp180_i2c_informUser(const QueueHandle_t* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure)
 {
     my_event_t ev;
 
@@ -43,7 +43,7 @@ bool bmp180_i2c_informUser(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_
 }
 
 // Timer call back
-static void bmp180_i2c_timer_cb(xTimerHandle xTimer)
+static void bmp180_i2c_timer_cb(TimerHandle_t xTimer)
 {
     my_event_t ev;
     ev.event_type = MY_EVT_TIMER;
@@ -55,7 +55,7 @@ static void bmp180_i2c_timer_cb(xTimerHandle xTimer)
 void bmp180_task(void *pvParameters)
 {
     // Received pvParameters is communication queue
-    xQueueHandle *com_queue = (xQueueHandle *)pvParameters;
+    QueueHandle_t *com_queue = (QueueHandle_t *)pvParameters;
 
     printf("%s: Started user interface task\n", __FUNCTION__);
 
@@ -116,7 +116,7 @@ void user_init(void)
     xTaskCreate(bmp180_task, "bmp180_task", 256, &mainqueue, 2, NULL);
 
     // Create Timer (Trigger a measurement every second)
-    timerHandle = xTimerCreate("BMP180 Trigger", 1000/portTICK_RATE_MS, pdTRUE, NULL, bmp180_i2c_timer_cb);
+    timerHandle = xTimerCreate("BMP180 Trigger", 1000/portTICK_PERIOD_MS, pdTRUE, NULL, bmp180_i2c_timer_cb);
 
     if (timerHandle != NULL)
     {

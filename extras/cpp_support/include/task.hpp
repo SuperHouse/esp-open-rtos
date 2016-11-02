@@ -66,7 +66,7 @@ protected:
      */
     void sleep(unsigned long ms)
     {
-        vTaskDelay(ms / portTICK_RATE_MS);
+        vTaskDelay(ms / portTICK_PERIOD_MS);
     }
     /**
      * 
@@ -74,7 +74,7 @@ protected:
      */
     inline unsigned long millis()
     {
-        return xTaskGetTickCount() * portTICK_RATE_MS;
+        return xTaskGetTickCount() * portTICK_PERIOD_MS;
     }
     
 private:

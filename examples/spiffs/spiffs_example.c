@@ -96,7 +96,7 @@ void test_task(void *pvParameters)
     }
 
     while (1) {
-        vTaskDelay(2000 / portTICK_RATE_MS);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
 
         example_write_file();
 

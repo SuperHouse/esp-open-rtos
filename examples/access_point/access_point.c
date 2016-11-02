@@ -84,7 +84,7 @@ static void telnetTask(void *pvParameters)
 
     char buf[80];
     snprintf(buf, sizeof(buf), "Uptime %d seconds\r\n",
-	     xTaskGetTickCount()*portTICK_RATE_MS/1000);
+	     xTaskGetTickCount()*portTICK_PERIOD_MS/1000);
     netconn_write(client, buf, strlen(buf), NETCONN_COPY);
     snprintf(buf, sizeof(buf), "Free heap %d bytes\r\n", (int)xPortGetFreeHeapSize());
     netconn_write(client, buf, strlen(buf), NETCONN_COPY);
