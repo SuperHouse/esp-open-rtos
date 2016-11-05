@@ -69,7 +69,7 @@ static void test_task(void *pvParameters)
     timers[1].start_time = get_current_time();
     sdk_ets_timer_arm(&timers[1].handle, 50, true);   // repeating timer
 
-    vTaskDelay(500 / portTICK_RATE_MS);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
 
     TEST_ASSERT_EQUAL_INT_MESSAGE(1, timers[0].fire_count,
             "Timer hasn't fired");

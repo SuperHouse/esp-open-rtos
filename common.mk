@@ -136,13 +136,13 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 
 $(1)_AR_IN_FILES = $$($(1)_OBJ_FILES)
 
-# the component is shown to depend on both obj and source files so we get 
+# the component is shown to depend on both obj and source files so we get
 # a meaningful error message for missing explicitly named source files
-ifeq ($(INCLUDE_SRC_INTO_AR),1)
-   $(1)_SRC_IN_AR_FILES = $$($(1)_SRC_FILES)
+ifeq ($(INCLUDE_SRC_IN_AR),1)
+   $(1)_AR_IN_FILES += $$($(1)_SRC_FILES)
 endif
 
-$$($(1)_AR): $$($(1)_OBJ_FILES) $$($(1)_SRC_IN_AR_FILES)
+$$($(1)_AR): $$($(1)_AR_IN_FILES)
 	$(vecho) "AR $$@"
 	$(Q) mkdir -p $$(dir $$@)
 	$(Q) $(AR) cru $$@ $$^

@@ -27,7 +27,7 @@
 #define SNTP_SERVERS 	"0.pool.ntp.org", "1.pool.ntp.org", \
 						"2.pool.ntp.org", "3.pool.ntp.org"
 
-#define vTaskDelayMs(ms)	vTaskDelay((ms)/portTICK_RATE_MS)
+#define vTaskDelayMs(ms)	vTaskDelay((ms)/portTICK_PERIOD_MS)
 #define UNUSED_ARG(x)	(void)x
 
 void sntp_tsk(void *pvParameters)

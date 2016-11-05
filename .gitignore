@@ -10,3 +10,4 @@ firmware
 local.mk
 local.h
 screenlog.*
+*.swp

@@ -28,7 +28,7 @@ typedef struct mqtt_timer mqtt_timer_t;
 
 struct mqtt_timer
 {
-    portTickType end_time;
+    TickType_t end_time;
 };
 
 typedef struct mqtt_network mqtt_network_t;

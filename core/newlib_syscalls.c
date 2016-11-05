@@ -59,14 +59,9 @@ __attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, i
 }
 
 /* syscall implementation for stdio read from UART */
-__attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len )
+__attribute__((weak)) long _read_stdin_r(struct _reent *r, int fd, char *ptr, int len)
 {
     int ch, i;
-
-    if(fd != r->_stdin->_file) {
-        r->_errno = EBADF;
-        return -1;
-    }
     uart_rxfifo_wait(0, 1);
     for(i = 0; i < len; i++) {
         ch = uart_getc_nowait(0);
@@ -74,6 +69,15 @@ __attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len
         ptr[i] = ch;
     }
     return i;
+}
+
+__attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len )
+{
+    if(fd != r->_stdin->_file) {
+        r->_errno = EBADF;
+        return -1;
+    }
+    return _read_stdin_r(r, fd, ptr, len);
 }
 
 /* Stub syscall implementations follow, to allow compiling newlib functions that

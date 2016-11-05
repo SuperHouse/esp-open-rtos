@@ -100,13 +100,12 @@ typedef portSTACK_TYPE StackType_t;
 typedef portBASE_TYPE BaseType_t;
 typedef unsigned portBASE_TYPE UBaseType_t;
 
-typedef uint32_t portTickType;
 typedef uint32_t TickType_t;
-#define portMAX_DELAY ( portTickType ) 0xffffffff
+#define portMAX_DELAY ( TickType_t ) 0xffffffff
 
 /* Architecture specifics. */
 #define portSTACK_GROWTH			( -1 )
-#define portTICK_PERIOD_MS			( ( portTickType ) 1000 / configTICK_RATE_HZ )
+#define portTICK_PERIOD_MS			( ( TickType_t ) 1000 / configTICK_RATE_HZ )
 #define portBYTE_ALIGNMENT			8
 /*-----------------------------------------------------------*/
 

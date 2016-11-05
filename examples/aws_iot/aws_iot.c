@@ -31,7 +31,7 @@ extern char *ca_cert, *client_endpoint, *client_cert, *client_key;
 static int wifi_alive = 0;
 static int ssl_reset;
 static SSLConnection *ssl_conn;
-static xQueueHandle publish_queue;
+static QueueHandle_t publish_queue;
 
 static void beat_task(void *pvParameters) {
     char msg[16];
@@ -39,7 +39,7 @@ static void beat_task(void *pvParameters) {
 
     while (1) {
         if (!wifi_alive) {
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             continue;
         }
 
@@ -50,7 +50,7 @@ static void beat_task(void *pvParameters) {
             printf("Publish queue overflow\r\n");
         }
 
-        vTaskDelay(10000 / portTICK_RATE_MS);
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
 }
 
@@ -142,7 +142,7 @@ static void mqtt_task(void *pvParameters) {
     ssl_conn = (SSLConnection *) malloc(sizeof(SSLConnection));
     while (1) {
         if (!wifi_alive) {
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             continue;
         }
 
@@ -191,7 +191,7 @@ static void mqtt_task(void *pvParameters) {
         while (wifi_alive && !ssl_reset) {
             char msg[64];
             while (xQueueReceive(publish_queue, (void *) msg, 0) == pdTRUE) {
-                portTickType task_tick = xTaskGetTickCount();
+                TickType_t task_tick = xTaskGetTickCount();
                 uint32_t free_heap = xPortGetFreeHeapSize();
                 uint32_t free_stack = uxTaskGetStackHighWaterMark(NULL);
                 snprintf(msg, sizeof(msg), "%u: free heap %u, free stack %u",
@@ -246,7 +246,7 @@ static void wifi_task(void *pvParameters) {
                 printf("WiFi: connection failed\r\n");
                 break;
             }
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             --retries;
         }
 
@@ -256,12 +256,12 @@ static void wifi_task(void *pvParameters) {
                 printf("WiFi: Connected\n\r");
                 wifi_alive = 1;
             }
-            vTaskDelay(500 / portTICK_RATE_MS);
+            vTaskDelay(500 / portTICK_PERIOD_MS);
         }
 
         wifi_alive = 0;
         printf("WiFi: disconnected\n\r");
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
 

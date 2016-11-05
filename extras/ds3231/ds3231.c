@@ -270,7 +270,7 @@ bool ds3231_getTime(struct tm *time)
     time->tm_min = bcdToDec(data[1]);
     if (data[2] & DS3231_12HOUR_FLAG) {
         /* 12H */
-        time->tm_hour = bcdToDec(data[2] & DS3231_12HOUR_MASK);
+        time->tm_hour = bcdToDec(data[2] & DS3231_12HOUR_MASK) - 1;
         /* AM/PM? */
         if (data[2] & DS3231_PM_FLAG) time->tm_hour += 12;
     } else {

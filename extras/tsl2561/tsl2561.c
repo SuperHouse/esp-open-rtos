@@ -195,13 +195,13 @@ static void get_channel_data(tsl2561_t *device, uint16_t *channel0, uint16_t *ch
     switch (device->integration_time)
     {
         case TSL2561_INTEGRATION_13MS:
-            vTaskDelay(TSL2561_INTEGRATION_TIME_13MS / portTICK_RATE_MS);
+            vTaskDelay(TSL2561_INTEGRATION_TIME_13MS / portTICK_PERIOD_MS);
             break;
         case TSL2561_INTEGRATION_101MS:
-            vTaskDelay(TSL2561_INTEGRATION_TIME_101MS / portTICK_RATE_MS);
+            vTaskDelay(TSL2561_INTEGRATION_TIME_101MS / portTICK_PERIOD_MS);
             break;
         default:
-            vTaskDelay(TSL2561_INTEGRATION_TIME_402MS / portTICK_RATE_MS);
+            vTaskDelay(TSL2561_INTEGRATION_TIME_402MS / portTICK_PERIOD_MS);
             break;
     }
 

@@ -93,7 +93,7 @@ void timerRegTask(void *pvParameters)
         printf("frc2 handler called %d times, last value 0x%08x\r\n", frc2_handler_call_count,
                frc2_last_count_val);
 
-        vTaskDelay(500 / portTICK_RATE_MS);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }
 

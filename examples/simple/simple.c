@@ -8,7 +8,7 @@
 
 void task1(void *pvParameters)
 {
-    xQueueHandle *queue = (xQueueHandle *)pvParameters;
+    QueueHandle_t *queue = (QueueHandle_t *)pvParameters;
     printf("Hello from task1!\r\n");
     uint32_t count = 0;
     while(1) {
@@ -21,7 +21,7 @@ void task1(void *pvParameters)
 void task2(void *pvParameters)
 {
     printf("Hello from task 2!\r\n");
-    xQueueHandle *queue = (xQueueHandle *)pvParameters;
+    QueueHandle_t *queue = (QueueHandle_t *)pvParameters;
     while(1) {
         uint32_t count;
         if(xQueueReceive(*queue, &count, 1000)) {
@@ -32,7 +32,7 @@ void task2(void *pvParameters)
     }
 }
 
-static xQueueHandle mainqueue;
+static QueueHandle_t mainqueue;
 
 void user_init(void)
 {

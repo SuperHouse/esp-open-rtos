@@ -56,7 +56,7 @@ void tsl2561MeasurementTask(void *pvParameters)
         }
 
         // 0.1 second delay
-        vTaskDelay(100 / portTICK_RATE_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
