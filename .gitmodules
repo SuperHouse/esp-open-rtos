@@ -16,3 +16,6 @@
 [submodule "examples/posix_fs/fs-test"]
 	path = examples/posix_fs/fs-test
 	url = https://github.com/sheinz/fs-test
+[submodule "extras/http-parser/http-parser"]
+	path = extras/http-parser/http-parser
+	url = https://github.com/nodejs/http-parser
