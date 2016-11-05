@@ -96,9 +96,9 @@ void ds1307_set_time(const struct tm *time)
     buf[1] = dec2bcd(time->tm_sec);
     buf[2] = dec2bcd(time->tm_min);
     buf[3] = dec2bcd(time->tm_hour);
-    buf[4] = dec2bcd(time->tm_wday);
+    buf[4] = dec2bcd(time->tm_wday + 1);
     buf[5] = dec2bcd(time->tm_mday);
-    buf[6] = dec2bcd(time->tm_mon);
+    buf[6] = dec2bcd(time->tm_mon + 1);
     buf[7] = dec2bcd(time->tm_year - 2000);
 
     i2c_slave_write(ADDR, buf, 8);
