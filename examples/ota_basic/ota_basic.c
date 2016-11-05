@@ -109,10 +109,10 @@ void tftp_client_task(void *pvParameters)
     */
     while(1) {
         tftpclient_download_and_verify_file1(slot, &conf);
-        vTaskDelay(5000 / portTICK_RATE_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
 
         tftpclient_download_file2(slot);
-        vTaskDelay(5000 / portTICK_RATE_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 }
 

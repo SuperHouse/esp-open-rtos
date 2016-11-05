@@ -29,14 +29,14 @@ void test_task(void *pvParameters)
     esp_spiffs_mount();
 
     while (1) {
-        vTaskDelay(5000 / portTICK_RATE_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
         if (fs_load_test_run(100)) {
             printf("PASS\n");
         } else {
             printf("FAIL\n");
         }
 
-        vTaskDelay(5000 / portTICK_RATE_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
         float write_rate, read_rate;
         if (fs_speed_test_run(get_current_time, &write_rate, &read_rate)) {
             printf("Read speed: %.0f bytes/s\n", read_rate * 1000); 

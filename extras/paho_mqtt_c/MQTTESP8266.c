@@ -30,7 +30,7 @@
 
 char  mqtt_timer_expired(mqtt_timer_t* timer)
 {
-    portTickType now = xTaskGetTickCount();
+    TickType_t now = xTaskGetTickCount();
     int32_t left = timer->end_time - now;
     return (left < 0);
 }
@@ -38,8 +38,8 @@ char  mqtt_timer_expired(mqtt_timer_t* timer)
 
 void  mqtt_timer_countdown_ms(mqtt_timer_t* timer, unsigned int timeout)
 {
-    portTickType now = xTaskGetTickCount();
-    timer->end_time = now + timeout / portTICK_RATE_MS;
+    TickType_t now = xTaskGetTickCount();
+    timer->end_time = now + timeout / portTICK_PERIOD_MS;
 }
 
 
@@ -51,9 +51,9 @@ void  mqtt_timer_countdown(mqtt_timer_t* timer, unsigned int timeout)
 
 int  mqtt_timer_left_ms(mqtt_timer_t* timer)
 {
-    portTickType now = xTaskGetTickCount();
+    TickType_t now = xTaskGetTickCount();
     int32_t left = timer->end_time - now;
-    return (left < 0) ? 0 : left / portTICK_RATE_MS;
+    return (left < 0) ? 0 : left / portTICK_PERIOD_MS;
 }
 
 
@@ -73,7 +73,7 @@ int  mqtt_esp_read(mqtt_network_t* n, unsigned char* buffer, int len, int timeou
     FD_ZERO(&fdset);
     FD_SET(n->my_socket, &fdset);
     // It seems tv_sec actually means FreeRTOS tick
-    tv.tv_sec = timeout_ms / portTICK_RATE_MS;
+    tv.tv_sec = timeout_ms / portTICK_PERIOD_MS;
     tv.tv_usec = 0;
     rc = select(n->my_socket + 1, &fdset, 0, 0, &tv);
     if ((rc > 0) && (FD_ISSET(n->my_socket, &fdset)))
@@ -98,7 +98,7 @@ int  mqtt_esp_write(mqtt_network_t* n, unsigned char* buffer, int len, int timeo
     FD_ZERO(&fdset);
     FD_SET(n->my_socket, &fdset);
     // It seems tv_sec actually means FreeRTOS tick
-    tv.tv_sec = timeout_ms / portTICK_RATE_MS;
+    tv.tv_sec = timeout_ms / portTICK_PERIOD_MS;
     tv.tv_usec = 0;
     rc = select(n->my_socket + 1, 0, &fdset, 0, &tv);
     if ((rc > 0) && (FD_ISSET(n->my_socket, &fdset)))

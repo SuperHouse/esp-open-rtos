@@ -38,7 +38,7 @@ void dhtMeasurementTask(void *pvParameters)
         }
 
         // Three second delay...
-        vTaskDelay(3000 / portTICK_RATE_MS);
+        vTaskDelay(3000 / portTICK_PERIOD_MS);
     }
 }
 

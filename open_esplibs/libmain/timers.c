@@ -60,7 +60,7 @@ void sdk_os_timer_setfn(ETSTimer *ptimer, ETSTimerFunc *pfunction, void *parg) {
     *tailptr = new_entry;
 }
 
-static void timer_tramp(xTimerHandle xTimer)
+static void timer_tramp(TimerHandle_t xTimer)
 {
     ETSTimer *ptimer = pvTimerGetTimerID(xTimer);
     ptimer->timer_func(ptimer->timer_arg);

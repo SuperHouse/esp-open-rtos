@@ -114,7 +114,7 @@ static struct {
     uint32_t end_addr;
     size_t region_size;
     bool force_compact;
-    xSemaphoreHandle sem;
+    SemaphoreHandle_t sem;
 } _sysparam_info;
 
 /***************************** Internal routines *****************************/

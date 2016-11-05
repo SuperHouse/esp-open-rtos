@@ -72,7 +72,7 @@ while(1) {
   printf("Pressure: %.2f Pa, Temperature: %.2f C", pressure, temperature);
   if (bme280p)
     printf(", Humidity: %.2f\n", humidity);
-  vTaskDelay(1000 / portTICK_RATE_MS);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
 ```
 
@@ -96,7 +96,7 @@ while(1) {
     printf(", Humidity: %.2f\n", humidity);
   else
     printf("\n");
-  vTaskDelay(1000 / portTICK_RATE_MS);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
 ```
 

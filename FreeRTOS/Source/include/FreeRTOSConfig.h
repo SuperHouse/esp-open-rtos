@@ -44,7 +44,7 @@
 #define configCPU_CLOCK_HZ			( ( unsigned long ) 80000000 )
 #endif
 #ifndef configTICK_RATE_HZ
-#define configTICK_RATE_HZ			( ( portTickType ) 100 )
+#define configTICK_RATE_HZ			( ( TickType_t ) 100 )
 #endif
 #ifndef configMAX_PRIORITIES
 #define configMAX_PRIORITIES		( ( unsigned portBASE_TYPE ) 15 )
@@ -138,6 +138,10 @@ to exclude the API function. */
 #endif
 #ifndef INCLUDE_uxTaskGetStackHighWaterMark
 #define INCLUDE_uxTaskGetStackHighWaterMark 1
+#endif
+
+#ifndef configENABLE_BACKWARD_COMPATIBILITY
+#define configENABLE_BACKWARD_COMPATIBILITY 0
 #endif
 
 #endif /* __DEFAULT_FREERTOS_CONFIG_H */

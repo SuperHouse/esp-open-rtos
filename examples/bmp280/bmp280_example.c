@@ -31,14 +31,14 @@ static void bmp280_task_forced(void *pvParameters)
     while (1) {
         while (!bmp280_init(&bmp280_dev, &params)) {
             printf("BMP280 initialization failed\n");
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
 
         bool bme280p = bmp280_dev.id == BME280_CHIP_ID;
         printf("BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
 
         while(1) {
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             if (!bmp280_force_measurement(&bmp280_dev)) {
                 printf("Failed initiating measurement\n");
                 break;
@@ -72,14 +72,14 @@ static void bmp280_task_normal(void *pvParameters)
     while (1) {
         while (!bmp280_init(&bmp280_dev, &params)) {
             printf("BMP280 initialization failed\n");
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
 
         bool bme280p = bmp280_dev.id == BME280_CHIP_ID;
         printf("BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
 
         while(1) {
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             if (!bmp280_read_float(&bmp280_dev, &temperature, &pressure, &humidity)) {
                 printf("Temperature/pressure reading failed\n");
                 break;

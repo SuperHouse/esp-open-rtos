@@ -133,7 +133,7 @@ int ssl_connect(SSLConnection* conn, const char* host, int port) {
         }
         handle_error(ret);
 
-        vTaskDelay(5000 / portTICK_RATE_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 
     mbedtls_ssl_get_record_expansion(&conn->ssl_ctx);

@@ -45,16 +45,16 @@ typedef struct
 bool bmp180_init(uint8_t scl, uint8_t sda);
 
 // Trigger a "complete" measurement (temperature and pressure will be valid when given to "bmp180_informUser)
-void bmp180_trigger_measurement(const xQueueHandle* resultQueue);
+void bmp180_trigger_measurement(const QueueHandle_t* resultQueue);
 
 // Trigger a "temperature only" measurement (only temperature will be valid when given to "bmp180_informUser)
-void bmp180_trigger_temperature_measurement(const xQueueHandle* resultQueue);
+void bmp180_trigger_temperature_measurement(const QueueHandle_t* resultQueue);
 
 // Trigger a "pressure only" measurement (only pressure will be valid when given to "bmp180_informUser)
-void bmp180_trigger_pressure_measurement(const xQueueHandle* resultQueue);
+void bmp180_trigger_pressure_measurement(const QueueHandle_t* resultQueue);
 
 // Give the user the chance to create it's own handler
-extern bool (*bmp180_informUser)(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
+extern bool (*bmp180_informUser)(const QueueHandle_t* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
 
 // Calibration constants
 typedef struct

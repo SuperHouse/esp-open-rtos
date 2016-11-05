@@ -88,7 +88,7 @@ void broadcast_temperature(void *pvParameters)
                 }
                 netbuf_delete(buf); // De-allocate packet buffer
             }
-            vTaskDelay(1000/portTICK_RATE_MS);
+            vTaskDelay(1000/portTICK_PERIOD_MS);
         }
 
         err = netconn_disconnect(conn);
@@ -97,7 +97,7 @@ void broadcast_temperature(void *pvParameters)
         err = netconn_delete(conn);
         printf("%s : Deleted connection (%s)\n", __FUNCTION__, lwip_strerr(err));
 
-        vTaskDelay(1000/portTICK_RATE_MS);
+        vTaskDelay(1000/portTICK_PERIOD_MS);
     }
 }
 

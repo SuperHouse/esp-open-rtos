@@ -72,7 +72,7 @@ void IRAM sdk__xt_int_exit(void) {
 void IRAM sdk__xt_timer_int(void) {
     uint32_t trigger_ccount;
     uint32_t current_ccount;
-    uint32_t ccount_interval = portTICK_RATE_MS * sdk_os_get_cpu_frequency() * 1000;
+    uint32_t ccount_interval = portTICK_PERIOD_MS * sdk_os_get_cpu_frequency() * 1000;
 
     do {
         RSR(trigger_ccount, ccompare0);
@@ -93,7 +93,7 @@ void IRAM sdk__xt_timer_int1(void) {
 void IRAM sdk__xt_tick_timer_init(void) {
     uint32_t ints_enabled;
     uint32_t current_ccount;
-    uint32_t ccount_interval = portTICK_RATE_MS * sdk_os_get_cpu_frequency() * 1000;
+    uint32_t ccount_interval = portTICK_PERIOD_MS * sdk_os_get_cpu_frequency() * 1000;
 
     RSR(current_ccount, ccount);
     WSR(current_ccount + ccount_interval, ccompare0);

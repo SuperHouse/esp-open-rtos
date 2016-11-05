@@ -16,7 +16,7 @@
 #define DS18B20_ALARMSEARCH      0xEC
 #define DS18B20_CONVERT_T        0x44
 
-#define os_sleep_ms(x) vTaskDelay(((x) + portTICK_RATE_MS - 1) / portTICK_RATE_MS)
+#define os_sleep_ms(x) vTaskDelay(((x) + portTICK_PERIOD_MS - 1) / portTICK_PERIOD_MS)
 
 #define DS18B20_FAMILY_ID 0x28
 #define DS18S20_FAMILY_ID 0x10
@@ -46,7 +46,7 @@ uint8_t ds18b20_read_all(uint8_t pin, ds_sensor_t *result) {
         onewire_write(pin, DS18B20_CONVERT_T);
         
         onewire_power(pin);
-        vTaskDelay(750 / portTICK_RATE_MS);
+        vTaskDelay(750 / portTICK_PERIOD_MS);
         
         onewire_reset(pin);
         onewire_select(pin, addr);
@@ -88,7 +88,7 @@ float ds18b20_read_single(uint8_t pin) {
     onewire_write(pin, DS18B20_CONVERT_T);
 
     onewire_power(pin);
-    vTaskDelay(750 / portTICK_RATE_MS);
+    vTaskDelay(750 / portTICK_PERIOD_MS);
 
     onewire_reset(pin);
     onewire_skip_rom(pin);

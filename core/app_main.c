@@ -52,10 +52,10 @@ uint8_t sdk_user_init_flag;
 struct sdk_info_st sdk_info;
 
 // xUserTaskHandle -- .bss+0x28
-xTaskHandle sdk_xUserTaskHandle;
+TaskHandle_t sdk_xUserTaskHandle;
 
 // xWatchDogTaskHandle -- .bss+0x2c
-xTaskHandle sdk_xWatchDogTaskHandle;
+TaskHandle_t sdk_xWatchDogTaskHandle;
 
 /* Static function prototypes */
 
@@ -227,7 +227,7 @@ void IRAM sdk_user_start(void) {
 }
 
 // .text+0x3a8
-void IRAM vApplicationStackOverflowHook(xTaskHandle task, char *task_name) {
+void IRAM vApplicationStackOverflowHook(TaskHandle_t task, char *task_name) {
     printf("Task stack overflow (high water mark=%lu name=\"%s\")\n", uxTaskGetStackHighWaterMark(task), task_name);
 }
 

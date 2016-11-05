@@ -214,20 +214,20 @@ bool bmp180_measure(bmp180_constants_t *c, int32_t *temperature,
 typedef struct
 {
     uint8_t cmd;
-    const xQueueHandle* resultQueue;
+    const QueueHandle_t* resultQueue;
 } bmp180_command_t;
 
-// Just works due to the fact that xQueueHandle is a "void *"
-static xQueueHandle bmp180_rx_queue = NULL;
-static xTaskHandle  bmp180_task_handle = NULL;
+// Just works due to the fact that QueueHandle_t is a "void *"
+static QueueHandle_t bmp180_rx_queue = NULL;
+static TaskHandle_t bmp180_task_handle = NULL;
 
 //
 // Forward declarations
 //
-static bool bmp180_informUser_Impl(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
+static bool bmp180_informUser_Impl(const QueueHandle_t* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure);
 
 // Set default implementation .. User gets result as bmp180_result_t event
-bool (*bmp180_informUser)(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure) = bmp180_informUser_Impl;
+bool (*bmp180_informUser)(const QueueHandle_t* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure) = bmp180_informUser_Impl;
 
 // I2C Driver Task
 static void bmp180_driver_task(void *pvParameters)
@@ -295,7 +295,7 @@ static bool bmp180_createTask()
 }
 
 // Default user inform implementation
-static bool bmp180_informUser_Impl(const xQueueHandle* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure)
+static bool bmp180_informUser_Impl(const QueueHandle_t* resultQueue, uint8_t cmd, bmp180_temp_t temperature, bmp180_press_t pressure)
 {
     bmp180_result_t result;
 
@@ -328,7 +328,7 @@ bool bmp180_init(uint8_t scl, uint8_t sda)
     return result;
 }
 
-void bmp180_trigger_measurement(const xQueueHandle* resultQueue)
+void bmp180_trigger_measurement(const QueueHandle_t* resultQueue)
 {
     bmp180_command_t c;
 
@@ -339,7 +339,7 @@ void bmp180_trigger_measurement(const xQueueHandle* resultQueue)
 }
 
 
-void bmp180_trigger_pressure_measurement(const xQueueHandle* resultQueue)
+void bmp180_trigger_pressure_measurement(const QueueHandle_t* resultQueue)
 {
     bmp180_command_t c;
 
@@ -349,7 +349,7 @@ void bmp180_trigger_pressure_measurement(const xQueueHandle* resultQueue)
     xQueueSend(bmp180_rx_queue, &c, 0);
 }
 
-void bmp180_trigger_temperature_measurement(const xQueueHandle* resultQueue)
+void bmp180_trigger_temperature_measurement(const QueueHandle_t* resultQueue)
 {
     bmp180_command_t c;
 

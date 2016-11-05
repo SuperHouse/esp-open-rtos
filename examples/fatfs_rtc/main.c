@@ -118,7 +118,7 @@ void rewrite_file_task(void *p)
         }
         while (false);
 
-        vTaskDelay(DELAY_MS / portTICK_RATE_MS);
+        vTaskDelay(DELAY_MS / portTICK_PERIOD_MS);
     }
 }
 
