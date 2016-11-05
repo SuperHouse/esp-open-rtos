@@ -9,14 +9,18 @@
 #include "esp_spiffs.h"
 #include "spiffs.h"
 
-#include "fs-test/fs_test.h"
+#include "fs_test.h"
+
+#include "testcase.h"
+
+DEFINE_SOLO_TESTCASE(05_spiffs)
 
 static fs_time_t get_current_time()
 {
      return timer_get_count(FRC2) / 5000;  // to get roughly 1ms resolution
 }
 
-void test_task(void *pvParameters)
+static void test_task(void *pvParameters)
 {
     esp_spiffs_init();
     esp_spiffs_mount();
@@ -28,28 +32,19 @@ void test_task(void *pvParameters)
     }
     esp_spiffs_mount();
 
-    while (1) {
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-        if (fs_load_test_run(100)) {
-            printf("PASS\n");
-        } else {
-            printf("FAIL\n");
-        }
+    TEST_ASSERT_TRUE_MESSAGE(fs_load_test_run(100), "Load test failed");
 
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-        float write_rate, read_rate;
-        if (fs_speed_test_run(get_current_time, &write_rate, &read_rate)) {
-            printf("Read speed: %.0f bytes/s\n", read_rate * 1000); 
-            printf("Write speed: %.0f bytes/s\n", write_rate * 1000); 
-        } else {
-            printf("FAIL\n");
-        }
+    float write_rate, read_rate;
+    if (fs_speed_test_run(get_current_time, &write_rate, &read_rate)) {
+        printf("Read speed: %.0f bytes/s\n", read_rate * 1000);
+        printf("Write speed: %.0f bytes/s\n", write_rate * 1000);
+    } else {
+        TEST_FAIL();
     }
+    TEST_PASS();
 }
 
-void user_init(void)
+static void a_05_spiffs(void)
 {
-    uart_set_baud(0, 115200);
-
     xTaskCreate(test_task, "test_task", 1024, NULL, 2, NULL);
 }
