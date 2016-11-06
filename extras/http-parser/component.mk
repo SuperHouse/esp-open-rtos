@@ -1,7 +1,7 @@
 # Component makefile for extras/http-parser
 
 # Include it as 'http-parser/http_parser.h'
-INC_DIRS += $(http-parser_ROOT)http-parser
+INC_DIRS += $(http-parser_ROOT)
 
 # args for passing into compile rule generation
 http-parser_INC_DIR =
