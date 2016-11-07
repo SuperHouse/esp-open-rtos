@@ -61,10 +61,9 @@ int sntp_set_servers(char *server_url[], int num_servers);
 void sntp_set_update_delay(uint32_t ms);
 
 /*
- * Returns the time read from RTC counter, in seconds from Epoch. If
- * us is not null, it will be filled with the microseconds.
+ * Returns the time read from RTC counter, in micro seconds from Epoch.
  */
-time_t sntp_get_rtc_time(int32_t *us);
+uint64_t sntp_get_rtc_time();
 
 /*
  * Update RTC timer. This function is called by the SNTP module each time
