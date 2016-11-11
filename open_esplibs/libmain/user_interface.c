@@ -462,6 +462,7 @@ uint32_t sdk_system_relative_time(uint32_t reltime) {
     return WDEV.SYS_TIME - reltime;
 }
 
+// Change arg types to ip4_addr for lwip v2.
 void sdk_system_station_got_ip_set(struct ip_addr *ip, struct ip_addr *mask, struct ip_addr *gw) {
     uint8_t *ip_bytes = (uint8_t *)&ip->addr;
     uint8_t *mask_bytes = (uint8_t *)&mask->addr;
@@ -558,6 +559,108 @@ enum sdk_dhcp_status sdk_wifi_station_dhcpc_status(void) {
     return sdk_dhcpc_flag;
 }
 
+uint8_t sdk_wifi_station_get_connect_status() {
+    if (sdk_wifi_get_opmode() == 2) // ESPCONN_AP
+        return 0xff;
+
+    struct sdk_g_ic_netif_info *netif_info = sdk_g_ic.v.station_netif_info;
+    if (!netif_info)
+        return 0xff;
+
+    return netif_info->connect_status;
+}
+
+bool sdk_wifi_get_ip_info(uint8_t if_index, struct ip_info *info) {
+    if (if_index >= 2) return false;
+    if (!info) return false;
+    struct netif *netif = _get_netif(if_index);
+    if (netif) {
+        info->ip = netif->ip_addr;
+        info->netmask = netif->netmask;
+        info->gw = netif->gw;
+        return true;
+    }
+
+    info->ip.addr = 0;
+    info->netmask.addr = 0;
+    info->gw.addr = 0;
+    return false;
+}
+
+bool sdk_wifi_set_ip_info(uint8_t if_index, struct ip_info *info) {
+    if (if_index >= 2) return false;
+    if (!info) return false;
+
+    if (if_index != 0) {
+        sdk_info.softap_ipaddr = info->ip;
+        sdk_info.softap_netmask = info->netmask;
+        sdk_info.softap_gw = info->gw;
+    } else {
+        if (sdk_dhcpc_flag == 1 && sdk_user_init_flag == 1)
+            return false;
+        sdk_info.sta_ipaddr = info->ip;
+        sdk_info.sta_netmask = info->netmask;
+        sdk_info.sta_gw = info->gw;
+    }
+
+    struct netif *netif = _get_netif(if_index);
+    if (netif)
+        netif_set_addr(netif, &info->ip, &info->netmask, &info->gw);
+
+    return true;
+}
+
+bool sdk_wifi_get_macaddr(uint8_t if_index, uint8_t *macaddr) {
+    if (if_index >= 2) return false;
+    if (!macaddr) return false;
+
+    struct netif *netif = _get_netif(if_index);
+    if (!netif) {
+        if (if_index != 0) {
+            memcpy(macaddr, sdk_info.softap_mac_addr, 6);
+            return true;
+        }
+        memcpy(macaddr, sdk_info.sta_mac_addr, 6);
+        return true;
+    }
+    memcpy(macaddr, netif->hwaddr, 6);
+    return true;
+}
+
+bool sdk_wifi_set_macaddr(uint8_t if_index, uint8_t *macaddr) {
+    if (if_index >= 2) return false;
+    if (!macaddr) return false;
+
+    struct netif *netif = _get_netif(if_index);
+    uint8_t mode = sdk_wifi_get_opmode();
+
+    if (if_index == 0) {
+        if (mode == STATION_MODE) return false;
+        if (memcmp(sdk_info.softap_mac_addr, macaddr, 6)) {
+            memcpy(sdk_info.softap_mac_addr, macaddr, 6);
+            if (netif) {
+                memcpy(netif->hwaddr, macaddr, 6);
+                sdk_wifi_softap_stop();
+                sdk_wifi_softap_start();
+            }
+        }
+        return true;
+    }
+
+    if (mode == SOFTAP_MODE) return false;
+    if (memcmp(sdk_info.sta_mac_addr, macaddr, 6)) {
+        memcpy(sdk_info.sta_mac_addr, macaddr, 6);
+        if (netif) {
+            memcpy(netif->hwaddr, macaddr, 6);
+            sdk_wifi_station_stop();
+            sdk_wifi_station_start();
+            sdk_wifi_station_connect();
+        }
+    }
+
+    return true;
+}
+
 void sdk_system_uart_swap()
 {
     while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS)) {};
@@ -590,6 +693,18 @@ void sdk_system_uart_de_swap()
     iomux_set_function(4, IOMUX_GPIO3_FUNC_UART0_RXD);
 
     DPORT.PERI_IO &= ~DPORT_PERI_IO_SWAP_UART0_PINS;
+}
+
+enum sdk_sleep_type sdk_wifi_get_sleep_type()
+{
+    return sdk_pm_get_sleep_type();
+}
+
+bool sdk_wifi_set_sleep_type(enum sdk_sleep_type type)
+{
+    if (type > WIFI_SLEEP_MODEM) return false;
+    sdk_pm_set_sleep_type_from_upper(type);
+    return true;
 }
 
 #endif /* OPEN_LIBMAIN_USER_INTERFACE */

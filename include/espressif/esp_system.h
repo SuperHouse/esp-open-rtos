@@ -37,8 +37,8 @@ enum sdk_sleep_type {
     WIFI_SLEEP_LIGHT = 1,
     WIFI_SLEEP_MODEM = 2,
 };
-void sdk_wifi_set_sleep_type(enum sdk_sleep_type);
-enum sdk_sleep_type sdk_wifi_get_sleep_type(enum sdk_sleep_type);
+bool sdk_wifi_set_sleep_type(enum sdk_sleep_type);
+enum sdk_sleep_type sdk_wifi_get_sleep_type(void);
 
 void sdk_system_restore(void);
 void sdk_system_restart(void);
