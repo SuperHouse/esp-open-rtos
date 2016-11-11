@@ -8,7 +8,7 @@
 #include "esp/uart.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "dht.h"
+#include <dht/dht.h>
 #include "esp8266.h"
 
 /* An example using the ubiquitous DHT** humidity sensors
@@ -16,6 +16,7 @@
  * from a sensor attached to GPIO pin 4.
  */
 uint8_t const dht_gpio = 4;
+const dht_sensor_type_t sensor_type = DHT_TYPE_DHT22;
 
 void dhtMeasurementTask(void *pvParameters)
 {
@@ -28,7 +29,7 @@ void dhtMeasurementTask(void *pvParameters)
     gpio_set_pullup(dht_gpio, false, false);
 
     while(1) {
-        if (dht_read_data(dht_gpio, &humidity, &temperature)) {
+        if (dht_read_data(sensor_type, dht_gpio, &humidity, &temperature)) {
             printf("Humidity: %d%% Temp: %dC\n", 
                     humidity / 10, 
                     temperature / 10);
@@ -37,7 +38,7 @@ void dhtMeasurementTask(void *pvParameters)
         }
 
         // Three second delay...
-        vTaskDelay(3000 / portTICK_RATE_MS);
+        vTaskDelay(3000 / portTICK_PERIOD_MS);
     }
 }
 

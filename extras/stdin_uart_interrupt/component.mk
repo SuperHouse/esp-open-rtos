@@ -4,10 +4,12 @@
 # for 'usage' as this module is a drop-in replacement for the original polled
 # version of reading from the UART.
 
-INC_DIRS += $(ROOT)extras/stdin_uart_interrupt
+INC_DIRS += $(stdin_uart_interrupt_ROOT)
 
 # args for passing into compile rule generation
-extras/stdin_uart_interrupt_INC_DIR =  $(ROOT)extras/stdin_uart_interrupt
-extras/stdin_uart_interrupt_SRC_DIR =  $(ROOT)extras/stdin_uart_interrupt
+stdin_uart_interrupt_SRC_DIR = $(stdin_uart_interrupt_ROOT)
 
-$(eval $(call component_compile_rules,extras/stdin_uart_interrupt))
+INCLUDE_SRC_IN_AR = 0
+EXTRA_LDFLAGS = -Wl,--whole-archive $(stdin_uart_interrupt_AR) -Wl,--no-whole-archive
+
+$(eval $(call component_compile_rules,stdin_uart_interrupt))

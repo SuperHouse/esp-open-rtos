@@ -68,7 +68,7 @@ static void server_task(void *pvParameters)
             buf[pb->len] = 0;
             break;
         }
-        vTaskDelay(100 / portTICK_RATE_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     TEST_ASSERT_TRUE_MESSAGE(pb->len > 0, "No data received");
     printf("Device A: received data: %s\n", buf);
@@ -122,7 +122,7 @@ static void connect_task(void *pvParameters)
 
     // wait for wifi connection
     while (sdk_wifi_station_get_connect_status() != STATION_GOT_IP) {
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
         printf("Waiting for connection to AP\n");
     }
 
@@ -148,7 +148,7 @@ static void connect_task(void *pvParameters)
         if (r > 0) {
             break;
         }
-        vTaskDelay(100 / portTICK_RATE_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     TEST_ASSERT_TRUE_MESSAGE(r > 0, "No data received");
 

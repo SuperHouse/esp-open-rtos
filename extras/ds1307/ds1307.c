@@ -78,14 +78,14 @@ void ds1307_get_time(struct tm *time)
     if (buf[2] & HOUR12_BIT)
     {
         // RTC in 12-hour mode
-        time->tm_hour = bcd2dec(buf[2] & HOUR12_MASK);
+        time->tm_hour = bcd2dec(buf[2] & HOUR12_MASK) - 1;
         if (buf[2] & PM_BIT)
             time->tm_hour += 12;
     }
     else time->tm_hour = bcd2dec(buf[2] & HOUR24_MASK);
     time->tm_wday = bcd2dec(buf[3]) - 1;
     time->tm_mday = bcd2dec(buf[4]);
-    time->tm_mon  = bcd2dec(buf[5]);
+    time->tm_mon  = bcd2dec(buf[5]) - 1;
     time->tm_year = bcd2dec(buf[6]) + 2000;
 }
 
@@ -96,9 +96,9 @@ void ds1307_set_time(const struct tm *time)
     buf[1] = dec2bcd(time->tm_sec);
     buf[2] = dec2bcd(time->tm_min);
     buf[3] = dec2bcd(time->tm_hour);
-    buf[4] = dec2bcd(time->tm_wday);
+    buf[4] = dec2bcd(time->tm_wday + 1);
     buf[5] = dec2bcd(time->tm_mday);
-    buf[6] = dec2bcd(time->tm_mon);
+    buf[6] = dec2bcd(time->tm_mon + 1);
     buf[7] = dec2bcd(time->tm_year - 2000);
 
     i2c_slave_write(ADDR, buf, 8);

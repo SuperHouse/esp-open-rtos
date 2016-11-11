@@ -24,18 +24,18 @@
 #define MQTT_USER NULL
 #define MQTT_PASS NULL
 
-xSemaphoreHandle wifi_alive;
-xQueueHandle publish_queue;
+SemaphoreHandle_t wifi_alive;
+QueueHandle_t publish_queue;
 #define PUB_MSG_LEN 16
 
 static void  beat_task(void *pvParameters)
 {
-    portTickType xLastWakeTime = xTaskGetTickCount();
+    TickType_t xLastWakeTime = xTaskGetTickCount();
     char msg[PUB_MSG_LEN];
     int count = 0;
 
     while (1) {
-        vTaskDelayUntil(&xLastWakeTime, 10000 / portTICK_RATE_MS);
+        vTaskDelayUntil(&xLastWakeTime, 10000 / portTICK_PERIOD_MS);
         printf("beat\r\n");
         snprintf(msg, PUB_MSG_LEN, "Beat %d\r\n", count++);
         if (xQueueSend(publish_queue, (void *)msg, 0) == pdFALSE) {
@@ -190,7 +190,7 @@ static void  wifi_task(void *pvParameters)
                 printf("WiFi: connection failed\r\n");
                 break;
             }
-            vTaskDelay( 1000 / portTICK_RATE_MS );
+            vTaskDelay( 1000 / portTICK_PERIOD_MS );
             --retries;
         }
         if (status == STATION_GOT_IP) {
@@ -205,7 +205,7 @@ static void  wifi_task(void *pvParameters)
         }
         printf("WiFi: disconnected\n\r");
         sdk_wifi_station_disconnect();
-        vTaskDelay( 1000 / portTICK_RATE_MS );
+        vTaskDelay( 1000 / portTICK_PERIOD_MS );
     }
 }
 

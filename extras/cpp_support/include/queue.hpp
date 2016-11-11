@@ -83,7 +83,7 @@ public:
      */
     inline int post(const Data& data, unsigned long ms = 0)
     {
-        return (xQueueSend(queue, &data, ms / portTICK_RATE_MS) == pdTRUE) ? 0 : -1;
+        return (xQueueSend(queue, &data, ms / portTICK_PERIOD_MS) == pdTRUE) ? 0 : -1;
     }
     /**
      * 
@@ -93,7 +93,7 @@ public:
      */
     inline int receive(Data& data, unsigned long ms = 0)
     {
-        return (xQueueReceive(queue, &data, ms / portTICK_RATE_MS) == pdTRUE) ? 0 : -1;
+        return (xQueueReceive(queue, &data, ms / portTICK_PERIOD_MS) == pdTRUE) ? 0 : -1;
     }
     /**
      * 
@@ -110,7 +110,7 @@ public:
     }
 
 private:
-    xQueueHandle queue;
+    QueueHandle_t queue;
 
     // Disable copy construction.
     queue_t (const queue_t&);

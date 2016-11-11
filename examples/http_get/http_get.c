@@ -43,7 +43,7 @@ void http_get_task(void *pvParameters)
             printf("DNS lookup failed err=%d res=%p\r\n", err, res);
             if(res)
                 freeaddrinfo(res);
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             failures++;
             continue;
         }
@@ -55,7 +55,7 @@ void http_get_task(void *pvParameters)
         if(s < 0) {
             printf("... Failed to allocate socket.\r\n");
             freeaddrinfo(res);
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             failures++;
             continue;
         }
@@ -66,7 +66,7 @@ void http_get_task(void *pvParameters)
             close(s);
             freeaddrinfo(res);
             printf("... socket connect failed.\r\n");
-            vTaskDelay(4000 / portTICK_RATE_MS);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
             failures++;
             continue;
         }
@@ -81,7 +81,7 @@ void http_get_task(void *pvParameters)
         if (write(s, req, strlen(req)) < 0) {
             printf("... socket send failed\r\n");
             close(s);
-            vTaskDelay(4000 / portTICK_RATE_MS);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
             failures++;
             continue;
         }
@@ -106,7 +106,7 @@ void http_get_task(void *pvParameters)
         printf("successes = %d failures = %d\r\n", successes, failures);
         for(int countdown = 10; countdown >= 0; countdown--) {
             printf("%d... ", countdown);
-            vTaskDelay(1000 / portTICK_RATE_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
         printf("\r\nStarting again!\r\n");
     }

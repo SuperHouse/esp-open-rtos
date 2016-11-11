@@ -70,7 +70,7 @@ static void demo(void *pvParameters)
                     sizeof(ws2812_pixel_t));
 
             ws2812_i2s_update(pixels);
-            vTaskDelay(20 / portTICK_RATE_MS);
+            vTaskDelay(20 / portTICK_PERIOD_MS);
         }
     }
 }

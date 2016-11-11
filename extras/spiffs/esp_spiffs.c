@@ -141,21 +141,16 @@ long _write_r(struct _reent *r, int fd, const char *ptr, int len )
     return len;
 }
 
+// This function is weakly defined in core/newlib_syscalls.c
+long _read_stdin_r(struct _reent *r, int fd, char *ptr, int len);
+
 // This implementation replaces implementation in core/newlib_syscals.c
 long _read_r( struct _reent *r, int fd, char *ptr, int len )
 {
-    int ch, i;
-
     if(fd != r->_stdin->_file) {
         return SPIFFS_read(&fs, (spiffs_file)fd, ptr, len);
     }
-    uart_rxfifo_wait(0, 1);
-    for(i = 0; i < len; i++) {
-        ch = uart_getc_nowait(0);
-        if (ch < 0) break;
-        ptr[i] = ch;
-    }
-    return i;
+    return _read_stdin_r(r, fd, ptr, len);
 }
 
 int _open_r(struct _reent *r, const char *pathname, int flags, int mode)

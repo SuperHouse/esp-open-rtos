@@ -46,7 +46,7 @@ static void a_01_scheduler_priorities()
     vTaskPrioritySet(xTaskGetCurrentTaskHandle(), tskIDLE_PRIORITY+4);
 
     bool lower = false, higher = false;
-    xTaskHandle task_lower, task_higher;
+    TaskHandle_t task_lower, task_higher;
 
     xTaskCreate(set_variable, "high_prio", 128, (void *)&higher, tskIDLE_PRIORITY+1, &task_higher);
     xTaskCreate(set_variable, "low_prio", 128, (void *)&lower, tskIDLE_PRIORITY, &task_lower);

@@ -11,15 +11,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DHT11       11
-#define DHT22       22
-
-// Type of sensor to use
-#define DHT_TYPE    DHT22
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Sensor type
+ */
+typedef enum
+{
+    DHT_TYPE_DHT11 = 0, //!< DHT11
+    DHT_TYPE_DHT22      //!< DHT22
+} dht_sensor_type_t;
 
 /**
  * Read data from sensor on specified pin.
@@ -29,7 +32,7 @@ extern "C" {
  *              temperature=24.4 is 24.4 degrees Celsius
  *
  */
-bool dht_read_data(uint8_t pin, int16_t *humidity, int16_t *temperature);
+bool dht_read_data(dht_sensor_type_t sensor_type, uint8_t pin, int16_t *humidity, int16_t *temperature);
 
 
 /**
@@ -37,7 +40,7 @@ bool dht_read_data(uint8_t pin, int16_t *humidity, int16_t *temperature);
  *
  * Return values as floating point values.
  */
-bool dht_read_float_data(uint8_t pin, float *humidity, float *temperature);
+bool dht_read_float_data(dht_sensor_type_t sensor_type, uint8_t pin, float *humidity, float *temperature);
 
 #ifdef __cplusplus
 }

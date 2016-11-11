@@ -86,7 +86,7 @@ public:
      */
     inline int try_lock(unsigned long ms)
     {
-        return (xSemaphoreTake(mutex, ms / portTICK_RATE_MS) == pdTRUE) ? 0 : -1;
+        return (xSemaphoreTake(mutex, ms / portTICK_PERIOD_MS) == pdTRUE) ? 0 : -1;
     }
     /**
      * 
@@ -98,7 +98,7 @@ public:
     }
 
 private:
-    xSemaphoreHandle    mutex;
+    SemaphoreHandle_t    mutex;
 
     // Disable copy construction and assignment.
     mutex_t (const mutex_t&);

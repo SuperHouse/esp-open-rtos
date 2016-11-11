@@ -28,7 +28,7 @@ typedef void ETSTimerFunc(void *);
 
 typedef struct ETSTimer_st {
     struct ETSTimer_st  *timer_next;
-    xTimerHandle timer_handle;
+    TimerHandle_t timer_handle;
     uint32_t _unknown;
     uint32_t timer_ms;
     ETSTimerFunc *timer_func;

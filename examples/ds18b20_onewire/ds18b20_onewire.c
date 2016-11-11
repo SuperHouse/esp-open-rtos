@@ -64,7 +64,7 @@ void print_temperature(void *pvParameters) {
                 // Wait for a little bit between each sample (note that the
                 // ds18b20_measure_and_read_multi operation already takes at
                 // least 750ms to run, so this is on top of that delay).
-                vTaskDelay(LOOP_DELAY_MS / portTICK_RATE_MS);
+                vTaskDelay(LOOP_DELAY_MS / portTICK_PERIOD_MS);
             }
         }
     }
