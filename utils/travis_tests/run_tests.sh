@@ -1,16 +1,19 @@
 #!/bin/bash
 #
 # This script builds tests, deploys them on one of the available test
-# servers and runs them.
-#
+# servers and runs them. If deployment fails it will not return an error code.
+# If tests fail the script will return an error code.
+# It is done this way not to fail Travis build if one of the test servers is
+# down.
 
 # Test servers configuration
 TEST_SERVERS[0]="IP=195.138.84.66;User=pi;Type=solo"
 TEST_SERVERS[1]="IP=195.138.84.66;User=pi;Type=dual"
 
+# It will be populated in 'build' function
 FLASH_CMD=
 
-# Function doesn't accept any arguments. It build the tests,
+# Function doesn't accept any arguments. It builds the tests,
 # packages the binaries into the archive and populates FLASH_CMD variable.
 function build {
     echo "Building tests"
@@ -19,7 +22,7 @@ function build {
     FLASH_CMD=$(make -s -C ./tests print_flash_cmd)
 
     # Now we need to pack all files that are included in the flash cmd
-    # so they can be transfered to the remote server and run there
+    # so they can be transferred to the remote server and run there
     # Also we need to prepare flash command:
     #  - remove firmware files path
     #  - remove serial port parameter
