@@ -8,8 +8,6 @@ INC_DIRS += $(stdin_uart_interrupt_ROOT)
 
 # args for passing into compile rule generation
 stdin_uart_interrupt_SRC_DIR = $(stdin_uart_interrupt_ROOT)
-
-INCLUDE_SRC_IN_AR = 0
-EXTRA_LDFLAGS = -Wl,--whole-archive $(stdin_uart_interrupt_AR) -Wl,--no-whole-archive
+stdin_uart_interrupt_WHOLE_ARCHIVE = yes
 
 $(eval $(call component_compile_rules,stdin_uart_interrupt))

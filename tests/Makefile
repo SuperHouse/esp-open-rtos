@@ -16,12 +16,7 @@ PROGRAM_EXTRA_SRC_FILES = ./unity/src/unity.c ./fs-test/fs_test.c
 
 TESTCASE_SRC_FILES = $(wildcard $(PROGRAM_DIR)cases/*.c)
 
-# Do not include source files into a static library because when adding this
-# library with '--whole-archive' linker gives error that archive contains
-# unknown objects (source files)
-INCLUDE_SRC_IN_AR = 0
-
 # Link every object in the 'program' archive, to pick up constructor functions for test cases
-EXTRA_LDFLAGS = -Wl,--whole-archive $(BUILD_DIR)program.a -Wl,--no-whole-archive
+PROGRAM_WHOLE_ARCHIVE = yes
 
 include ../common.mk
