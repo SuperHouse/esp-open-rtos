@@ -19,3 +19,6 @@
 [submodule "tests/fs-test"]
 	path = tests/fs-test
 	url = https://github.com/sheinz/fs-test
+[submodule "extras/bearssl/BearSSL"]
+	path = extras/bearssl/BearSSL
+	url = https://www.bearssl.org/git/BearSSL
