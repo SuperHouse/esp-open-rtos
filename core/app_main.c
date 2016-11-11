@@ -26,8 +26,10 @@
 
 #include "espressif/esp_common.h"
 #include "espressif/phy_info.h"
-#include "sdk_internal.h"
 #include "esplibs/libmain.h"
+#include "esplibs/libnet80211.h"
+#include "esplibs/libphy.h"
+#include "esplibs/libpp.h"
 #include "sysparam.h"
 
 /* This is not declared in any header file (but arguably should be) */
@@ -296,11 +298,11 @@ static void init_g_ic(void) {
     }
     if (sdk_g_ic.s._unknown1e4._unknown1e4 == 0xffffffff) {
         bzero(&sdk_g_ic.s._unknown1e4, sizeof(sdk_g_ic.s._unknown1e4));
-        bzero(&sdk_g_ic.s._unknown20f, sizeof(sdk_g_ic.s._unknown20f));
+        bzero(&sdk_g_ic.s.sta_password, sizeof(sdk_g_ic.s.sta_password));
     }
     sdk_g_ic.s.wifi_led_enable = 0;
-    if (sdk_g_ic.s._unknown281 > 1) {
-        sdk_g_ic.s._unknown281 = 0;
+    if (sdk_g_ic.s.sta_bssid_set > 1) {
+        sdk_g_ic.s.sta_bssid_set = 0;
     }
     if (sdk_g_ic.s.ap_number > 5) {
         sdk_g_ic.s.ap_number = 1;
@@ -374,9 +376,9 @@ static __attribute__((noinline)) void user_start_phase2(void) {
     sdk_sleep_reset_analog_rtcreg_8266();
     get_otp_mac_address(sdk_info.sta_mac_addr);
     sdk_wifi_softap_cacl_mac(sdk_info.softap_mac_addr, sdk_info.sta_mac_addr);
-    sdk_info._unknown0 = 0x0104a8c0;
-    sdk_info._unknown4 = 0x00ffffff;
-    sdk_info._unknown8 = 0x0104a8c0;
+    sdk_info.softap_ipaddr.addr = 0x0104a8c0;  // 192.168.4.1
+    sdk_info.softap_netmask.addr = 0x00ffffff; // 255.255.255.0
+    sdk_info.softap_gw.addr = 0x0104a8c0;      // 192.168.4.1
     init_g_ic();
 
     read_saved_phy_info(&phy_info);
