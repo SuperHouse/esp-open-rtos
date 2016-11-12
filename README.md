@@ -33,14 +33,12 @@ git clone --recursive https://github.com/Superhouse/esp-open-rtos.git
 cd esp-open-rtos
 ```
 
-* To build any examples that use WiFi, edit `include/ssid_config.h` and change the two macro defines:
+* To build any examples that use WiFi, create `include/private_ssid_config.h` defining the two macro defines:
 
 ```c
 #define WIFI_SSID "mywifissid"
 #define WIFI_PASS "my secret password"
 ```
-
-Remove the `#warning` line and follow the git ignore instructions written in the header file to keep your credentials from being pushed to Github.
 
 * Build an example project (found in the 'examples' directory) and flash it to a serial port:
 
