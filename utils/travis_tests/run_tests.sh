@@ -75,8 +75,7 @@ function run_tests {
     echo "Running tests, server IP=${1}, type=${3}"
     echo "Flash cmd: ${FLASH_CMD}"
     # Run test runner on the remote server
-    # ssh ${2}@${1} "source /home/pi/.profile; cd /tmp/eor_test/; ./test_runner.py --type ${3} -f -c \"${FLASH_CMD}\""
-    ssh ${2}@${1} "source /home/pi/.profile; /tmp/eor_test/test_runner.py --type ${3} -f -c \"${FLASH_CMD}\""
+    ssh ${2}@${1} "source ~/.profile; /tmp/eor_test/test_runner.py --type ${3} -f -c \"${FLASH_CMD}\""
 }
 
 # First step is to build a firmware

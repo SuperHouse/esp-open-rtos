@@ -31,8 +31,8 @@ Test server running on Raspberry PI:
 * One or two ESP8266 modules connected to USB ports
 * SSH access from the Internet (with public key from Travis CI)
 * Python3
-* [esptool.py] installed
-* pySerial python module `pip install pyserial`
+* [esptool.py] installed `pip install esptool`
+* pySerial python module `pip3 install pyserial`
 
 ### Create SSH keys for Travis
 
