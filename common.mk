@@ -89,8 +89,9 @@ all: $(PROGRAM_OUT) $(FW_FILE_1) $(FW_FILE_2) $(FW_FILE)
 # $(1)_INC_DIR = List of include directories specific for the component
 #
 #
-# Each call appends to COMPONENT_ARS which is a list of archive files for compiled components
+# Each call appends to COMPONENT_ARS or WHOLE_ARCHIVES which are lists of archive files for compiled components
 COMPONENT_ARS =
+WHOLE_ARCHIVES =
 define component_compile_rules
 $(1)_DEFAULT_ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 $(1)_ROOT ?= $$($(1)_DEFAULT_ROOT)
@@ -136,10 +137,13 @@ $$($(1)_OBJ_DIR)%.o: $$($(1)_REAL_ROOT)%.S $$($(1)_MAKEFILE) $(wildcard $(ROOT)*
 
 $(1)_AR_IN_FILES = $$($(1)_OBJ_FILES)
 
-# the component is shown to depend on both obj and source files so we get
-# a meaningful error message for missing explicitly named source files
-ifeq ($(INCLUDE_SRC_IN_AR),1)
-   $(1)_SRC_IN_AR_FILES = $$($(1)_SRC_FILES)
+# The component is shown to depend on both obj and source files so we get
+# a meaningful error message for missing explicitly named source files.
+# But do not include source files into a static library because when adding this
+# library with '--whole-archive' linker gives error that archive contains
+# unknown objects (source files)
+ifndef $(1)_WHOLE_ARCHIVE
+   $(1)_AR_IN_FILES += $$($(1)_SRC_FILES)
 endif
 
 $$($(1)_AR): $$($(1)_OBJ_FILES) $$($(1)_SRC_IN_AR_FILES)
@@ -147,7 +151,11 @@ $$($(1)_AR): $$($(1)_OBJ_FILES) $$($(1)_SRC_IN_AR_FILES)
 	$(Q) mkdir -p $$(dir $$@)
 	$(Q) $(AR) cru $$@ $$^
 
-COMPONENT_ARS += $$($(1)_AR)
+ifdef $(1)_WHOLE_ARCHIVE
+   WHOLE_ARCHIVES += $$($(1)_AR)
+else
+   COMPONENT_ARS += $$($(1)_AR)
+endif
 
 -include $$($(1)_OBJ_FILES:.o=.d)
 endef
@@ -200,9 +208,9 @@ $(foreach component,$(COMPONENTS), 					\
 )
 
 # final linking step to produce .elf
-$(PROGRAM_OUT): $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
+$(PROGRAM_OUT): $(WHOLE_ARCHIVES) $(COMPONENT_ARS) $(SDK_PROCESSED_LIBS) $(LINKER_SCRIPTS)
 	$(vecho) "LD $@"
-	$(Q) $(LD) $(LDFLAGS) -Wl,--start-group $(COMPONENT_ARS) $(LIB_ARGS) $(SDK_LIB_ARGS) -Wl,--end-group -o $@
+	$(Q) $(LD) $(LDFLAGS) -Wl,--whole-archive $(WHOLE_ARCHIVES) -Wl,--no-whole-archive -Wl,--start-group $(COMPONENT_ARS) $(LIB_ARGS) $(SDK_LIB_ARGS) -Wl,--end-group -o $@
 
 $(BUILD_DIR) $(FIRMWARE_DIR) $(BUILD_DIR)sdklib:
 	$(Q) mkdir -p $@

@@ -46,7 +46,7 @@ before_install:
 script:
   - cd ${TRAVIS_BUILD_DIR}
   # Remove ssid_config requirement for examples
-  - sed -i "s%#error%//#error%" include/ssid_config.h
+  - echo -e '#define WIFI_SSID "mywifissid"\n#define WIFI_PASS "my secret password"\n' > include/private_ssid_config.h
   # Don't verbose-build all examples (too much output), only verbose-build errors
   - ( ${MAKE_CMD} ) || ( ${MAKE_CMD} V=1 )
   # build bootloader
