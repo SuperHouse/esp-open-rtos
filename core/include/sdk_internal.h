@@ -14,23 +14,109 @@
 // 'info' is declared in app_main.o at .bss+0x4
 
 struct sdk_info_st {
-    uint32_t _unknown0;         // 0x00
-    uint32_t _unknown4;         // 0x04
-    uint32_t _unknown8;         // 0x08
-    ip_addr_t ipaddr;           // 0x0c
-    ip_addr_t netmask;          // 0x10
-    ip_addr_t gw;               // 0x14
+    ip_addr_t softap_ipaddr;    // 0x00
+    ip_addr_t softap_netmask;   // 0x04
+    ip_addr_t softap_gw;        // 0x08
+    ip_addr_t sta_ipaddr;       // 0x0c
+    ip_addr_t sta_netmask;      // 0x10
+    ip_addr_t sta_gw;           // 0x14
     uint8_t softap_mac_addr[6]; // 0x18
     uint8_t sta_mac_addr[6];    // 0x1e
 };
 
-extern struct sdk_info_st sdk_info;
 
-// 'rst_if' is declared in user_interface.o at .bss+0xfc
-extern struct sdk_rst_info sdk_rst_if;
+struct _unknown_info1 {
+    uint8_t _unknown00;
+    uint8_t _unknown01;
+    uint8_t _unknown02;
+    uint8_t _unknown03;
+    uint8_t _unknown04;
+    uint8_t _unknown05;
+    uint8_t channel; // eagle_auth_done
+};
 
-// 'g_ic' is declared in libnet80211/ieee80211.o at .bss+0x0
-// See also: http://esp8266-re.foogod.com/wiki/G_ic_(IoT_RTOS_SDK_0.9.9)
+
+struct _unknown_softap2 {
+    uint32_t _unknown00;
+    uint32_t _unknown04;
+    uint32_t _unknown08;
+    uint32_t _unknown0c;
+    uint32_t _unknown10[8]; // block copied from sdk_g_ic.s._unknown28c
+    uint32_t _unknown30;
+    uint32_t _unknown34;
+    uint32_t *_unknown38;
+    uint8_t *_unknown3c; // string copied from sdk_g_ic.s._unknown2ac
+    uint32_t _unknown40[29];
+    uint32_t _unknownb4; // 300
+    uint32_t _unknownb8[5];
+};
+
+
+struct _unknown_softap1 {
+    uint32_t _unknown00;
+    struct _unknown_softap2 *_unknown04;
+    uint32_t _unknown08[4];
+    uint32_t *_unknown18; // result of sdk_wpa_init, dynamically allocated object.
+};
+
+
+struct _unknown_wpa1 {
+    uint32_t _unknown00; // 1, 2, 3
+    uint32_t _unknown04; // 2
+    uint32_t _unknown08; // 10
+    uint32_t _unknown0c;
+    uint32_t _unknown10;
+    uint32_t _unknown14;
+    uint32_t _unknown18;
+    uint32_t _unknown1c;
+    uint32_t _unknown20; // 10
+    uint32_t _unknown24;
+    uint32_t _unknown28;
+    uint32_t _unknown2c;
+    uint32_t _unknown30;
+    uint32_t _unknown34;
+    uint32_t _unknown38;
+    uint32_t _unknown3c;
+    uint32_t _unknown40; // 2
+    uint32_t _unknown44;
+    uint32_t _unknown48;
+};
+
+
+struct sdk_netif_conninfo {
+    uint8_t mac_addr[6];
+    uint8_t _unknown07[2];
+
+    uint32_t _unknown08; // eagle_auth_done
+
+    uint32_t _unknown0c[3];
+
+    int8_t _unknown18; // eagle_auth_done
+    int8_t _unknown19;
+    int8_t _unknown1a;
+    int8_t _unknown1b;
+
+    uint32_t _unknown1c[23];
+
+    struct _unknown_info1 *_unknown78; // eagle_auth_done
+
+    uint32_t _unknown7c[8];
+
+    uint16_t _unknown9c; // ieee80211_hostap. increases by one one each timer func called.
+    uint16_t _unknown9e;
+
+    uint32_t _unknowna0[18];
+
+    int8_t _unknowne8; //
+    int8_t _unknowne9; // ppInstallKey
+    int8_t _unknownea;
+    int8_t _unknowneb;
+
+    uint32_t _unknownec[7];
+
+    uint32_t _unknown108; // hostap_handle_timer count
+};
+
 
 struct sdk_g_ic_netif_info {
     struct netif *netif;     // 0x00
@@ -38,15 +124,21 @@ struct sdk_g_ic_netif_info {
     uint8_t _unknown20[28];  // 0x20 - 0x3c
     uint32_t _unknown3c;     // 0x3c (referenced by sdk_wifi_station_disconnect)
     uint8_t _unknown40[6];   // 0x40 - 0x46
-    uint8_t _unknown46[66];  // 0x46 - 0x88
+    uint8_t _unknown46[2];   // 0x46 - 0x47
+    uint32_t _unknown48;     // 0x48
+    uint8_t _unknown4c;      // 0x4c
+    uint8_t _unknown4d[59];  // 0x4d - 0x88
     struct sdk_netif_conninfo *_unknown88;  // 0x88
     uint32_t _unknown8c;     // 0x8c
     struct sdk_netif_conninfo *conninfo[6]; // 0x90 - 0xa8
-    uint8_t _unknowna8[16];  // 0xa8 - 0xb8
-    uint8_t _unknownb8;      // 0xb8 (referenced by sdk_wifi_station_connect / sdk_wifi_station_disconnect)
-    uint8_t _unknownb9;      // 0xb9 (referenced by sdk_wifi_station_connect / sdk_wifi_station_disconnect)
-    uint8_t connect_status;  // 0xba (referenced by sdk_system_station_got_ip_set / sdk_wifi_station_disconnect)
+    uint8_t _unknowna8[12];  // 0xa8 - 0xb4
+    struct _unknown_softap1 *_unknownb4;
+    uint8_t statusb8;        // 0xb8 (arg of sta_status_set)
+    uint8_t statusb9;        // 0xb9 (compared to arg of sta_status_set)
+    uint8_t connect_status;  // 0xba (result of wifi_station_get_connect_status)
+    uint8_t started;         // 0xbb (referenced by sdk_wifi_station_start / sdk_wifi_station_stop)
 };
+
 
 // This is the portion of g_ic which is not loaded/saved to the flash ROM, and
 // starts out zeroed on every boot.
@@ -73,9 +165,11 @@ struct sdk_g_ic_volatile_st {
     uint8_t _unknown7e;
     uint8_t _unknown7f;
 
-    uint8_t _unknown80[204];
+    uint32_t _unknown80;
 
-    void *_unknown14c;
+    uint32_t _unknown84[50]; // wifi_softap_start, channels.
+
+    void * volatile _unknown14c; // wifi_softap_start, current channel, arg to ieee80211_chan2ieee
 
     uint8_t _unknown150[20];
 
@@ -92,8 +186,7 @@ struct sdk_g_ic_volatile_st {
     void *_unknown184;
     struct station_info *station_info_head;
     struct station_info *station_info_tail;
-    uint32_t _unknown190;
-    uint32_t _unknown194;
+    void *_unknown190[2]; // cnx_sta_leave
 
     uint8_t _unknown198[40];
 
@@ -112,9 +205,11 @@ struct sdk_g_ic_volatile_st {
     uint8_t _unknown1d5[3];
 };
 
+
 struct sdk_g_ic_unk0_st {
-    uint32_t _unknown1e4;
-    uint8_t _unknown1e8[32];
+    uint16_t _unknown1e4;  // sdk_wpa_config_profile
+    uint16_t _unknown1e6;  // sdk_wpa_config_profile
+    uint8_t sta_ssid[32];  // 0x1e8 Station ssid. Null terminated string.
 };
 
 // This is the portion of g_ic which is loaded/saved to the flash ROM, and thus
@@ -127,40 +222,45 @@ struct sdk_g_ic_saved_st {
     uint8_t wifi_mode;
     uint8_t wifi_led_enable;
     uint8_t wifi_led_gpio;
-    uint8_t _unknown1e3;
+    uint8_t wifi_led_state;  // 0 or 1.
 
     struct sdk_g_ic_unk0_st _unknown1e4;
 
     uint8_t _unknown208;
-    uint8_t _unknown209;
-    uint8_t _unknown20a;
+    uint8_t _unknown209; // sdk_wpa_config_profile
+    uint8_t _unknown20a; // sdk_wpa_config_profile
     uint8_t _unknown20b;
-    uint8_t _unknown20c;
+    uint8_t _unknown20c; // sdk_wpa_config_profile
     uint8_t _unknown20d;
     uint8_t _unknown20e;
-    uint8_t _unknown20f[64];
+    uint8_t sta_password[64]; // 0x20f Null terminated string.
     uint8_t _unknown24f;
 
     uint8_t _unknown250[49];
 
-    uint8_t _unknown281;
+    uint8_t sta_bssid_set; // 0x281 One if bssid is used, otherwise zero.
 
-    uint8_t _unknown282[6];
+    uint8_t sta_bssid[6]; // 0x282
 
-    uint32_t _unknown288;
+    uint16_t _unknown288;
+    uint16_t _unknown28a;
     uint8_t _unknown28c;
 
-    uint8_t _unknown28d[31];
+    uint8_t _unknown28d[21];
 
-    uint8_t _unknown2ac[64];
+    uint8_t _unknown2a0; // used in dhcp_bind_check wpa_main.o
+
+    uint8_t _unknown2a1[9];
+
+    char _unknown2ac[64]; // string.
     uint8_t _unknonwn2ec;
 
     uint8_t _unknown2ed[32];
 
-    uint8_t _unknown30d;
+    uint8_t _unknown30d; // result of ieee80211_chan2ieee
     uint8_t _unknown30e;
     uint8_t _unknown30f;
-    uint8_t _unknown310;
+    uint8_t _unknown310; // count of entries in the softap conninfo array, less two.
 
     uint8_t _unknown311[3];
 
@@ -194,7 +294,20 @@ struct sdk_g_ic_st {
     struct sdk_g_ic_saved_st    s; // 0x1d8 - 0x548
 };
 
-extern struct sdk_g_ic_st sdk_g_ic;
+
+
+struct esf_buf {
+    struct pbuf *pbuf1;    // 0x00
+    struct pbuf *pbuf2;    // 0x04
+    uint32_t *_unknown8_;  // 0x08
+    uint32_t *_unknownc_;  // 0x0c
+    uint8_t *frame;        // 0x10 IEEE-802.11 payload data?
+    uint16_t _unknown14_;  // 0x14
+    uint16_t length;       // 0x16
+    uint32_t *_unknown18_; // 0x18
+    struct esf_buf *next;  // 0x1c Free list.
+    void *extra;           // 0x20
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // The above structures all refer to data regions outside our control, and a
@@ -205,35 +318,65 @@ extern struct sdk_g_ic_st sdk_g_ic;
 ///////////////////////////////////////////////////////////////////////////////
 
 _Static_assert(sizeof(struct sdk_info_st) == 0x24, "info_st is the wrong size!");
+_Static_assert(offsetof(struct sdk_info_st, sta_mac_addr) == 0x1e, "bad struct");
+
+_Static_assert(offsetof(struct _unknown_info1, channel) == 0x06, "bad struct");
+
+_Static_assert(sizeof(struct _unknown_softap2) == 0xcc, "_unknown_softap2 is the wrong size!");
+_Static_assert(offsetof(struct _unknown_softap2, _unknownb8) == 0xb8, "bad struct");
+
+_Static_assert(sizeof(struct _unknown_softap1) == 0x1c, "_unknown_softap1 is the wrong size!");
+_Static_assert(offsetof(struct _unknown_softap1, _unknown18) == 0x18, "bad struct");
+
+_Static_assert(sizeof(struct _unknown_wpa1) == 0x4c, "_unknown_wpa1 is the wrong size!");
+_Static_assert(offsetof(struct _unknown_wpa1, _unknown48) == 0x48, "bad struct");
+
+_Static_assert(offsetof(struct sdk_netif_conninfo, _unknown78) == 0x78, "bad struct");
+_Static_assert(offsetof(struct sdk_netif_conninfo, _unknown108) == 0x108, "bad struct");
+
+_Static_assert(offsetof(struct sdk_g_ic_netif_info, started) == 0xbb, "bad struct");
+
 _Static_assert(sizeof(struct sdk_g_ic_volatile_st) == 0x1d8, "sdk_g_ic_volatile_st is the wrong size!");
+_Static_assert(offsetof(struct sdk_g_ic_volatile_st, _unknown1d5) == 0x1d5, "bad struct");
+
 _Static_assert(sizeof(struct sdk_g_ic_saved_st) == 0x370, "sdk_g_ic_saved_st is the wrong size!");
+_Static_assert(offsetof(struct sdk_g_ic_saved_st, _unknown1e4) == 0x1e4 - 0x1d8, "bad struct");
+_Static_assert(offsetof(struct sdk_g_ic_saved_st, _unknown546) == 0x546 - 0x1d8, "bad struct");
+
 _Static_assert(sizeof(struct sdk_g_ic_st) == 0x548, "sdk_g_ic_st is the wrong size!");
 
-///////////////////////////////////////////////////////////////////////////////
-//                            Function Prototypes                            //
-///////////////////////////////////////////////////////////////////////////////
+_Static_assert(sizeof(struct esf_buf) == 0x24, "struct esf_buf: wrong size");
+_Static_assert(offsetof(struct esf_buf, extra) == 0x20, "bad struct");
+_Static_assert(offsetof(struct esf_buf, length) == 0x16, "bad struct");
 
-sdk_SpiFlashOpResult sdk_SPIRead(uint32_t src_addr, uint32_t *des_addr, uint32_t size);
-sdk_SpiFlashOpResult sdk_SPIWrite(uint32_t des_addr, uint32_t *src_addr, uint32_t size);
-void sdk_cnx_attach(struct sdk_g_ic_st *);
-void sdk_ets_timer_init(void);
-void sdk_ieee80211_ifattach(struct sdk_g_ic_st *, uint8_t *);
-void sdk_ieee80211_phy_init(enum sdk_phy_mode);
-void sdk_lmacInit(void);
-void sdk_phy_disable_agc(void);
-void sdk_phy_enable_agc(void);
-void sdk_pm_attach(void);
-void sdk_pp_attach(void);
-void sdk_pp_soft_wdt_init(void);
-int sdk_register_chipv6_phy(sdk_phy_info_t *);
-void sdk_sleep_reset_analog_rtcreg_8266(void);
-uint32_t sdk_system_get_checksum(uint8_t *, uint32_t);
-void sdk_wDevEnableRx(void);
-void sdk_wDev_Initialize(void);
-void sdk_wifi_mode_set(uint8_t);
-void sdk_wifi_softap_cacl_mac(uint8_t *, uint8_t *);
-void sdk_wifi_softap_set_default_ssid(void);
-void sdk_wifi_softap_start(void);
-void sdk_wifi_station_start(void);
+// The SDK access some slots in lwip structures.
+
+// The netif->state is initialized in netif_add within lwip with a struct
+// sdk_g_ic_netif_info, see sdk_wifi_station_start and sdk_wifi_softap_start.
+// There is a known sdk read of the netif->state in ieee80211_output.o
+// ieee80211_output_pbuf and perhaps elsewhere. The value is just passed through
+// lwip and and not used by lwip so just ensure this slot is at the expected
+// offset.
+_Static_assert(offsetof(struct netif, state) == 28, "netif->state offset wrong!");
+
+// Some sdk uses of netif->hwaddr have been converted to source code, but many
+// remain, but the content of this slot should not change in future versions of
+// lwip, so just ensure it is at the expected offset.
+_Static_assert(offsetof(struct netif, hwaddr) == 41, "netif->hwaddr offset wrong!");
+
+// Most sdk uses of the netif->flags have been converted to source code. One
+// known sdk binary read of the flags remains in wl_cnx.o:sdk_cnx_sta_leave
+// which checks the NETIF_FLAG_DHCP flag. The NETIF_FLAG_DHCP has been removed
+// in lwip v2, so some lwip hacks are needed to handle this for now until
+// wl_cnx.o is converted so source code too.
+_Static_assert(offsetof(struct netif, flags) == 47, "netif->flags offset wrong!");
+
+_Static_assert(offsetof(struct pbuf, eb) == 16, "pbuf->eb offset wrong!");
+
+
+/// Misc.
+
+err_t ethernetif_init(struct netif *netif);
+void ethernetif_input(struct netif *netif, struct pbuf *p);
 
 #endif /* _INTERNAL_SDK_STRUCTURES_H */

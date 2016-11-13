@@ -31,7 +31,6 @@
 #include "espressif/osapi.h"
 #include "espressif/user_interface.h"
 
-#include "sdk_internal.h"
 #include "esplibs/libmain.h"
 #include "esplibs/libpp.h"
 #include "esplibs/libphy.h"
@@ -530,10 +529,10 @@ bool sdk_wifi_station_dhcpc_start(void) {
         return false;
     }
     if (netif && sdk_dhcpc_flag == DHCP_STOPPED) {
-        sdk_info.ipaddr.addr = 0;
-        sdk_info.netmask.addr = 0;
-        sdk_info.gw.addr = 0;
-        netif_set_addr(netif, &sdk_info.ipaddr, &sdk_info.netmask, &sdk_info.gw);
+        sdk_info.sta_ipaddr.addr = 0;
+        sdk_info.sta_netmask.addr = 0;
+        sdk_info.sta_gw.addr = 0;
+        netif_set_addr(netif, &sdk_info.sta_ipaddr, &sdk_info.sta_netmask, &sdk_info.sta_gw);
         if (dhcp_start(netif)) {
             return false;
         }

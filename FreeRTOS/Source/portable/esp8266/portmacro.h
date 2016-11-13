@@ -144,7 +144,7 @@ void PendSV(enum SVC_ReqType);
    ESPTODO: It may be possible to just read the 'ps' register instead
    of accessing thisvariable.
 */
-extern char sdk_NMIIrqIsOn;
+extern uint8_t sdk_NMIIrqIsOn;
 extern char level1_int_disabled;
 extern unsigned cpu_sr;
 
