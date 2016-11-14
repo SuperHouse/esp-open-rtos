@@ -591,4 +591,16 @@ void sdk_system_uart_de_swap()
     DPORT.PERI_IO &= ~DPORT_PERI_IO_SWAP_UART0_PINS;
 }
 
+enum sdk_sleep_type sdk_wifi_get_sleep_type()
+{
+    return sdk_pm_get_sleep_type();
+}
+
+bool sdk_wifi_set_sleep_type(enum sdk_sleep_type type)
+{
+    if (type > WIFI_SLEEP_MODEM) return false;
+    sdk_pm_set_sleep_type_from_upper(type);
+    return true;
+}
+
 #endif /* OPEN_LIBMAIN_USER_INTERFACE */
