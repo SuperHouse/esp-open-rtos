@@ -279,9 +279,11 @@ NoiseTimerInterval sdk_NoiseTimerInterval
 operation_test sdk_operation_test
 os_delay_us sdk_os_delay_us
 os_get_cpu_frequency sdk_os_get_cpu_frequency
+os_get_random sdk_os_get_random
 os_get_time sdk_os_get_time
 os_install_putc1 sdk_os_install_putc1
 os_putc sdk_os_putc
+os_random sdk_os_random
 os_timer_arm sdk_os_timer_arm
 os_timer_disarm sdk_os_timer_disarm
 os_timer_setfn sdk_os_timer_setfn
