@@ -254,12 +254,25 @@ static void zero_bss(void) {
 
 // .Lfunc006 -- .irom0.text+0x70
 static void init_networking(sdk_phy_info_t *phy_info, uint8_t *mac_addr) {
+    // The call to sdk_register_chipv6_phy appears to change the bus clock,
+    // perhaps from 40MHz to 26MHz, at least it has such an effect on the uart
+    // baud rate. The caller flushes the TX fifos.
     if (sdk_register_chipv6_phy(phy_info)) {
         printf("FATAL: sdk_register_chipv6_phy failed");
         abort();
     }
-    uart_set_baud(0, 74906);
-    uart_set_baud(1, 74906);
+
+    // The boot rom initializes uart0 for a 115200 baud rate but the bus clock
+    // does not appear to be as expected so the initial baud rate is actually
+    // 74906. On a cold boot, to keep the 74906 baud rate the uart0 divisor
+    // would need to changed here to 74906. On a warm boot the bus clock is
+    // expected to have already been set so the boot baud rate is 115200.
+    // Reset the rate here and settle on a 115200 baud rate.
+    if (sdk_rst_if.reason > 0) {
+        uart_set_baud(0, 115200);
+        uart_set_baud(1, 115200);
+    }
+
     sdk_phy_disable_agc();
     sdk_ieee80211_phy_init(sdk_g_ic.s.phy_mode);
     sdk_lmacInit();
