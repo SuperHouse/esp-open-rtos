@@ -12,6 +12,12 @@
  * from the real FRC2 timer ISR handler and calls former ISR handler.
  * So, timer callbacks are called from the task context rather than an interrupt.
  *
+ * Modifications from the original reverese engineered version:
+ *  - FreeRTOS queue is replaced with Task notifications.
+ *  - Removed unknown queue lenght monitoring and parameters allocation.
+ *  - Removed unused debug variables
+ *  - xTaskGenericCreate is replaced with xTaskCreate
+ *
  * This timer should be used with coution together with other tasks. As the
  * timer callback is executed within timer task context, access to data that
  * other tasks accessing should be protected.
@@ -55,25 +61,7 @@ typedef struct ets_timer_st {
  */
 static ets_timer_t* timer_list = 0;
 
-/**
- * Those debug variables are set but never used.
- */
-static ets_timer_func_t *debug_timerfn;
-static ets_timer_t *debug_timer;
-
-/**
- * Timer queue
- */
-static QueueHandle_t queue;
-
-/**
- * Unknown stuff
- * Some counters
- */
-static uint8_t queue_len = 0;
-static uint8_t buf_param_index = 0;
-static uint64_t _unknown_buf[4];
-
+static TaskHandle_t task_handle = NULL;
 
 void sdk_ets_timer_setfn(ets_timer_t *timer, ets_timer_func_t *func, void *parg)
 {
@@ -87,7 +75,7 @@ void sdk_ets_timer_setfn(ets_timer_t *timer, ets_timer_func_t *func, void *parg)
 /**
  * .Lfunc004
  */
-static void set_alarm_value(uint32_t value)
+static inline void set_alarm_value(uint32_t value)
 {
     TIMER_FRC2.ALARM = value;
 }
@@ -247,15 +235,12 @@ void sdk_ets_timer_disarm(ets_timer_t *timer)
  * Check the list of pending timers for expired ones and process them.
  * This function is not called from the interrupt regardless of its name.
  */
-void sdk_ets_timer_handler_isr()
+void IRAM sdk_ets_timer_handler_isr()
 {
     vPortEnterCritical();
     int32_t ticks = TIMER_FRC2.COUNT;
     while (timer_list) {
         if (((int32_t)timer_list->fire_ticks - ticks) < 1) {
-            debug_timerfn = timer_list->callback;
-            debug_timer = timer_list;
-
             ets_timer_t *timer = timer_list;
             timer_list = timer->next;
             timer->next = ETS_TIMER_NOT_ARMED;
@@ -281,67 +266,19 @@ void sdk_ets_timer_handler_isr()
     vPortExitCritical();
 }
 
-
-/**
- * .Lfunc001
- *
- * Mysterious function.
- * It seems like it keeps track of the queue size and returns 0 if
- * the queue gets longer than 5.
- * Also it seems like it returns some buffers that are used in the queue.
- * But those buffers in the queue are not used at all.
- * If anybody knows what is this all about please leave a comment.
- */
-static void* IRAM func001()
-{
-    uint8_t *p = (uint8_t*)_unknown_buf;
-
-    queue_len++;
-    if (queue_len < 5) {
-        p += (buf_param_index*8);
-        if (buf_param_index + 1 < 4) {
-            buf_param_index++;
-        } else {
-            buf_param_index = 0;
-        }
-        return p;
-    } else {
-        queue_len--;
-        return 0;
-    }
-}
-
 /**
  * .Lfunc002
  */
 static void IRAM frc2_isr()
 {
-    void *p = func001();
-
-    if (!p) {
-        printf("TIMQ_NUL\n");
-        return;
-    }
-
     BaseType_t task_woken = 0;
 
-    BaseType_t result = xQueueGenericSendFromISR(queue, p, &task_woken, 0);
+    BaseType_t result = xTaskNotifyFromISR(task_handle, 0, eNoAction, &task_woken);
     if (result != pdTRUE) {
         printf("TIMQ_FL:%d!!", (uint32_t)result);
     }
-    if (task_woken) {
-        vTaskSwitchContext();
-    }
-}
 
-/**
- * .Lfunc003
- */
-static void func003()
-{
-    vPortEnterCritical();
-    queue_len--;
-    vPortExitCritical();
+    portEND_SWITCHING_ISR(task_woken);
 }
 
 /**
@@ -351,11 +288,9 @@ static void func003()
  */
 static void timer_task(void* param)
 {
-    uint32_t *local0;
     while (true) {
-        if (xQueueGenericReceive(queue, &local0, 0xffffffff, 0) == 1) {
+        if (xTaskNotifyWait(0, 0, NULL, portMAX_DELAY) == pdTRUE) {
             sdk_ets_timer_handler_isr();
-            func003();
         }
     }
 }
@@ -366,17 +301,12 @@ void sdk_ets_timer_init()
 
     _xt_isr_attach(INUM_TIMER_FRC2, frc2_isr);
 
-    queue = xQueueGenericCreate(/*length=*/4, /*item size=*/4,
-            /*queu type: base*/0);
-
-    TaskHandle_t handle = 0;
-
     /* Original code calls xTaskGenericCreate:
-     * xTaskGenericCreate(timer_task, "rtc_timer_task", 200, 0, 12, &handle,
+     * xTaskGenericCreate(task_handle, "rtc_timer_task", 200, 0, 12, &handle,
      *     NULL, NULL);
      */
-    xTaskCreate(timer_task, "rtc_timer_task", 200, 0, 12, &handle);
-    printf("frc2_timer_task_hdl:%x, prio:%d, stack:%d\n", (uint32_t)handle, 12, 200);
+    xTaskCreate(timer_task, "rtc_timer_task", 200, 0, 12, &task_handle);
+    printf("frc2_timer_task_hdl:%p, prio:%d, stack:%d\n", task_handle, 12, 200);
 
     TIMER_FRC2.ALARM = 0;
     TIMER_FRC2.CTRL =  VAL2FIELD(TIMER_CTRL_CLKDIV, TIMER_CLKDIV_16)
