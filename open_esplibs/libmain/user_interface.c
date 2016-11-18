@@ -20,6 +20,7 @@
 #include "esp/iomux_regs.h"
 #include "esp/sar_regs.h"
 #include "esp/wdev_regs.h"
+#include "esp/uart.h"
 
 #include "etstimer.h"
 #include "espressif/sdk_private.h"
@@ -79,16 +80,23 @@ void IRAM sdk_system_restart_in_nmi(void) {
         buf[0] = 3;
         sdk_system_rtc_mem_write(0, buf, 32);
     }
+
+    uart_flush_txfifo(0);
+    uart_flush_txfifo(1);
+
     if (!sdk_NMIIrqIsOn) {
         portENTER_CRITICAL();
         do {
             DPORT.DPORT0 = SET_FIELD(DPORT.DPORT0, DPORT_DPORT0_FIELD0, 0);
         } while (DPORT.DPORT0 & 1);
     }
+
     ESPSAR.UNKNOWN_48 |= 3;
     DPORT.CLOCKGATE_WATCHDOG |= DPORT_CLOCKGATE_WATCHDOG_UNKNOWN_8;
     ESPSAR.UNKNOWN_48 &= ~3;
     DPORT.CLOCKGATE_WATCHDOG &= ~DPORT_CLOCKGATE_WATCHDOG_UNKNOWN_8;
+
+    Wait_SPI_Idle(&sdk_flashchip);
     Cache_Read_Disable();
     DPORT.SPI_CACHE_RAM &= ~(DPORT_SPI_CACHE_RAM_BANK0 | DPORT_SPI_CACHE_RAM_BANK1);
     // This calls directly to 0x40000080, the "reset" exception vector address.
@@ -559,8 +567,8 @@ enum sdk_dhcp_status sdk_wifi_station_dhcpc_status(void) {
 
 void sdk_system_uart_swap()
 {
-    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS)) {};
-    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(1).STATUS)) {};
+    uart_flush_txfifo(0);
+    uart_flush_txfifo(1);
 
     /* Disable pullup IO_MUX_MTDO, Alt TX. GPIO15. */
     iomux_set_pullup_flags(3, 0);
@@ -576,8 +584,8 @@ void sdk_system_uart_swap()
 
 void sdk_system_uart_de_swap()
 {
-    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(0).STATUS)) {};
-    while (FIELD2VAL(UART_STATUS_TXFIFO_COUNT, UART(1).STATUS)) {};
+    uart_flush_txfifo(0);
+    uart_flush_txfifo(1);
 
     /* Disable pullup IO_MUX_U0TXD, TX. GPIO 1. */
     iomux_set_pullup_flags(5, 0);
