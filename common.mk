@@ -146,7 +146,7 @@ ifndef $(1)_WHOLE_ARCHIVE
    $(1)_AR_IN_FILES += $$($(1)_SRC_FILES)
 endif
 
-$$($(1)_AR): $$($(1)_OBJ_FILES) $$($(1)_SRC_IN_AR_FILES)
+$$($(1)_AR): $$($(1)_AR_IN_FILES)
 	$(vecho) "AR $$@"
 	$(Q) mkdir -p $$(dir $$@)
 	$(Q) $(AR) cru $$@ $$^
@@ -223,14 +223,9 @@ $(FW_FILE): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 	$(vecho) "FW $@"
 	$(Q) $(ESPTOOL) elf2image --version=2 $(ESPTOOL_ARGS) $< -o $(FW_FILE)
 
-ESPTOOL_FLASH_CMD ?= -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) \
-	0x0 $(RBOOT_BIN) 0x1000 $(RBOOT_CONF) 0x2000 $(FW_FILE) $(SPIFFS_ESPTOOL_ARGS)
-
 flash: all
-	$(Q) $(ESPTOOL) $(ESPTOOL_FLASH_CMD)
-
-print_flash_cmd:
-	$(Q) echo "$(ESPTOOL_FLASH_CMD)"
+	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) \
+		0x0 $(RBOOT_BIN) 0x1000 $(RBOOT_CONF) 0x2000 $(FW_FILE) $(SPIFFS_ESPTOOL_ARGS)
 
 erase_flash:
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) erase_flash
@@ -274,9 +269,6 @@ help:
 	@echo ""
 	@echo "test"
 	@echo "'flash', then start a GNU Screen session on the same serial port to see serial output."
-	@echo ""
-	@echo "print_flash_cmd"
-	@echo "Just print command line arguments for flashing with esptool.py"
 	@echo ""
 	@echo "size"
 	@echo "Build, then print a summary of built firmware size."
