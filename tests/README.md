@@ -39,12 +39,6 @@ If not specified device `/dev/ttyUSB1` is used.
 
 `--no-flash` or `-n` - Do not flash the test firmware before running tests.
 
-`--flash` or `-f` - Flash device directly with esptool instead of using
-`make flash` command. Can be used to flash binaries without esp-open-rtos
-environment.
-
-`--flash-cmd` or `-c` - Flash command for esptool. Used together with `--flash`.
-
 `--list` or `-l` - Display list of the available test cases on the device.
 
 ### Example
