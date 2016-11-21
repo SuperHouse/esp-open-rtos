@@ -12,13 +12,14 @@
  * from the real FRC2 timer ISR handler and calls former ISR handler.
  * So, timer callbacks are called from the task context rather than an interrupt.
  *
- * Modifications from the original reverese engineered version:
+ * Modifications from the original reverse engineered version:
  *  - FreeRTOS queue is replaced with Task notifications.
- *  - Removed unknown queue lenght monitoring and parameters allocation.
+ *  - Removed unknown queue length monitoring and parameters allocation.
  *  - Removed unused debug variables
  *  - xTaskGenericCreate is replaced with xTaskCreate
+ *  - simplified time to ticks conversion (simply multiply by 5)
  *
- * This timer should be used with coution together with other tasks. As the
+ * This timer should be used with caution together with other tasks. As the
  * timer callback is executed within timer task context, access to data that
  * other tasks accessing should be protected.
  */
@@ -175,20 +176,9 @@ void sdk_ets_timer_arm_ms_us(ets_timer_t *timer, uint32_t value,
     }
 
     if (value_in_ms) {
-        value *= 1000;
-    }
-
-    if (value != 0) {
-        // Why to do multiplication for values greater than 858
-        // and do 'shift and add' for other?
-        // What is the magic number 858 ?
-        if (858 < value) {
-            ticks = (value << 2) + value;  // ticks = value * 5
-        } else {
-            // It is the same as just multiply by 5
-            // No idea why to do it this way
-            ticks = (value * 5000000) / 1000000;
-        }
+        ticks = value * 5000;
+    } else {
+        ticks = value * 5;
     }
 
     if (repeat_flag) {
@@ -204,6 +194,13 @@ void sdk_ets_timer_arm(ets_timer_t *timer, uint32_t milliseconds,
 {
     sdk_ets_timer_arm_ms_us(timer, milliseconds, repeat_flag,
             /*value in ms=*/true);
+}
+
+void sdk_ets_timer_arm_us(ets_timer_t *timer, uint32_t useconds,
+        bool repeat_flag)
+{
+    sdk_ets_timer_arm_ms_us(timer, useconds, repeat_flag,
+            /*value in ms=*/false);
 }
 
 /**
@@ -233,9 +230,8 @@ void sdk_ets_timer_disarm(ets_timer_t *timer)
 
 /**
  * Check the list of pending timers for expired ones and process them.
- * This function is not called from the interrupt regardless of its name.
  */
-void IRAM sdk_ets_timer_handler_isr()
+static inline void process_pending_timers()
 {
     vPortEnterCritical();
     int32_t ticks = TIMER_FRC2.COUNT;
@@ -290,7 +286,7 @@ static void timer_task(void* param)
 {
     while (true) {
         if (xTaskNotifyWait(0, 0, NULL, portMAX_DELAY) == pdTRUE) {
-            sdk_ets_timer_handler_isr();
+            process_pending_timers();
         }
     }
 }
@@ -305,7 +301,7 @@ void sdk_ets_timer_init()
      * xTaskGenericCreate(task_handle, "rtc_timer_task", 200, 0, 12, &handle,
      *     NULL, NULL);
      */
-    xTaskCreate(timer_task, "rtc_timer_task", 200, 0, 12, &task_handle);
+    xTaskCreate(timer_task, "ets_timer_task", 200, 0, 12, &task_handle);
     printf("frc2_timer_task_hdl:%p, prio:%d, stack:%d\n", task_handle, 12, 200);
 
     TIMER_FRC2.ALARM = 0;
