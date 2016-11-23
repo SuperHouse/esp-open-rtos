@@ -19,3 +19,6 @@
 [submodule "tests/fs-test"]
 	path = tests/fs-test
 	url = https://github.com/sheinz/fs-test
+[submodule "extras/http-parser/http-parser"]
+	path = extras/http-parser/http-parser
+	url = https://github.com/nodejs/http-parser
