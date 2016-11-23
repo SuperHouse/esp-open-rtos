@@ -3,3 +3,4 @@ printf-stdarg.o
 libc.o
 xtensa_vectors.o
 app_main.o
+ets_timer.o

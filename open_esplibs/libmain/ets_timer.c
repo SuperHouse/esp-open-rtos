@@ -27,6 +27,33 @@
 
 #if OPEN_LIBMAIN_ETS_TIMER
 
+#if 0
+
+#include "etstimer.h"
+#include "espressif/osapi.h"
+
+void sdk_ets_timer_setfn(ETSTimer *timer, ETSTimerFunc *func, void *parg) {
+    sdk_os_timer_setfn(timer, func, parg);
+}
+
+void sdk_ets_timer_arm(ETSTimer *timer, uint32_t value, bool repeat_flag) {
+    sdk_os_timer_arm(timer, value, repeat_flag);
+}
+
+void sdk_ets_timer_arm_ms_us(ETSTimer *timer, uint32_t value,
+                             bool repeat_flag, bool value_in_ms) {
+    sdk_os_timer_arm(timer, value * 1000 + value_in_ms, repeat_flag);
+}
+
+void sdk_ets_timer_disarm(ETSTimer *timer) {
+    sdk_os_timer_disarm(timer);
+}
+
+void sdk_ets_timer_init() {
+}
+
+#else
+
 #include "open_esplibs.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -73,17 +100,12 @@ void sdk_ets_timer_setfn(ets_timer_t *timer, ets_timer_func_t *func, void *parg)
     timer->next = ETS_TIMER_NOT_ARMED;
 }
 
-/**
- * .Lfunc004
- */
 static inline void set_alarm_value(uint32_t value)
 {
     TIMER_FRC2.ALARM = value;
 }
 
 /**
- * .Lfunc005
- *
  * Set timer alarm and make sure the alarm is set in the future
  * and will not be missed by the timer.
  */
@@ -103,7 +125,6 @@ static void set_alarm(uint32_t ticks)
 }
 
 /**
- * .Lfunc006
  *
  * Pending timer list example:
  *
@@ -313,5 +334,7 @@ void sdk_ets_timer_init()
 
    _xt_isr_unmask(BIT(INUM_TIMER_FRC2));
 }
+
+#endif
 
 #endif /* OPEN_LIBMAIN_ETS_TIMER */
