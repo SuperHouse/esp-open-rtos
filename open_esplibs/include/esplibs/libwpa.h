@@ -35,6 +35,9 @@ int sdk_hostapd_setup_wpa_psk(struct _unknown_softap2 *);
 // md5.o
 
 // os_xtensa.o
+int sdk_os_get_time(uint32_t time[]);
+uint32_t sdk_os_random();
+int sdk_os_get_random(uint8_t *dst, uint32_t size);
 
 // rc4.o
 
