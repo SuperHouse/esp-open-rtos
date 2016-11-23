@@ -69,6 +69,7 @@ typedef enum {
  * Pressure oversampling settings
  */
 typedef enum {
+    BMP280_SKIPPED = 0,          /* no measurement  */
     BMP280_ULTRA_LOW_POWER = 1,  /* oversampling x1 */
     BMP280_LOW_POWER = 2,        /* oversampling x2 */
     BMP280_STANDARD = 3,         /* oversampling x4 */
@@ -97,7 +98,8 @@ typedef enum {
 typedef struct {
     BMP280_Mode mode;
     BMP280_Filter filter;
-    BMP280_Oversampling oversampling;  // pressure oversampling
+    BMP280_Oversampling oversampling_pressure;
+    BMP280_Oversampling oversampling_temperature;
     BMP280_Oversampling oversampling_humidity;
     BMP280_StandbyTime standby;
 } bmp280_params_t;
