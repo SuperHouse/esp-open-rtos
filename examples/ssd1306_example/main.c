@@ -21,6 +21,7 @@
 
 #ifdef I2C_CONNECTION
     #define PROTOCOL SSD1306_PROTO_I2C
+    #define ADDR     SSD1306_I2C_ADDR_0
     #define SCL_PIN  5
     #define SDA_PIN  4
 #else
@@ -32,7 +33,9 @@
 /* Declare device descriptor */
 static const ssd1306_t dev = {
     .protocol = PROTOCOL,
-#ifndef I2C_CONNECTION
+#ifdef I2C_CONNECTION
+    .addr     = ADDR,
+#else
     .cs_pin   = CS_PIN,
     .dc_pin   = DC_PIN,
 #endif

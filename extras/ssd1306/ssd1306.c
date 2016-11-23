@@ -82,7 +82,7 @@ int ssd1306_command(const ssd1306_t *dev, uint8_t cmd)
 #if (SSD1306_I2C_SUPPORT)
         case SSD1306_PROTO_I2C:
             i2c_start();
-            if (!i2c_write(SSD1306_I2C_ADDR << 1)) {
+            if (!i2c_write(dev->addr << 1)) {
                 debug("Error while xmitting I2C slave address\n");
                 i2c_stop();
                 return -EIO;
@@ -189,7 +189,7 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
         case SSD1306_PROTO_I2C:
             for (i = 0; i < len; i++) {
                 i2c_start();
-                if (!i2c_write(SSD1306_I2C_ADDR << 1)) {
+                if (!i2c_write(dev->addr << 1)) {
                     debug("Error while xmitting I2C slave address\n");
                     i2c_stop();
                     return -EIO;
