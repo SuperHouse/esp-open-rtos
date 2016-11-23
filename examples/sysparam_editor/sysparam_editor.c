@@ -31,6 +31,7 @@ void usage(void) {
         "  <key>=<value>   -- Set <key> to text <value>\n"
         "  <key>:<hexdata> -- Set <key> to binary value represented as hex\n"
         "  dump            -- Show all currently set keys/values\n"
+        "  compact         -- Compact the sysparam area\n"
         "  reformat        -- Reinitialize (clear) the sysparam area\n"
         "  echo-off        -- Disable input echo\n"
         "  echo-on         -- Enable input echo\n"
@@ -211,6 +212,9 @@ void sysparam_editor_task(void *pvParameters) {
         } else if (!strcmp(cmd_buffer, "dump")) {
             printf("Dumping all params:\n");
             status = dump_params();
+        } else if (!strcmp(cmd_buffer, "compact")) {
+            printf("Compacting...\n");
+            status = sysparam_compact();
         } else if (!strcmp(cmd_buffer, "reformat")) {
             printf("Re-initializing region...\n");
             status = sysparam_create_area(base_addr, num_sectors, true);
