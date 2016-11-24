@@ -43,10 +43,12 @@ typedef struct
 {
     ssd1306_protocol_t protocol;
 #if (SSD1306_I2C_SUPPORT)
-    uint8_t addr;                 //!< I2C address
+    uint8_t addr;                 //!< I2C address, used by SSD1306_PROTO_I2C
 #endif
+#if (SSD1306_SPI4_SUPPORT)
     uint8_t cs_pin;               //!< Chip Select GPIO pin, used by SSD1306_PROTO_SPI3, SSD1306_PROTO_SPI4
     uint8_t dc_pin;               //!< Data/Command GPIO pin, used by SSD1306_PROTO_SPI4
+#endif
     uint8_t width;                //!< Screen width, currently supported 128px, 96px
     uint8_t height;               //!< Screen height, currently supported 16px, 32px, 64px
 } ssd1306_t;
