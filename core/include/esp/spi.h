@@ -337,12 +337,12 @@ static inline void spi_set_address(uint8_t bus,uint8_t bits, uint32_t data)
  * \param bits Number of bits
  * \param pos Address to send for each transfert.
  */
-static inline void spi_set_dummy_bits(uint8_t bus, uint8_t bits,bool pos)
+static inline void spi_set_dummy_bits(uint8_t bus, uint8_t bits, bool pos)
 {
 	if(!bits) return ;
 	if(pos) { SPI(bus).USER0 |= SPI_USER0_MISO; } // Dummy bit will be between Dout and Din data if set
-    SPI(bus).USER0 |= SPI_USER0_DUMMY; //enable dummy bits
-    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_DUMMY_CYCLELEN, --bits);
+	SPI(bus).USER0 |= SPI_USER0_DUMMY; //enable dummy bits
+	SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_DUMMY_CYCLELEN, --bits);
 }
 
 /**
