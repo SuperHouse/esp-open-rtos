@@ -248,33 +248,33 @@ size_t spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len
 
 static void _repeat_send(uint8_t bus, uint32_t* dword,int32_t* repeats,spi_word_size_t size)
 {
-	uint8_t i = 0 ;
-	while(*repeats > 0)
-	{
-		uint16_t bytes_to_transfer = __min(*repeats * size , _SPI_BUF_SIZE);
-		_wait(bus);
-		_set_size(bus,bytes_to_transfer);
-		for(i = 0; i < (bytes_to_transfer + 3) / 4;i++)
-			SPI(bus).W[i] = *dword; //need test with memcpy !
-		_start(bus);
-		*repeats -= (bytes_to_transfer / size ) ;
-	}
-	_wait(bus);
+    uint8_t i = 0 ;
+    while(*repeats > 0)
+    {
+        uint16_t bytes_to_transfer = __min(*repeats * size , _SPI_BUF_SIZE);
+        _wait(bus);
+        _set_size(bus,bytes_to_transfer);
+        for(i = 0; i < (bytes_to_transfer + 3) / 4;i++)
+            SPI(bus).W[i] = *dword; //need test with memcpy !
+        _start(bus);
+        *repeats -= (bytes_to_transfer / size ) ;
+    }
+    _wait(bus);
 }
 
 void spi_repeat_send_8(uint8_t bus, uint8_t data,int32_t repeats)
 {
-	uint32_t dword = data << 24 | data << 16 | data << 8 | data;
-	_repeat_send(bus,&dword,&repeats, SPI_8BIT);
+    uint32_t dword = data << 24 | data << 16 | data << 8 | data;
+    _repeat_send(bus,&dword,&repeats, SPI_8BIT);
 }
 
 void spi_repeat_send_16(uint8_t bus, uint16_t data,int32_t repeats)
 {
-	uint32_t dword = data << 16 | data;
-	_repeat_send(bus,&dword,&repeats, SPI_16BIT);
+    uint32_t dword = data << 16 | data;
+    _repeat_send(bus,&dword,&repeats, SPI_16BIT);
 }
 
 void spi_repeat_send_32(uint8_t bus, uint32_t data,int32_t repeats)
 {
-	_repeat_send(bus,&data,&repeats, SPI_32BIT);
+    _repeat_send(bus,&data,&repeats, SPI_32BIT);
 }

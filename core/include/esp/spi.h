@@ -186,7 +186,7 @@ void spi_set_frequency_div(uint8_t bus, uint32_t divider);
 inline uint32_t spi_get_frequency_div(uint8_t bus)
 {
     return (FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) |
-           (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
+            (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
 }
 /**
  * \brief Get SPI bus frequency in Hz
@@ -196,8 +196,8 @@ inline uint32_t spi_get_frequency_div(uint8_t bus)
 inline uint32_t spi_get_frequency_hz(uint8_t bus)
 {
     return APB_CLK_FREQ /
-        (FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) /
-        (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
+            (FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) /
+            (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
 }
 
 /**
@@ -230,8 +230,8 @@ void spi_set_endianness(uint8_t bus, spi_endianness_t endianness);
 inline spi_endianness_t spi_get_endianness(uint8_t bus)
 {
     return SPI(bus).USER0 & (SPI_USER0_WR_BYTE_ORDER | SPI_USER0_RD_BYTE_ORDER)
-        ? SPI_BIG_ENDIAN
-        : SPI_LITTLE_ENDIAN;
+            ? SPI_BIG_ENDIAN
+                    : SPI_LITTLE_ENDIAN;
 }
 
 /**
@@ -291,12 +291,12 @@ size_t spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len
  */
 static inline void spi_set_command(uint8_t bus,uint8_t bits, uint16_t data)
 {
-	if(!bits) return ;
-	SPI(bus).USER0 |= SPI_USER0_COMMAND ; //enable COMMAND function in SPI module
-	uint16_t command = data << (16-bits); //align command data to high bits
-	command = ((command>>8)&0xff) | ((command<<8)&0xff00); //swap byte order
-	SPI(bus).USER2 =  SET_FIELD(SPI(bus).USER2, SPI_USER2_COMMAND_BITLEN, --bits);
-	SPI(bus).USER2 =  SET_FIELD(SPI(bus).USER2, SPI_USER2_COMMAND_VALUE, command);
+    if(!bits) return ;
+    SPI(bus).USER0 |= SPI_USER0_COMMAND ; //enable COMMAND function in SPI module
+    uint16_t command = data << (16-bits); //align command data to high bits
+    command = ((command>>8)&0xff) | ((command<<8)&0xff00); //swap byte order
+    SPI(bus).USER2 =  SET_FIELD(SPI(bus).USER2, SPI_USER2_COMMAND_BITLEN, --bits);
+    SPI(bus).USER2 =  SET_FIELD(SPI(bus).USER2, SPI_USER2_COMMAND_VALUE, command);
 }
 
 /**
@@ -316,10 +316,10 @@ static inline void spi_set_command(uint8_t bus,uint8_t bits, uint16_t data)
  */
 static inline void spi_set_address(uint8_t bus,uint8_t bits, uint32_t data)
 {
-	if(!bits) return ;
-	SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_ADDR_BITLEN, --bits);
-	SPI(bus).USER0 |= SPI_USER0_ADDR ; //enable ADDRess function in SPI module
-	SPI(bus).ADDR = data<<(32-bits) ; //align address data to high bits
+    if(!bits) return ;
+    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_ADDR_BITLEN, --bits);
+    SPI(bus).USER0 |= SPI_USER0_ADDR ; //enable ADDRess function in SPI module
+    SPI(bus).ADDR = data<<(32-bits) ; //align address data to high bits
 }
 
 /**
@@ -335,14 +335,14 @@ static inline void spi_set_address(uint8_t bus,uint8_t bits, uint32_t data)
  *
  * \param bus Bus ID: 0 - system, 1 - user
  * \param bits Number of bits
- * \param pos Address to send for each transfert.
+ * \param pos Position of dummy bit, between Dout and Din if true.
  */
 static inline void spi_set_dummy_bits(uint8_t bus, uint8_t bits, bool pos)
 {
-	if(!bits) return ;
-	if(pos) { SPI(bus).USER0 |= SPI_USER0_MISO; } // Dummy bit will be between Dout and Din data if set
-	SPI(bus).USER0 |= SPI_USER0_DUMMY; //enable dummy bits
-	SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_DUMMY_CYCLELEN, --bits);
+    if(!bits) return ;
+    if(pos) { SPI(bus).USER0 |= SPI_USER0_MISO; } // Dummy bit will be between Dout and Din data if set
+    SPI(bus).USER0 |= SPI_USER0_DUMMY; //enable dummy bits
+    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_DUMMY_CYCLELEN, --bits);
 }
 
 /**
@@ -351,7 +351,7 @@ static inline void spi_set_dummy_bits(uint8_t bus, uint8_t bits, bool pos)
  */
 static inline void spi_clear_address(uint8_t bus)
 {
-	SPI(bus).USER0 &= ~(SPI_USER0_ADDR) ;
+    SPI(bus).USER0 &= ~(SPI_USER0_ADDR) ;
 }
 
 /**
@@ -361,7 +361,7 @@ static inline void spi_clear_address(uint8_t bus)
 
 static inline void spi_clear_command(uint8_t bus)
 {
-	SPI(bus).USER0 &= ~(SPI_USER0_COMMAND) ;
+    SPI(bus).USER0 &= ~(SPI_USER0_COMMAND) ;
 }
 
 /**
@@ -370,7 +370,7 @@ static inline void spi_clear_command(uint8_t bus)
  */
 static inline void spi_clear_dummy(uint8_t bus)
 {
-	SPI(bus).USER0 &= ~(SPI_USER0_DUMMY | SPI_USER0_MISO ) ;
+    SPI(bus).USER0 &= ~(SPI_USER0_DUMMY | SPI_USER0_MISO);
 }
 
 /**
