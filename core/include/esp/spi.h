@@ -36,6 +36,15 @@
 #define SPI_FREQ_DIV_40M  SPI_GET_FREQ_DIV(1,  2)  ///< 40MHz
 #define SPI_FREQ_DIV_80M  SPI_GET_FREQ_DIV(1,  1)  ///< 80MHz
 
+/*
+ * Possible Data Structure of SPI Transaction
+ *
+ * [COMMAND]+[ADDRESS]+[DataOUT]+[DUMMYBITS]+[DataIN]
+ *
+ * [COMMAND]+[ADDRESS]+[DUMMYBITS]+[DataOUT]
+ *
+ */
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -177,7 +186,7 @@ void spi_set_frequency_div(uint8_t bus, uint32_t divider);
 inline uint32_t spi_get_frequency_div(uint8_t bus)
 {
     return (FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) |
-           (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
+            (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
 }
 /**
  * \brief Get SPI bus frequency in Hz
@@ -187,8 +196,8 @@ inline uint32_t spi_get_frequency_div(uint8_t bus)
 inline uint32_t spi_get_frequency_hz(uint8_t bus)
 {
     return APB_CLK_FREQ /
-        (FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) /
-        (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
+            (FIELD2VAL(SPI_CLOCK_DIV_PRE, SPI(bus).CLOCK) + 1) /
+            (FIELD2VAL(SPI_CLOCK_COUNT_NUM, SPI(bus).CLOCK) + 1);
 }
 
 /**
@@ -221,8 +230,8 @@ void spi_set_endianness(uint8_t bus, spi_endianness_t endianness);
 inline spi_endianness_t spi_get_endianness(uint8_t bus)
 {
     return SPI(bus).USER0 & (SPI_USER0_WR_BYTE_ORDER | SPI_USER0_RD_BYTE_ORDER)
-        ? SPI_BIG_ENDIAN
-        : SPI_LITTLE_ENDIAN;
+            ? SPI_BIG_ENDIAN
+                    : SPI_LITTLE_ENDIAN;
 }
 
 /**
@@ -264,6 +273,129 @@ uint32_t spi_transfer_32(uint8_t bus, uint32_t data);
  * \return Transmitted/received words count
  */
 size_t spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len, spi_word_size_t word_size);
+
+/**
+ * \brief Add permanent command bits when transfert data over SPI
+ * Example:
+ *
+ *    spi_set_command(1,1,0x01); // Set one command bit to 1
+ *    for (uint8_t i = 0 ; i < x ; i++ ) {
+ *    	spi_transfer_8(1,0x55);  // Send 1 bit command + 8 bits data x times
+ *    }
+ *    spi_clear_command(1); // Clear command
+ *    spi_transfer_8(1,0x55);  // Send 8 bits data
+ *
+ * \param bus Bus ID: 0 - system, 1 - user
+ * \param bits Number of bits (max: 16).
+ * \param data Command to send for each transfert.
+ */
+static inline void spi_set_command(uint8_t bus,uint8_t bits, uint16_t data)
+{
+    if(!bits) return ;
+    SPI(bus).USER0 |= SPI_USER0_COMMAND ; //enable COMMAND function in SPI module
+    uint16_t command = data << (16-bits); //align command data to high bits
+    command = ((command>>8)&0xff) | ((command<<8)&0xff00); //swap byte order
+    SPI(bus).USER2 =  SET_FIELD(SPI(bus).USER2, SPI_USER2_COMMAND_BITLEN, --bits);
+    SPI(bus).USER2 =  SET_FIELD(SPI(bus).USER2, SPI_USER2_COMMAND_VALUE, command);
+}
+
+/**
+ * \brief Add permanent address bits when transfert data over SPI
+ * Example:
+ *
+ *    spi_set_address(1,8,0x45); // Set one address byte to 0x45
+ *    for (uint8_t i = 0 ; i < x ; i++ ) {
+ *    	spi_transfer_16(1,0xC584);  // Send 16 bits address + 16 bits data x times
+ *    }
+ *    spi_clear_address(1); // Clear command
+ *    spi_transfer_16(1,0x55);  // Send 16 bits data
+ *
+ * \param bus Bus ID: 0 - system, 1 - user
+ * \param bits Number of bits (max: 32).
+ * \param data Address to send for each transfert.
+ */
+static inline void spi_set_address(uint8_t bus,uint8_t bits, uint32_t data)
+{
+    if(!bits) return ;
+    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_ADDR_BITLEN, --bits);
+    SPI(bus).USER0 |= SPI_USER0_ADDR ; //enable ADDRess function in SPI module
+    SPI(bus).ADDR = data<<(32-bits) ; //align address data to high bits
+}
+
+/**
+ * \brief Add permanent dummy bits when transfert data over SPI
+ * Example:
+ *
+ *    spi_set_dummy_bits(1,4,false); // Set 4 dummy bit before Dout
+ *    for (uint8_t i = 0 ; i < x ; i++ ) {
+ *    	spi_transfer_16(1,0xC584);  // Send 4 bits dummy + 16 bits Dout x times
+ *    }
+ *    spi_set_dummy_bits(1,4,true); // Set 4 dummy bit between Dout and Din
+ *    spi_transfer_8(1,0x55);  // Send 8 bits Dout + 4 bits dummy + 8 bits Din
+ *
+ * \param bus Bus ID: 0 - system, 1 - user
+ * \param bits Number of bits
+ * \param pos Position of dummy bit, between Dout and Din if true.
+ */
+static inline void spi_set_dummy_bits(uint8_t bus, uint8_t bits, bool pos)
+{
+    if(!bits) return ;
+    if(pos) { SPI(bus).USER0 |= SPI_USER0_MISO; } // Dummy bit will be between Dout and Din data if set
+    SPI(bus).USER0 |= SPI_USER0_DUMMY; //enable dummy bits
+    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_DUMMY_CYCLELEN, --bits);
+}
+
+/**
+ * \brief Clear adress Bits
+ * \param bus Bus ID: 0 - system, 1 - user
+ */
+static inline void spi_clear_address(uint8_t bus)
+{
+    SPI(bus).USER0 &= ~(SPI_USER0_ADDR) ;
+}
+
+/**
+ * \brief Clear command Bits
+ * \param bus Bus ID: 0 - system, 1 - user
+ */
+
+static inline void spi_clear_command(uint8_t bus)
+{
+    SPI(bus).USER0 &= ~(SPI_USER0_COMMAND) ;
+}
+
+/**
+ * \brief Clear dummy Bits
+ * \param bus Bus ID: 0 - system, 1 - user
+ */
+static inline void spi_clear_dummy(uint8_t bus)
+{
+    SPI(bus).USER0 &= ~(SPI_USER0_DUMMY | SPI_USER0_MISO);
+}
+
+/**
+ * \brief Send many 8 bits template over SPI
+ * \param bus Bus ID: 0 - system, 1 - user
+ * \param data Byte template (8 bits)
+ * \param repeats Copy byte number
+ */
+void spi_repeat_send_8(uint8_t bus, uint8_t data, int32_t repeats);
+
+/**
+ * \brief Send many 16 bits template over SPI
+ * \param bus Bus ID: 0 - system, 1 - user
+ * \param data Word template (16 bits)
+ * \param repeats Copy word number
+ */
+void spi_repeat_send_16(uint8_t bus, uint16_t data, int32_t repeats);
+
+/**
+ * \brief Send many 32 bits template over SPI
+ * \param bus Bus ID: 0 - system, 1 - user
+ * \param data Dualword template (32 bits)
+ * \param repeats Copy dword number
+ */
+void spi_repeat_send_32(uint8_t bus, uint32_t data, int32_t repeats);
 
 #ifdef __cplusplus
 }
