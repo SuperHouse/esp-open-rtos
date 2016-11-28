@@ -9,7 +9,7 @@
 
 #include <testcase.h>
 
-/* #define DEBUG */
+// #define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -20,6 +20,7 @@
 
 DEFINE_SOLO_TESTCASE(07_sysparam_basic_test);
 DEFINE_SOLO_TESTCASE(07_sysparam_load_test);
+DEFINE_SOLO_TESTCASE(07_sysparam_bool_test);
 
 #define TEST_ITERATIONS         10
 #define KEY_BUF_SIZE            32
@@ -54,13 +55,13 @@ static inline void init_sysparam()
     uint32_t base_addr, num_sectors;
 
     status = sysparam_get_info(&base_addr, &num_sectors);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
 
     status = sysparam_create_area(base_addr, num_sectors, /*force=*/true);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
 
     status = sysparam_init(base_addr, 0);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
 
     debug("sysparam initialized at addr=%x, sectors=%d\n",
             base_addr, num_sectors);
@@ -186,7 +187,7 @@ static void write_test_values(test_data_t *data)
                 break;
         }
 
-        TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+        TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
 
         test_data_next(data);
     }
@@ -208,23 +209,23 @@ static void verify_test_values(test_data_t *data)
             case VALUE_STRING:
                 test_data_get_string(data, expected_str_buf);
                 status = sysparam_get_string(key_buf, &actual_str);
-                TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+                TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
                 TEST_ASSERT_EQUAL_STRING(expected_str_buf, actual_str);
                 free(actual_str);
                 break;
             case VALUE_INT32:
                 status = sysparam_get_int32(key_buf, &actual_int32);
-                TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+                TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
                 TEST_ASSERT_EQUAL_INT(test_data_get_int32(data), actual_int32);
                 break;
             case VALUE_INT8:
                 status = sysparam_get_int8(key_buf, &actual_int8);
-                TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+                TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
                 TEST_ASSERT_EQUAL_INT(test_data_get_int8(data), actual_int8);
                 break;
             case VALUE_BOOL:
                 status = sysparam_get_bool(key_buf, &actual_bool);
-                TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+                TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
                 TEST_ASSERT_TRUE(test_data_get_bool(data) == actual_bool);
                 break;
             case VALUE_ENUM_END:
@@ -244,7 +245,7 @@ static void clear_test_values(test_data_t *data)
     for (int i = 0; i < NUMBER_OF_TEST_DATA; ++i) {
         test_data_get_key(data, key_buf);
         status = sysparam_set_data(key_buf, NULL, 0, false);
-        TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+        TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
 
         test_data_next(data);
     }
@@ -283,43 +284,125 @@ static void a_07_sysparam_load_test(void)
 static void a_07_sysparam_basic_test(void)
 {
     sysparam_status_t status;
-    init_sysparam();
     int32_t int32_val = 0;
     int8_t int8_val = 0;
     char *str;
     bool bool_val;
 
+    init_sysparam();
+
     status = sysparam_set_int32("int_1", -123);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     status = sysparam_get_int32("int_1", &int32_val);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     TEST_ASSERT_EQUAL_INT(-123, int32_val);
 
     status = sysparam_set_int8("int_2", -34);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     status = sysparam_get_int8("int_2", &int8_val);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     TEST_ASSERT_EQUAL_INT(-34, int8_val);
 
     status = sysparam_set_string("str_1", "test string");
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     status = sysparam_get_string("str_1", &str);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     TEST_ASSERT_EQUAL_STRING("test string", str);
     free(str);
 
     status = sysparam_set_bool("bool_true", true);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     status = sysparam_get_bool("bool_true", &bool_val);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     TEST_ASSERT_TRUE(bool_val);
 
     status = sysparam_set_bool("bool_false", false);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     status = sysparam_get_bool("bool_false", &bool_val);
-    TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
     TEST_ASSERT_FALSE(bool_val);
 
     TEST_PASS();
 }
 
+typedef struct {
+    const char *key;
+    const char *str;
+    bool value;
+} bool_test_data_t;
+
+const static bool_test_data_t bool_data[] = {
+    {"str_true", "true", true},
+    {"str_True", "True", true},
+    {"str_TRUE", "TRUE", true},
+    {"str_t", "t", true},
+    {"str_T", "T", true},
+    {"str_y", "y", true},
+    {"str_Y", "Y", true},
+    {"str_yes", "yes", true},
+    {"str_Yes", "Yes", true},
+    {"str_YES", "YES", true},
+    {"str_1", "1", true},
+
+    {"str_false", "false", false},
+    {"str_False", "False", false},
+    {"str_FALSE", "FALSE", false},
+    {"str_f", "f", false},
+    {"str_F", "F", false},
+    {"str_n", "n", false},
+    {"str_N", "N", false},
+    {"str_no", "no", false},
+    {"str_No", "No", false},
+    {"str_NO", "NO", false},
+    {"str_0", "0", false},
+};
+
+static void a_07_sysparam_bool_test(void)
+{
+    sysparam_status_t status;
+    bool value;
+
+    init_sysparam();
+
+    for (int i = 0; i < sizeof(bool_data) / sizeof(bool_data[0]); ++i) {
+        status = sysparam_set_string(bool_data[i].key, bool_data[i].str);
+        TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+    }
+
+    status = sysparam_set_int8("int8_0", 0);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+
+    status = sysparam_set_int8("int8_1", 1);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+
+    status = sysparam_set_int32("int32_0", 0);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+
+    status = sysparam_set_int32("int32_1", 1);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+
+    for (int i = 0; i < sizeof(bool_data) / sizeof(bool_data[0]); ++i) {
+        debug("Getting bool key=%s\n", bool_data[i].key);
+        status = sysparam_get_bool(bool_data[i].key, &value);
+        TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+        TEST_ASSERT_TRUE(bool_data[i].value == value);
+    }
+
+    status = sysparam_get_bool("int8_0", &value);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+    TEST_ASSERT_FALSE(value);
+
+    status = sysparam_get_bool("int8_1", &value);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+    TEST_ASSERT_TRUE(value);
+
+    status = sysparam_get_bool("int32_0", &value);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+    TEST_ASSERT_FALSE(value);
+
+    status = sysparam_get_bool("int32_1", &value);
+    TEST_ASSERT_EQUAL_INT(SYSPARAM_OK, status);
+    TEST_ASSERT_TRUE(value);
+
+    TEST_PASS();
+}

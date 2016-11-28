@@ -809,32 +809,48 @@ sysparam_status_t sysparam_get_int8(const char *key, int8_t *result) {
 }
 
 sysparam_status_t sysparam_get_bool(const char *key, bool *result) {
-    char *buffer;
+    const size_t buf_size = 8;
+    char buf[buf_size + 1];  // extra byte for zero termination
+    size_t data_len = 0;
+    bool binary = false;
     sysparam_status_t status;
 
-    status = sysparam_get_string(key, &buffer);
+    status = sysparam_get_data_static(key, (uint8_t*)buf,
+            buf_size, &data_len, &binary);
+
     if (status != SYSPARAM_OK) return status;
     do {
-        if (!strcasecmp(buffer, "y")    ||
-            !strcasecmp(buffer, "yes")  ||
-            !strcasecmp(buffer, "t")    ||
-            !strcasecmp(buffer, "true") ||
-            !strcmp(buffer, "1")) {
+        if (binary) {
+            if (data_len == 1) {  // int8 value
+                *result = (int8_t)(*buf) ? true : false;
+            } else if (data_len == 4) {  // int32 value
+                *result = (int32_t)(*buf) ? true : false;
+            } else {
+                status = SYSPARAM_PARSEFAILED;
+            }
+            break;
+        }
+        buf[data_len] = 0;
+
+        if (!strcasecmp(buf, "y")    ||
+            !strcasecmp(buf, "yes")  ||
+            !strcasecmp(buf, "t")    ||
+            !strcasecmp(buf, "true") ||
+            !strcmp(buf, "1")) {
                 *result = true;
                 break;
         }
-        if (!strcasecmp(buffer, "n")     ||
-            !strcasecmp(buffer, "no")    ||
-            !strcasecmp(buffer, "f")     ||
-            !strcasecmp(buffer, "false") ||
-            !strcmp(buffer, "0")) {
+        if (!strcasecmp(buf, "n")     ||
+            !strcasecmp(buf, "no")    ||
+            !strcasecmp(buf, "f")     ||
+            !strcasecmp(buf, "false") ||
+            !strcmp(buf, "0")) {
                 *result = false;
                 break;
         }
         status = SYSPARAM_PARSEFAILED;
     } while (0);
 
-    free(buffer);
     return status;
 }
 
