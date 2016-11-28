@@ -1,6 +1,6 @@
-/* 
+/*
  * copyright (c) Espressif System 2010
- * 
+ *
  */
 
 #ifndef __SPI_FLASH_H__
@@ -45,12 +45,6 @@ sdk_SpiFlashOpResult sdk_spi_flash_write(uint32_t des_addr, uint32_t *src, uint3
    size is number of bytes to read. Should be a multiple of 4.
 */
 sdk_SpiFlashOpResult sdk_spi_flash_read(uint32_t src_addr, uint32_t *des, uint32_t size);
-
-/* SDK uses this structure internally to account for flash size.
-
-   See flashchip.h for more info.
-*/
-extern sdk_flashchip_t sdk_flashchip;
 
 #ifdef	__cplusplus
 }

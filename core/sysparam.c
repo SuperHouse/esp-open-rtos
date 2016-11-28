@@ -8,7 +8,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <sysparam.h>
-#include <espressif/spi_flash.h>
+#include "spiflash.h"
+#include "flashchip.h"
 #include <common_macros.h>
 #include "FreeRTOS.h"
 #include "semphr.h"
@@ -83,7 +84,9 @@
 
 #define debug(level, format, ...) if (SYSPARAM_DEBUG >= (level)) { printf("%s" format "\n", "sysparam: ", ## __VA_ARGS__); }
 
-#define CHECK_FLASH_OP(x) do { int __x = (x); if ((__x) != SPI_FLASH_RESULT_OK) { debug(1, "FLASH ERR: %d", __x); return SYSPARAM_ERR_IO; } } while (0);
+#define CHECK_FLASH_OP(x) do { bool __x = (x); if (!(__x)) { \
+        debug(1, "FLASH ERR: %d", __x); return SYSPARAM_ERR_IO; \
+    } } while (0);
 
 /********************* Internal datatypes and structures *********************/
 
@@ -120,36 +123,13 @@ static struct {
 /***************************** Internal routines *****************************/
 
 static sysparam_status_t _write_and_verify(uint32_t addr, const void *data, size_t data_size) {
-    int i;
-    uint32_t bounce[BOUNCE_BUFFER_WORDS];
+    static uint8_t bounce[BOUNCE_BUFFER_SIZE];
 
-    // The flash write can not cross a flash page boundary, the source needs to
-    // be word align, so an initial alignment write is performed if necessary.
-    int align = addr & 3;
-    if (align) {
-        size_t count = min(data_size, 4 - align);
-        // Pad the word with ones, write a word.
-        bounce[0] = 0xffffffff;
-        memcpy(((void *)bounce) + align, data, count);
-        CHECK_FLASH_OP(sdk_spi_flash_write(addr & ~3, bounce, 4));
-        CHECK_FLASH_OP(sdk_spi_flash_read(addr & ~3, bounce, 4));
-        if (memcmp(((void *)bounce) + align, data, count) != 0) {
-            debug(1, "Flash write (@ 0x%08x) verify failed!", addr);
-            return SYSPARAM_ERR_IO;
-        }
-        addr += count;
-        data += count;
-        data_size -= count;
-    }
-
-    for (i = 0; i < data_size; i += BOUNCE_BUFFER_SIZE) {
+    for (int i = 0; i < data_size; i += BOUNCE_BUFFER_SIZE) {
         size_t count = min(data_size - i, BOUNCE_BUFFER_SIZE);
-        // Pad the last word write ones, write words.
-        bounce[(count - 1) >> 2] = 0xffffffff;
         memcpy(bounce, data + i, count);
-        size_t word_count = (count + 3) & ~3;
-        CHECK_FLASH_OP(sdk_spi_flash_write(addr + i, bounce, word_count));
-        CHECK_FLASH_OP(sdk_spi_flash_read(addr + i, bounce, word_count));
+        CHECK_FLASH_OP(spiflash_write(addr + i, bounce, count));
+        CHECK_FLASH_OP(spiflash_read(addr + i, bounce, count));
         if (memcmp(data + i, bounce, count) != 0) {
             debug(1, "Flash write (@ 0x%08x) verify failed!", addr);
             return SYSPARAM_ERR_IO;
@@ -160,11 +140,10 @@ static sysparam_status_t _write_and_verify(uint32_t addr, const void *data, size
 
 /** Erase the sectors of a region */
 static sysparam_status_t _format_region(uint32_t addr, uint16_t num_sectors) {
-    uint16_t sector = addr / sdk_flashchip.sector_size;
     int i;
 
     for (i = 0; i < num_sectors; i++) {
-        CHECK_FLASH_OP(sdk_spi_flash_erase_sector(sector + i));
+        CHECK_FLASH_OP(spiflash_erase_sector(addr + (i * SPI_FLASH_SECTOR_SIZE)));
     }
     return SYSPARAM_OK;
 }
@@ -214,7 +193,7 @@ static sysparam_status_t init_write_context(struct sysparam_context *ctx) {
     memset(ctx, 0, sizeof(*ctx));
     ctx->addr = _sysparam_info.end_addr;
     debug(3, "read entry header @ 0x%08x", ctx->addr);
-    CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
+    CHECK_FLASH_OP(spiflash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
     return SYSPARAM_OK;
 }
 
@@ -240,7 +219,10 @@ static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint16_t matc
                 // workaround is to make sure that the next write operation
                 // will always start with a compaction, which will leave off
                 // the invalid data at the end and fix the issue going forward.
-                debug(1, "Encountered entry with invalid length (0x%04x) @ 0x%08x (region end is 0x%08x).  Truncating entries.", ctx->entry.len, ctx->addr, _sysparam_info.end_addr);
+                debug(1, "Encountered entry with invalid length (0x%04x) @ 0x%08x (region end is 0x%08x).  Truncating entries.",
+                        ctx->entry.len,
+                        ctx->addr, _sysparam_info.end_addr);
+
                 _sysparam_info.force_compact = true;
                 break;
             }
@@ -253,7 +235,7 @@ static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint16_t matc
         }
 
         debug(3, "read entry header @ 0x%08x", ctx->addr);
-        CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
+        CHECK_FLASH_OP(spiflash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
         debug(3, "  idflags = 0x%04x", ctx->entry.idflags);
         if (ctx->entry.idflags == 0xffff) {
             // 0xffff is never a valid id field, so this means we've hit the
@@ -299,18 +281,11 @@ static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint16_t matc
 /** Read the payload from the current entry pointed to by `ctx` */
 
 static inline sysparam_status_t _read_payload(struct sysparam_context *ctx, uint8_t *buffer, size_t buffer_size) {
-    int i;
     uint32_t addr = ctx->addr + ENTRY_HEADER_SIZE;
     size_t size = min(buffer_size, ctx->entry.len);
-    uint32_t bounce[BOUNCE_BUFFER_WORDS];
     debug(3, "read payload (%d) @ 0x%08x", size, addr);
 
-    for (i = 0; i < size; i += BOUNCE_BUFFER_SIZE) {
-        size_t count = min(size - i, BOUNCE_BUFFER_SIZE);
-        size_t word_count = (count + 3) & ~3;
-        CHECK_FLASH_OP(sdk_spi_flash_read(addr + i, bounce, word_count));
-        memcpy(buffer + i, bounce, count);
-    }
+    CHECK_FLASH_OP(spiflash_read(addr, buffer, buffer_size));
 
     return SYSPARAM_OK;
 }
@@ -323,7 +298,7 @@ static inline sysparam_status_t _compare_payload(struct sysparam_context *ctx, u
     int i;
     for (i = 0; i < size; i += BOUNCE_BUFFER_SIZE) {
         int len = min(size - i, BOUNCE_BUFFER_SIZE);
-        CHECK_FLASH_OP(sdk_spi_flash_read(addr + i, (void*)bounce, len));
+        CHECK_FLASH_OP(spiflash_read(addr + i, (void*)bounce, len));
         if (memcmp(value + i, bounce, len)) {
             // Mismatch.
             return SYSPARAM_NOTFOUND;
@@ -425,7 +400,7 @@ static inline sysparam_status_t _delete_entry(uint32_t addr) {
 
     debug(2, "Deleting entry @ 0x%08x", addr);
     debug(3, "read entry header @ 0x%08x", addr);
-    CHECK_FLASH_OP(sdk_spi_flash_read(addr, (void*) &entry, ENTRY_HEADER_SIZE));
+    CHECK_FLASH_OP(spiflash_read(addr, (uint8_t*) &entry, ENTRY_HEADER_SIZE));
     // Set the ID to zero to mark it as "deleted"
     entry.idflags &= ~ENTRY_FLAG_ALIVE;
     debug(3, "write entry header @ 0x%08x", addr);
@@ -453,7 +428,11 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, int *key_
     uint16_t binary_flag;
     uint16_t num_sectors = _sysparam_info.region_size / sdk_flashchip.sector_size;
 
-    debug(1, "compacting region (current size %d, expect to recover %d%s bytes)...", _sysparam_info.end_addr - _sysparam_info.cur_base, ctx ? ctx->compactable : 0, (ctx && ctx->unused_keys > 0) ? "+ (unused keys present)" : "");
+    debug(1, "compacting region (current size %d, expect to recover %d%s bytes)...",
+            _sysparam_info.end_addr - _sysparam_info.cur_base,
+            ctx ? ctx->compactable : 0,
+            (ctx && ctx->unused_keys > 0) ? "+ (unused keys present)" : "");
+
     status = _format_region(new_base, num_sectors);
     if (status < 0) return status;
     status = sysparam_iter_start(&iter);
@@ -534,7 +513,7 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
         top_addr = base_addr + sdk_flashchip.sector_size;
     }
     for (addr0 = base_addr; addr0 < top_addr; addr0 += sdk_flashchip.sector_size) {
-        CHECK_FLASH_OP(sdk_spi_flash_read(addr0, (void*) &header0, REGION_HEADER_SIZE));
+        CHECK_FLASH_OP(spiflash_read(addr0, (void*) &header0, REGION_HEADER_SIZE));
         if (header0.magic == SYSPARAM_MAGIC) {
             // Found a starting point...
             break;
@@ -552,7 +531,7 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
     } else {
         addr1 = addr0 + num_sectors * sdk_flashchip.sector_size;
     }
-    CHECK_FLASH_OP(sdk_spi_flash_read(addr1, (void*) &header1, REGION_HEADER_SIZE));
+    CHECK_FLASH_OP(spiflash_read(addr1, (uint8_t*) &header1, REGION_HEADER_SIZE));
 
     if (header1.magic == SYSPARAM_MAGIC) {
         // Yay! Found the other one.  Sanity-check it..
@@ -629,7 +608,7 @@ sysparam_status_t sysparam_create_area(uint32_t base_addr, uint16_t num_sectors,
         // we're not going to be clobbering something else important.
         for (addr = base_addr; addr < base_addr + region_size * 2; addr += SCAN_BUFFER_SIZE) {
             debug(3, "read %d words @ 0x%08x", SCAN_BUFFER_SIZE, addr);
-            CHECK_FLASH_OP(sdk_spi_flash_read(addr, buffer, SCAN_BUFFER_SIZE * 4));
+            CHECK_FLASH_OP(spiflash_read(addr, (uint8_t*)buffer, SCAN_BUFFER_SIZE * 4));
             for (i = 0; i < SCAN_BUFFER_SIZE; i++) {
                 if (buffer[i] != 0xffffffff) {
                     // Uh oh, not empty.

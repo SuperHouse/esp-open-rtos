@@ -252,7 +252,7 @@ static void clear_test_values(test_data_t *data)
 }
 
 
-static void test_task(void *pvParameters)
+static void a_07_sysparam_load_test(void)
 {
     test_data_t test_data;
     init_sysparam();
@@ -274,11 +274,6 @@ static void test_task(void *pvParameters)
     printf("Test took %d ms\n", get_current_time() - start_time);
 
     TEST_PASS();
-}
-
-static void a_07_sysparam_load_test(void)
-{
-    xTaskCreate(test_task, "test_task", 256, NULL, 2, NULL);
 }
 
 static void a_07_sysparam_basic_test(void)
