@@ -1008,7 +1008,7 @@ sysparam_status_t sysparam_set_int32(const char *key, int32_t value) {
 }
 
 sysparam_status_t sysparam_set_int8(const char *key, int8_t value) {
-    return sysparam_set_int32(key, value);
+    return sysparam_set_data(key, (const uint8_t *)&value, sizeof(value), true);
 }
 
 sysparam_status_t sysparam_set_bool(const char *key, bool value) {

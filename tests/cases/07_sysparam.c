@@ -218,11 +218,9 @@ static void verify_test_values(test_data_t *data)
                 TEST_ASSERT_EQUAL_INT(test_data_get_int32(data), actual_int32);
                 break;
             case VALUE_INT8:
-                /* fails
                 status = sysparam_get_int8(key_buf, &actual_int8);
                 TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
                 TEST_ASSERT_EQUAL_INT(test_data_get_int8(data), actual_int8);
-                */
                 break;
             case VALUE_BOOL:
                 status = sysparam_get_bool(key_buf, &actual_bool);
@@ -297,13 +295,11 @@ static void a_07_sysparam_basic_test(void)
     TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
     TEST_ASSERT_EQUAL_INT(-123, int32_val);
 
-    /* fails
     status = sysparam_set_int8("int_2", -34);
     TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
     status = sysparam_get_int8("int_2", &int8_val);
     TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
     TEST_ASSERT_EQUAL_INT(-34, int8_val);
-    */
 
     status = sysparam_set_string("str_1", "test string");
     TEST_ASSERT_EQUAL_INT(status, SYSPARAM_OK);
