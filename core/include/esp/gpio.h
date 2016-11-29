@@ -127,21 +127,14 @@ static inline bool gpio_read(const uint8_t gpio_num)
         return GPIO.IN & BIT(gpio_num);
 }
 
-extern void gpio_interrupt_handler(void);
+typedef void (* gpio_interrupt_handler_t)(uint8_t gpio_num);
 
 /* Set the interrupt type for a given pin
  *
  * If int_type is not GPIO_INTTYPE_NONE, the gpio_interrupt_handler will be
  * attached and unmasked.
  */
-static inline void gpio_set_interrupt(const uint8_t gpio_num, const gpio_inttype_t int_type)
-{
-    GPIO.CONF[gpio_num] = SET_FIELD(GPIO.CONF[gpio_num], GPIO_CONF_INTTYPE, int_type);
-    if(int_type != GPIO_INTTYPE_NONE) {
-        _xt_isr_attach(INUM_GPIO, gpio_interrupt_handler);
-        _xt_isr_unmask(1<<INUM_GPIO);
-    }
-}
+void gpio_set_interrupt(const uint8_t gpio_num, const gpio_inttype_t int_type, gpio_interrupt_handler_t handler);
 
 /* Return the interrupt type set for a pin */
 static inline gpio_inttype_t gpio_get_interrupt(const uint8_t gpio_num)
