@@ -129,6 +129,36 @@ static inline bool gpio_read(const uint8_t gpio_num)
 
 typedef void (* gpio_interrupt_handler_t)(uint8_t gpio_num);
 
+/*
+ * You can implement GPIO interrupt handlers in either of two ways:
+ * - Implement handler and use it with the gpio_set_interrupt()
+ *
+ *    Example:
+ *
+ *    void my_intr_handler(uint8_t gpio_num) {
+ *        // Do something when GPIO changes
+ *    }
+ *    ...
+ *    gpio_set_interrupt(MY_GPIO_NUM, GPIO_INTTYPE_EDGE_ANY, my_intr_handler);
+ *
+ * OR
+ *
+ * - Implement a single function named gpio_interrupt_handler(). This
+ *   will need to manually check GPIO.STATUS and clear any status
+ *   bits after handling interrupts. This gives you full control, but
+ *   you can't combine it with the first approach.
+ *
+ *   Example:
+ *
+ *   void IRAM gpio_interrupt_handler(void) {
+ *        // check GPIO.STATUS
+ *        // write GPIO.STATUS_CLEAR
+ *        // Do something when GPIO changes
+ *   }
+ *   ...
+ *   gpio_set_interrupt(MY_GPIO_NUM, GPIO_INTTYPE_EDGE_ANY, NULL);
+ */
+
 /* Set the interrupt type for a given pin
  *
  * If int_type is not GPIO_INTTYPE_NONE, the gpio_interrupt_handler will be

@@ -58,7 +58,7 @@ void gpio_set_pullup(uint8_t gpio_num, bool enabled, bool enabled_during_sleep)
 
 static gpio_interrupt_handler_t gpio_interrupt_handlers[16] = { 0 };
 
-static void IRAM _gpio_intr_internal_handler(void)
+void __attribute__((weak)) IRAM gpio_interrupt_handler(void)
 {
     uint32_t status_reg = GPIO.STATUS;
     GPIO.STATUS_CLEAR = status_reg;
@@ -82,8 +82,8 @@ void gpio_set_interrupt(const uint8_t gpio_num, const gpio_inttype_t int_type, g
     gpio_interrupt_handlers[gpio_num] = handler;
 
     GPIO.CONF[gpio_num] = SET_FIELD(GPIO.CONF[gpio_num], GPIO_CONF_INTTYPE, int_type);
-    if(int_type != GPIO_INTTYPE_NONE && handler) {
-        _xt_isr_attach(INUM_GPIO, _gpio_intr_internal_handler);
+    if(int_type != GPIO_INTTYPE_NONE) {
+        _xt_isr_attach(INUM_GPIO, gpio_interrupt_handler);
         _xt_isr_unmask(1<<INUM_GPIO);
     }
 }
