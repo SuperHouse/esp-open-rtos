@@ -317,9 +317,9 @@ static inline void spi_set_command(uint8_t bus,uint8_t bits, uint16_t data)
 static inline void spi_set_address(uint8_t bus,uint8_t bits, uint32_t data)
 {
     if(!bits) return ;
-    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_ADDR_BITLEN, --bits);
     SPI(bus).USER0 |= SPI_USER0_ADDR ; //enable ADDRess function in SPI module
     SPI(bus).ADDR = data<<(32-bits) ; //align address data to high bits
+    SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_ADDR_BITLEN, --bits);
 }
 
 /**
