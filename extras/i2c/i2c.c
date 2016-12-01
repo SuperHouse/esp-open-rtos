@@ -24,14 +24,13 @@
 
 #include <esp8266.h>
 #include <espressif/esp_misc.h> // sdk_os_delay_us
+#include <espressif/esp_system.h>
 #include "i2c.h"
 
 
 // I2C driver for ESP8266 written for use with esp-open-rtos
 // Based on https://en.wikipedia.org/wiki/I²C#Example_of_bit-banging_the_I.C2.B2C_Master_protocol
-
-// With calling overhead, we end up at ~100kbit/s
-#define CLK_HALF_PERIOD_US (1)
+// With calling overhead, we end up at ~320kbit/s
 
 #define CLK_STRETCH  (10)
 
@@ -59,7 +58,14 @@ void i2c_init(uint8_t scl_pin, uint8_t sda_pin)
 
 static inline void i2c_delay(void)
 {
-    sdk_os_delay_us(CLK_HALF_PERIOD_US);
+    if (sdk_system_get_cpu_freq() == SYS_CPU_160MHZ)
+    {
+        for (volatile uint8_t __j = 0 ; __j < 5 ; __j++) {} ;
+    }
+    else
+    {
+        for (volatile uint8_t __j = 0 ; __j < 0 ; __j++) {} ;
+    }
 }
 
 // Set SCL as input, allowing it to float high, and return current
