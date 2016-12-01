@@ -119,7 +119,7 @@ bool IRAM sdk_system_rtc_mem_write(uint32_t des_addr, void *src_addr, uint16_t s
         save_size = (save_size & ~3) + 4;
     }
     for (uint8_t i = 0; i < (save_size >> 2); i++) {
-        RTCMEM_SYSTEM[i] = src_buf[i];
+        RTCMEM_SYSTEM[des_addr + i] = src_buf[i];
     }
     return true;
 }
@@ -140,7 +140,7 @@ bool IRAM sdk_system_rtc_mem_read(uint32_t src_addr, void *des_addr, uint16_t sa
         save_size = (save_size & ~3) + 4;
     }
     for (uint8_t i = 0; i < (save_size >> 2); i++) {
-        dest_buf[i] = RTCMEM_SYSTEM[i];
+        dest_buf[i] = RTCMEM_SYSTEM[src_addr + i];
     }
     return true;
 }
