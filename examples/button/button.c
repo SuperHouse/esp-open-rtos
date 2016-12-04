@@ -16,7 +16,6 @@
 const int gpio = 0;   /* gpio 0 usually has "PROGRAM" button attached */
 const int active = 0; /* active == 0 for active low */
 const gpio_inttype_t int_type = GPIO_INTTYPE_EDGE_NEG;
-#define GPIO_HANDLER gpio00_interrupt_handler
 
 
 /* This task polls for the button and prints the tick
@@ -39,6 +38,8 @@ void buttonPollTask(void *pvParameters)
     }
 }
 
+void gpio_intr_handler(uint8_t gpio_num);
+
 /* This task configures the GPIO interrupt and uses it to tell
    when the button is pressed.
 
@@ -51,7 +52,7 @@ void buttonIntTask(void *pvParameters)
 {
     printf("Waiting for button press interrupt on gpio %d...\r\n", gpio);
     QueueHandle_t *tsqueue = (QueueHandle_t *)pvParameters;
-    gpio_set_interrupt(gpio, int_type);
+    gpio_set_interrupt(gpio, int_type, gpio_intr_handler);
 
     uint32_t last = 0;
     while(1) {
@@ -67,7 +68,7 @@ void buttonIntTask(void *pvParameters)
 
 static QueueHandle_t tsqueue;
 
-void GPIO_HANDLER(void)
+void gpio_intr_handler(uint8_t gpio_num)
 {
     uint32_t now = xTaskGetTickCountFromISR();
     xQueueSendToBackFromISR(tsqueue, &now, NULL);
