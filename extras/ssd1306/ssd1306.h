@@ -35,7 +35,7 @@ typedef enum
 {
     SSD1306_PROTO_I2C = 0, //!< I2C
     SSD1306_PROTO_SPI4,    //!< SPI 8 bits + D/C pin
-    SSD1306_PROTO_SPI3     //!< SPI 9 bits, currently not supported
+    SSD1306_PROTO_SPI3     //!< SPI 9 bits
 } ssd1306_protocol_t;
 
 /**
@@ -44,11 +44,13 @@ typedef enum
 typedef struct
 {
     ssd1306_protocol_t protocol;
+    union {
 #if (SSD1306_I2C_SUPPORT)
-    uint8_t addr;                 //!< I2C address, used by SSD1306_PROTO_I2C
+        uint8_t addr ;          //!< I2C address, used by SSD1306_PROTO_I2C
 #endif
+        uint8_t cs_pin ;        //!< Chip Select GPIO pin, used by SSD1306_PROTO_SPI3, SSD1306_PROTO_SPI4
+    } ;
 #if (SSD1306_SPI4_SUPPORT)
-    uint8_t cs_pin;               //!< Chip Select GPIO pin, used by SSD1306_PROTO_SPI3, SSD1306_PROTO_SPI4
     uint8_t dc_pin;               //!< Data/Command GPIO pin, used by SSD1306_PROTO_SPI4
 #endif
     uint8_t width;                //!< Screen width, currently supported 128px, 96px
