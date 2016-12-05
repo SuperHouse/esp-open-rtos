@@ -224,20 +224,20 @@ uint32_t spi_transfer_32(uint8_t bus, uint32_t data)
 static void _rearm_extras_bit(uint8_t bus, bool arm) {
 
     if(!_minimal_pins[bus]) return ;
-    static uint8_t status = 0 ;
+    static uint8_t status[2] ;
 
     if (arm)
     {
-        if (status & (0x01<<(4*bus))) SPI(bus).USER0 |= (SPI_USER0_ADDR) ;
-        if (status & (0x02<<(4*bus))) SPI(bus).USER0 |= (SPI_USER0_COMMAND) ;
-        if (status & (0x04<<(4*bus))) SPI(bus).USER0 |= (SPI_USER0_DUMMY | SPI_USER0_MISO);
-        status &= ~(0x0F<<(4*bus));
+        if (status[bus] & 0x01) SPI(bus).USER0 |= (SPI_USER0_ADDR) ;
+        if (status[bus] & 0x02) SPI(bus).USER0 |= (SPI_USER0_COMMAND) ;
+        if (status[bus] & 0x04) SPI(bus).USER0 |= (SPI_USER0_DUMMY | SPI_USER0_MISO);
+        status[bus] = 0;
     }
     else
     {
-        if (SPI(bus).USER0 & SPI_USER0_ADDR) { SPI(bus).USER0 &= ~(SPI_USER0_ADDR) ; status |= 0x01<<(4*bus) ; }
-        if (SPI(bus).USER0 & SPI_USER0_COMMAND) { SPI(bus).USER0 &= ~(SPI_USER0_COMMAND) ; status |= 0x02<<(4*bus) ; }
-        if (SPI(bus).USER0 & SPI_USER0_DUMMY) { SPI(bus).USER0 &= ~(SPI_USER0_DUMMY | SPI_USER0_MISO); status |= 0x04<<(4*bus) ; }
+        if (SPI(bus).USER0 & SPI_USER0_ADDR) { SPI(bus).USER0 &= ~(SPI_USER0_ADDR) ; status[bus] |= 0x01 ; }
+        if (SPI(bus).USER0 & SPI_USER0_COMMAND) { SPI(bus).USER0 &= ~(SPI_USER0_COMMAND) ; status[bus] |= 0x02 ; }
+        if (SPI(bus).USER0 & SPI_USER0_DUMMY) { SPI(bus).USER0 &= ~(SPI_USER0_DUMMY | SPI_USER0_MISO); status[bus] |= 0x04 ; }
     }
 }
 
