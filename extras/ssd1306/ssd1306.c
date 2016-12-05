@@ -108,6 +108,15 @@ int ssd1306_command(const ssd1306_t *dev, uint8_t cmd)
             gpio_write(dev->cs_pin, true);
             break;
 #endif
+#if (SSD1306_SPI3_SUPPORT)
+        case SSD1306_PROTO_SPI3:
+            gpio_write(dev->cs_pin, false);
+            spi_set_command(SPI_BUS,1,0); // command mode
+            spi_transfer_8(SPI_BUS, cmd);
+            spi_clear_command(SPI_BUS);
+            gpio_write(dev->cs_pin, true);
+            break;
+#endif
         default:
             debug("Unsupported protocol");
             return -EPROTONOSUPPORT;
@@ -144,6 +153,13 @@ int ssd1306_init(const ssd1306_t *dev)
             gpio_enable(dev->cs_pin, GPIO_OUTPUT);
             gpio_write(dev->cs_pin, true);
             gpio_enable(dev->dc_pin, GPIO_OUTPUT);
+            spi_init(SPI_BUS, SPI_MODE0, SPI_FREQ_DIV_8M, true, SPI_LITTLE_ENDIAN, true);
+            break;
+#endif
+#if (SSD1306_SPI3_SUPPORT)
+        case SSD1306_PROTO_SPI3:
+            gpio_enable(dev->cs_pin, GPIO_OUTPUT);
+            gpio_write(dev->cs_pin, true);
             spi_init(SPI_BUS, SPI_MODE0, SPI_FREQ_DIV_8M, true, SPI_LITTLE_ENDIAN, true);
             break;
 #endif
@@ -221,9 +237,19 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
             if (buf)
                 spi_transfer(SPI_BUS, buf, NULL, len, SPI_8BIT);
             else
-                for (i = 0; i < len; i ++) {
-                    spi_transfer_8(SPI_BUS, 0);
-                }
+                spi_repeat_send_8(SPI_BUS,0,len);
+            gpio_write(dev->cs_pin, true);
+            break;
+#endif
+#if (SSD1306_SPI3_SUPPORT)
+        case SSD1306_PROTO_SPI3:
+            spi_set_command(SPI_BUS,1,1); // data mode
+            gpio_write(dev->cs_pin, false);
+            if (buf)
+                spi_transfer(SPI_BUS, buf, NULL, len, SPI_8BIT);
+            else
+                spi_repeat_send_8(SPI_BUS,0,len);
+            spi_clear_command(SPI_BUS);
             gpio_write(dev->cs_pin, true);
             break;
 #endif
