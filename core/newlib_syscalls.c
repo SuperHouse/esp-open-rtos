@@ -12,6 +12,7 @@
 #include <xtensa_ops.h>
 #include <esp/uart.h>
 #include <stdlib.h>
+#include <stdout_redirect.h>
 
 extern void *xPortSupervisorStackPointer;
 
@@ -41,12 +42,8 @@ IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
 }
 
 /* syscall implementation for stdio write to UART */
-__attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, int len )
+__attribute__((weak)) long _write_stdout_r(struct _reent *r, int fd, const char *ptr, int len )
 {
-    if(fd != r->_stdout->_file) {
-        r->_errno = EBADF;
-        return -1;
-    }
     for(int i = 0; i < len; i++) {
         /* Auto convert CR to CRLF, ignore other LFs (compatible with Espressif SDK behaviour) */
         if(ptr[i] == '\r')
@@ -56,6 +53,37 @@ __attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, i
         uart_putc(0, ptr[i]);
     }
     return len;
+}
+
+_WriteFunction *_current_stdout_write_r = &_write_stdout_r;
+
+void set_write_stdout(_WriteFunction *f)
+{
+    if  (f != NULL) {
+        _current_stdout_write_r = f;
+    } else {
+        _current_stdout_write_r = &_write_stdout_r;
+    }
+}
+
+_WriteFunction *get_write_stdout()
+{
+    return _current_stdout_write_r;
+}
+
+/* default implementation, replace in a filesystem */
+__attribute__((weak)) long _write_filesystem_r(struct _reent *r, int fd, const char *ptr, int len )
+{
+    r->_errno = EBADF;
+    return -1;
+}
+
+__attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, int len )
+{
+    if(fd != r->_stdout->_file) {
+        return _write_filesystem_r(r, fd, ptr, len);
+    }
+    return _current_stdout_write_r(r, fd, ptr, len);
 }
 
 /* syscall implementation for stdio read from UART */
@@ -71,11 +99,17 @@ __attribute__((weak)) long _read_stdin_r(struct _reent *r, int fd, char *ptr, in
     return i;
 }
 
+/* default implementation, replace in a filesystem */
+__attribute__((weak)) long _read_filesystem_r( struct _reent *r, int fd, char *ptr, int len )
+{
+    r->_errno = EBADF;
+    return -1;
+}
+
 __attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len )
 {
     if(fd != r->_stdin->_file) {
-        r->_errno = EBADF;
-        return -1;
+        return _read_filesystem_r(r, fd, ptr, len);
     }
     return _read_stdin_r(r, fd, ptr, len);
 }
