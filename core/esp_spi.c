@@ -221,6 +221,26 @@ uint32_t spi_transfer_32(uint8_t bus, uint32_t data)
     return res;
 }
 
+static void _rearm_extras_bit(uint8_t bus, bool arm) {
+
+    if(!_minimal_pins[bus]) return ;
+    static uint8_t status = 0 ;
+
+    if (arm)
+    {
+        if (status & 0x01) SPI(bus).USER0 |= (SPI_USER0_ADDR) ;
+        if (status & 0x02) SPI(bus).USER0 |= (SPI_USER0_COMMAND) ;
+        if (status & 0x04) SPI(bus).USER0 |= (SPI_USER0_DUMMY | SPI_USER0_MISO);
+        status = 0 ;
+    }
+    else
+    {
+        if (SPI(bus).USER0 & SPI_USER0_ADDR) { SPI(bus).USER0 &= ~(SPI_USER0_ADDR) ; status |= 1 ; }
+        if (SPI(bus).USER0 & SPI_USER0_COMMAND) { SPI(bus).USER0 &= ~(SPI_USER0_COMMAND) ; status |= 2 ; }
+        if (SPI(bus).USER0 & SPI_USER0_DUMMY) { SPI(bus).USER0 &= ~(SPI_USER0_DUMMY | SPI_USER0_MISO); status |= 4 ; }
+    }
+}
+
 size_t spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len, spi_word_size_t word_size)
 {
     if (!out_data || !len) return 0;
@@ -234,6 +254,7 @@ size_t spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len
         size_t offset = i * _SPI_BUF_SIZE;
         _spi_buf_transfer(bus, (const uint8_t *)out_data + offset,
             in_data ? (uint8_t *)in_data + offset : NULL, buf_size, e, word_size);
+        if (blocks) _rearm_extras_bit(bus, false) ;
     }
 
     uint8_t tail = len % buf_size;
@@ -243,6 +264,7 @@ size_t spi_transfer(uint8_t bus, const void *out_data, void *in_data, size_t len
             in_data ? (uint8_t *)in_data + blocks * _SPI_BUF_SIZE : NULL, tail, e, word_size);
     }
 
+    if (blocks) _rearm_extras_bit(bus, true) ;
     return len;
 }
 
@@ -253,6 +275,7 @@ static void _repeat_send(uint8_t bus, uint32_t* dword,int32_t* repeats,spi_word_
     {
         uint16_t bytes_to_transfer = __min(*repeats * size , _SPI_BUF_SIZE);
         _wait(bus);
+        if (i)  _rearm_extras_bit(bus, false) ;
         _set_size(bus,bytes_to_transfer);
         for(i = 0; i < (bytes_to_transfer + 3) / 4;i++)
             SPI(bus).W[i] = *dword; //need test with memcpy !
@@ -260,6 +283,7 @@ static void _repeat_send(uint8_t bus, uint32_t* dword,int32_t* repeats,spi_word_
         *repeats -= (bytes_to_transfer / size ) ;
     }
     _wait(bus);
+    _rearm_extras_bit(bus, true) ;
 }
 
 void spi_repeat_send_8(uint8_t bus, uint8_t data,int32_t repeats)
