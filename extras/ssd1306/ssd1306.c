@@ -14,7 +14,7 @@
 #if (SSD1306_I2C_SUPPORT)
     #include <i2c/i2c.h>
 #endif
-#if (SSD1306_SPI4_SUPPORT)
+#if (SSD1306_SPI4_SUPPORT) || (SSD1306_SPI3_SUPPORT)
     #include <esp/spi.h>
 #endif
 #include <esp/gpio.h>
@@ -234,7 +234,7 @@ int ssd1306_init(const ssd1306_t *dev)
 }
 
 static int sh1106_go_coordinate(const ssd1306_t *dev, uint8_t x, uint8_t y) {
-    if (x >= dev->width || y >= dev->height) return -EINVAL;
+    if (x >= dev->width || y >= (dev->height/8)) return -EINVAL;
     int err = 0;
     x+=2 ; //offset : panel is 128 ; RAM is 132 for sh1106
     if ((err = ssd1306_command(dev, SH1106_SET_PAGE_ADDRESS + y))) // Set row
