@@ -71,6 +71,10 @@
 #define SH1106_SET_LOW_COL_ADDR      (0x00)
 #define SH1106_SET_HIGH_COL_ADDR     (0x10)
 
+#define SH1106_SET_PAGE_ADDRESS      (0xB0)
+#define SH1106_SET_LOW_COL_ADDR      (0x00)
+#define SH1106_SET_HIGH_COL_ADDR     (0x10)
+
 #ifdef SSD1306_DEBUG
 #define debug(fmt, ...) printf("%s: " fmt "\n", "SSD1306", ## __VA_ARGS__)
 #else
