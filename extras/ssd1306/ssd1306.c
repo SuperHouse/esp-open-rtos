@@ -62,6 +62,11 @@
 #define SSD1306_CHARGE_PUMP_EN       (0x14)
 #define SSD1306_CHARGE_PUMP_DIS      (0x10)
 
+#define SH1106_SET_CHARGE_PUMP       (0xAD)
+#define SH1106_CHARGE_PUMP_EN        (0x8B)
+#define SH1106_CHARGE_PUMP_DIS       (0x8A)
+#define SH1106_CHARGE_PUMP_VALUE     (0x30)
+
 #ifdef SSD1306_DEBUG
 #define debug(fmt, ...) printf("%s: " fmt "\n", "SSD1306", ## __VA_ARGS__)
 #else
@@ -132,6 +137,7 @@ int ssd1306_init(const ssd1306_t *dev)
     uint8_t pin_cfg;
     switch (dev->height) {
         case 16:
+            break;
         case 32:
             pin_cfg = 0x02;
             break;
@@ -167,27 +173,61 @@ int ssd1306_init(const ssd1306_t *dev)
             debug("Unsupported protocol");
             return -EPROTONOSUPPORT;
     }
+    switch (dev->screen) {
+    case SSD1306_SCREEN:
+        if (!ssd1306_display_on(dev, false)                                  &&
+                !ssd1306_set_osc_freq(dev, 0x80)                                 &&
+                !ssd1306_set_mux_ratio(dev, dev->height - 1)                     &&
+                !ssd1306_set_display_offset(dev, 0x0)                            &&
+                !ssd1306_set_display_start_line(dev, 0x0)                        &&
+                !ssd1306_set_charge_pump_enabled(dev, true)                      &&
+                !ssd1306_set_mem_addr_mode(dev, SSD1306_ADDR_MODE_HORIZONTAL)    &&
+                !ssd1306_set_segment_remapping_enabled(dev, false)               &&
+                !ssd1306_set_scan_direction_fwd(dev, true)                       &&
+                !ssd1306_set_com_pin_hw_config(dev, pin_cfg)                     &&
+                !ssd1306_set_contrast(dev, 0x9f)                                 &&
+                !ssd1306_set_precharge_period(dev, 0xf1)                         &&
+                !ssd1306_set_deseltct_lvl(dev, 0x40)                             &&
+                !ssd1306_set_whole_display_lighting(dev, true)                   &&
+                !ssd1306_set_inversion(dev, false)                               &&
+                !ssd1306_display_on(dev, true)) {
+            return 0;
+        }
+        break;
+    case SH1106_SCREEN:
+        if (!ssd1306_display_on(dev, false)                                  &&
+                !sh1106_set_charge_pump_voltage(dev,SH1106_VOLTAGE_74)           &&
+                !ssd1306_set_osc_freq(dev, 0x80)                                 &&
+                !ssd1306_set_mux_ratio(dev, dev->height - 1)                     &&
+                !ssd1306_set_display_offset(dev, 0x0)                            &&
+                !ssd1306_set_display_start_line(dev, 0x0)                        &&
+                !ssd1306_set_charge_pump_enabled(dev, true)                      &&
+                !ssd1306_set_segment_remapping_enabled(dev, true)                &&
+                !ssd1306_set_scan_direction_fwd(dev, true)                       &&
+                !ssd1306_set_com_pin_hw_config(dev, pin_cfg)                     &&
+                !ssd1306_set_contrast(dev, 0x9f)                                 &&
+                !ssd1306_set_precharge_period(dev, 0xf1)                         &&
+                !ssd1306_set_deseltct_lvl(dev, 0x40)                             &&
+                !ssd1306_set_whole_display_lighting(dev, true)                   &&
+                !ssd1306_set_inversion(dev, false)                               &&
+                !ssd1306_display_on(dev, true)) {
 
-    if (!ssd1306_display_on(dev, false)                                  &&
-        !ssd1306_set_osc_freq(dev, 0x80)                                 &&
-        !ssd1306_set_mux_ratio(dev, dev->height - 1)                     &&
-        !ssd1306_set_display_offset(dev, 0x0)                            &&
-        !ssd1306_set_display_start_line(dev, 0x0)                        &&
-        !ssd1306_set_charge_pump_enabled(dev, true)                      &&
-        !ssd1306_set_mem_addr_mode(dev, SSD1306_ADDR_MODE_HORIZONTAL)    &&
-        !ssd1306_set_segment_remapping_enabled(dev, false)               &&
-        !ssd1306_set_scan_direction_fwd(dev, true)                       &&
-        !ssd1306_set_com_pin_hw_config(dev, pin_cfg)                     &&
-        !ssd1306_set_contrast(dev, 0x9f)                                 &&
-        !ssd1306_set_precharge_period(dev, 0xf1)                         &&
-        !ssd1306_set_deseltct_lvl(dev, 0x40)                             &&
-        !ssd1306_set_whole_display_lighting(dev, true)                   &&
-        !ssd1306_set_inversion(dev, false)                               &&
-        !ssd1306_display_on(dev, true)) {
-        return 0;
+            return 0;
+        }
+        break;
     }
-
     return -EIO;
+}
+
+static int sh1106_go_coordinate(const ssd1306_t *dev, uint8_t x, uint8_t y) {
+    if (x >= dev->width || y >= dev->height) return -EINVAL;
+    int err = 0;
+    x+=2 ; //offset : panel is 128 ; RAM is 132 for sh1106
+    if ((err = ssd1306_command(dev, 0xB0 + y))) // Set row
+        return err;
+    if ((err = ssd1306_command(dev, x & 0xf)))  // Set lower column address
+        return err;
+    return ssd1306_command(dev, 0x10 | (x >> 4)); //Set higher column address
 }
 
 int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
@@ -195,15 +235,17 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
     uint16_t i;
     uint8_t j;
 
-    ssd1306_set_column_addr(dev, 0, dev->width - 1);
-    ssd1306_set_page_addr(dev, 0, dev->height / 8 - 1);
-
     size_t len = dev->width * dev->height / 8;
+    if(dev->screen == SSD1306_SCREEN) {
+        ssd1306_set_column_addr(dev, 0, dev->width - 1);
+        ssd1306_set_page_addr(dev, 0, dev->height / 8 - 1);
+    }
 
     switch (dev->protocol) {
 #if (SSD1306_I2C_SUPPORT)
         case SSD1306_PROTO_I2C:
             for (i = 0; i < len; i++) {
+                if(dev->screen == SH1106_SCREEN) sh1106_go_coordinate(dev,0,i/dev->width);
                 i2c_start();
                 if (!i2c_write(dev->addr << 1)) {
                     debug("Error while xmitting I2C slave address\n");
@@ -232,23 +274,51 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
 #endif
 #if (SSD1306_SPI4_SUPPORT)
         case SSD1306_PROTO_SPI4:
-            gpio_write(dev->dc_pin, true); // data mode
             gpio_write(dev->cs_pin, false);
-            if (buf)
-                spi_transfer(SPI_BUS, buf, NULL, len, SPI_8BIT);
+            if(dev->screen == SSD1306_SCREEN)
+            {
+                gpio_write(dev->dc_pin, true); // data mode
+                if (buf)
+                    spi_transfer(SPI_BUS, buf, NULL, len, SPI_8BIT);
+                else
+                    spi_repeat_send_8(SPI_BUS,0,len);
+            }
             else
-                spi_repeat_send_8(SPI_BUS,0,len);
+            {
+                for (i = 0 ; i < (dev->height/8) ; i++) {
+                    sh1106_go_coordinate(dev,0,i);
+                    gpio_write(dev->dc_pin, true); // data mode
+                    if (buf)
+                        spi_transfer(SPI_BUS, &buf[dev->width*i], NULL, dev->width, SPI_8BIT);
+                    else
+                        spi_repeat_send_8(SPI_BUS,0,dev->width);
+                }
+            }
             gpio_write(dev->cs_pin, true);
             break;
 #endif
 #if (SSD1306_SPI3_SUPPORT)
         case SSD1306_PROTO_SPI3:
-            spi_set_command(SPI_BUS,1,1); // data mode
             gpio_write(dev->cs_pin, false);
-            if (buf)
-                spi_transfer(SPI_BUS, buf, NULL, len, SPI_8BIT);
+            if(dev->screen == SSD1306_SCREEN)
+            {
+                spi_set_command(SPI_BUS,1,1); // data mode
+                if (buf)
+                    spi_transfer(SPI_BUS, buf, NULL, len, SPI_8BIT);
+                else
+                    spi_repeat_send_8(SPI_BUS,0,len);
+            }
             else
-                spi_repeat_send_8(SPI_BUS,0,len);
+            {
+                for (i = 0 ; i < (dev->height/8) ; i++) {
+                    sh1106_go_coordinate(dev,0,i);
+                    spi_set_command(SPI_BUS,1,1); // data mode
+                    if (buf)
+                        spi_transfer(SPI_BUS, &buf[dev->width*i], NULL, dev->width, SPI_8BIT);
+                    else
+                        spi_repeat_send_8(SPI_BUS,0,dev->width);
+                }
+            }
             spi_clear_command(SPI_BUS);
             gpio_write(dev->cs_pin, true);
             break;
@@ -286,17 +356,44 @@ int ssd1306_set_display_offset(const ssd1306_t *dev, uint8_t offset)
     return ssd1306_command(dev, offset);
 }
 
+int sh1106_set_charge_pump_voltage(const ssd1306_t *dev, sh1106_voltage_t select)
+{
+    if (dev->screen == SSD1306_SCREEN)
+    {
+        debug("Unsupported screen type");
+        return -ENOTSUP ;
+    }
+    return ssd1306_command(dev, select | SH1106_CHARGE_PUMP_VALUE);
+}
+
+
 int ssd1306_set_charge_pump_enabled(const ssd1306_t *dev, bool enabled)
 {
     int err = 0;
-    if ((err = ssd1306_command(dev, SSD1306_SET_CHARGE_PUMP)))
-        return err;
-
-    return ssd1306_command(dev, enabled ? SSD1306_CHARGE_PUMP_EN : SSD1306_CHARGE_PUMP_DIS);
+    switch (dev->screen) {
+    case SH1106_SCREEN:
+        if ((err = ssd1306_command(dev, SH1106_SET_CHARGE_PUMP)))
+            return err;
+        return ssd1306_command(dev, enabled ? SH1106_CHARGE_PUMP_EN : SH1106_CHARGE_PUMP_DIS);
+        break;
+    case SSD1306_SCREEN:
+        if ((err = ssd1306_command(dev, SSD1306_SET_CHARGE_PUMP)))
+            return err;
+        return ssd1306_command(dev, enabled ? SSD1306_CHARGE_PUMP_EN : SSD1306_CHARGE_PUMP_DIS);
+        break;
+    default:
+        debug("Unsupported screen type");
+        return -ENOTSUP;
+    }
 }
 
 int ssd1306_set_mem_addr_mode(const ssd1306_t *dev, ssd1306_mem_addr_mode_t mode)
 {
+    if (dev->screen == SH1106_SCREEN)
+    {
+        debug("Unsupported screen type");
+        return -ENOTSUP ;
+    }
     int err = 0;
     if ((err = ssd1306_command(dev, SSD1306_SET_MEM_ADDR_MODE)))
         return err;
@@ -428,5 +525,3 @@ int ssd1306_load_xbm(const ssd1306_t *dev, uint8_t *xbm, uint8_t *fb)
 
     return ssd1306_load_frame_buffer(dev, fb);
 }
-
-
