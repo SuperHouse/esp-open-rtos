@@ -13,7 +13,7 @@
 #if (SSD1306_I2C_SUPPORT)
     #include <i2c/i2c.h>
 #endif
-#if (SSD1306_SPI4_SUPPORT)
+#if (SSD1306_SPI4_SUPPORT) || (SSD1306_SPI3_SUPPORT)
     #include <esp/spi.h>
 #endif
 #include <esp/gpio.h>
@@ -66,6 +66,10 @@
 #define SH1106_CHARGE_PUMP_EN        (0x8B)
 #define SH1106_CHARGE_PUMP_DIS       (0x8A)
 #define SH1106_CHARGE_PUMP_VALUE     (0x30)
+
+#define SH1106_SET_PAGE_ADDRESS      (0xB0)
+#define SH1106_SET_LOW_COL_ADDR      (0x00)
+#define SH1106_SET_HIGH_COL_ADDR     (0x10)
 
 #ifdef SSD1306_DEBUG
 #define debug(fmt, ...) printf("%s: " fmt "\n", "SSD1306", ## __VA_ARGS__)
@@ -137,7 +141,6 @@ int ssd1306_init(const ssd1306_t *dev)
     uint8_t pin_cfg;
     switch (dev->height) {
         case 16:
-            break;
         case 32:
             pin_cfg = 0x02;
             break;
@@ -220,14 +223,14 @@ int ssd1306_init(const ssd1306_t *dev)
 }
 
 static int sh1106_go_coordinate(const ssd1306_t *dev, uint8_t x, uint8_t y) {
-    if (x >= dev->width || y >= dev->height) return -EINVAL;
+    if (x >= dev->width || y >= (dev->height/8)) return -EINVAL;
     int err = 0;
     x+=2 ; //offset : panel is 128 ; RAM is 132 for sh1106
-    if ((err = ssd1306_command(dev, 0xB0 + y))) // Set row
+    if ((err = ssd1306_command(dev, SH1106_SET_PAGE_ADDRESS + y))) // Set row
         return err;
-    if ((err = ssd1306_command(dev, x & 0xf)))  // Set lower column address
+    if ((err = ssd1306_command(dev, SH1106_SET_LOW_COL_ADDR | (x & 0xf))))  // Set lower column address
         return err;
-    return ssd1306_command(dev, 0x10 | (x >> 4)); //Set higher column address
+    return ssd1306_command(dev, SH1106_SET_HIGH_COL_ADDR | (x >> 4)); //Set higher column address
 }
 
 int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
@@ -236,7 +239,8 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
     uint8_t j;
 
     size_t len = dev->width * dev->height / 8;
-    if(dev->screen == SSD1306_SCREEN) {
+    if(dev->screen == SSD1306_SCREEN)
+    {
         ssd1306_set_column_addr(dev, 0, dev->width - 1);
         ssd1306_set_page_addr(dev, 0, dev->height / 8 - 1);
     }
