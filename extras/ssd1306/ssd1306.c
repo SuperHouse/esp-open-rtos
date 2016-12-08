@@ -19,6 +19,7 @@
 #include <esp/gpio.h>
 #include <FreeRTOS.h>
 #include <task.h>
+#include <fonts/fonts.h>
 
 #define SPI_BUS 1
 
@@ -67,6 +68,11 @@
 #else
 #define debug(fmt, ...)
 #endif
+
+#define abs(x) ((x)<0 ? -(x) : (x))
+#define swap(x, y) do { typeof(x) temp##x##y = x; x = y; y = temp##x##y; } while (0)
+
+const font_info_t* font ; // save font selection
 
 /* Issue a command to SSD1306 device
  * I2C proto format:
@@ -403,4 +409,583 @@ int ssd1306_load_xbm(const ssd1306_t *dev, uint8_t *xbm, uint8_t *fb)
     return ssd1306_load_frame_buffer(dev, fb);
 }
 
+int ssd1306_draw_pixel(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ssd1306_color_t color)
+{
+    uint16_t index;
 
+    if ((x >= dev->width) || (x < 0) || (y >= dev->height) || (y < 0))
+        return -EINVAL;
+
+    index = x + (y / 8) * dev->width;
+    switch (color)
+    {
+    case OLED_COLOR_WHITE:
+        fb[index] |= (1 << (y & 7));
+        break;
+    case OLED_COLOR_BLACK:
+        fb[index] &= ~(1 << (y & 7));
+        break;
+    case OLED_COLOR_INVERT:
+        fb[index] ^= (1 << (y & 7));
+        break;
+    default:
+        break;
+    }
+    return 0 ;
+}
+
+int ssd1306_draw_hline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t w, ssd1306_color_t color)
+{
+    uint16_t index;
+    uint8_t mask, t;
+
+    // boundary check
+    if ((x >= dev->width) || (x < 0) || (y >= dev->height) || (y < 0))
+        return -EINVAL;
+    if (w == 0)
+        return -EINVAL;
+    if (x + w > dev->width)
+        w = dev->width - x;
+
+    t = w;
+    index = x + (y / 8) * dev->width;
+    mask = 1 << (y & 7);
+    switch (color)
+    {
+    case OLED_COLOR_WHITE:
+        while (t--)
+        {
+            fb[index] |= mask;
+            ++index;
+        }
+        break;
+    case OLED_COLOR_BLACK:
+        mask = ~mask;
+        while (t--)
+        {
+            fb[index] &= mask;
+            ++index;
+        }
+        break;
+    case OLED_COLOR_INVERT:
+        while (t--)
+        {
+            fb[index] ^= mask;
+            ++index;
+        }
+        break;
+    default:
+        break;
+    }
+    return 0 ;
+}
+
+int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t h, ssd1306_color_t color)
+{
+    uint16_t index;
+    uint8_t mask, mod, t;
+
+    // boundary check
+    if ((x >= dev->width) || (x < 0) || (y >= dev->height) || (y < 0))
+        return -EINVAL;
+    if (h == 0)
+        return -EINVAL;
+    if (y + h > dev->height)
+        h = dev->height - y;
+
+    t = h;
+    index = x + (y / 8) * dev->width;
+    mod = y & 7;
+    if (mod) // partial line that does not fit into byte at top
+    {
+        // Magic from Adafruit
+        mod = 8 - mod;
+        static const uint8_t premask[8] = { 0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE };
+        mask = premask[mod];
+        if (t < mod)
+            mask &= (0xFF >> (mod - t));
+        switch (color)
+        {
+        case OLED_COLOR_WHITE:
+            fb[index] |= mask;
+            break;
+        case OLED_COLOR_BLACK:
+            fb[index] &= ~mask;
+            break;
+        case OLED_COLOR_INVERT:
+            fb[index] ^= mask;
+            break;
+        default:
+            break;
+        }
+
+        if (t < mod)
+            return 0;
+        t -= mod;
+        index += dev->width;
+    }
+    if (t >= 8) // byte aligned line at middle
+    {
+        switch (color)
+        {
+        case OLED_COLOR_WHITE:
+            do
+           {
+               fb[index] = 0xff;
+               index += dev->width;
+               t -= 8;
+           } while (t >= 8);
+            break;
+        case OLED_COLOR_BLACK:
+            do
+            {
+               fb[index] = 0x00;
+               index += dev->width;
+               t -= 8;
+            } while (t >= 8);
+            break;
+        case OLED_COLOR_INVERT:
+            do
+            {
+                fb[index] = ~fb[index];
+                index += dev->width;
+                t -= 8;
+            } while (t >= 8);
+            break;
+        default:
+            break;
+        }
+    }
+    if (t) // // partial line at bottom
+    {
+        mod = t & 7;
+        static const uint8_t postmask[8] = {0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
+        mask = postmask[mod];
+        switch (color)
+        {
+        case OLED_COLOR_WHITE:
+            fb[index] |= mask;
+            break;
+        case OLED_COLOR_BLACK:
+            fb[index] &= ~mask;
+            break;
+        case OLED_COLOR_INVERT:
+            fb[index] ^= mask;
+            break;
+        default:
+            break;
+        }
+
+
+    }
+    return 0;
+}
+
+int ssd1306_draw_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t w, uint8_t h, ssd1306_color_t color)
+{
+    int err = 0;
+    if ((err = ssd1306_draw_hline(dev, fb, x, y, w, color)))
+        return err;
+    if ((err = ssd1306_draw_hline(dev, fb, x, y + h - 1, w, color)))
+        return err;
+    if ((err = ssd1306_draw_vline(dev, fb, x, y, h, color)))
+        return err;
+    return ssd1306_draw_vline(dev, fb, x + w - 1, y, h, color);
+
+}
+
+
+int ssd1306_fill_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t w, uint8_t h, ssd1306_color_t color)
+{
+    // Can be optimized?
+    uint8_t i;
+    int err = 0;
+    for (i = x; i < x + w; ++i)
+        if ((err = ssd1306_draw_vline(dev, fb, i, y, h, color)))
+            return err;
+    return 0 ;
+}
+
+int ssd1306_draw_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0, uint8_t r, ssd1306_color_t color)
+{
+    // Refer to http://en.wikipedia.org/wiki/Midpoint_circle_algorithm for the algorithm
+
+    int8_t x = r;
+    int8_t y = 1;
+    int16_t radius_err = 1 - x;
+    int err = 0;
+
+    if (r == 0)
+        return -EINVAL;
+
+    if ((err = ssd1306_draw_pixel(dev, fb, x0 - r, y0,     color)))
+        return err;
+    if ((err = ssd1306_draw_pixel(dev, fb, x0 + r, y0,     color)))
+        return err;
+    if ((err = ssd1306_draw_pixel(dev, fb, x0,     y0 - r, color)))
+        return err;
+    if ((err = ssd1306_draw_pixel(dev, fb, x0,     y0 + r, color)))
+        return err;
+
+    while (x >= y)
+    {
+        if ((err = ssd1306_draw_pixel(dev, fb, x0 + x, y0 + y, color)))
+            return err;
+        if ((err = ssd1306_draw_pixel(dev, fb, x0 - x, y0 + y, color)))
+            return err;
+        if ((err = ssd1306_draw_pixel(dev, fb, x0 + x, y0 - y, color)))
+            return err;
+        if ((err = ssd1306_draw_pixel(dev, fb, x0 - x, y0 - y, color)))
+            return err;
+        if (x != y)
+        {
+            /* Otherwise the 4 drawings below are the same as above, causing
+             * problem when color is INVERT
+             */
+            if ((err = ssd1306_draw_pixel(dev, fb, x0 + y, y0 + x, color)))
+                return err;
+            if ((err = ssd1306_draw_pixel(dev, fb, x0 - y, y0 + x, color)))
+                return err;
+            if ((err = ssd1306_draw_pixel(dev, fb, x0 + y, y0 - x, color)))
+                return err;
+            if ((err = ssd1306_draw_pixel(dev, fb, x0 - y, y0 - x, color)))
+                return err;
+        }
+        ++y;
+        if (radius_err < 0)
+        {
+            radius_err += 2 * y + 1;
+        }
+        else
+        {
+            --x;
+            radius_err += 2 * (y - x + 1);
+        }
+
+    }
+    return 0 ;
+}
+
+int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0, uint8_t r, ssd1306_color_t color)
+{
+    int8_t x = 1;
+    int8_t y = r;
+    int16_t radius_err = 1 - y;
+    int8_t x1;
+    int err = 0;
+
+    if (r == 0)
+        return -EINVAL;
+
+    if ((err = ssd1306_draw_vline(dev, fb, x0, y0 - r, 2 * r + 1, color))) // Center vertical line
+        return err;
+    while (y >= x)
+    {
+        if ((err = ssd1306_draw_vline(dev, fb, x0 - x, y0 - y, 2 * y + 1, color)))
+            return err;
+        if ((err = ssd1306_draw_vline(dev, fb, x0 + x, y0 - y, 2 * y + 1, color)))
+            return err;
+        if (color != OLED_COLOR_INVERT)
+        {
+            if ((err = ssd1306_draw_vline(dev, fb, x0 - y, y0 - x, 2 * x + 1, color)))
+                return err;
+            if ((err = ssd1306_draw_vline(dev, fb, x0 + y, y0 - x, 2 * x + 1, color)))
+                return err;
+        }
+        ++x;
+        if (radius_err < 0)
+        {
+            radius_err += 2 * x + 1;
+        }
+        else
+        {
+            --y;
+            radius_err += 2 * (x - y + 1);
+        }
+    }
+
+    if (color == OLED_COLOR_INVERT)
+    {
+        x1 = x; // Save where we stopped
+
+        y = 1;
+        x = r;
+        radius_err = 1 - x;
+        if ((err = ssd1306_draw_hline(dev, fb, x0 + x1, y0, r - x1 + 1, color)))
+            return err;
+        if ((err = ssd1306_draw_hline(dev, fb, x0 - r, y0, r - x1 + 1, color)))
+            return err;
+        while (x >= y)
+        {
+            if ((err = ssd1306_draw_hline(dev, fb, x0 + x1, y0 - y, x - x1 + 1, color)))
+                return err;
+            if ((err = ssd1306_draw_hline(dev, fb, x0 + x1, y0 + y, x - x1 + 1, color)))
+                return err;
+            if ((err = ssd1306_draw_hline(dev, fb, x0 - x,  y0 - y, x - x1 + 1, color)))
+                return err;
+            if ((err = ssd1306_draw_hline(dev, fb, x0 - x,  y0 + y, x - x1 + 1, color)))
+                return err;
+            ++y;
+            if (radius_err < 0)
+            {
+                radius_err += 2 * y + 1;
+            }
+            else
+            {
+                --x;
+                radius_err += 2 * (y - x + 1);
+            }
+        }
+    }
+    return 0 ;
+}
+
+int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, ssd1306_color_t color) {
+
+    if ((x0 >= dev->width) || (x0 < 0) || (y0 >= dev->height) || (y0 < 0))
+        return -EINVAL;
+    if ((x1 >= dev->width) || (x1 < 0) || (y1 >= dev->height) || (y1 < 0))
+        return -EINVAL;
+
+   int16_t steep = abs(y1 - y0) > abs(x1 - x0);
+   if (steep) {
+       swap(x0, y0);
+       swap(x1, y1);
+   }
+
+   if (x0 > x1) {
+       swap(x0, x1);
+       swap(y0, y1);
+   }
+
+   int16_t dx, dy;
+   dx = x1 - x0;
+   dy = abs(y1 - y0);
+
+   int16_t err = dx / 2;
+   int16_t ystep;
+
+   if (y0 < y1) {
+       ystep = 1;
+   } else {
+       ystep = -1;
+   }
+
+   for (; x0<=x1; x0++) {
+       if (steep) {
+           ssd1306_draw_pixel(dev, fb, y0, x0, color);
+       } else {
+           ssd1306_draw_pixel(dev, fb, x0, y0, color);
+       }
+       err -= dy;
+       if (err < 0) {
+           y0 += ystep;
+           err += dx;
+       }
+   }
+   return 0;
+}
+
+int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, ssd1306_color_t color) {
+    int err ;
+    if ((err = ssd1306_draw_line(dev, fb, x0, y0, x1, y1, color)))
+        return err;
+    if ((err = ssd1306_draw_line(dev, fb, x1, y1, x2, y2, color)))
+        return err;
+    return ssd1306_draw_line(dev, fb, x2, y2, x0, y0, color);
+}
+
+int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,int16_t x1, int16_t y1, int16_t x2, int16_t y2, ssd1306_color_t color) {
+
+   int16_t a, b, y, last;
+   int err ;
+
+   // Sort coordinates by Y order (y2 >= y1 >= y0)
+   if (y0 > y1) {
+       swap(y0, y1); swap(x0, x1);
+   }
+   if (y1 > y2) {
+       swap(y2, y1); swap(x2, x1);
+   }
+   if (y0 > y1) {
+       swap(y0, y1); swap(x0, x1);
+   }
+
+   if(y0 == y2) { // Handle awkward all-on-same-line case as its own thing
+       a = b = x0;
+       if(x1 < a)      a = x1;
+       else if(x1 > b) b = x1;
+       if(x2 < a)      a = x2;
+       else if(x2 > b) b = x2;
+       if ((err = ssd1306_draw_hline(dev, fb, a, y0, b-a+1, color)))
+           return err;
+       return 0;
+   }
+
+   int16_t
+   dx01 = x1 - x0,
+   dy01 = y1 - y0,
+   dx02 = x2 - x0,
+   dy02 = y2 - y0,
+   dx12 = x2 - x1,
+   dy12 = y2 - y1,
+   sa   = 0,
+   sb   = 0;
+
+   // For upper part of triangle, find scanline crossings for segments
+   // 0-1 and 0-2.  If y1=y2 (flat-bottomed triangle), the scanline y1
+   // is included here (and second loop will be skipped, avoiding a /0
+   // error there), otherwise scanline y1 is skipped here and handled
+   // in the second loop...which also avoids a /0 error here if y0=y1
+   // (flat-topped triangle).
+   if(y1 == y2) last = y1;   // Include y1 scanline
+   else         last = y1-1; // Skip it
+
+   for(y=y0; y<=last; y++) {
+       a   = x0 + sa / dy01;
+       b   = x0 + sb / dy02;
+       sa += dx01;
+       sb += dx02;
+       /* longhand:
+   a = x0 + (x1 - x0) * (y - y0) / (y1 - y0);
+   b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
+        */
+       if(a > b) swap(a,b);
+       if ((err = ssd1306_draw_hline(dev, fb, a, y, b-a+1, color)))
+           return err;
+   }
+
+   // For lower part of triangle, find scanline crossings for segments
+   // 0-2 and 1-2.  This loop is skipped if y1=y2.
+   sa = dx12 * (y - y1);
+   sb = dx02 * (y - y0);
+   for(; y<=y2; y++) {
+       a   = x1 + sa / dy12;
+       b   = x0 + sb / dy02;
+       sa += dx12;
+       sb += dx02;
+       /* longhand:
+   a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
+   b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
+        */
+       if(a > b) swap(a,b);
+       if ((err = ssd1306_draw_hline(dev, fb, a, y, b-a+1, color)))
+           return err;
+   }
+   return 0 ;
+}
+
+int ssd1306_select_font(uint8_t idx)
+{
+    if (idx < NUM_FONTS)
+        font = fonts[idx];
+    else
+        return -EINVAL;
+    return 0 ;
+}
+
+uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background)
+{
+    uint8_t i, j;
+    const uint8_t *bitmap;
+    uint8_t line = 0 ;
+
+    if (font == NULL)
+        return 0;
+
+    // we always have space in the font set
+    if ((c < font->char_start) || (c > font->char_end))
+        c = ' ';
+    c = c - font->char_start;   // c now become index to tables
+    bitmap = font->bitmap + font->char_descriptors[(unsigned char)c].offset;
+    for (j = 0; j < font->height; ++j)
+    {
+        for (i = 0; i < font->char_descriptors[(unsigned char)c].width; ++i)
+        {
+            if (i % 8 == 0)
+            {
+                line = bitmap[(font->char_descriptors[(unsigned char)c].width + 7) / 8 * j + i / 8]; // line data
+            }
+            if (line & 0x80)
+            {
+                ssd1306_draw_pixel(dev, fb, x + i, y + j, foreground);
+            }
+            else
+            {
+                switch (background)
+                {
+                case OLED_COLOR_TRANSPARENT:
+                    // Not drawing for transparent background
+                    break;
+                case OLED_COLOR_WHITE:
+                case OLED_COLOR_BLACK:
+                    ssd1306_draw_pixel(dev, fb, x + i, y + j, background);
+                    break;
+                case OLED_COLOR_INVERT:
+                    // I don't know why I need invert background
+                    break;
+                }
+            }
+            line = line << 1;
+        }
+    }
+    return (font->char_descriptors[(unsigned char)c].width);
+}
+
+uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background)
+{
+    uint8_t t = x;
+
+    if (font == NULL)
+        return 0;
+    if (str == NULL)
+        return 0;
+
+    while (*str)
+    {
+       x += ssd1306_draw_char(dev, fb, x, y, *str, foreground, background);
+       ++str;
+       if (*str)
+           x += font->c;
+
+    }
+    return (x - t);
+}
+
+uint8_t ssd1306_get_font_height()
+{
+    if (font == NULL)
+        return 0;
+    return (font->height);
+}
+
+
+uint8_t ssd1306_get_font_c()
+{
+    if (font == NULL)
+        return 0;
+    return (font->c);
+}
+
+uint8_t ssd1306_measure_string(char *str)
+{
+    uint8_t w = 0;
+    char c;
+
+    if (font == NULL)
+        return 0;
+
+    while (*str)
+    {
+        c = *str;
+        // we always have space in the font set
+        if ((c < font->char_start) || (c > font->char_end))
+            c = ' ';
+        c = c - font->char_start;   // c now become index to tables
+        w += font->char_descriptors[(unsigned char)c].width;
+        ++str;
+       if (*str)
+           w += font->c;
+    }
+    return w;
+}
