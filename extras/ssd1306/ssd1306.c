@@ -747,6 +747,7 @@ int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,
     if ((x1 >= dev->width) || (x1 < 0) || (y1 >= dev->height) || (y1 < 0))
         return -EINVAL;
 
+   int err ;
    int16_t steep = abs(y1 - y0) > abs(x1 - x0);
    if (steep) {
        swap(x0, y0);
@@ -762,7 +763,7 @@ int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,
    dx = x1 - x0;
    dy = abs(y1 - y0);
 
-   int16_t err = dx / 2;
+   int16_t errx = dx / 2;
    int16_t ystep;
 
    if (y0 < y1) {
@@ -773,14 +774,16 @@ int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,
 
    for (; x0<=x1; x0++) {
        if (steep) {
-           ssd1306_draw_pixel(dev, fb, y0, x0, color);
+           if ((err = ssd1306_draw_pixel(dev, fb, y0, x0, color)))
+               return err;
        } else {
-           ssd1306_draw_pixel(dev, fb, x0, y0, color);
+           if ((err = ssd1306_draw_pixel(dev, fb, x0, y0, color)))
+               return err;
        }
-       err -= dy;
-       if (err < 0) {
+       errx -= dy;
+       if (errx < 0) {
            y0 += ystep;
-           err += dx;
+           errx += dx;
        }
    }
    return 0;
