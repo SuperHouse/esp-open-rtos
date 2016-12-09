@@ -19,7 +19,6 @@
 #include <esp/gpio.h>
 #include <FreeRTOS.h>
 #include <task.h>
-#include <fonts/fonts.h>
 
 #define SPI_BUS 1
 
@@ -72,7 +71,7 @@
 #define abs(x) ((x)<0 ? -(x) : (x))
 #define swap(x, y) do { typeof(x) temp##x##y = x; x = y; y = temp##x##y; } while (0)
 
-const font_info_t* font ; // save font selection
+static const font_info_t *font; // save font selection
 
 /* Issue a command to SSD1306 device
  * I2C proto format:
@@ -772,7 +771,7 @@ int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,
        ystep = -1;
    }
 
-   for (; x0<=x1; x0++) {
+    for (; x0 <= x1; x0++) {
        if (steep) {
            if ((err = ssd1306_draw_pixel(dev, fb, y0, x0, color)))
                return err;
@@ -844,7 +843,7 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
    if(y1 == y2) last = y1;   // Include y1 scanline
    else         last = y1-1; // Skip it
 
-   for(y=y0; y<=last; y++) {
+    for (y = y0; y <= last; y++) {
        a   = x0 + sa / dy01;
        b   = x0 + sb / dy02;
        sa += dx01;
@@ -862,7 +861,7 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
    // 0-2 and 1-2.  This loop is skipped if y1=y2.
    sa = dx12 * (y - y1);
    sb = dx02 * (y - y0);
-   for(; y<=y2; y++) {
+    for (; y <= y2; y++) {
        a   = x1 + sa / dy12;
        b   = x0 + sb / dy02;
        sa += dx12;
@@ -878,13 +877,15 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
    return 0 ;
 }
 
-int ssd1306_select_font(uint8_t idx)
+int ssd1306_select_font(font_face_t font_face)
 {
-    if (idx < NUM_FONTS)
-        font = fonts[idx];
+    if (font_face < fonts_count)
+        font = fonts[font_face];
     else
         return -EINVAL;
-    return 0 ;
+    if (!font)
+        return -EINVAL;
+    return 0;
 }
 
 uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background)

@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <fonts/fonts.h>
 
 #include "config.h"
 
@@ -418,7 +419,7 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
  * @param idx id value of the font
  * @return Non-zero if error occured
  */
-int ssd1306_select_font(uint8_t idx);
+int ssd1306_select_font(font_face_t font_face);
 
 /**
  * Get the height of current selected font
