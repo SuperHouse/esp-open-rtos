@@ -1,7 +1,9 @@
-/*
- * fonts.h
+/**
+ * LCD/OLED fonts library
  *
- *  Created on: 8 dec. 2016
+ * FIXME: License?
+ *
+ * @date 8 dec. 2016
  *      Author: zaltora
  */
 #ifndef _EXTRAS_FONTS_H_
@@ -20,18 +22,17 @@ typedef enum
     FONT_FACE_GLCD5x7 = 0,
     FONT_FACE_ROBOTO_8PT,
     FONT_FACE_ROBOTO_10PT,
+    FONT_FACE_BITOCRA_4X7,
+    FONT_FACE_BITOCRA_6X11,
+    FONT_FACE_BITOCRA_7X13,
     FONT_FACE_TERMINUS_6X12_KOI8_R,
     FONT_FACE_TERMINUS_8X14_KOI8_R,
     FONT_FACE_TERMINUS_BOLD_8X14_KOI8_R,
-    FONT_FACE_TERMINUS_8X16_KOI8_R,
-    FONT_FACE_TERMINUS_BOLD_8X16_KOI8_R,
     FONT_FACE_TERMINUS_14X28_KOI8_R,
     FONT_FACE_TERMINUS_BOLD_14X28_KOI8_R,
     FONT_FACE_TERMINUS_16X32_KOI8_R,
     FONT_FACE_TERMINUS_BOLD_16X32_KOI8_R,
 } font_face_t;
-
-#define FONT_FACE_MAX FONT_FACE_TERMINUS_BOLD_16X32_KOI8_R
 
 /**
  * Character descriptor
@@ -58,8 +59,29 @@ typedef struct _font_info
 /**
  * Built-in fonts
  */
-extern const font_info_t *fonts[];
-extern const size_t fonts_count;
+extern const font_info_t *font_builtin_fonts[];
+extern const size_t font_builtin_fonts_count;
+
+/**
+ * Find character decriptor in font
+ * @param fnt Poniter to font information struct
+ * @param c Character
+ * @return Character descriptor or NULL if no character found
+ */
+inline const font_char_desc_t *font_get_char_desc(const font_info_t *fnt, char c)
+{
+    return c < fnt->char_start || c > fnt->char_end
+        ? NULL
+        : fnt->char_descriptors + c - fnt->char_start;
+}
+
+/**
+ * Calculate width of string in pixels
+ * @param fnt Poniter to font information struct
+ * @param s String
+ * @return String width
+ */
+uint16_t font_measure_string(const font_info_t *fnt, const char *s);
 
 #ifdef __cplusplus
 }

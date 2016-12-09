@@ -6,6 +6,10 @@
  * Charset: koi8_r
  * 255 characters (1..255)
  *
+ * Copyright (c) 2015 Dimitar Toshkov Zhekov
+ * License: SIL Open Font License, Version 1.1. The license is included as OFL.TXT, and is
+ *      also available with a FAQ at http://scripts.sil.org/OFL
+ *
  * Generated: 
  */
 #ifndef _EXTRAS_FONTS_FONT_TERMINUS_BOLD_8X14_KOI8_R_H_
