@@ -6,6 +6,7 @@ from PIL import Image, ImageFont, ImageDraw
 import argparse
 import jinja2
 import re
+import time
 
 def gen_char(index, c, im):
     bw = (im.size[0] + 7) // 8
@@ -59,7 +60,7 @@ def main(args):
         chars.append(gen_char(idx, idx + args.first, im.convert('1')))
         
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(os.path.abspath(__file__))), finalize=lambda x: '' if x is None else x)
-    print(env.get_template('template.c').render({
+    print(env.get_template(args.template).render({
         'font': {
             'name': args.name,
             'size': size,
@@ -67,7 +68,8 @@ def main(args):
             'first': args.first,
             'last': args.last,
         },
-        'chars': chars
+        'chars': chars,
+        'created': time.ctime()
     }))
 
 

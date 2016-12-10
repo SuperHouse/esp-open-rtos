@@ -15,6 +15,8 @@ _fonts_{{ font.name|lower }}_{{ font_size }}_{{ font.charset|lower }}
  * Charset: {{ font.charset }}
  * {{ chars|length }} characters ({{ font.first }}..{{ font.last }})
  *
+ * License: FIXME
+ *
  * Generated: {{ created }}
  */
 #ifndef {{ header_id }}

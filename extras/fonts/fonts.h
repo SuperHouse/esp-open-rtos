@@ -1,7 +1,9 @@
-/*
- * fonts.h
+/**
+ * LCD/OLED fonts library
  *
- *  Created on: 8 dec. 2016
+ * FIXME: License?
+ *
+ * @date 8 dec. 2016
  *      Author: zaltora
  */
 #ifndef _EXTRAS_FONTS_H_
