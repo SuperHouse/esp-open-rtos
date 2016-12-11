@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 
 import sys, os
 from PIL import Image, ImageFont, ImageDraw

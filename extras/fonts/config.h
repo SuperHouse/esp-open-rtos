@@ -14,6 +14,18 @@
 #define FONTS_ROBOTO_10PT 0
 #endif
 
+#ifndef FONTS_BITOCRA_4X7
+#define FONTS_BITOCRA_4X7 1
+#endif
+
+#ifndef FONTS_BITOCRA_6X11
+#define FONTS_BITOCRA_6X11 1
+#endif
+
+#ifndef FONTS_BITOCRA_7X13
+#define FONTS_BITOCRA_7X13 1
+#endif
+
 #ifndef FONTS_TERMINUS_6X12_KOI8_R
 #define FONTS_TERMINUS_6X12_KOI8_R 1
 #endif

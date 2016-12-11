@@ -2,10 +2,17 @@
 # Default built-in fonts
 #########################################
 
+# FIXME
+
 FONTS_GLCD_5X7 ?= 1
 
 FONTS_ROBOTO_8PT ?= 0
 FONTS_ROBOTO_10PT ?= 0
+
+# BitOCRA
+FONTS_BITOCRA_4X7 ?= 1
+FONTS_BITOCRA_6X11 ?= 1
+FONTS_BITOCRA_7X13 ?= 1
 
 # Terminus, KOI8-R
 FONTS_TERMINUS_6X12_KOI8_R ?= 1
