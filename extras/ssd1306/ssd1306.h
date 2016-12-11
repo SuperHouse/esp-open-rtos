@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2016 urx (https://github.com/urx),
  *                    Ruslan V. Uss (https://github.com/UncleRus)
+ *                    Zaltora (https://github.com/Zaltora)
  *
  * MIT Licensed as described in the file LICENSE
  */
@@ -289,7 +290,7 @@ int ssd1306_set_whole_display_lighting(const ssd1306_t *dev, bool light);
 /**
  * Draw one pixel
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x X coordinate
  * @param y Y coordinate
  * @param color Color of the pixel
@@ -300,7 +301,7 @@ int ssd1306_draw_pixel(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ss
 /**
  * Draw a horizontal line
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x X coordinate or starting (left) point
  * @param y Y coordinate or starting (left) point
  * @param w Line width
@@ -312,7 +313,7 @@ int ssd1306_draw_hline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
 /**
  * Draw a vertical line
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x X coordinate or starting (top) point
  * @param y Y coordinate or starting (top) point
  * @param h Line height
@@ -324,7 +325,7 @@ int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
 /**
  * Draw a line
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x0 First x point coordinate
  * @param y0 First y point coordinate
  * @param x1 Second x point coordinate
@@ -337,7 +338,7 @@ int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,
 /**
  * Draw a rectangle
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x X coordinate or starting (top left) point
  * @param y Y coordinate or starting (top left) point
  * @param w Rectangle width
@@ -350,7 +351,7 @@ int ssd1306_draw_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y
 /**
  * Draw a filled rectangle
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x X coordinate or starting (top left) point
  * @param y Y coordinate or starting (top left) point
  * @param w Rectangle width
@@ -363,7 +364,7 @@ int ssd1306_fill_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y
 /**
  * Draw a circle
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x0 X coordinate or center
  * @param y0 Y coordinate or center
  * @param r Radius
@@ -375,7 +376,7 @@ int ssd1306_draw_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
 /**
  * Draw a filled circle
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x0 X coordinate or center
  * @param y0 Y coordinate or center
  * @param r Radius
@@ -387,7 +388,7 @@ int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
 /**
  * Draw a triangle
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x0 First x point coordinate
  * @param y0 First y point coordinate
  * @param x1 Second x point coordinate
@@ -402,7 +403,7 @@ int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
 /**
  * Draw a filled triangle
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
  * @param x0 First x point coordinate
  * @param y0 First y point coordinate
  * @param x1 Second x point coordinate
@@ -417,7 +418,8 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
 /**
  * Draw one character using currently selected font
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param font Pointer to font info structure
  * @param x X position of character (top-left corner)
  * @param y Y position of character (top-left corner)
  * @param c The character to draw
@@ -425,20 +427,21 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
  * @param background Background color
  * @return Width of the character
  */
-uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *fnt, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background);
+uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background);
 
 /**
  * Draw one character using currently selected font
  * @param dev Pointer to device descriptor
- * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param font Pointer to font info structure
  * @param x X position of character (top-left corner)
  * @param y Y position of character (top-left corner)
- * @param str         The string to draw
+ * @param str The string to draw
  * @param foreground Character color
  * @param background Background color
  * @return Width of the string (out-of-display pixels also included)
  */
-uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *fnt, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background);
+uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background);
 
 #ifdef __cplusplus
 extern "C"

@@ -3,10 +3,11 @@
  *
  * Copyright (c) 2016 urx (https://github.com/urx),
  *                    Ruslan V. Uss (https://github.com/UncleRus)
+ *                    Zaltora (https://github.com/Zaltora)
  *
  * MIT Licensed as described in the file LICENSE
  *
- * @todo Scrolling, fonts
+ * @todo HW scrolling, sprites
  */
 #include "ssd1306.h"
 #include <stdio.h>
@@ -428,7 +429,7 @@ int ssd1306_draw_pixel(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ss
     default:
         break;
     }
-    return 0 ;
+    return 0;
 }
 
 int ssd1306_draw_hline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t w, ssd1306_color_t color)
@@ -474,7 +475,7 @@ int ssd1306_draw_hline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
     default:
         break;
     }
-    return 0 ;
+    return 0;
 }
 
 int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t h, ssd1306_color_t color)
@@ -527,11 +528,11 @@ int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
         {
         case OLED_COLOR_WHITE:
             do
-           {
+            {
                fb[index] = 0xff;
                index += dev->width;
                t -= 8;
-           } while (t >= 8);
+            } while (t >= 8);
             break;
         case OLED_COLOR_BLACK:
             do
@@ -553,10 +554,10 @@ int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
             break;
         }
     }
-    if (t) // // partial line at bottom
+    if (t) // partial line at bottom
     {
         mod = t & 7;
-        static const uint8_t postmask[8] = {0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
+        static const uint8_t postmask[8] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
         mask = postmask[mod];
         switch (color)
         {
@@ -572,8 +573,6 @@ int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
         default:
             break;
         }
-
-
     }
     return 0;
 }
@@ -588,7 +587,6 @@ int ssd1306_draw_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y
     if ((err = ssd1306_draw_vline(dev, fb, x, y, h, color)))
         return err;
     return ssd1306_draw_vline(dev, fb, x + w - 1, y, h, color);
-
 }
 
 
@@ -600,13 +598,12 @@ int ssd1306_fill_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y
     for (i = x; i < x + w; ++i)
         if ((err = ssd1306_draw_vline(dev, fb, i, y, h, color)))
             return err;
-    return 0 ;
+    return 0;
 }
 
 int ssd1306_draw_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0, uint8_t r, ssd1306_color_t color)
 {
     // Refer to http://en.wikipedia.org/wiki/Midpoint_circle_algorithm for the algorithm
-
     int8_t x = r;
     int8_t y = 1;
     int16_t radius_err = 1 - x;
@@ -649,18 +646,16 @@ int ssd1306_draw_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
                 return err;
         }
         ++y;
-        if (radius_err < 0)
-        {
+        if (radius_err < 0) {
             radius_err += 2 * y + 1;
         }
-        else
-        {
+        else {
             --x;
             radius_err += 2 * (y - x + 1);
         }
 
     }
-    return 0 ;
+    return 0;
 }
 
 int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0, uint8_t r, ssd1306_color_t color)
@@ -690,12 +685,10 @@ int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
                 return err;
         }
         ++x;
-        if (radius_err < 0)
-        {
+        if (radius_err < 0) {
             radius_err += 2 * x + 1;
         }
-        else
-        {
+        else {
             --y;
             radius_err += 2 * (x - y + 1);
         }
@@ -723,29 +716,28 @@ int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
             if ((err = ssd1306_draw_hline(dev, fb, x0 - x,  y0 + y, x - x1 + 1, color)))
                 return err;
             ++y;
-            if (radius_err < 0)
-            {
+            if (radius_err < 0) {
                 radius_err += 2 * y + 1;
             }
-            else
-            {
+            else {
                 --x;
                 radius_err += 2 * (y - x + 1);
             }
         }
     }
-    return 0 ;
+    return 0;
 }
 
-int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, ssd1306_color_t color) {
-
+int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,
+    int16_t x1, int16_t y1, ssd1306_color_t color)
+{
     if ((x0 >= dev->width) || (x0 < 0) || (y0 >= dev->height) || (y0 < 0))
         return -EINVAL;
     if ((x1 >= dev->width) || (x1 < 0) || (y1 >= dev->height) || (y1 < 0))
         return -EINVAL;
 
-   int err ;
-   int16_t steep = abs(y1 - y0) > abs(x1 - x0);
+   int err;
+   bool steep = abs(y1 - y0) > abs(x1 - x0);
    if (steep) {
        swap(x0, y0);
        swap(x1, y1);
@@ -786,8 +778,11 @@ int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,
    return 0;
 }
 
-int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, ssd1306_color_t color) {
-    int err ;
+int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0,
+    int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+    ssd1306_color_t color)
+{
+    int err;
     if ((err = ssd1306_draw_line(dev, fb, x0, y0, x1, y1, color)))
         return err;
     if ((err = ssd1306_draw_line(dev, fb, x1, y1, x2, y2, color)))
@@ -795,91 +790,95 @@ int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
     return ssd1306_draw_line(dev, fb, x2, y2, x0, y0, color);
 }
 
-int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,int16_t x1, int16_t y1, int16_t x2, int16_t y2, ssd1306_color_t color) {
+int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0,
+    int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+    ssd1306_color_t color)
+{
+    int16_t a, b, y, last;
+    int err;
 
-   int16_t a, b, y, last;
-   int err ;
+    // Sort coordinates by Y order (y2 >= y1 >= y0)
+    if (y0 > y1) {
+        swap(y0, y1); swap(x0, x1);
+    }
+    if (y1 > y2) {
+        swap(y2, y1); swap(x2, x1);
+    }
+    if (y0 > y1) {
+        swap(y0, y1); swap(x0, x1);
+    }
 
-   // Sort coordinates by Y order (y2 >= y1 >= y0)
-   if (y0 > y1) {
-       swap(y0, y1); swap(x0, x1);
-   }
-   if (y1 > y2) {
-       swap(y2, y1); swap(x2, x1);
-   }
-   if (y0 > y1) {
-       swap(y0, y1); swap(x0, x1);
-   }
+    if(y0 == y2) { // Handle awkward all-on-same-line case as its own thing
+        a = b = x0;
+        if (x1 < a)      a = x1;
+        else if (x1 > b) b = x1;
+        if (x2 < a)      a = x2;
+        else if (x2 > b) b = x2;
+        if ((err = ssd1306_draw_hline(dev, fb, a, y0, b - a + 1, color)))
+            return err;
+        return 0;
+    }
 
-   if(y0 == y2) { // Handle awkward all-on-same-line case as its own thing
-       a = b = x0;
-       if(x1 < a)      a = x1;
-       else if(x1 > b) b = x1;
-       if(x2 < a)      a = x2;
-       else if(x2 > b) b = x2;
-       if ((err = ssd1306_draw_hline(dev, fb, a, y0, b-a+1, color)))
-           return err;
-       return 0;
-   }
+    int16_t
+    dx01 = x1 - x0,
+    dy01 = y1 - y0,
+    dx02 = x2 - x0,
+    dy02 = y2 - y0,
+    dx12 = x2 - x1,
+    dy12 = y2 - y1,
+    sa   = 0,
+    sb   = 0;
 
-   int16_t
-   dx01 = x1 - x0,
-   dy01 = y1 - y0,
-   dx02 = x2 - x0,
-   dy02 = y2 - y0,
-   dx12 = x2 - x1,
-   dy12 = y2 - y1,
-   sa   = 0,
-   sb   = 0;
-
-   // For upper part of triangle, find scanline crossings for segments
-   // 0-1 and 0-2.  If y1=y2 (flat-bottomed triangle), the scanline y1
-   // is included here (and second loop will be skipped, avoiding a /0
-   // error there), otherwise scanline y1 is skipped here and handled
-   // in the second loop...which also avoids a /0 error here if y0=y1
-   // (flat-topped triangle).
-   if(y1 == y2) last = y1;   // Include y1 scanline
-   else         last = y1-1; // Skip it
+    // For upper part of triangle, find scanline crossings for segments
+    // 0-1 and 0-2.  If y1=y2 (flat-bottomed triangle), the scanline y1
+    // is included here (and second loop will be skipped, avoiding a /0
+    // error there), otherwise scanline y1 is skipped here and handled
+    // in the second loop...which also avoids a /0 error here if y0=y1
+    // (flat-topped triangle).
+    if (y1 == y2) last = y1;     // Include y1 scanline
+    else          last = y1 - 1; // Skip it
 
     for (y = y0; y <= last; y++) {
-       a   = x0 + sa / dy01;
-       b   = x0 + sb / dy02;
-       sa += dx01;
-       sb += dx02;
-       /* longhand:
-   a = x0 + (x1 - x0) * (y - y0) / (y1 - y0);
-   b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
+        a = x0 + sa / dy01;
+        b = x0 + sb / dy02;
+        sa += dx01;
+        sb += dx02;
+        /* longhand:
+        a = x0 + (x1 - x0) * (y - y0) / (y1 - y0);
+        b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
         */
-       if(a > b) swap(a,b);
-       if ((err = ssd1306_draw_hline(dev, fb, a, y, b-a+1, color)))
-           return err;
-   }
+        if (a > b) swap(a, b);
+        if ((err = ssd1306_draw_hline(dev, fb, a, y, b - a + 1, color)))
+            return err;
+    }
 
-   // For lower part of triangle, find scanline crossings for segments
-   // 0-2 and 1-2.  This loop is skipped if y1=y2.
-   sa = dx12 * (y - y1);
-   sb = dx02 * (y - y0);
+    // For lower part of triangle, find scanline crossings for segments
+    // 0-2 and 1-2.  This loop is skipped if y1=y2.
+    sa = dx12 * (y - y1);
+    sb = dx02 * (y - y0);
     for (; y <= y2; y++) {
-       a   = x1 + sa / dy12;
-       b   = x0 + sb / dy02;
-       sa += dx12;
-       sb += dx02;
-       /* longhand:
-   a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
-   b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
+        a = x1 + sa / dy12;
+        b = x0 + sb / dy02;
+        sa += dx12;
+        sb += dx02;
+        /* longhand:
+        a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
+        b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
         */
-       if(a > b) swap(a,b);
-       if ((err = ssd1306_draw_hline(dev, fb, a, y, b-a+1, color)))
+        if (a > b) swap(a, b);
+        if ((err = ssd1306_draw_hline(dev, fb, a, y, b - a + 1, color)))
            return err;
-   }
-   return 0 ;
+    }
+    return 0;
 }
 
-uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background)
+uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb,
+    const font_info_t *font, uint8_t x, uint8_t y, char c,
+    ssd1306_color_t foreground, ssd1306_color_t background)
 {
     uint8_t i, j;
     const uint8_t *bitmap;
-    uint8_t line = 0 ;
+    uint8_t line = 0;
 
     if (font == NULL)
         return 0;
@@ -889,20 +888,15 @@ uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *
         return 0;
 
     bitmap = font->bitmap + d->offset;
-    for (j = 0; j < font->height; ++j)
-    {
-        for (i = 0; i < d->width; ++i)
-        {
-            if (i % 8 == 0)
-            {
+    for (j = 0; j < font->height; ++j) {
+        for (i = 0; i < d->width; ++i) {
+            if (i % 8 == 0) {
                 line = bitmap[(d->width + 7) / 8 * j + i / 8]; // line data
             }
-            if (line & 0x80)
-            {
+            if (line & 0x80) {
                 ssd1306_draw_pixel(dev, fb, x + i, y + j, foreground);
             }
-            else
-            {
+            else {
                 switch (background)
                 {
                 case OLED_COLOR_TRANSPARENT:
@@ -923,7 +917,9 @@ uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *
     return d->width;
 }
 
-uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background)
+uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb,
+    const font_info_t *font, uint8_t x, uint8_t y, char *str,
+    ssd1306_color_t foreground, ssd1306_color_t background)
 {
     uint8_t t = x;
 
@@ -936,7 +932,6 @@ uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t
        ++str;
        if (*str)
            x += font->c;
-
     }
-    return (x - t);
+    return x - t;
 }
