@@ -6,7 +6,7 @@
  * Charset: koi8_r
  * 255 characters (1..255)
  *
- * Author: http://terminus-font.sourceforge.net/
+ * Copyright (c) 2015 Dimitar Toshkov Zhekov
  * License: SIL Open Font License, Version 1.1. The license is included as OFL.TXT, and is
  *      also available with a FAQ at http://scripts.sil.org/OFL
  *
