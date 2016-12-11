@@ -415,25 +415,6 @@ int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
 int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, ssd1306_color_t color);
 
 /**
- * Select the font
- * @param font_face id value of the font
- * @return Non-zero if error occured
- */
-int ssd1306_select_font(font_face_t font_face);
-
-/**
- * Get the height of current selected font
- * @return Height of the font (in pixels) or 0 if none font selected
- */
-uint8_t ssd1306_get_font_height();
-
-/**
- * Get the "C" value (space between adjacent characters) of current selected font
- * @return "C" value
- */
-uint8_t ssd1306_get_font_c();
-
-/**
  * Draw one character using currently selected font
  * @param dev Pointer to device descriptor
  * @param buf Pointer to framebuffer. Framebuffer size = width * height / 8
@@ -444,7 +425,7 @@ uint8_t ssd1306_get_font_c();
  * @param background Background color
  * @return Width of the character
  */
-uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background);
+uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *fnt, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background);
 
 /**
  * Draw one character using currently selected font
@@ -457,14 +438,7 @@ uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t 
  * @param background Background color
  * @return Width of the string (out-of-display pixels also included)
  */
-uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background);
-
-/**
- * Measure width of string with current selected font
- * @param str String to measure
- * @return Width of the string
- */
-uint8_t ssd1306_measure_string(char *str);
+uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *fnt, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background);
 
 #ifdef __cplusplus
 extern "C"

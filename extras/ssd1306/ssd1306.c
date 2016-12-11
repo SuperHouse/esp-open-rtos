@@ -71,8 +71,6 @@
 #define abs(x) ((x)<0 ? -(x) : (x))
 #define swap(x, y) do { typeof(x) temp##x##y = x; x = y; y = temp##x##y; } while (0)
 
-static const font_info_t *font; // save font selection
-
 /* Issue a command to SSD1306 device
  * I2C proto format:
  * |S|Slave Address|W|ACK|0x00|Command|Ack|P|
@@ -877,18 +875,7 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
    return 0 ;
 }
 
-int ssd1306_select_font(font_face_t font_face)
-{
-    if (font_face < fonts_count)
-        font = fonts[font_face];
-    else
-        return -EINVAL;
-    if (!font)
-        return -EINVAL;
-    return 0;
-}
-
-uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background)
+uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background)
 {
     uint8_t i, j;
     const uint8_t *bitmap;
@@ -897,18 +884,18 @@ uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t 
     if (font == NULL)
         return 0;
 
-    // we always have space in the font set
-    if ((c < font->char_start) || (c > font->char_end))
-        c = ' ';
-    c = c - font->char_start;   // c now become index to tables
-    bitmap = font->bitmap + font->char_descriptors[(unsigned char)c].offset;
+    const font_char_desc_t *d = font_get_char_desc(font, c);
+    if (d == NULL)
+        return 0;
+
+    bitmap = font->bitmap + d->offset;
     for (j = 0; j < font->height; ++j)
     {
-        for (i = 0; i < font->char_descriptors[(unsigned char)c].width; ++i)
+        for (i = 0; i < d->width; ++i)
         {
             if (i % 8 == 0)
             {
-                line = bitmap[(font->char_descriptors[(unsigned char)c].width + 7) / 8 * j + i / 8]; // line data
+                line = bitmap[(d->width + 7) / 8 * j + i / 8]; // line data
             }
             if (line & 0x80)
             {
@@ -933,63 +920,23 @@ uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t 
             line = line << 1;
         }
     }
-    return (font->char_descriptors[(unsigned char)c].width);
+    return d->width;
 }
 
-uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background)
+uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background)
 {
     uint8_t t = x;
 
-    if (font == NULL)
-        return 0;
-    if (str == NULL)
+    if (font == NULL || str == NULL)
         return 0;
 
     while (*str)
     {
-       x += ssd1306_draw_char(dev, fb, x, y, *str, foreground, background);
+       x += ssd1306_draw_char(dev, fb, font, x, y, *str, foreground, background);
        ++str;
        if (*str)
            x += font->c;
 
     }
     return (x - t);
-}
-
-uint8_t ssd1306_get_font_height()
-{
-    if (font == NULL)
-        return 0;
-    return (font->height);
-}
-
-
-uint8_t ssd1306_get_font_c()
-{
-    if (font == NULL)
-        return 0;
-    return (font->c);
-}
-
-uint8_t ssd1306_measure_string(char *str)
-{
-    uint8_t w = 0;
-    char c;
-
-    if (font == NULL)
-        return 0;
-
-    while (*str)
-    {
-        c = *str;
-        // we always have space in the font set
-        if ((c < font->char_start) || (c > font->char_end))
-            c = ' ';
-        c = c - font->char_start;   // c now become index to tables
-        w += font->char_descriptors[(unsigned char)c].width;
-        ++str;
-       if (*str)
-           w += font->c;
-    }
-    return w;
 }

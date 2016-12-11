@@ -53,9 +53,14 @@ static const ssd1306_t dev = {
 /* Local frame buffer */
 static uint8_t buffer[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8];
 
-TimerHandle_t timerHandle = 0; // Timer handler
+TimerHandle_t fps_timer_handle = NULL; // Timer handler
+TimerHandle_t font_timer_handle = NULL;
+
 uint8_t frame_done = 0; // number of frame send.
 uint8_t fps = 0; // image per second.
+
+const font_info_t *font = NULL; // current font
+font_face_t font_face = 0;
 
 #define SECOND (1000 / portTICK_PERIOD_MS)
 
@@ -72,23 +77,15 @@ static void ssd1306_task(void *pvParameters)
     uint8_t x1 = LOAD_ICON_X + LOAD_ICON_SIZE;
     uint8_t y1 = LOAD_ICON_Y + LOAD_ICON_SIZE;
     uint16_t count = 0;
-    uint8_t font = 0;
-    //ssd1306_select_font(FONT_FACE_TERMINUS_BOLD_8X14_KOI8_R);
 
     while (1) {
 
-        if (!(count % 200))
-            while (true)
-            {
-                if (font++ >= FONT_FACE_MAX) font = 0;
-                if (!ssd1306_select_font(font)) break;
-            }
+        ssd1306_draw_string(&dev, buffer, font, 0, 0, "Hello, esp-open-rtos!", OLED_COLOR_WHITE, OLED_COLOR_BLACK);
+        sprintf(text, "FPS: %u   ", fps);
+        ssd1306_draw_string(&dev, buffer, font_builtin_fonts[FONT_FACE_TERMINUS_6X12_KOI8_R],
+            0, 40, text, OLED_COLOR_WHITE, OLED_COLOR_BLACK);
 
-        ssd1306_draw_string(&dev, buffer, 10, 10,"Hello, esp-open-rtos !", OLED_COLOR_WHITE, OLED_COLOR_BLACK);
-        sprintf(text,"FPS: %u",fps);
-        ssd1306_draw_string(&dev, buffer, 10, 40, text, OLED_COLOR_WHITE, OLED_COLOR_BLACK);
-
-        //generate loading icon
+        // generate loading icon
         ssd1306_draw_line(&dev, buffer, x0, y0, x1, y1, OLED_COLOR_BLACK);
         if (x0 < (LOAD_ICON_X + LOAD_ICON_SIZE)) {
             x0++;
@@ -108,7 +105,7 @@ static void ssd1306_task(void *pvParameters)
         ssd1306_draw_rectangle(&dev, buffer, LOAD_ICON_X, LOAD_ICON_Y,
             LOAD_ICON_SIZE + 1, LOAD_ICON_SIZE + 1, OLED_COLOR_WHITE);
 
-        //generate circle counting
+        // generate circle counting
         for (uint8_t i = 0; i < 10; i++) {
             if ((count >> i) & 0x01)
                 ssd1306_draw_circle(&dev, buffer, CIRCLE_COUNT_ICON_X, CIRCLE_COUNT_ICON_Y, i, OLED_COLOR_BLACK);
@@ -135,10 +132,21 @@ error_loop:
     }
 }
 
-void SoftTimer(TimerHandle_t xTimer)
+void fps_timer(TimerHandle_t h)
 {
     fps = frame_done; // Save number of frame already send to screen
     frame_done = 0;
+}
+
+void font_timer(TimerHandle_t h)
+{
+    do {
+        if (++font_face >= font_builtin_fonts_count)
+            font_face = 0;
+        font = font_builtin_fonts[font_face];
+    } while (!font);
+
+    printf("Selected builtin font %d\n", font_face);
 }
 
 void user_init(void)
@@ -162,9 +170,14 @@ void user_init(void)
     ssd1306_set_whole_display_lighting(&dev, true);
     vTaskDelay(SECOND);
 
+    font = font_builtin_fonts[font_face];
+
     // Create user interface task
     xTaskCreate(ssd1306_task, "ssd1306_task", 256, NULL, 2, NULL);
 
-    timerHandle = xTimerCreate("Timer", SECOND, pdTRUE, NULL, SoftTimer);
-    xTimerStart(timerHandle, 0);
+    fps_timer_handle = xTimerCreate("fps_timer", SECOND, pdTRUE, NULL, fps_timer);
+    xTimerStart(fps_timer_handle, 0);
+
+    font_timer_handle = xTimerCreate("font_timer", 5 * SECOND, pdTRUE, NULL, font_timer);
+    xTimerStart(font_timer_handle, 0);
 }

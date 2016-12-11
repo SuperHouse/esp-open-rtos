@@ -1,7 +1,9 @@
-/*
- * fonts.c
+/**
+ * LCD/OLED fonts library
  *
- *  Created on: 8 dec. 2016
+ * FIXME: License?
+ *
+ * @date: 8 dec. 2016
  *      Author: zaltora
  */
 #include "fonts.h"
@@ -44,7 +46,9 @@
 
 /////////////////////////////////////////////
 
-const font_info_t *fonts[] =
+// FIXME: this declaration is noisy
+
+const font_info_t *font_builtin_fonts[] =
 {
 #if FONTS_GLCD_5X7
     [FONT_FACE_GLCD5x7] = &_fonts_glcd_5x7_info,
@@ -103,4 +107,23 @@ const font_info_t *fonts[] =
 #endif
 };
 
-const size_t fonts_count = (sizeof(fonts) / sizeof(font_info_t *));
+const size_t font_builtin_fonts_count = (sizeof(font_builtin_fonts) / sizeof(font_info_t *));
+
+/////////////////////////////////////////////
+
+uint16_t font_measure_string(const font_info_t *fnt, const char *s)
+{
+    if (!s || !fnt) return 0;
+
+    uint16_t res = 0;
+    while (s)
+    {
+        font_char_desc_t *d = font_get_char_desc(fnt, *s);
+        if (d)
+            res += d->width + fnt->c;
+        s++;
+    }
+
+    return res > 0 ? res - fnt->c : 0;
+}
+
