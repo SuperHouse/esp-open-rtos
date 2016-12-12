@@ -246,7 +246,7 @@ uint16_t font_measure_string(const font_info_t *fnt, const char *s)
     if (!s || !fnt) return 0;
 
     uint16_t res = 0;
-    while (s)
+    while (*s)
     {
         const font_char_desc_t *d = font_get_char_desc(fnt, *s);
         if (d)

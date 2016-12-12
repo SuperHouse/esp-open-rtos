@@ -37,6 +37,8 @@
     #define DC_PIN   4
 #endif
 
+#define DEFAULT_FONT FONT_FACE_TERMINUS_6X12_ISO8859_1
+
 /* Declare device descriptor */
 static const ssd1306_t dev = {
     .protocol = PROTOCOL,
@@ -82,8 +84,7 @@ static void ssd1306_task(void *pvParameters)
 
         ssd1306_draw_string(&dev, buffer, font, 0, 0, "Hello, esp-open-rtos!", OLED_COLOR_WHITE, OLED_COLOR_BLACK);
         sprintf(text, "FPS: %u   ", fps);
-        ssd1306_draw_string(&dev, buffer, font_builtin_fonts[FONT_FACE_TERMINUS_6X12_KOI8_R],
-            0, 40, text, OLED_COLOR_WHITE, OLED_COLOR_BLACK);
+        ssd1306_draw_string(&dev, buffer, font_builtin_fonts[DEFAULT_FONT], 0, 40, text, OLED_COLOR_WHITE, OLED_COLOR_BLACK);
 
         // generate loading icon
         ssd1306_draw_line(&dev, buffer, x0, y0, x1, y1, OLED_COLOR_BLACK);
