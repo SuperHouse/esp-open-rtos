@@ -3,6 +3,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <queue.h>
+#include <timers.h>
 #include <string.h>
 #include <ssd1306/ssd1306.h>
 
@@ -45,6 +46,11 @@ static const ssd1306_t dev = {
 
 /* Local frame buffer */
 static uint8_t buffer[DISPLAY_WIDTH * DISPLAY_HEIGHT / 8];
+TimerHandle_t scrol_timer_handle = NULL; // Timer handler
+
+
+#define SECOND (1000 / portTICK_PERIOD_MS)
+
 
 static void ssd1306_task(void *pvParameters)
 {
@@ -58,7 +64,7 @@ static void ssd1306_task(void *pvParameters)
     ssd1306_set_whole_display_lighting(&dev, false);
     bool fwd = false;
     while (1) {
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        vTaskDelay(2*SECOND);
         printf("%s: still alive, flipping!\n", __FUNCTION__);
         ssd1306_set_scan_direction_fwd(&dev, fwd);
         fwd = !fwd;
@@ -67,9 +73,20 @@ static void ssd1306_task(void *pvParameters)
 error_loop:
     printf("%s: error while loading framebuffer into SSD1306\n", __func__);
     for(;;){
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        vTaskDelay(2*SECOND);
         printf("%s: error loop\n", __FUNCTION__);
     }
+}
+
+void scrolling_timer(TimerHandle_t h)
+{
+    static bool scrol = true ;
+    if(scrol)
+        ssd1306_start_scroll_hori(&dev, false, 0, 7, FRAME_25);
+    else
+        ssd1306_stop_scroll(&dev);
+    printf("Scrolling status: %s\n", (scrol)? "On" : "Off");
+    scrol=!scrol ;
 }
 
 void user_init(void)
@@ -86,11 +103,16 @@ void user_init(void)
     while (ssd1306_init(&dev) != 0)
     {
         printf("%s: failed to init SSD1306 lcd\n", __func__);
-        vTaskDelay(1000/portTICK_PERIOD_MS);
+        vTaskDelay(SECOND);
     }
 
     ssd1306_set_whole_display_lighting(&dev, true);
-    vTaskDelay(1000/portTICK_PERIOD_MS);
+    vTaskDelay(SECOND);
     // Create user interface task
     xTaskCreate(ssd1306_task, "ssd1306_task", 256, NULL, 2, NULL);
+
+    //Scrolling timer
+    scrol_timer_handle = xTimerCreate("fps_timer", 10*SECOND, pdTRUE, NULL, scrolling_timer);
+    xTimerStart(scrol_timer_handle, 0);
+
 }

@@ -75,6 +75,23 @@ typedef enum
     OLED_COLOR_WHITE = 1,        //!< White (or blue, yellow, pixel on)
     OLED_COLOR_INVERT = 2,       //!< Invert pixel (XOR)
 } ssd1306_color_t;
+
+/**
+ * Scrolling time frame interval
+ */
+typedef enum
+{
+    FRAME_5 = 0,
+    FRAME_64,
+    FRAME_128,
+    FRAME_256,
+    FRAME_3,
+    FRAME_4,
+    FRAME_25,
+    FRAME_2
+
+} ssd1306_scroll_t;
+
 /**
  * Issue a single command on SSD1306.
  * @param dev Pointer to device descriptor
@@ -442,6 +459,36 @@ uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *
  * @return Width of the string (out-of-display pixels also included)
  */
 uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background);
+
+/**
+ * Stop scrolling (the ram data needs to be rewritten)
+ * @param dev Pointer to device descriptor
+ * @return Non-zero if error occured
+ */
+int ssd1306_stop_scroll(const ssd1306_t *dev);
+
+/**
+ * Start horizontal scrolling
+ * @param dev Pointer to device descriptor
+ * @param way Orientation ( true: left // false: right )
+ * @param start Page address start
+ * @param stop Page address stop
+ * @param frame Time interval between each scroll
+ * @return Non-zero if error occured
+ */
+int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uint8_t stop, ssd1306_scroll_t frame);
+
+/**
+ * Start horizontal+vertical scrolling (cant vertical scrolling)
+ * @param dev Pointer to device descriptor
+ * @param way Orientation ( true: left // false: right )
+ * @param start Page address start
+ * @param stop Page address stop
+ * @param dy vertical size shifting (min : 1 // max: 63 )
+ * @param frame Time interval between each scroll
+ * @return Non-zero if error occured
+ */
+int ssd1306_set_scroll_hori_vert(const ssd1306_t *dev, bool way,  uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame);
 
 #ifdef __cplusplus
 extern "C"
