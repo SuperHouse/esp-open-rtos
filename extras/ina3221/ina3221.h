@@ -77,16 +77,16 @@ typedef enum {
 typedef union
 {
     struct {
-        uint8_t reset : 1 ; //Set this bit to 1 to reset device
-        uint8_t ch1 : 1 ; // Enable/Disable channel 1
-        uint8_t ch2 : 1 ; // Enable/Disable channel 2
-        uint8_t ch3 : 1 ; // Enable/Disable channel 3
-        uint8_t avg : 3 ; // number of sample collected and averaged together
-        uint8_t vbus : 3 ; // Bus voltage conversion time
-        uint8_t vsht : 3 ; // Shunt voltage conversion time
-        uint8_t mode : 1 ; // Single shot measure or continious mode
-        uint8_t ebus : 1 ; // Enable/Disable bus measure
-        uint8_t esht : 1 ; // Enable/Disable shunt measure
+        uint16_t esht : 1 ; // Enable/Disable shunt measure    // LSB
+        uint16_t ebus : 1 ; // Enable/Disable bus measure
+        uint16_t mode : 1 ; // Single shot measure or continious mode
+        uint16_t vsht : 3 ; // Shunt voltage conversion time
+        uint16_t vbus : 3 ; // Bus voltage conversion time
+        uint16_t avg : 3 ; // number of sample collected and averaged together
+        uint16_t ch3 : 1 ; // Enable/Disable channel 3
+        uint16_t ch2 : 1 ; // Enable/Disable channel 2
+        uint16_t ch1 : 1 ; // Enable/Disable channel 1
+        uint16_t reset : 1 ; //Set this bit to 1 to reset device  // MSB
     };
     uint16_t config_register ;
 } ina3221_config_t ;
@@ -98,22 +98,22 @@ typedef union
 typedef union
 {
     struct {
-        uint8_t  : 1 ; //Reserved
-        uint8_t scc1 : 1 ; // channel 1 sum (1:enable)
-        uint8_t scc2 : 1 ; // channel 2 sum (1:enable)
-        uint8_t scc3 : 1 ; // channel 2 sum (1:enable)
-        uint8_t wen : 1 ; // Warning alert latch (1:enable)
-        uint8_t cen : 1 ; // Critical alert latch (1:enable)
-        uint8_t cf1 : 1 ; // Critical alert flag (Read mask to clear)
-        uint8_t cf2 : 1 ; // Critical alert flag (Read mask to clear)
-        uint8_t cf3 : 1 ; // Critical alert flag (Read mask to clear)
-        uint8_t sf : 1 ; // Sum alert flag (Read mask to clear)
-        uint8_t wf1 : 1 ; // Warning alert flag (Read mask to clear)
-        uint8_t wf2 : 1 ; // Warning alert flag (Read mask to clear)
-        uint8_t wf3 : 1 ; // Warning alert flag (Read mask to clear)
-        uint8_t pvf : 1 ; // Power valid flag
-        uint8_t tcf : 1 ; // Timing control flag
-        uint8_t cvrf : 1 ; // Conversion ready flag (1: ready)
+        uint16_t cvrf : 1 ; // Conversion ready flag (1: ready)   // LSB
+        uint16_t tcf : 1 ; // Timing control flag
+        uint16_t pvf : 1 ; // Power valid flag
+        uint16_t wf3 : 1 ; // Warning alert flag (Read mask to clear)
+        uint16_t wf2 : 1 ; // Warning alert flag (Read mask to clear)
+        uint16_t wf1 : 1 ; // Warning alert flag (Read mask to clear)
+        uint16_t sf : 1 ; // Sum alert flag (Read mask to clear)
+        uint16_t cf3 : 1 ; // Critical alert flag (Read mask to clear)
+        uint16_t cf2 : 1 ; // Critical alert flag (Read mask to clear)
+        uint16_t cf1 : 1 ; // Critical alert flag (Read mask to clear)
+        uint16_t cen : 1 ; // Critical alert latch (1:enable)
+        uint16_t wen : 1 ; // Warning alert latch (1:enable)
+        uint16_t scc3 : 1 ; // channel 2 sum (1:enable)
+        uint16_t scc2 : 1 ; // channel 2 sum (1:enable)
+        uint16_t scc1 : 1 ; // channel 1 sum (1:enable)
+        uint16_t  : 1 ; //Reserved         //MSB
     };
     uint16_t mask_register ;
 } ina3221_mask_t ;
