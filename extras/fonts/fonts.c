@@ -8,6 +8,10 @@
  */
 #include "fonts.h"
 
+#ifndef FONTS_GLCD_5X7
+#define FONTS_GLCD_5X7 1
+#endif
+
 #if FONTS_GLCD_5X7
     #include "data/font_glcd_5x7.h"
 #endif
@@ -27,6 +31,46 @@
 #endif
 #if FONTS_BITOCRA_7X13
     #include "data/font_bitocra_7x13_iso8859_1.h"
+#endif
+
+#if FONTS_TERMINUS_6X12_ISO8859_1
+    #include "data/font_terminus_6x12_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_8X14_ISO8859_1
+    #include "data/font_terminus_8x14_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_BOLD_8X14_ISO8859_1
+    #include "data/font_terminus_bold_8x14_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_10X18_ISO8859_1
+    #include "data/font_terminus_10x18_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_BOLD_10X18_ISO8859_1
+    #include "data/font_terminus_bold_10x18_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_11X22_ISO8859_1
+    #include "data/font_terminus_11x22_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_BOLD_11X22_ISO8859_1
+    #include "data/font_terminus_bold_11x22_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_12X24_ISO8859_1
+    #include "data/font_terminus_12x24_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_BOLD_12X24_ISO8859_1
+    #include "data/font_terminus_bold_12x24_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_14X28_ISO8859_1
+    #include "data/font_terminus_14x28_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_BOLD_14X28_ISO8859_1
+    #include "data/font_terminus_bold_14x28_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_16X32_ISO8859_1
+    #include "data/font_terminus_16x32_iso8859_1.h"
+#endif
+#if FONTS_TERMINUS_BOLD_16X32_ISO8859_1
+    #include "data/font_terminus_bold_16x32_iso8859_1.h"
 #endif
 
 #if FONTS_TERMINUS_6X12_KOI8_R
@@ -88,6 +132,72 @@ const font_info_t *font_builtin_fonts[] =
     [FONT_FACE_BITOCRA_7X13] = &_fonts_bitocra_7x13_iso8859_1_info,
 #else
     [FONT_FACE_BITOCRA_7X13] = NULL,
+#endif
+
+#if FONTS_TERMINUS_6X12_ISO8859_1
+    [FONT_FACE_TERMINUS_6X12_ISO8859_1] = &_fonts_terminus_6x12_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_6X12_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_8X14_ISO8859_1
+    [FONT_FACE_TERMINUS_8X14_ISO8859_1] = &_fonts_terminus_8x14_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_8X14_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_BOLD_8X14_ISO8859_1
+    [FONT_FACE_TERMINUS_BOLD_8X14_ISO8859_1] = &_fonts_terminus_bold_8x14_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_BOLD_8X14_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_10X18_ISO8859_1
+    [FONT_FACE_TERMINUS_10X18_ISO8859_1] = &_fonts_terminus_10x18_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_10X18_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_BOLD_10X18_ISO8859_1
+    [FONT_FACE_TERMINUS_BOLD_10X18_ISO8859_1] = &_fonts_terminus_bold_10x18_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_BOLD_10X18_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_11X22_ISO8859_1
+    [FONT_FACE_TERMINUS_11X22_ISO8859_1] = &_fonts_terminus_11x22_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_11X22_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_BOLD_11X22_ISO8859_1
+    [FONT_FACE_TERMINUS_BOLD_11X22_ISO8859_1] = &_fonts_terminus_bold_11x22_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_BOLD_11X22_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_12X24_ISO8859_1
+    [FONT_FACE_TERMINUS_12X24_ISO8859_1] = &_fonts_terminus_12x24_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_12X24_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_BOLD_12X24_ISO8859_1
+    [FONT_FACE_TERMINUS_BOLD_12X24_ISO8859_1] = &_fonts_terminus_bold_12x24_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_BOLD_12X24_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_14X28_ISO8859_1
+    [FONT_FACE_TERMINUS_14X28_ISO8859_1] = &_fonts_terminus_14x28_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_14X28_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_BOLD_14X28_ISO8859_1
+    [FONT_FACE_TERMINUS_BOLD_14X28_ISO8859_1] = &_fonts_terminus_bold_14x28_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_BOLD_14X28_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_16X32_ISO8859_1
+    [FONT_FACE_TERMINUS_16X32_ISO8859_1] = &_fonts_terminus_16x32_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_16X32_ISO8859_1] = NULL,
+#endif
+#if FONTS_TERMINUS_BOLD_16X32_ISO8859_1
+    [FONT_FACE_TERMINUS_BOLD_16X32_ISO8859_1] = &_fonts_terminus_bold_16x32_iso8859_1_info,
+#else
+    [FONT_FACE_TERMINUS_BOLD_16X32_ISO8859_1] = NULL,
 #endif
 
 #if FONTS_TERMINUS_6X12_KOI8_R

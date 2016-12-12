@@ -63,12 +63,12 @@
 #define SSD1306_CHARGE_PUMP_EN       (0x14)
 #define SSD1306_CHARGE_PUMP_DIS      (0x10)
 
-#define SSD1306_SCROL_HOR_LEFT      (0x27)
-#define SSD1306_SCROL_HOR_RIGHT     (0x26)
-#define SSD1306_SCROL_HOR_VER_LEFT  (0x2A)
-#define SSD1306_SCROL_HOR_VER_RIGHT (0x29)
-#define SSD1306_SCROL_ENABLE        (0x2F)
-#define SSD1306_SCROL_DISABLE       (0x2E)
+#define SSD1306_SCROLL_HOR_LEFT      (0x27)
+#define SSD1306_SCROLL_HOR_RIGHT     (0x26)
+#define SSD1306_SCROLL_HOR_VER_LEFT  (0x2A)
+#define SSD1306_SCROLL_HOR_VER_RIGHT (0x29)
+#define SSD1306_SCROLL_ENABLE        (0x2F)
+#define SSD1306_SCROLL_DISABLE       (0x2E)
 
 #ifdef SSD1306_DEBUG
 #define debug(fmt, ...) printf("%s: " fmt "\n", "SSD1306", ## __VA_ARGS__)
@@ -945,22 +945,22 @@ uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb,
 
 int ssd1306_stop_scroll(const ssd1306_t *dev)
 {
-    return ssd1306_command(dev, SSD1306_SCROL_DISABLE);
+    return ssd1306_command(dev, SSD1306_SCROLL_DISABLE);
 }
 
 int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uint8_t stop, ssd1306_scroll_t frame)
 {
-    int err ;
+    int err;
 
     if (way)
     {
-        if ((err = ssd1306_command(dev, SSD1306_SCROL_HOR_LEFT)))
-            return err ;
+        if ((err = ssd1306_command(dev, SSD1306_SCROLL_HOR_LEFT)))
+            return err;
     }
     else
     {
-        if ((err = ssd1306_command(dev, SSD1306_SCROL_HOR_RIGHT)))
-            return err ;
+        if ((err = ssd1306_command(dev, SSD1306_SCROLL_HOR_RIGHT)))
+            return err;
     }
     if (!ssd1306_command(dev, 0x00)             &&   //dummy
             !ssd1306_command(dev, (start&0x07))     &&
@@ -968,7 +968,7 @@ int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uin
             !ssd1306_command(dev, (stop&0x07))      &&
             !ssd1306_command(dev, 0x00)             && //dummy
             !ssd1306_command(dev, 0xFF)             && //dummy
-            !ssd1306_command(dev, SSD1306_SCROL_ENABLE)) {
+            !ssd1306_command(dev, SSD1306_SCROLL_ENABLE)) {
         return 0;
     }
     return -EIO;
@@ -977,34 +977,34 @@ int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uin
 int ssd1306_set_scroll_hori_vert(const ssd1306_t *dev, bool way,  uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame)
 {
     //this function dont work well if no vertical setting.
-    if ( (!dy) || (dy > 63))
+    if ((!dy) || (dy > 63))
         return -EINVAL;
-    int err ;
+    int err;
 
     //vertical scrolling selection (all screen)
     if ((err = ssd1306_command(dev, 0xA3)))
-        return err ;
+        return err;
     if ((err = ssd1306_command(dev, 0)))
-        return err ;
+        return err;
     if ((err = ssd1306_command(dev, dev->height)))
-        return err ;
+        return err;
 
     if (way)
     {
-        if ((err = ssd1306_command(dev, SSD1306_SCROL_HOR_VER_LEFT)))
-            return err ;
+        if ((err = ssd1306_command(dev, SSD1306_SCROLL_HOR_VER_LEFT)))
+            return err;
     }
     else
     {
-        if ((err = ssd1306_command(dev, SSD1306_SCROL_HOR_VER_RIGHT)))
-            return err ;
+        if ((err = ssd1306_command(dev, SSD1306_SCROLL_HOR_VER_RIGHT)))
+            return err;
     }
     if (!ssd1306_command(dev, 0x00)             &&   //dummy
             !ssd1306_command(dev, (start&0x07))     &&
             !ssd1306_command(dev, frame)            &&
             !ssd1306_command(dev, (stop&0x07))      &&
             !ssd1306_command(dev, dy)               &&
-            !ssd1306_command(dev, SSD1306_SCROL_ENABLE)) {
+            !ssd1306_command(dev, SSD1306_SCROLL_ENABLE)) {
         return 0;
     }
     return -EIO;
