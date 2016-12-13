@@ -1,10 +1,9 @@
 /**
  * LCD/OLED fonts library
  *
- * FIXME: License?
- *
- * @date 8 dec. 2016
- *      Author: zaltora
+ * Copyright (c) 2016 Ruslan V. Uss (https://github.com/UncleRus),
+ *                    Zaltora (https://github.com/Zaltora)
+ * MIT Licensed as described in the file LICENSE
  */
 #ifndef _EXTRAS_FONTS_H_
 #define _EXTRAS_FONTS_H_
