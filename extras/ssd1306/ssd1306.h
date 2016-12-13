@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2016 urx (https://github.com/urx),
  *                    Ruslan V. Uss (https://github.com/UncleRus)
+ *                    Zaltora (https://github.com/Zaltora)
  *
  * MIT Licensed as described in the file LICENSE
  */
@@ -12,6 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <fonts/fonts.h>
 
 #include "config.h"
 
@@ -62,6 +64,33 @@ typedef enum
     SSD1306_ADDR_MODE_VERTICAL,
     SSD1306_ADDR_MODE_PAGE
 } ssd1306_mem_addr_mode_t;
+
+/**
+ * Drawing color
+ */
+typedef enum
+{
+    OLED_COLOR_TRANSPARENT = -1, //!< Transparent (not drawing)
+    OLED_COLOR_BLACK = 0,        //!< Black (pixel off)
+    OLED_COLOR_WHITE = 1,        //!< White (or blue, yellow, pixel on)
+    OLED_COLOR_INVERT = 2,       //!< Invert pixel (XOR)
+} ssd1306_color_t;
+
+/**
+ * Scrolling time frame interval
+ */
+typedef enum
+{
+    FRAME_5 = 0,
+    FRAME_64,
+    FRAME_128,
+    FRAME_256,
+    FRAME_3,
+    FRAME_4,
+    FRAME_25,
+    FRAME_2
+
+} ssd1306_scroll_t;
 
 /**
  * Issue a single command on SSD1306.
@@ -274,6 +303,192 @@ int ssd1306_set_deseltct_lvl(const ssd1306_t *dev, uint8_t lvl);
  * @return Non-zero if error occured
  */
 int ssd1306_set_whole_display_lighting(const ssd1306_t *dev, bool light);
+
+/**
+ * Draw one pixel
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @param color Color of the pixel
+ * @return Non-zero if error occured
+ */
+int ssd1306_draw_pixel(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ssd1306_color_t color);
+
+/**
+ * Draw a horizontal line
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x X coordinate or starting (left) point
+ * @param y Y coordinate or starting (left) point
+ * @param w Line width
+ * @param color Color of the line
+ * @return Non-zero if error occured
+ */
+int ssd1306_draw_hline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t w, ssd1306_color_t color);
+
+/**
+ * Draw a vertical line
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x X coordinate or starting (top) point
+ * @param y Y coordinate or starting (top) point
+ * @param h Line height
+ * @param color Color of the line
+ * @return Non-zero if error occured
+ */
+int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t h, ssd1306_color_t color);
+
+/**
+ * Draw a line
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x0 First x point coordinate
+ * @param y0 First y point coordinate
+ * @param x1 Second x point coordinate
+ * @param y1 Second y point coordinate
+ * @param color Color of the line
+ * @return Non-zero if error occured
+ */
+int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, ssd1306_color_t color);
+
+/**
+ * Draw a rectangle
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x X coordinate or starting (top left) point
+ * @param y Y coordinate or starting (top left) point
+ * @param w Rectangle width
+ * @param h Rectangle height
+ * @param color Color of the rectangle border
+ * @return Non-zero if error occured
+ */
+int ssd1306_draw_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t w, uint8_t h, ssd1306_color_t color);
+
+/**
+ * Draw a filled rectangle
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x X coordinate or starting (top left) point
+ * @param y Y coordinate or starting (top left) point
+ * @param w Rectangle width
+ * @param h Rectangle height
+ * @param color Color of the rectangle
+ * @return Non-zero if error occured
+ */
+int ssd1306_fill_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t w, uint8_t h, ssd1306_color_t color);
+
+/**
+ * Draw a circle
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x0 X coordinate or center
+ * @param y0 Y coordinate or center
+ * @param r Radius
+ * @param color Color of the circle border
+ * @return Non-zero if error occured
+ */
+int ssd1306_draw_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0, uint8_t r, ssd1306_color_t color);
+
+/**
+ * Draw a filled circle
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x0 X coordinate or center
+ * @param y0 Y coordinate or center
+ * @param r Radius
+ * @param color Color of the circle
+ * @return Non-zero if error occured
+ */
+int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0, uint8_t r, ssd1306_color_t color);
+
+/**
+ * Draw a triangle
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x0 First x point coordinate
+ * @param y0 First y point coordinate
+ * @param x1 Second x point coordinate
+ * @param y1 Second y point coordinate
+ * @param x2 third x point coordinate
+ * @param y2 third y point coordinate
+ * @param color Color of the triangle border
+ * @return Non-zero if error occured
+ */
+int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, ssd1306_color_t color);
+
+/**
+ * Draw a filled triangle
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param x0 First x point coordinate
+ * @param y0 First y point coordinate
+ * @param x1 Second x point coordinate
+ * @param y1 Second y point coordinate
+ * @param x2 third x point coordinate
+ * @param y2 third y point coordinate
+ * @param color Color of the triangle
+ * @return Non-zero if error occured
+ */
+int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, ssd1306_color_t color);
+
+/**
+ * Draw one character using currently selected font
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param font Pointer to font info structure
+ * @param x X position of character (top-left corner)
+ * @param y Y position of character (top-left corner)
+ * @param c The character to draw
+ * @param foreground Character color
+ * @param background Background color
+ * @return Width of the character or negative value if error occured
+ */
+int ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background);
+
+/**
+ * Draw one character using currently selected font
+ * @param dev Pointer to device descriptor
+ * @param fb Pointer to framebuffer. Framebuffer size = width * height / 8
+ * @param font Pointer to font info structure
+ * @param x X position of character (top-left corner)
+ * @param y Y position of character (top-left corner)
+ * @param str The string to draw
+ * @param foreground Character color
+ * @param background Background color
+ * @return Width of the string  or negative value if error occured
+ */
+int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background);
+
+/**
+ * Stop scrolling (the ram data needs to be rewritten)
+ * @param dev Pointer to device descriptor
+ * @return Non-zero if error occured
+ */
+int ssd1306_stop_scroll(const ssd1306_t *dev);
+
+/**
+ * Start horizontal scrolling
+ * @param dev Pointer to device descriptor
+ * @param way Orientation ( true: left // false: right )
+ * @param start Page address start
+ * @param stop Page address stop
+ * @param frame Time interval between each scroll
+ * @return Non-zero if error occured
+ */
+int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uint8_t stop, ssd1306_scroll_t frame);
+
+/**
+ * Start horizontal+vertical scrolling (cant vertical scrolling)
+ * @param dev Pointer to device descriptor
+ * @param way Orientation ( true: left // false: right )
+ * @param start Page address start
+ * @param stop Page address stop
+ * @param dy vertical size shifting (min : 1 // max: 63 )
+ * @param frame Time interval between each scroll
+ * @return Non-zero if error occured
+ */
+int ssd1306_start_scroll_hori_vert(const ssd1306_t *dev, bool way,  uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame);
 
 #ifdef __cplusplus
 extern "C"
