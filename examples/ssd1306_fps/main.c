@@ -8,14 +8,14 @@
 #include <ssd1306/ssd1306.h>
 
 #define LOAD_ICON_X 54
-#define LOAD_ICON_Y 32
+#define LOAD_ICON_Y 42
 #define LOAD_ICON_SIZE 20
 
-#define CIRCLE_COUNT_ICON_X 94
-#define CIRCLE_COUNT_ICON_Y 42
+#define CIRCLE_COUNT_ICON_X 100
+#define CIRCLE_COUNT_ICON_Y 52
 
 /* Remove this line if your display connected by SPI */
-//#define I2C_CONNECTION
+#define I2C_CONNECTION
 
 #ifdef I2C_CONNECTION
     #include <i2c/i2c.h>
@@ -29,8 +29,8 @@
 #ifdef I2C_CONNECTION
     #define PROTOCOL SSD1306_PROTO_I2C
     #define ADDR     SSD1306_I2C_ADDR_0
-    #define SCL_PIN  14
-    #define SDA_PIN  13
+    #define SCL_PIN  5
+    #define SDA_PIN  4
 #else
     #define PROTOCOL SSD1306_PROTO_SPI4
     #define CS_PIN   5
@@ -82,9 +82,10 @@ static void ssd1306_task(void *pvParameters)
 
     while (1) {
 
+        ssd1306_fill_rectangle(&dev, buffer, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT/2, OLED_COLOR_BLACK);
         ssd1306_draw_string(&dev, buffer, font, 0, 0, "Hello, esp-open-rtos!", OLED_COLOR_WHITE, OLED_COLOR_BLACK);
         sprintf(text, "FPS: %u   ", fps);
-        ssd1306_draw_string(&dev, buffer, font_builtin_fonts[DEFAULT_FONT], 0, 40, text, OLED_COLOR_WHITE, OLED_COLOR_BLACK);
+        ssd1306_draw_string(&dev, buffer, font_builtin_fonts[DEFAULT_FONT], 0, 45, text, OLED_COLOR_WHITE, OLED_COLOR_BLACK);
 
         // generate loading icon
         ssd1306_draw_line(&dev, buffer, x0, y0, x1, y1, OLED_COLOR_BLACK);

@@ -442,9 +442,9 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t
  * @param c The character to draw
  * @param foreground Character color
  * @param background Background color
- * @return Width of the character
+ * @return Width of the character or negative value if error occured
  */
-uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background);
+int ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground, ssd1306_color_t background);
 
 /**
  * Draw one character using currently selected font
@@ -456,9 +456,9 @@ uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *
  * @param str The string to draw
  * @param foreground Character color
  * @param background Background color
- * @return Width of the string (out-of-display pixels also included)
+ * @return Width of the string (out-of-display pixels also included) or negative value if error occured
  */
-uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background);
+int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background);
 
 /**
  * Stop scrolling (the ram data needs to be rewritten)
@@ -488,7 +488,7 @@ int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uin
  * @param frame Time interval between each scroll
  * @return Non-zero if error occured
  */
-int ssd1306_set_scroll_hori_vert(const ssd1306_t *dev, bool way,  uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame);
+int ssd1306_start_scroll_hori_vert(const ssd1306_t *dev, bool way,  uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame);
 
 #ifdef __cplusplus
 extern "C"

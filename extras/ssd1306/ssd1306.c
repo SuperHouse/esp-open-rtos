@@ -879,13 +879,14 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0,
     return 0;
 }
 
-uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb,
+int ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb,
     const font_info_t *font, uint8_t x, uint8_t y, char c,
     ssd1306_color_t foreground, ssd1306_color_t background)
 {
     uint8_t i, j;
     const uint8_t *bitmap;
     uint8_t line = 0;
+    int err;
 
     if (font == NULL)
         return 0;
@@ -901,7 +902,7 @@ uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb,
                 line = bitmap[(d->width + 7) / 8 * j + i / 8]; // line data
             }
             if (line & 0x80) {
-                ssd1306_draw_pixel(dev, fb, x + i, y + j, foreground);
+                err = ssd1306_draw_pixel(dev, fb, x + i, y + j, foreground);
             }
             else {
                 switch (background)
@@ -911,34 +912,38 @@ uint8_t ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb,
                     break;
                 case OLED_COLOR_WHITE:
                 case OLED_COLOR_BLACK:
-                    ssd1306_draw_pixel(dev, fb, x + i, y + j, background);
+                    err = ssd1306_draw_pixel(dev, fb, x + i, y + j, background);
                     break;
                 case OLED_COLOR_INVERT:
                     // I don't know why I need invert background
                     break;
                 }
             }
+            if (err) return -ERANGE ;
             line = line << 1;
         }
     }
     return d->width;
 }
 
-uint8_t ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb,
+int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb,
     const font_info_t *font, uint8_t x, uint8_t y, char *str,
     ssd1306_color_t foreground, ssd1306_color_t background)
 {
     uint8_t t = x;
+    int err;
 
     if (font == NULL || str == NULL)
         return 0;
 
     while (*str)
     {
-       x += ssd1306_draw_char(dev, fb, font, x, y, *str, foreground, background);
-       ++str;
-       if (*str)
-           x += font->c;
+        if ((err = ssd1306_draw_char(dev, fb, font, x, y, *str, foreground, background)) < 0 )
+            return err;
+        x +=  err;
+        ++str;
+        if (*str)
+            x += font->c;
     }
     return x - t;
 }
@@ -974,7 +979,7 @@ int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uin
     return -EIO;
 }
 
-int ssd1306_set_scroll_hori_vert(const ssd1306_t *dev, bool way,  uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame)
+int ssd1306_start_scroll_hori_vert(const ssd1306_t *dev, bool way,  uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame)
 {
     //this function dont work well if no vertical setting.
     if ((!dy) || (dy > 63))
