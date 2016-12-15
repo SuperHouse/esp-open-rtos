@@ -55,20 +55,20 @@ __attribute__((weak)) long _write_stdout_r(struct _reent *r, int fd, const char 
     return len;
 }
 
-_WriteFunction *_current_stdout_write_r = &_write_stdout_r;
+static _WriteFunction *current_stdout_write_r = &_write_stdout_r;
 
 void set_write_stdout(_WriteFunction *f)
 {
     if  (f != NULL) {
-        _current_stdout_write_r = f;
+        current_stdout_write_r = f;
     } else {
-        _current_stdout_write_r = &_write_stdout_r;
+        current_stdout_write_r = &_write_stdout_r;
     }
 }
 
 _WriteFunction *get_write_stdout()
 {
-    return _current_stdout_write_r;
+    return current_stdout_write_r;
 }
 
 /* default implementation, replace in a filesystem */
@@ -83,7 +83,7 @@ __attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, i
     if(fd != r->_stdout->_file) {
         return _write_filesystem_r(r, fd, ptr, len);
     }
-    return _current_stdout_write_r(r, fd, ptr, len);
+    return current_stdout_write_r(r, fd, ptr, len);
 }
 
 /* syscall implementation for stdio read from UART */
