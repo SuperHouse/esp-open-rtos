@@ -3,6 +3,10 @@
 
 #include "lwip/err.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void (*tftp_receive_cb)(size_t bytes_received);
 
 /* TFTP Server OTA Support
@@ -51,5 +55,9 @@ err_t ota_tftp_download(const char *server, int port, const char *filename,
                         int timeout, int ota_slot, tftp_receive_cb receive_cb);
 
 #define TFTP_PORT 69
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
