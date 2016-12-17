@@ -123,7 +123,7 @@ static struct {
 /***************************** Internal routines *****************************/
 
 static sysparam_status_t _write_and_verify(uint32_t addr, const void *data, size_t data_size) {
-    static uint8_t bounce[BOUNCE_BUFFER_SIZE];
+    uint8_t bounce[BOUNCE_BUFFER_SIZE];
 
     for (int i = 0; i < data_size; i += BOUNCE_BUFFER_SIZE) {
         size_t count = min(data_size - i, BOUNCE_BUFFER_SIZE);
@@ -293,7 +293,7 @@ static inline sysparam_status_t _read_payload(struct sysparam_context *ctx, uint
 static inline sysparam_status_t _compare_payload(struct sysparam_context *ctx, uint8_t *value, size_t size) {
     debug(3, "compare payload (%d) @ 0x%08x", size, ctx->addr);
     if (ctx->entry.len != size) return SYSPARAM_NOTFOUND;
-    uint32_t *bounce[BOUNCE_BUFFER_WORDS];
+    uint32_t bounce[BOUNCE_BUFFER_WORDS];
     uint32_t addr = ctx->addr + ENTRY_HEADER_SIZE;
     int i;
     for (i = 0; i < size; i += BOUNCE_BUFFER_SIZE) {
