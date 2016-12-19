@@ -30,8 +30,8 @@
 #define INA3221_REG_VALID_POWER_UPPER_LIMIT     (0x10)
 #define INA3221_REG_VALID_POWER_LOWER_LIMIT     (0x11)
 
-
 #define INA3221_DEFAULT_CONFIG                   (0x7127) //Default register after reset
+#define INA3221_DEFAULT_MASK                     (0x0002)
 #define INA3221_DEFAULT_POWER_UPPER_LIMIT        (0x2710) //10V
 #define INA3221_DEFAULT_POWER_LOWER_LIMIT        (0x2328) //9V
 /*

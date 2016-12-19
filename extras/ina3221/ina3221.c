@@ -8,7 +8,7 @@
 #include "ina3221.h"
 
 #ifdef INA3221_DEBUG
-#define debug(fmt, ...) printf("%s: " fmt "\n", "SSD1306", ## __VA_ARGS__)
+#define debug(fmt, ...) printf("%s: " fmt "\n", "INA3221", ## __VA_ARGS__)
 #else
 #define debug(fmt, ...)
 #endif
@@ -107,23 +107,19 @@ int ina3221_setShuntConversionTime(ina3221_t *dev,ina3221_ct_t ct)
 
 int ina3221_reset(ina3221_t *dev)
 {
-    dev->config.config_register = INA3221_DEFAULT_CONFIG ; //internal lib reset
+    dev->config.config_register = INA3221_DEFAULT_CONFIG ; //dev reset
+    dev->config.mask = INA3221_DEFAULT_CONFIG ; //dev reset
     dev->config.reset = 1 ;
     return _wireWriteRegister(dev->addr, INA3221_REG_CONFIG, dev->config.config_register); // send reset to device
-}
-
-static int _get_raw(uint8_t addr, uint8_t reg,  ina3221_channel_t channel, uint16_t *raw)
-{
-    return _wireReadRegister(addr,reg+channel*2, raw);
 }
 
 int ina3221_getBusVoltage(ina3221_t *dev, ina3221_channel_t channel, uint32_t *voltage)
 {
     uint16_t raw_value ;
     int err = 0 ;
-    if ((err = _get_raw(dev->addr,INA3221_REG_BUSVOLTAGE_1, channel, &raw_value)))
+    if ((err = _wireReadRegister(dev->addr,INA3221_REG_BUSVOLTAGE_1+channel*2, &raw_value)))
         return err;
-    *voltage = (raw_value>>3)*8 ; //mV
+    *voltage = (raw_value>>3)*8 ; //mV    8mV step
 	return 0;
 }
 
@@ -131,26 +127,21 @@ int ina3221_getShuntValue(ina3221_t *dev, ina3221_channel_t channel, uint32_t *v
 {
     uint16_t raw_value ;
 	int err = 0 ;
-    if ((err = _get_raw(dev->addr,INA3221_REG_SHUNTVOLTAGE_1, channel, &raw_value)))
+    if ((err = _wireReadRegister(dev->addr,INA3221_REG_SHUNTVOLTAGE_1+channel*2, &raw_value)))
         return err;
-    *voltage = (raw_value>>3)*40 ; //uV
-    *current = *voltage/dev->shunt[channel] ;  //mA = uV / mOhm
+    *voltage = (raw_value>>3)*40 ; //uV   40uV step
+    if(dev->shunt[channel]) *current = *voltage/dev->shunt[channel] ;  //mA = uV / mOhm
 	return 0;
-}
-
-static int _set_raw(uint8_t addr, uint8_t reg,  ina3221_channel_t channel, uint16_t raw)
-{
-    return _wireWriteRegister(addr,reg+channel*2, raw);
 }
 
 int ina3221_setCriticalAlert(ina3221_t *dev, ina3221_channel_t channel, uint32_t current)
 {
     uint16_t raw_value = (current*dev->shunt[channel]/40)<<3 ;
-    return _set_raw(dev->addr,INA3221_REG_CRITICAL_ALERT_1, channel, raw_value) ;
+    return _wireWriteRegister(dev->addr,INA3221_REG_CRITICAL_ALERT_1+channel*2, raw_value);
 }
 
 int ina3221_setWarningAlert(ina3221_t *dev, ina3221_channel_t channel, uint32_t current)
 {
     uint16_t raw_value = (current*dev->shunt[channel]/40)<<3 ;
-    return _set_raw(dev->addr,INA3221_REG_WARNING_ALERT_1, channel, raw_value) ;
+    return _wireWriteRegister(dev->addr,INA3221_REG_WARNING_ALERT_1+channel*2, raw_value);
 }
