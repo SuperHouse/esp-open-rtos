@@ -125,32 +125,15 @@ int32_t esp_spiffs_mount()
 }
 
 // This implementation replaces implementation in core/newlib_syscals.c
-long _write_r(struct _reent *r, int fd, const char *ptr, int len )
+long _write_filesystem_r(struct _reent *r, int fd, const char *ptr, int len )
 {
-    if(fd != r->_stdout->_file) {
-        return SPIFFS_write(&fs, (spiffs_file)fd, (char*)ptr, len);
-    }
-    for(int i = 0; i < len; i++) {
-        /* Auto convert CR to CRLF, ignore other LFs (compatible with Espressif SDK behaviour) */
-        if(ptr[i] == '\r')
-            continue;
-        if(ptr[i] == '\n')
-            uart_putc(0, '\r');
-        uart_putc(0, ptr[i]);
-    }
-    return len;
+    return SPIFFS_write(&fs, (spiffs_file)fd, (char*)ptr, len);
 }
 
-// This function is weakly defined in core/newlib_syscalls.c
-long _read_stdin_r(struct _reent *r, int fd, char *ptr, int len);
-
 // This implementation replaces implementation in core/newlib_syscals.c
-long _read_r( struct _reent *r, int fd, char *ptr, int len )
+long _read_filesystem_r( struct _reent *r, int fd, char *ptr, int len )
 {
-    if(fd != r->_stdin->_file) {
-        return SPIFFS_read(&fs, (spiffs_file)fd, ptr, len);
-    }
-    return _read_stdin_r(r, fd, ptr, len);
+    return SPIFFS_read(&fs, (spiffs_file)fd, ptr, len);
 }
 
 int _open_r(struct _reent *r, const char *pathname, int flags, int mode)
