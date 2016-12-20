@@ -8,8 +8,12 @@
 #ifndef INA3221_H_
 #define INA3221_H_
 
-#include "espressif/esp_common.h"
-#include "esp8266.h"
+#include <errno.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "i2c/i2c.h"
 
 #define INA3221_ADDR_0  (0x40)      // A0 to GND
@@ -200,7 +204,7 @@ int ina3221_reset(ina3221_t *dev);
  * @param voltage Data pointer to get bus voltage (mV)
  * @return Non-zero if error occured
  */
-int ina3221_getBusVoltage(ina3221_t *dev, ina3221_channel_t channel, uint32_t *voltage);
+int ina3221_getBusVoltage(ina3221_t *dev, ina3221_channel_t channel, int32_t *voltage);
 
 /**
  * Get Shunt voltage (uV) and current (mA)
@@ -210,7 +214,16 @@ int ina3221_getBusVoltage(ina3221_t *dev, ina3221_channel_t channel, uint32_t *v
  * @param current Data pointer to get shunt voltage (mA)
  * @return Non-zero if error occured
  */
-int ina3221_getShuntValue(ina3221_t *dev, ina3221_channel_t channel, uint32_t *voltage, uint32_t *current);
+int ina3221_getShuntValue(ina3221_t *dev, ina3221_channel_t channel, int32_t *voltage, int32_t *current);
+
+/**
+ * Get Shunt-voltage (uV) sum value of selected channels
+ * @param dev Pointer to device descriptor
+ * @param channel Select channel value to get
+ * @param voltage Data pointer to get shunt voltage (uV)
+ * @return Non-zero if error occured
+ */
+int ina3221_getSumShuntValue(ina3221_t *dev, int32_t *voltage);
 
 /**
  * Set Critical alert (when measurement(s) is greater that value set )
@@ -219,7 +232,7 @@ int ina3221_getShuntValue(ina3221_t *dev, ina3221_channel_t channel, uint32_t *v
  * @param current Value to set (mA)
  * @return Non-zero if error occured
  */
-int ina3221_setCriticalAlert(ina3221_t *dev, ina3221_channel_t channel, uint32_t current);
+int ina3221_setCriticalAlert(ina3221_t *dev, ina3221_channel_t channel, int32_t current);
 
 /**
  * Set Warning alert (when average measurement(s) is greater that value set )
@@ -228,6 +241,36 @@ int ina3221_setCriticalAlert(ina3221_t *dev, ina3221_channel_t channel, uint32_t
  * @param current Value to set (mA)
  * @return Non-zero if error occured
  */
-int ina3221_setWarningAlert(ina3221_t *dev, ina3221_channel_t channel, uint32_t current);
+int ina3221_setWarningAlert(ina3221_t *dev, ina3221_channel_t channel, int32_t current);
+
+/**
+ * Set Sum Warning alert (Compared to each completed cycle of all selected channels : Sum register )
+ * @param dev Pointer to device descriptor
+ * @param voltage voltage to set (uV)
+ * @return Non-zero if error occured
+ */
+int ina3221_setSumWarningAlert(ina3221_t *dev, int32_t voltage);
+
+/**
+ * Set Power-valid upper-limit ( To determine if power conditions are met.)( bus need enable )
+ * If bus voltage exceed the value set, PV pin is high
+ * @param dev Pointer to device descriptor
+ * @param voltage voltage to set (mV)
+ * @return Non-zero if error occured
+ */
+int ina3221_setPowerValidUpperLimit(ina3221_t *dev, int32_t voltage);
+
+/**
+ * Set Power-valid lower-limit ( To determine if power conditions are met.)( bus need enable )
+ * If bus voltage drops below the value set, PV pin is low
+ * @param dev Pointer to device descriptor
+ * @param voltage voltage to set (mV)
+ * @return Non-zero if error occured
+ */
+int ina3221_setPowerValidLowerLimit(ina3221_t *dev, int32_t voltage);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INA3221_H_ */
