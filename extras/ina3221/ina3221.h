@@ -34,10 +34,14 @@ extern "C" {
 #define INA3221_REG_VALID_POWER_UPPER_LIMIT     (0x10)
 #define INA3221_REG_VALID_POWER_LOWER_LIMIT     (0x11)
 
-#define INA3221_DEFAULT_CONFIG                   (0x7127) //Default register after reset
+/*
+ *  Default register after reset
+ */
+#define INA3221_DEFAULT_CONFIG                   (0x7127)
 #define INA3221_DEFAULT_MASK                     (0x0002)
 #define INA3221_DEFAULT_POWER_UPPER_LIMIT        (0x2710) //10V
 #define INA3221_DEFAULT_POWER_LOWER_LIMIT        (0x2328) //9V
+
 /*
  * Numbrer of samples
  */
@@ -133,7 +137,7 @@ typedef struct {
 } ina3221_t;
 
 /**
- * get config register from the device
+ * sync internal config buffer with external device register
  * @param dev Pointer to device descriptor
  * @return Non-zero if error occured
  */
@@ -165,6 +169,25 @@ int ina3221_setting(ina3221_t *dev ,bool mode, bool bus, bool shunt);
  * @return Non-zero if error occured
  */
 int ina3221_enableChannel(ina3221_t *dev ,bool ch1, bool ch2, bool ch3);
+
+/**
+ * Select channel to be sum (don't impact enable channel status)
+ * @param dev Pointer to device descriptor
+ * @param ch1 Enable/Disable channel 1 ( true : enable // false : disable )
+ * @param ch2 Enable/Disable channel 2 ( true : enable // false : disable )
+ * @param ch3 Enable/Disable channel 3 ( true : enable // false : disable )
+ * @return Non-zero if error occured
+ */
+int ina3221_enableChannelSum(ina3221_t *dev ,bool ch1, bool ch2, bool ch3);
+
+/**
+ * enable Latch on warning and critical alert pin
+ * @param dev Pointer to device descriptor
+ * @param warning Enable/Disable warning latch ( true : Latch // false : Transparent )
+ * @param critical Enable/Disable critical latch ( true : Latch // false : Transparent )
+ * @return Non-zero if error occured
+ */
+int ina3221_enableLatchPin(ina3221_t *dev ,bool warning, bool critical);
 
 /**
  * Set average ( number(s) of point measured )
@@ -246,7 +269,7 @@ int ina3221_setWarningAlert(ina3221_t *dev, ina3221_channel_t channel, int32_t c
 /**
  * Set Sum Warning alert (Compared to each completed cycle of all selected channels : Sum register )
  * @param dev Pointer to device descriptor
- * @param voltage voltage to set (uV)
+ * @param voltage voltage to set (uV) : 40uV step
  * @return Non-zero if error occured
  */
 int ina3221_setSumWarningAlert(ina3221_t *dev, int32_t voltage);
@@ -255,7 +278,7 @@ int ina3221_setSumWarningAlert(ina3221_t *dev, int32_t voltage);
  * Set Power-valid upper-limit ( To determine if power conditions are met.)( bus need enable )
  * If bus voltage exceed the value set, PV pin is high
  * @param dev Pointer to device descriptor
- * @param voltage voltage to set (mV)
+ * @param voltage voltage to set (mV) : 8mV step
  * @return Non-zero if error occured
  */
 int ina3221_setPowerValidUpperLimit(ina3221_t *dev, int32_t voltage);
@@ -264,7 +287,7 @@ int ina3221_setPowerValidUpperLimit(ina3221_t *dev, int32_t voltage);
  * Set Power-valid lower-limit ( To determine if power conditions are met.)( bus need enable )
  * If bus voltage drops below the value set, PV pin is low
  * @param dev Pointer to device descriptor
- * @param voltage voltage to set (mV)
+ * @param voltage voltage to set (mV) : 8mV step
  * @return Non-zero if error occured
  */
 int ina3221_setPowerValidLowerLimit(ina3221_t *dev, int32_t voltage);

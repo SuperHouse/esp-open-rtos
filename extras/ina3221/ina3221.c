@@ -13,6 +13,8 @@
 #define debug(fmt, ...)
 #endif
 
+#define sign(x) ((x > 0) - (x < 0))
+
 static int _wireWriteRegister (uint8_t addr, uint8_t reg, uint16_t value)
 {
     i2c_start();
@@ -47,8 +49,8 @@ static int _wireReadRegister(uint8_t addr, uint8_t reg, uint16_t *value)
     i2c_start(); // restart condition
     if (!i2c_write((addr<<1) | 1)) // adress + R
         goto error;
-    tampon[0] = i2c_read(0);
-    tampon[1] = i2c_read(1);
+    tampon[1] = i2c_read(0);
+    tampon[0] = i2c_read(1);
     i2c_stop();
     return 0;
 
@@ -65,7 +67,15 @@ int ina3221_trigger(ina3221_t *dev)
 
 int ina3221_sync(ina3221_t *dev)
 {
-    return _wireReadRegister(dev->addr, INA3221_REG_CONFIG, &dev->config.config_register);
+    uint16_t ptr_config ;
+    int err = 0;
+    if ((err = _wireReadRegister(dev->addr, INA3221_REG_CONFIG, &ptr_config))) // Read config
+        return err;
+    if( ptr_config != dev->config.config_register) {
+        if ((err = _wireWriteRegister(dev->addr, INA3221_REG_CONFIG, dev->config.config_register))) // Update config
+            return err;
+    }
+    return 0;
 }
 
 int ina3221_setting(ina3221_t *dev ,bool mode, bool bus, bool shunt)
@@ -82,6 +92,21 @@ int ina3221_enableChannel(ina3221_t *dev ,bool ch1, bool ch2, bool ch3)
     dev->config.ch2 = ch2;
     dev->config.ch3 = ch3;
     return _wireWriteRegister(dev->addr, INA3221_REG_CONFIG, dev->config.config_register);
+}
+
+int ina3221_enableChannelSum(ina3221_t *dev ,bool ch1, bool ch2, bool ch3)
+{
+    dev->mask.scc1 = ch1;
+    dev->mask.scc2 = ch2;
+    dev->mask.scc3 = ch3;
+    return _wireWriteRegister(dev->addr, INA3221_REG_MASK, dev->mask.mask_register);
+}
+
+int ina3221_enableLatchPin(ina3221_t *dev ,bool warning, bool critical)
+{
+    dev->mask.wen = warning;
+    dev->mask.cen = critical;
+    return _wireWriteRegister(dev->addr, INA3221_REG_MASK, dev->mask.mask_register);
 }
 
 int ina3221_setAverage(ina3221_t *dev, ina3221_avg_t avg)
@@ -148,21 +173,21 @@ int ina3221_getSumShuntValue(ina3221_t *dev, int32_t *voltage)
 
 int ina3221_setCriticalAlert(ina3221_t *dev, ina3221_channel_t channel, int32_t current)
 {
-    int16_t raw_value = (current*dev->shunt[channel]/40)<<3;
+    int16_t raw_value = ((current*dev->shunt[channel]+20*sign(current))/40)<<3; // round and format
     uint16_t* ptr_value = (uint16_t*)&raw_value; // FIXME: Need this to convert int to uint without change data ?
     return _wireWriteRegister(dev->addr,INA3221_REG_CRITICAL_ALERT_1+channel*2, *ptr_value);
 }
 
 int ina3221_setWarningAlert(ina3221_t *dev, ina3221_channel_t channel, int32_t current)
 {
-    int16_t raw_value = (current*dev->shunt[channel]/40)<<3;
+    int16_t raw_value = ((current*dev->shunt[channel]+ 20*sign(current))/40)<<3; // round and format
     uint16_t* ptr_value = (uint16_t*)&raw_value; // FIXME: Need this to convert int to uint without change data ?
     return _wireWriteRegister(dev->addr,INA3221_REG_WARNING_ALERT_1+channel*2, *ptr_value);
 }
 
 int ina3221_setSumWarningAlert(ina3221_t *dev, int32_t voltage)
 {
-    int16_t raw_value = (voltage/40)<<1;
+    int16_t raw_value = ((voltage + 20*sign(voltage))/40)<<1; // round and format
     uint16_t* ptr_value = (uint16_t*)&raw_value; // FIXME: Need this to convert int to uint without change data ?
     return _wireWriteRegister(dev->addr,INA3221_REG_SHUNT_VOLTAGE_SUM_LIMIT, *ptr_value);
 }
@@ -174,7 +199,7 @@ int ina3221_setPowerValidUpperLimit(ina3221_t *dev, int32_t voltage)
         debug("Bus not enable. Dev:%X INA3221\n", dev->addr);
         return -ENOTSUP;
     }
-    int16_t raw_value = (voltage/8)<<3;
+    int16_t raw_value = ((voltage+4*sign(voltage))/8)<<3; // round and format
     uint16_t* ptr_value = (uint16_t*)&raw_value; // FIXME: Need this to convert int to uint without change data ?
     return _wireWriteRegister(dev->addr,INA3221_REG_VALID_POWER_UPPER_LIMIT, *ptr_value);
 }
@@ -186,7 +211,7 @@ int ina3221_setPowerValidLowerLimit(ina3221_t *dev, int32_t voltage)
         debug("Bus not enable. Dev:%X INA3221\n", dev->addr);
         return -ENOTSUP;
     }
-    int16_t raw_value = (voltage/8)<<3;
+    int16_t raw_value = ((voltage+4*sign(voltage))/8)<<3; // round and format
     uint16_t* ptr_value = (uint16_t*)&raw_value; // FIXME: Need this to convert int to uint without change data ?
     return _wireWriteRegister(dev->addr,INA3221_REG_VALID_POWER_LOWER_LIMIT, *ptr_value);
 }
