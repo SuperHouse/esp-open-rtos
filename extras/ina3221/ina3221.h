@@ -85,19 +85,19 @@ typedef enum {
 typedef union
 {
     struct {
-        uint16_t esht : 1 ; // Enable/Disable shunt measure    // LSB
-        uint16_t ebus : 1 ; // Enable/Disable bus measure
-        uint16_t mode : 1 ; // Single shot measure or continious mode
-        uint16_t vsht : 3 ; // Shunt voltage conversion time
-        uint16_t vbus : 3 ; // Bus voltage conversion time
-        uint16_t avg : 3 ; // number of sample collected and averaged together
-        uint16_t ch3 : 1 ; // Enable/Disable channel 3
-        uint16_t ch2 : 1 ; // Enable/Disable channel 2
-        uint16_t ch1 : 1 ; // Enable/Disable channel 1
-        uint16_t reset : 1 ; //Set this bit to 1 to reset device  // MSB
+        uint16_t esht : 1; // Enable/Disable shunt measure    // LSB
+        uint16_t ebus : 1; // Enable/Disable bus measure
+        uint16_t mode : 1; // Single shot measure or continious mode
+        uint16_t vsht : 3; // Shunt voltage conversion time
+        uint16_t vbus : 3; // Bus voltage conversion time
+        uint16_t avg : 3; // number of sample collected and averaged together
+        uint16_t ch3 : 1; // Enable/Disable channel 3
+        uint16_t ch2 : 1; // Enable/Disable channel 2
+        uint16_t ch1 : 1; // Enable/Disable channel 1
+        uint16_t rst : 1; //Set this bit to 1 to reset device  // MSB
     };
-    uint16_t config_register ;
-} ina3221_config_t ;
+    uint16_t config_register;
+} ina3221_config_t;
 
 
 /*
@@ -123,17 +123,17 @@ typedef union
         uint16_t scc1 : 1 ; // channel 1 sum (1:enable)
         uint16_t  : 1 ; //Reserved         //MSB
     };
-    uint16_t mask_register ;
-} ina3221_mask_t ;
+    uint16_t mask_register;
+} ina3221_mask_t;
 
 /*
  *  Device description
  */
 typedef struct {
-    uint8_t addr ; // ina3221 I2C address
-    ina3221_config_t config ; //Memory of ina3221 config
-    ina3221_mask_t mask ; //Memory of mask_config
-    uint16_t shunt[BUS_NUMBER] ; //Memory of shunt value  (mOhm)
+    const uint8_t addr; // ina3221 I2C address
+    const uint16_t shunt[BUS_NUMBER]; //Memory of shunt value  (mOhm)
+    ina3221_config_t config; //Memory of ina3221 config
+    ina3221_mask_t mask; //Memory of mask_config
 } ina3221_t;
 
 /**
@@ -221,76 +221,76 @@ int ina3221_setShuntConversionTime(ina3221_t *dev,ina3221_ct_t ct);
 int ina3221_reset(ina3221_t *dev);
 
 /**
- * Get Bus voltage (mV)
+ * Get Bus voltage (V)
  * @param dev Pointer to device descriptor
  * @param channel Select channel value to get
- * @param voltage Data pointer to get bus voltage (mV)
+ * @param voltage Data pointer to get bus voltage (V)
  * @return Non-zero if error occured
  */
-int ina3221_getBusVoltage(ina3221_t *dev, ina3221_channel_t channel, int32_t *voltage);
+int ina3221_getBusVoltage(ina3221_t *dev, ina3221_channel_t channel, float *voltage);
 
 /**
- * Get Shunt voltage (uV) and current (mA)
+ * Get Shunt voltage (mV) and current (mA)
  * @param dev Pointer to device descriptor
  * @param channel Select channel value to get
- * @param voltage Data pointer to get shunt voltage (uV)
+ * @param voltage Data pointer to get shunt voltage (mV)
  * @param current Data pointer to get shunt voltage (mA)
  * @return Non-zero if error occured
  */
-int ina3221_getShuntValue(ina3221_t *dev, ina3221_channel_t channel, int32_t *voltage, int32_t *current);
+int ina3221_getShuntValue(ina3221_t *dev, ina3221_channel_t channel, float *voltage, float *current);
 
 /**
- * Get Shunt-voltage (uV) sum value of selected channels
+ * Get Shunt-voltage (mV) sum value of selected channels
  * @param dev Pointer to device descriptor
  * @param channel Select channel value to get
- * @param voltage Data pointer to get shunt voltage (uV)
+ * @param voltage Data pointer to get shunt voltage (mV)
  * @return Non-zero if error occured
  */
-int ina3221_getSumShuntValue(ina3221_t *dev, int32_t *voltage);
+int ina3221_getSumShuntValue(ina3221_t *dev, float *voltage);
 
 /**
  * Set Critical alert (when measurement(s) is greater that value set )
  * @param dev Pointer to device descriptor
  * @param channel Select channel value to set
- * @param current Value to set (mA)
+ * @param current Value to set (mA) // max : 163800/shunt (mOhm)
  * @return Non-zero if error occured
  */
-int ina3221_setCriticalAlert(ina3221_t *dev, ina3221_channel_t channel, int32_t current);
+int ina3221_setCriticalAlert(ina3221_t *dev, ina3221_channel_t channel, float current);
 
 /**
  * Set Warning alert (when average measurement(s) is greater that value set )
  * @param dev Pointer to device descriptor
  * @param channel Select channel value to set
- * @param current Value to set (mA)
+ * @param current Value to set (mA)  // max : 163800/shunt (mOhm)
  * @return Non-zero if error occured
  */
-int ina3221_setWarningAlert(ina3221_t *dev, ina3221_channel_t channel, int32_t current);
+int ina3221_setWarningAlert(ina3221_t *dev, ina3221_channel_t channel, float current);
 
 /**
  * Set Sum Warning alert (Compared to each completed cycle of all selected channels : Sum register )
  * @param dev Pointer to device descriptor
- * @param voltage voltage to set (uV) : 40uV step
+ * @param voltage voltage to set (mV) //  max : 655.32
  * @return Non-zero if error occured
  */
-int ina3221_setSumWarningAlert(ina3221_t *dev, int32_t voltage);
+int ina3221_setSumWarningAlert(ina3221_t *dev, float voltage);
 
 /**
  * Set Power-valid upper-limit ( To determine if power conditions are met.)( bus need enable )
  * If bus voltage exceed the value set, PV pin is high
  * @param dev Pointer to device descriptor
- * @param voltage voltage to set (mV) : 8mV step
+ * @param voltage voltage to set (V)
  * @return Non-zero if error occured
  */
-int ina3221_setPowerValidUpperLimit(ina3221_t *dev, int32_t voltage);
+int ina3221_setPowerValidUpperLimit(ina3221_t *dev, float voltage);
 
 /**
  * Set Power-valid lower-limit ( To determine if power conditions are met.)( bus need enable )
  * If bus voltage drops below the value set, PV pin is low
  * @param dev Pointer to device descriptor
- * @param voltage voltage to set (mV) : 8mV step
+ * @param voltage voltage to set (V)
  * @return Non-zero if error occured
  */
-int ina3221_setPowerValidLowerLimit(ina3221_t *dev, int32_t voltage);
+int ina3221_setPowerValidLowerLimit(ina3221_t *dev, float voltage);
 
 #ifdef __cplusplus
 }
