@@ -1,5 +1,5 @@
 /*
- * Driver for barometic pressure sensor ms511-01BA03
+ * Driver for barometic pressure sensor MS5611-01BA03
  *
  * Copyright (C) 2016 Bernhard Guillon <Bernhard.Guillon@web.de>
  *
@@ -13,9 +13,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#define CONVERT_D1          0x40
-#define CONVERT_D2          0x50
-#define ADC_READ            0x00
+#define CONVERT_D1  0x40
+#define CONVERT_D2  0x50
+#define ADC_READ    0x00
+#define RESET       0x1E
 
 /*
  * FIXME:
@@ -25,8 +26,6 @@
  */
 #define CONVERSION_TIME     20 / portTICK_PERIOD_MS // milliseconds
 
-static const uint8_t RESET = 0x1E;
-
 static inline bool reset(uint8_t addr)
 {
     uint8_t buf[1] = { RESET };
@@ -35,29 +34,29 @@ static inline bool reset(uint8_t addr)
 
 static inline bool read_prom(ms561101ba03_t *dev)
 {
-    uint8_t tmp[2] = {0,0};
+    uint8_t tmp[2] = { 0, 0 };
 
-    if (!i2c_slave_read(dev->addr, 0xA2 , tmp, 2))
+    if (!i2c_slave_read(dev->addr, 0xA2, tmp, 2))
         return false;
     dev->config_data.sens = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xA4 , tmp, 2))
+    if (!i2c_slave_read(dev->addr, 0xA4, tmp, 2))
         return false;
     dev->config_data.off = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xA6 , tmp, 2))
+    if (!i2c_slave_read(dev->addr, 0xA6, tmp, 2))
         return false;
     dev->config_data.tcs = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xA8 , tmp, 2))
+    if (!i2c_slave_read(dev->addr, 0xA8, tmp, 2))
         return false;
     dev->config_data.tco = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xAA , tmp, 2))
+    if (!i2c_slave_read(dev->addr, 0xAA, tmp, 2))
         return false;
     dev->config_data.t_ref = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xAC , tmp, 2))
+    if (!i2c_slave_read(dev->addr, 0xAC, tmp, 2))
         return false;
     dev->config_data.tempsens = tmp[0] << 8 | tmp[1];
 
@@ -103,28 +102,32 @@ static inline int32_t calc_temp(ms561101ba03_t *dev)
 {
     // Actual temerature (-40...85C with 0.01 resulution)
     // TEMP = 20C +dT * TEMPSENSE =2000 + dT * C6 / 2^23
-    return (int32_t)((int64_t)2000 +(int64_t)dev->dT * (int64_t)dev->config_data.tempsens / (int64_t)8388608);
+    return (int32_t)(2000 + (int64_t)dev->dT * dev->config_data.tempsens / 8388608);
 }
 
 static inline int64_t calc_off(ms561101ba03_t *dev)
 {
     // Offset at actual temperature
     // OFF=OFF_t1 + TCO * dT = OFF_t1(C2) * 2^16 + (C4*dT)/2^7
-    return (int64_t)((int64_t)dev->config_data.off * (int64_t)65536) + (((int64_t)dev->config_data.tco * (int64_t)dev->dT ) /(int64_t)128);
+    return (int64_t)((int64_t)dev->config_data.off * (int64_t)65536)
+        + (((int64_t)dev->config_data.tco * (int64_t)dev->dT) / (int64_t)128);
 }
 
 static inline int64_t calc_sens(ms561101ba03_t *dev)
 {
     // Senisitivity at actual temperature
     // SENS=SENS_t1 + TCS *dT = SENS_t1(C1) *2^15 + (TCS(C3) *dT)/2^8
-    return (int64_t)(((int64_t)dev->config_data.sens) *(int64_t)32768) + (((int64_t)dev->config_data.tcs * (int64_t)dev->dT ) /(int64_t)256);
+    return (int64_t)(((int64_t)dev->config_data.sens) * (int64_t)32768)
+        + (((int64_t)dev->config_data.tcs * (int64_t)dev->dT) / (int64_t)256);
 }
 
 static inline int32_t calc_p(uint32_t digital_pressure, int64_t sens, int64_t off)
 {
     // Temperature compensated pressure (10...1200mbar with 0.01mbar resolution
     // P = digital pressure value  * SENS - OFF = (D1 * SENS/2^21 -OFF)/2^15
-    return  (int32_t) (((int64_t)digital_pressure * (int64_t)((int64_t)sens / (int64_t)0x200000) - (int64_t)off) / (int64_t)32768);
+    return (int32_t)(((int64_t)digital_pressure
+        * (int64_t)((int64_t)sens / (int64_t)0x200000) - (int64_t)off)
+        / (int64_t)32768);
 }
 
 static inline bool get_raw_temperature(ms561101ba03_t *dev, uint32_t *result)
@@ -143,12 +146,12 @@ static inline bool get_raw_temperature(ms561101ba03_t *dev, uint32_t *result)
 static inline bool get_raw_pressure(ms561101ba03_t *dev, uint32_t *result)
 {
     if (!start_pressure_conversion(dev))
-        return false;
+    	return false;
 
     vTaskDelay(CONVERSION_TIME);
 
     if (!read_adc(dev->addr, result))
-        return false;
+    	return false;
 
     return true;
 }
@@ -160,15 +163,15 @@ bool ms561101ba03_get_sensor_data(ms561101ba03_t *dev)
     // Second order temperature compensation see datasheet p8
     uint32_t raw_pressure = 0;
     if (!get_raw_pressure(dev, &raw_pressure))
-        return false;
+    	return false;
 
     uint32_t raw_temperature = 0;
-    if(!get_raw_temperature(dev, &raw_temperature))
-        return false;
+    if (!get_raw_temperature(dev, &raw_temperature))
+    	return false;
 
     calc_dt(dev, raw_temperature);
-    int64_t temp =  calc_temp(dev);
-    int64_t off =  calc_off(dev);
+    int64_t temp = calc_temp(dev);
+    int64_t off = calc_off(dev);
     int64_t sens = calc_sens(dev);
 
     //Set defaults for temp >= 2000
@@ -180,17 +183,17 @@ bool ms561101ba03_get_sensor_data(ms561101ba03_t *dev)
     {
         //Low temperature
         t_2 = ((dev->dT * dev->dT) >> 31);           // T2 = dT^2/2^31
-        help = (temp-2000);
+        help = (temp - 2000);
         help = 5 * help * help;
-        off_2 = help >> 1;                           // OFF_2 = 5 * (TEMP - 2000)^2/2^1
-        sens_2 = help >> 2;                          // SENS_2 = 5 * (TEMP - 2000)^2/2^2
-        if(temp < -1500)
+        off_2 = help >> 1;                    // OFF_2 = 5 * (TEMP - 2000)^2/2^1
+        sens_2 = help >> 2;                  // SENS_2 = 5 * (TEMP - 2000)^2/2^2
+        if (temp < -1500)
         {
             // Very low temperature
-            help = (temp+1500);
+            help = (temp + 1500);
             help = help * help;
-            off_2 = off_2 + 7 * help;                // OFF_2 = OFF_2 + 7 * (TEMP + 1500)^2
-            sens_2 = sens_2 + ((11 * help) >> 1);    // SENS_2 = SENS_2 + 7 * (TEMP + 1500)^2/2^1
+            off_2 = off_2 + 7 * help;     // OFF_2 = OFF_2 + 7 * (TEMP + 1500)^2
+            sens_2 = sens_2 + ((11 * help) >> 1); // SENS_2 = SENS_2 + 7 * (TEMP + 1500)^2/2^1
         }
     }
 
@@ -206,13 +209,13 @@ bool ms561101ba03_get_sensor_data(ms561101ba03_t *dev)
 bool ms561101ba03_init(ms561101ba03_t *dev)
 {
     // First of all we need to reset the chip
-    if(!reset(dev->addr))
-        return false;
+    if (!reset(dev->addr))
+    	return false;
     // Wait a bit for the device to reset
     vTaskDelay(CONVERSION_TIME);
     // Get the config
-    if(!read_prom(dev))
-        return false;
+    if (!read_prom(dev))
+    	return false;
     // Every thing went fine
     return true;
 }
