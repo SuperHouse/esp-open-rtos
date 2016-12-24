@@ -23,9 +23,10 @@ void user_init(void)
     uart_set_baud(0, 115200);
     printf("SDK version:%s\n\n", sdk_system_get_sdk_version());
 
-    ms561101ba03_config_data_t conf = {0,0,0,0,0,0};
-    ms561101ba03_result_t result = {0,0};
-    ms561101ba03_t device= {MS561101BA03_ADDR_CSB_LOW, MS561101BA03_OSR_4096, conf, result, 0};
+    ms561101ba03_t device = {
+        .addr = MS561101BA03_ADDR_CSB_LOW,
+        .osr  = MS561101BA03_OSR_4096,
+    };
 
     while (!ms561101ba03_init(&device))
         printf("Device not found\n");
