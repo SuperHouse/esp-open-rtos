@@ -18,8 +18,10 @@
 #define ADDR INA3221_ADDR_0
 
 //#define STRUCT_SETTING 1
+#define MODE false  // true : continuous  measurements // false : trigger measurements
 
-void loop(void *pvParameters)
+
+void ina_tast(void *pvParameters)
 {
     uint32_t measure_number = 0;
     float bus_voltage;
@@ -35,7 +37,7 @@ void loop(void *pvParameters)
     };
 
 #ifndef STRUCT_SETTING
-    if(ina3221_setting(&dev ,false, true, true)) // trigger mode,  bus and shunt activated
+    if(ina3221_setting(&dev ,false, true, MODE)) //  mode selection ,  bus and shunt activated
         goto error_loop;
     if(ina3221_enableChannel(&dev , true, true, true)) // Enable all channels
         goto error_loop;
@@ -46,7 +48,7 @@ void loop(void *pvParameters)
     if(ina3221_setShuntConversionTime(&dev, INA3221_CT_2116)) // 2ms by channel
         goto error_loop;
 #else
-    dev.config.mode = false; // trigger mode
+    dev.config.mode = MODE; // mode selection
     dev.config.esht = true; // shunt enable
     dev.config.ebus = true; // bus enable
     dev.config.ch1 = true; // channel 1 enable
@@ -62,14 +64,15 @@ void loop(void *pvParameters)
     while(1)
     {
         measure_number++;
+#if !MODE
         do
         {
             if (ina3221_trigger(&dev)) // Start a measure & get mask
                 goto error_loop;
         } while(!(dev.mask.cvrf)); // check if measure done
-
-        for (uint8_t i = 0 ; i < BUS_NUMBER ; i++) {
-
+#endif
+        for (uint8_t i = 0 ; i < BUS_NUMBER ; i++)
+        {
             if(ina3221_getBusVoltage(&dev, i, &bus_voltage)) // Get voltage in V
                 goto error_loop;
             if(ina3221_getShuntValue(&dev, i, &shunt_voltage, &shunt_current)) // Get voltage in mV and currant in mA
@@ -79,21 +82,18 @@ void loop(void *pvParameters)
             printf("Bus voltage: %.02f V\n", bus_voltage );
             printf("Shunt voltage: %.02f mV\n", shunt_voltage );
             printf("Shunt current: %.02f mA\n\n", shunt_current );
-
         }
         vTaskDelay(5000/portTICK_PERIOD_MS);
     }
 
     error_loop:
     printf("%s: error while com with INA3221\n", __func__);
-    for(;;){
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    for(;;)
+    {
+        vTaskDelay(2000/portTICK_PERIOD_MS);
         printf("%s: error loop\n", __FUNCTION__);
     }
-
 }
-
-
 
 void user_init(void)
 {
@@ -102,5 +102,5 @@ void user_init(void)
 
     i2c_init(PIN_SCL,PIN_SDA);
 
-    xTaskCreate(loop, "tsk1", 512, NULL, 2, NULL);
+    xTaskCreate(ina_tast, "Measurements_task", 512, NULL, 2, NULL);
 }
