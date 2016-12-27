@@ -203,12 +203,12 @@ int ssd1306_init(const ssd1306_t *dev)
         break;
     case SH1106_SCREEN:
         if (!ssd1306_display_on(dev, false)                                  &&
+                !ssd1306_set_charge_pump_enabled(dev, true)                      &&
                 !sh1106_set_charge_pump_voltage(dev,SH1106_VOLTAGE_74)           &&
                 !ssd1306_set_osc_freq(dev, 0x80)                                 &&
                 !ssd1306_set_mux_ratio(dev, dev->height - 1)                     &&
                 !ssd1306_set_display_offset(dev, 0x0)                            &&
                 !ssd1306_set_display_start_line(dev, 0x0)                        &&
-                !ssd1306_set_charge_pump_enabled(dev, true)                      &&
                 !ssd1306_set_segment_remapping_enabled(dev, true)                &&
                 !ssd1306_set_scan_direction_fwd(dev, true)                       &&
                 !ssd1306_set_com_pin_hw_config(dev, pin_cfg)                     &&
@@ -218,7 +218,6 @@ int ssd1306_init(const ssd1306_t *dev)
                 !ssd1306_set_whole_display_lighting(dev, true)                   &&
                 !ssd1306_set_inversion(dev, false)                               &&
                 !ssd1306_display_on(dev, true)) {
-
             return 0;
         }
         break;
@@ -296,6 +295,7 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
                 for (i = 0 ; i < (dev->height/8) ; i++) {
                     sh1106_go_coordinate(dev,0,i);
                     gpio_write(dev->dc_pin, true); // data mode
+                    gpio_write(dev->cs_pin, false);
                     if (buf)
                         spi_transfer(SPI_BUS, &buf[dev->width*i], NULL, dev->width, SPI_8BIT);
                     else
@@ -321,10 +321,13 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
                 for (i = 0 ; i < (dev->height/8) ; i++) {
                     sh1106_go_coordinate(dev,0,i);
                     spi_set_command(SPI_BUS,1,1); // data mode
+                    gpio_write(dev->cs_pin, false);
                     if (buf)
-                        spi_transfer(SPI_BUS, &buf[dev->width*i], NULL, dev->width, SPI_8BIT);
+                        for (j = 0 ; j < dev->width ; j++)
+                            spi_transfer_8(SPI_BUS, buf[dev->width*i+j]);
                     else
-                        spi_repeat_send_8(SPI_BUS,0,dev->width);
+                        for (j = 0 ; j < dev->width ; j++)
+                            spi_transfer_8(SPI_BUS, buf[dev->width*i+j]);
                 }
             }
             spi_clear_command(SPI_BUS);
@@ -509,7 +512,6 @@ int ssd1306_set_whole_display_lighting(const ssd1306_t *dev, bool light)
 {
     return ssd1306_command(dev, light ? SSD1306_SET_ENTIRE_DISP_ON :  SSD1306_SET_ENTIRE_DISP_OFF);
 }
-
 
 /* one byte of xbm - 8 dots in line of picture source
  * one byte of fb - 8 rows for 1 column of screen
