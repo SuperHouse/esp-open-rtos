@@ -193,6 +193,14 @@ int ssd1306_set_display_offset(const ssd1306_t *dev, uint8_t offset);
 int sh1106_set_charge_pump_voltage(const ssd1306_t *dev, sh1106_voltage_t select);
 
 /**
+ * Select charge pump voltage. See value in datasheet.
+ * @param dev Pointer to device descriptor
+ * @param select Select charge pump voltage value
+ * @return Non-zero if error occured
+ */
+int sh1106_set_charge_pump_voltage(const ssd1306_t *dev, sh1106_voltage_t select);
+
+/**
  * Enable or disable the charge pump. See application note in datasheet.
  * @param dev Pointer to device descriptor
  * @param enabled Enable charge pump if true

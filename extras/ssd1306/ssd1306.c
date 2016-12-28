@@ -137,6 +137,15 @@ int ssd1306_command(const ssd1306_t *dev, uint8_t cmd)
             gpio_write(dev->cs_pin, true);
             break;
 #endif
+#if (SSD1306_SPI3_SUPPORT)
+        case SSD1306_PROTO_SPI3:
+            gpio_write(dev->cs_pin, false);
+            spi_set_command(SPI_BUS,1,0); // command mode
+            spi_transfer_8(SPI_BUS, cmd);
+            spi_clear_command(SPI_BUS);
+            gpio_write(dev->cs_pin, true);
+            break;
+#endif
         default:
             debug("Unsupported protocol");
             return -EPROTONOSUPPORT;
