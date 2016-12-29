@@ -29,14 +29,34 @@ extern "C"
 #endif
 
 /**
+ * SH1106 pump voltage value
+ */
+typedef enum
+{
+    SH1106_VOLTAGE_74 = 0, // 7.4 Volt
+    SH1106_VOLTAGE_80,     // 8.0 Volt
+    SH1106_VOLTAGE_84,     // 8.4 Volt
+    SH1106_VOLTAGE_90      // 9.0 Volt
+} sh1106_voltage_t;
+
+/**
  * I/O protocols
  */
 typedef enum
 {
     SSD1306_PROTO_I2C = 0, //!< I2C
     SSD1306_PROTO_SPI4,    //!< SPI 8 bits + D/C pin
-    SSD1306_PROTO_SPI3     //!< SPI 9 bits, currently not supported
+    SSD1306_PROTO_SPI3     //!< SPI 9 bits
 } ssd1306_protocol_t;
+
+/**
+ * Screen type
+ */
+typedef enum
+{
+    SSD1306_SCREEN = 0,
+    SH1106_SCREEN
+} ssd1306_screen_t;
 
 /**
  * Device descriptor
@@ -44,11 +64,14 @@ typedef enum
 typedef struct
 {
     ssd1306_protocol_t protocol;
+    ssd1306_screen_t screen ;
+    union {
 #if (SSD1306_I2C_SUPPORT)
-    uint8_t addr;                 //!< I2C address, used by SSD1306_PROTO_I2C
+        uint8_t addr ;          //!< I2C address, used by SSD1306_PROTO_I2C
 #endif
+        uint8_t cs_pin ;        //!< Chip Select GPIO pin, used by SSD1306_PROTO_SPI3, SSD1306_PROTO_SPI4
+    } ;
 #if (SSD1306_SPI4_SUPPORT)
-    uint8_t cs_pin;               //!< Chip Select GPIO pin, used by SSD1306_PROTO_SPI3, SSD1306_PROTO_SPI4
     uint8_t dc_pin;               //!< Data/Command GPIO pin, used by SSD1306_PROTO_SPI4
 #endif
     uint8_t width;                //!< Screen width, currently supported 128px, 96px
@@ -160,6 +183,22 @@ int ssd1306_set_display_start_line(const ssd1306_t *dev, uint8_t start);
  * @return Non-zero if error occured
  */
 int ssd1306_set_display_offset(const ssd1306_t *dev, uint8_t offset);
+
+/**
+ * Select charge pump voltage. See value in datasheet.
+ * @param dev Pointer to device descriptor
+ * @param select Select charge pump voltage value
+ * @return Non-zero if error occured
+ */
+int sh1106_set_charge_pump_voltage(const ssd1306_t *dev, sh1106_voltage_t select);
+
+/**
+ * Select charge pump voltage. See value in datasheet.
+ * @param dev Pointer to device descriptor
+ * @param select Select charge pump voltage value
+ * @return Non-zero if error occured
+ */
+int sh1106_set_charge_pump_voltage(const ssd1306_t *dev, sh1106_voltage_t select);
 
 /**
  * Enable or disable the charge pump. See application note in datasheet.

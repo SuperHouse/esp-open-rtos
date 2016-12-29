@@ -9,4 +9,8 @@
 #define SSD1306_SPI4_SUPPORT 1
 #endif
 
+#ifndef SSD1306_SPI3_SUPPORT
+#define SSD1306_SPI3_SUPPORT 1
+#endif
+
 #endif /* _EXTRAS_SSD1306_CONFIG_H_ */
