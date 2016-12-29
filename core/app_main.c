@@ -21,6 +21,8 @@
 #include "esp/spi_regs.h"
 #include "esp/dport_regs.h"
 #include "esp/wdev_regs.h"
+#include "esp/wdt_regs.h"
+#include "esp/rtcmem_regs.h"
 #include "esp/hwrand.h"
 #include "os_version.h"
 
