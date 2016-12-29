@@ -72,12 +72,13 @@ void ina_measure(void *pvParameters)
 #if !MODE
         if (ina3221_trigger(&dev)) // Start a measure
             goto error_loop;
+        printf("trig done, wait: ");
         do
         {
-            printf("measure not ready");
+            printf("X");
             if (ina3221_getStatus(&dev)) // get mask
                 goto error_loop;
-            vTaskDelay(100/portTICK_PERIOD_MS);
+            vTaskDelay(20/portTICK_PERIOD_MS);
             if(dev.mask.wf&(1<<(3-WARNING_CHANNEL)))
                 warning = true ;
         } while(!(dev.mask.cvrf)); // check if measure done
