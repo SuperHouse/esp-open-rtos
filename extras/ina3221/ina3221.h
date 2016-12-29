@@ -1,14 +1,17 @@
-/*
- * ina3221.h
+/**
+ * INA3221 driver for esp-open-rtos.
  *
- *  Created on: 4 oct. 2016
- *      Author: lilian
+ * Copyright (c) 2016 Zaltora (https://github.com/Zaltora)
+ *
+ * MIT Licensed as described in the file LICENSE
+ *
  */
 
 #ifndef INA3221_H_
 #define INA3221_H_
 
 #include <errno.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,6 +45,7 @@ extern "C" {
 #define INA3221_DEFAULT_POWER_UPPER_LIMIT        (0x2710) //10V
 #define INA3221_DEFAULT_POWER_LOWER_LIMIT        (0x2328) //9V
 
+#define INA3221_MASK_CONFIG (0x7C00)
 /*
  * Numbrer of samples
  */
@@ -109,16 +113,12 @@ typedef union
         uint16_t cvrf : 1 ; // Conversion ready flag (1: ready)   // LSB
         uint16_t tcf : 1 ; // Timing control flag
         uint16_t pvf : 1 ; // Power valid flag
-        uint16_t wf3 : 1 ; // Warning alert flag (Read mask to clear)
-        uint16_t wf2 : 1 ; // Warning alert flag (Read mask to clear)
-        uint16_t wf1 : 1 ; // Warning alert flag (Read mask to clear)
+        uint16_t wf : 3 ; // Warning alert flag (Read mask to clear) (order : Channel1:channel2:channel3)
         uint16_t sf : 1 ; // Sum alert flag (Read mask to clear)
-        uint16_t cf3 : 1 ; // Critical alert flag (Read mask to clear)
-        uint16_t cf2 : 1 ; // Critical alert flag (Read mask to clear)
-        uint16_t cf1 : 1 ; // Critical alert flag (Read mask to clear)
+        uint16_t cf : 3 ; // Critical alert flag (Read mask to clear) (order : Channel1:channel2:channel3)
         uint16_t cen : 1 ; // Critical alert latch (1:enable)
         uint16_t wen : 1 ; // Warning alert latch (1:enable)
-        uint16_t scc3 : 1 ; // channel 2 sum (1:enable)
+        uint16_t scc3 : 1 ; // channel 3 sum (1:enable)
         uint16_t scc2 : 1 ; // channel 2 sum (1:enable)
         uint16_t scc1 : 1 ; // channel 1 sum (1:enable)
         uint16_t  : 1 ; //Reserved         //MSB
@@ -137,18 +137,25 @@ typedef struct {
 } ina3221_t;
 
 /**
- * sync internal config buffer with external device register
+ * sync internal config buffer  and mask with external device register ( When struct is manually set )
  * @param dev Pointer to device descriptor
  * @return Non-zero if error occured
  */
 int ina3221_sync(ina3221_t *dev);
 
 /**
- * get mask register from the device (trig measurement if single-shot mode)
+ * send current config register to trig a measurement in single-shot mode
  * @param dev Pointer to device descriptor
  * @return Non-zero if error occured
  */
 int ina3221_trigger(ina3221_t *dev);
+
+/**
+ * get mask register from the device ( Used to read flags )
+ * @param dev Pointer to device descriptor
+ * @return Non-zero if error occured
+ */
+int ina3221_getStatus(ina3221_t *dev);
 
 /**
  * Set options for bus and shunt

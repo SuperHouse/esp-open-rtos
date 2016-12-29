@@ -13,20 +13,23 @@
 #include <stdbool.h>
 #include "ina3221/ina3221.h"
 
-#define PIN_SCL 4
+#define PIN_SCL 5
 #define PIN_SDA 2
 #define ADDR INA3221_ADDR_0
 
-//#define STRUCT_SETTING 1
+#define WARNING_CHANNEL 1
+#define WARNING_CURRENT (40.0)
+
+//#define STRUCT_SETTING 0
 #define MODE false  // true : continuous  measurements // false : trigger measurements
 
-
-void ina_tast(void *pvParameters)
+void ina_measure(void *pvParameters)
 {
     uint32_t measure_number = 0;
     float bus_voltage;
     float shunt_voltage;
     float shunt_current;
+    bool warning = false ;
 
     // Create ina3221 device
     ina3221_t dev = {
@@ -37,7 +40,7 @@ void ina_tast(void *pvParameters)
     };
 
 #ifndef STRUCT_SETTING
-    if(ina3221_setting(&dev ,false, true, MODE)) //  mode selection ,  bus and shunt activated
+    if(ina3221_setting(&dev ,MODE, true, true)) //  mode selection ,  bus and shunt activated
         goto error_loop;
     if(ina3221_enableChannel(&dev , true, true, true)) // Enable all channels
         goto error_loop;
@@ -61,15 +64,28 @@ void ina_tast(void *pvParameters)
         goto error_loop;
 #endif
 
+    ina3221_setWarningAlert(&dev, WARNING_CHANNEL-1, WARNING_CURRENT); //Set security flag overcurrent
+
     while(1)
     {
         measure_number++;
 #if !MODE
+        if (ina3221_trigger(&dev)) // Start a measure
+            goto error_loop;
         do
         {
-            if (ina3221_trigger(&dev)) // Start a measure & get mask
+            printf("measure not ready");
+            if (ina3221_getStatus(&dev)) // get mask
                 goto error_loop;
+            vTaskDelay(100/portTICK_PERIOD_MS);
+            if(dev.mask.wf&(1<<(3-WARNING_CHANNEL)))
+                warning = true ;
         } while(!(dev.mask.cvrf)); // check if measure done
+#else
+        if (ina3221_getStatus(&dev)) // get mask
+            goto error_loop;
+        if(dev.mask.wf&(1<<(3-WARNING_CHANNEL)))
+            warning = true ;
 #endif
         for (uint8_t i = 0 ; i < BUS_NUMBER ; i++)
         {
@@ -78,11 +94,14 @@ void ina_tast(void *pvParameters)
             if(ina3221_getShuntValue(&dev, i, &shunt_voltage, &shunt_current)) // Get voltage in mV and currant in mA
                 goto error_loop;
 
-            printf("Measure number %u\n", measure_number);
-            printf("Bus voltage: %.02f V\n", bus_voltage );
-            printf("Shunt voltage: %.02f mV\n", shunt_voltage );
-            printf("Shunt current: %.02f mA\n\n", shunt_current );
+            printf("\nC%u:Measure number %u\n",i+1,measure_number);
+            if (warning && (i+1) == WARNING_CHANNEL) printf("C%u:Warning Current > %.2f mA !!\n",i+1,WARNING_CURRENT);
+            printf("C%u:Bus voltage: %.02f V\n",i+1,bus_voltage );
+            printf("C%u:Shunt voltage: %.02f mV\n",i+1,shunt_voltage );
+            printf("C%u:Shunt current: %.02f mA\n\n",i+1,shunt_current );
+
         }
+        warning = false ;
         vTaskDelay(5000/portTICK_PERIOD_MS);
     }
 
@@ -102,5 +121,5 @@ void user_init(void)
 
     i2c_init(PIN_SCL,PIN_SDA);
 
-    xTaskCreate(ina_tast, "Measurements_task", 512, NULL, 2, NULL);
+    xTaskCreate(ina_measure, "Measurements_task", 512, NULL, 2, NULL);
 }
