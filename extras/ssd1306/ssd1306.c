@@ -259,7 +259,7 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
 #if (SSD1306_I2C_SUPPORT)
         case SSD1306_PROTO_I2C:
             for (i = 0; i < len; i++) {
-                if(dev->screen == SH1106_SCREEN) sh1106_go_coordinate(dev,0,i/dev->width);
+                if(dev->screen == SH1106_SCREEN && i%dev->width == 0) sh1106_go_coordinate(dev,0,i/dev->width);
                 i2c_start();
                 if (!i2c_write(dev->addr << 1)) {
                     debug("Error while xmitting I2C slave address\n");
