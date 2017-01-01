@@ -187,6 +187,13 @@ static bool process_directory(const char *direcotry)
                 !strcmp(ep->d_name, "..")) {
                 continue;
             }
+            if(ep->d_type == DT_DIR) {
+                char *new_dir_name = malloc(strlen(direcotry) + strlen(ep->d_name) + 2);
+                sprintf(new_dir_name, "%s/%s", direcotry, ep->d_name);
+                process_directory(new_dir_name);
+                free(new_dir_name);
+                continue;
+            }
             if (ep->d_type != DT_REG) {
                 continue;  // not a regular file
             }
