@@ -178,7 +178,7 @@ static bool process_directory(const char *direcotry)
 {
     DIR *dp;
     struct dirent *ep;
-    char path[256];
+    char path[256], *filename, *file_ptr;
 
     dp = opendir(direcotry);
     if (dp != NULL) {
@@ -198,8 +198,16 @@ static bool process_directory(const char *direcotry)
                 continue;  // not a regular file
             }
             sprintf(path, "%s/%s", direcotry, ep->d_name);
-            printf("Processing file %s\n", path);
-            if (!process_file(path, ep->d_name)) {
+            filename = path;
+            file_ptr = path;
+            while(*file_ptr != 0 && *file_ptr != '/') {
+                file_ptr ++;
+            }
+            if(*file_ptr != 0) {
+                filename = file_ptr + 1;
+            }
+            printf("Processing file source %s, dest: %s\n", path, filename);
+            if (!process_file(path, filename)) {
                 printf("Error processing file\n");
                 break;
             }
