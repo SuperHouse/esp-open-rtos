@@ -26,6 +26,7 @@
 #include "esp/iomux.h"
 #include "esp/i2s_regs.h"
 #include "esp/interrupts.h"
+#include "esp/iomux.h"
 #include "common_macros.h"
 
 #include <stdlib.h>

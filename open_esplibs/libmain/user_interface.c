@@ -21,6 +21,8 @@
 #include "esp/sar_regs.h"
 #include "esp/wdev_regs.h"
 #include "esp/uart.h"
+#include "esp/rtc_regs.h"
+#include "esp/iomux.h"
 
 #include "etstimer.h"
 #include "espressif/sdk_private.h"
