@@ -27,16 +27,24 @@
 #include <espressif/esp_system.h>
 #include "i2c.h"
 
+//#define I2C_DEBUG true
 
-// I2C driver for ESP8266 written for use with esp-open-rtos
-// Based on https://en.wikipedia.org/wiki/I²C#Example_of_bit-banging_the_I.C2.B2C_Master_protocol
-// With calling overhead, we end up at ~320kbit/s
+#ifdef I2C_DEBUG
+#define debug(fmt, ...) printf("%s: " fmt "\n", "I2C", ## __VA_ARGS__)
+#else
+#define debug(fmt, ...)
+#endif
 
 #define CLK_STRETCH  (10)
 
 static bool started;
 static uint8_t g_scl_pin;
 static uint8_t g_sda_pin;
+
+inline bool i2c_status(void)
+{
+    return started;
+}
 
 void i2c_init(uint8_t scl_pin, uint8_t sda_pin)
 {
@@ -110,14 +118,14 @@ void i2c_start(void)
         // Repeated start setup time, minimum 4.7us
         i2c_delay();
     }
+    started = true;
     if (read_sda() == 0) {
-        printf("I2C: arbitration lost in i2c_start\n");
+        debug("arbitration lost in i2c_start");
     }
     // SCL is high, set SDA from 1 to 0.
     clear_sda();
     i2c_delay();
     clear_scl();
-    started = true;
 }
 
 // Output stop condition
@@ -133,7 +141,7 @@ void i2c_stop(void)
     i2c_delay();
     // SCL is high, set SDA from 0 to 1
     if (read_sda() == 0) {
-        printf("I2C: arbitration lost in i2c_stop\n");
+        debug("arbitration lost in i2c_stop");
     }
     i2c_delay();
     started = false;
@@ -154,7 +162,7 @@ static void i2c_write_bit(bool bit)
     // SCL is high, now data is valid
     // If SDA is high, check that nobody else is driving SDA
     if (bit && read_sda() == 0) {
-        printf("I2C: arbitration lost in i2c_write_bit\n");
+        debug("arbitration lost in i2c_write_bit");
     }
     i2c_delay();
     clear_scl();
@@ -203,6 +211,7 @@ uint8_t i2c_read(bool ack)
 bool i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t len)
 {
     bool success = false;
+    if (i2c_status()) return success ; // If bus busy, dont write
     do {
         i2c_start();
         if (!i2c_write(slave_addr << 1))
@@ -220,6 +229,7 @@ bool i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t len)
 bool i2c_slave_read(uint8_t slave_addr, uint8_t data, uint8_t *buf, uint32_t len)
 {
     bool success = false;
+    if (i2c_status()) return success ; // If bus busy, dont read
     do {
         i2c_start();
         if (!i2c_write(slave_addr << 1)) {
@@ -240,7 +250,7 @@ bool i2c_slave_read(uint8_t slave_addr, uint8_t data, uint8_t *buf, uint32_t len
     } while(0);
     i2c_stop();
     if (!success) {
-        printf("I2C: write error\n");
+        debug("write error");
     }
     return success;
 }
