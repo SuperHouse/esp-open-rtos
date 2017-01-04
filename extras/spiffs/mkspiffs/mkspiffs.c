@@ -199,13 +199,9 @@ static bool process_directory(const char *direcotry)
             }
             sprintf(path, "%s/%s", direcotry, ep->d_name);
             filename = path;
-            file_ptr = path;
-            while(*file_ptr != 0 && *file_ptr != '/') {
-                file_ptr ++;
-            }
-            if(*file_ptr != 0) {
-                filename = file_ptr + 1;
-            }
+            filename = strchr(path, '/');
+            filename = filename ? &filename[1] : path;
+            
             printf("Processing file source %s, dest: %s\n", path, filename);
             if (!process_file(path, filename)) {
                 printf("Error processing file\n");
