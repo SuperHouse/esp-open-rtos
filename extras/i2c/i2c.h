@@ -27,16 +27,39 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <FreeRTOS.h>
+#include <task.h>
 
 #ifdef	__cplusplus
 extern "C" {
+#endif
+
+
+#define I2C_FREQUENCY_400K true  // for test WIP
+
+/*
+ *  Some bit can be transmit slower.
+ *  Selected frequency fix the speed of a bit transmission
+ *  I2C lib take the maximum frequency defined
+ */
+
+#ifdef I2C_FREQUENCY_500K
+#define I2C_CUSTOM_DELAY_160MHZ   6
+#define I2C_CUSTOM_DELAY_80MHZ    1   //Sry, maximum is 320kHz at 80MHz
+#elif defined(I2C_FREQUENCY_400K)
+#define I2C_CUSTOM_DELAY_160MHZ   10
+#define I2C_CUSTOM_DELAY_80MHZ    1   //Sry, maximum is 320kHz at 80MHz
+#else
+#define I2C_CUSTOM_DELAY_160MHZ   100
+#define I2C_CUSTOM_DELAY_80MHZ    20
 #endif
 
 // I2C driver for ESP8266 written for use with esp-open-rtos
 // Based on https://en.wikipedia.org/wiki/I²C#Example_of_bit-banging_the_I.C2.B2C_Master_protocol
 // With calling overhead, we end up at ~320kbit/s
 
-///////Level 0 API
+//Level 0 API
 
 /**
  * Init bitbanging I2C driver on given pins
@@ -66,8 +89,9 @@ void i2c_start(void);
 
 /**
  * Send stop condition
+ * @return false if link was broken
  */
-void i2c_stop(void);
+bool i2c_stop(void);
 
 /**
  * get status from I2C bus.
@@ -75,10 +99,10 @@ void i2c_stop(void);
  */
 bool i2c_status(void);
 
-///////Level 1 API (Don't need functions above)
+//Level 1 API (Don't need functions above)
 
 /**
- * Write 'len' bytes from 'buf' to slave. Return true if slave acked.
+ * Write 'len' bytes from 'buf' to slave.
  * @param slave_addr slave device address
  * @param buf Pointer to data buffer
  * @param len Number of byte to send
@@ -87,7 +111,7 @@ bool i2c_status(void);
 bool i2c_slave_write(uint8_t slave_addr, uint8_t *buf, uint8_t len);
 
 /**
- * Issue a read operation and send 'data', followed by reading 'len' bytes
+ * Issue a read operation and read 'data', followed by reading 'len' bytes
  * from slave into 'buf'.
  * @param slave_addr slave device address
  * @param data register address to send
@@ -96,6 +120,29 @@ bool i2c_slave_write(uint8_t slave_addr, uint8_t *buf, uint8_t len);
  * @return false if error occured
  */
 bool i2c_slave_read(uint8_t slave_addr, uint8_t data, uint8_t *buf, uint32_t len);
+
+/**
+ * Write len word at register.
+ * @param slave_addr slave device address
+ * @param data Register address pointer to send  (ignored if NULL)
+ * @param buf Pointer to 16 bits data buffer
+ * @param len Number of word to read
+ * @param force If true, current i2c link will be break to force this one (Use with precaution)
+ * @return Non-zero if error occured
+ */
+int i2c_slave_write_16(uint8_t slave_addr, uint8_t *data, uint16_t *buf, uint8_t len, bool force);
+
+/**
+ * Issue a read operation at 'data'(!= NULL) , followed by reading 'len' bytes
+ * from slave into 'buf'.
+ * @param slave_addr slave device address
+ * @param data Register address pointer to send  (ignored if NULL)
+ * @param buf Pointer to 16 bits data buffer
+ * @param len Number of word to read
+ * @param force If true, current i2c link will be break to force this one (Use with precaution)
+ * @return Non-zero if error occured
+ */
+int i2c_slave_read_16(uint8_t slave_addr, uint8_t *data, uint16_t *buf, uint32_t len, bool force);
 
 
 #ifdef	__cplusplus
