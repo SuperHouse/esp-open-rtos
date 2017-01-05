@@ -55,7 +55,7 @@ const float ads111x_gain_values[] = {
 static uint16_t read_reg(uint8_t addr, uint8_t reg)
 {
     uint16_t res = 0;
-    if (!i2c_slave_read(addr, reg, (uint8_t *)&res, 2))
+    if (i2c_slave_read(addr, &reg, (uint8_t *)&res, 2, false))
         debug("Could not read register %d", reg);
     //debug("Read %d: 0x%04x", reg, res);
     return res;
@@ -64,8 +64,8 @@ static uint16_t read_reg(uint8_t addr, uint8_t reg)
 static void write_reg(uint8_t addr, uint8_t reg, uint16_t val)
 {
     //debug("Write %d: 0x%04x", reg, val);
-    uint8_t buf[3] = {reg, val >> 8, val};
-    if (!i2c_slave_write(addr, buf, 3))
+    uint8_t buf[3] = { val >> 8, val};
+    if (i2c_slave_write(addr, &reg, buf, 2, false))
         debug("Could not write 0x%04x to register %d", val, reg);
 }
 

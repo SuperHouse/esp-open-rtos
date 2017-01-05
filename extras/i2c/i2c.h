@@ -42,6 +42,7 @@ extern "C" {
  *  Some bit can be transmit slower.
  *  Selected frequency fix the speed of a bit transmission
  *  I2C lib take the maximum frequency defined
+ *  Don't change frequency when I2C transaction had begin
  */
 
 #ifdef I2C_FREQUENCY_500K
@@ -102,48 +103,27 @@ bool i2c_status(void);
 //Level 1 API (Don't need functions above)
 
 /**
- * Write 'len' bytes from 'buf' to slave.
+ * Write 'len' bytes from 'buf' to slave at 'data' register adress .
  * @param slave_addr slave device address
+ * @param data Pointer to register address to send if non-null
  * @param buf Pointer to data buffer
  * @param len Number of byte to send
- * @return false if error occured
+ * @param force Force transaction if bus busy (use with precaution)
+ * @return Non-Zero if error occured
  */
-bool i2c_slave_write(uint8_t slave_addr, uint8_t *buf, uint8_t len);
+int i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len, bool force);
 
 /**
- * Issue a read operation and read 'data', followed by reading 'len' bytes
+ * Issue a send operation of 'data' register adress, followed by reading 'len' bytes
  * from slave into 'buf'.
  * @param slave_addr slave device address
- * @param data register address to send
+ * @param data Pointer to register address to send if non-null
  * @param buf Pointer to data buffer
  * @param len Number of byte to read
- * @return false if error occured
+ * @param force Force transaction if bus busy (use with precaution)
+ * @return Non-Zero if error occured
  */
-bool i2c_slave_read(uint8_t slave_addr, uint8_t data, uint8_t *buf, uint32_t len);
-
-/**
- * Write len word at register.
- * @param slave_addr slave device address
- * @param data Register address pointer to send  (ignored if NULL)
- * @param buf Pointer to 16 bits data buffer
- * @param len Number of word to read
- * @param force If true, current i2c link will be break to force this one (Use with precaution)
- * @return Non-zero if error occured
- */
-int i2c_slave_write_16(uint8_t slave_addr, uint8_t *data, uint16_t *buf, uint8_t len, bool force);
-
-/**
- * Issue a read operation at 'data'(!= NULL) , followed by reading 'len' bytes
- * from slave into 'buf'.
- * @param slave_addr slave device address
- * @param data Register address pointer to send  (ignored if NULL)
- * @param buf Pointer to 16 bits data buffer
- * @param len Number of word to read
- * @param force If true, current i2c link will be break to force this one (Use with precaution)
- * @return Non-zero if error occured
- */
-int i2c_slave_read_16(uint8_t slave_addr, uint8_t *data, uint16_t *buf, uint32_t len, bool force);
-
+int i2c_slave_read(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len, bool force);
 
 #ifdef	__cplusplus
 }
