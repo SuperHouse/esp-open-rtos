@@ -29,12 +29,11 @@ static int _wireWriteRegister (uint8_t addr, uint8_t reg, uint16_t value)
 
 static int _wireReadRegister(uint8_t addr, uint8_t reg, uint16_t *value)
 {
-    int error = 0;
     uint8_t d[] = {0, 0};
-    return i2c_slave_read(addr, &reg, d, sizeof(d), false);
+    int error = i2c_slave_read(addr, &reg, d, sizeof(d), false)
     debug("Data read from %02X: %02X+%04X\n",addr,reg,*value);
     *value = d[1] | (d[0] << 8);
-    return 0 ;
+    return error;
 }
 
 int ina3221_trigger(ina3221_t *dev)
