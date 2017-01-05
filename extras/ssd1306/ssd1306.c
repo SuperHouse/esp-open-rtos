@@ -254,7 +254,11 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
         case SSD1306_PROTO_I2C:
             for (i = 0; i < len; i++)
             {
+<<<<<<< HEAD
                 if(dev->screen == SH1106_SCREEN && i%dev->width == 0) sh1106_go_coordinate(dev,0,i/dev->width);
+=======
+                if(dev->screen == SH1106_SCREEN) sh1106_go_coordinate(dev,0,i/dev->width);
+>>>>>>> branch 'i2c_optimization' of https://github.com/Zaltora/esp-open-rtos.git
                 i2c_send(dev, 0x40, buf ? &buf[i] : tab, 16);
             }
             break;
