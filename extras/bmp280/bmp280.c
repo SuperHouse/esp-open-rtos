@@ -69,11 +69,16 @@ void bmp280_init_default_params(bmp280_params_t *params)
 static bool read_register16(uint8_t i2c_addr, uint8_t addr, uint16_t *value)
 {
     uint8_t d[] = {0, 0};
-    if (i2c_slave_read(i2c_addr, addr, d, sizeof(d))) {
+    if (!i2c_slave_read(i2c_addr, &addr, d, sizeof(d), false)) {
         *value = d[0] | (d[1] << 8);
         return true;
     }
     return false;
+}
+
+static inline int read_data(uint8_t i2c_addr, uint8_t addr, uint8_t *value, uint8_t len)
+{
+    return i2c_slave_read(i2c_addr, &addr, value, len, false);
 }
 
 static bool read_calibration_data(bmp280_t *dev)
@@ -118,12 +123,12 @@ static bool read_hum_calibration_data(bmp280_t *dev)
     uint8_t i2c_addr = dev->i2c_addr;
     uint16_t h4, h5;
 
-    if (i2c_slave_read(i2c_addr, 0xa1, &dev->dig_H1, 1) &&
+    if (!read_data(i2c_addr, 0xa1, &dev->dig_H1, 1) &&
         read_register16(i2c_addr, 0xe1, (uint16_t *)&dev->dig_H2) &&
-        i2c_slave_read(i2c_addr, 0xe3, &dev->dig_H3, 1) &&
+        !read_data(i2c_addr, 0xe3, &dev->dig_H3, 1) &&
         read_register16(i2c_addr, 0xe4, &h4) &&
         read_register16(i2c_addr, 0xe5, &h5) &&
-        i2c_slave_read(i2c_addr, 0xe7, (uint8_t *)&dev->dig_H6, 1)) {
+        !read_data(i2c_addr, 0xe7, (uint8_t *)&dev->dig_H6, 1)) {
         dev->dig_H4 = (h4 & 0x00ff) << 4 | (h4 & 0x0f00) >> 8;
         dev->dig_H5 = h5 >> 4;
         debug("Calibration data received:");
@@ -139,11 +144,9 @@ static bool read_hum_calibration_data(bmp280_t *dev)
     return false;
 }
 
-static bool write_register8(uint8_t i2c_addr, uint8_t addr, uint8_t value)
+static int write_register8(uint8_t i2c_addr, uint8_t addr, uint8_t value)
 {
-    uint8_t d[] = {addr, value};
-
-    return i2c_slave_write(i2c_addr, d, 2);
+    return i2c_slave_write(i2c_addr, &addr, &value, 1, false);
 }
 
 bool bmp280_init(bmp280_t *dev, bmp280_params_t *params)
@@ -155,7 +158,7 @@ bool bmp280_init(bmp280_t *dev, bmp280_params_t *params)
         return false;
     }
 
-    if (!i2c_slave_read(i2c_addr, BMP280_REG_ID, &dev->id, 1)) {
+    if (read_data(i2c_addr, BMP280_REG_ID, &dev->id, 1)) {
         debug("Sensor not found");
         return false;
     }
@@ -166,7 +169,7 @@ bool bmp280_init(bmp280_t *dev, bmp280_params_t *params)
     }
 
     // Soft reset.
-    if (!write_register8(i2c_addr, BMP280_REG_RESET, BMP280_RESET_VALUE)) {
+    if (write_register8(i2c_addr, BMP280_REG_RESET, BMP280_RESET_VALUE)) {
         debug("Failed resetting sensor");
         return false;
     }
@@ -174,7 +177,7 @@ bool bmp280_init(bmp280_t *dev, bmp280_params_t *params)
     // Wait until finished copying over the NVP data.
     while (1) {
         uint8_t status;
-        if (i2c_slave_read(i2c_addr, BMP280_REG_STATUS, &status, 1) && (status & 1) == 0)
+        if (!read_data(i2c_addr, BMP280_REG_STATUS, &status, 1) && (status & 1) == 0)
             break;
     }
 
@@ -190,7 +193,7 @@ bool bmp280_init(bmp280_t *dev, bmp280_params_t *params)
 
     uint8_t config = (params->standby << 5) | (params->filter << 2);
     debug("Writing config reg=%x", config);
-    if (!write_register8(i2c_addr, BMP280_REG_CONFIG, config)) {
+    if (write_register8(i2c_addr, BMP280_REG_CONFIG, config)) {
         debug("Failed configuring sensor");
         return false;
     }
@@ -207,14 +210,14 @@ bool bmp280_init(bmp280_t *dev, bmp280_params_t *params)
         // Write crtl hum reg first, only active after write to BMP280_REG_CTRL.
         uint8_t ctrl_hum = params->oversampling_humidity;
         debug("Writing ctrl hum reg=%x", ctrl_hum);
-        if (!write_register8(i2c_addr, BMP280_REG_CTRL_HUM, ctrl_hum)) {
+        if (write_register8(i2c_addr, BMP280_REG_CTRL_HUM, ctrl_hum)) {
             debug("Failed controlling sensor");
             return false;
         }
     }
 
     debug("Writing ctrl reg=%x", ctrl);
-    if (!write_register8(i2c_addr, BMP280_REG_CTRL, ctrl)) {
+    if (write_register8(i2c_addr, BMP280_REG_CTRL, ctrl)) {
         debug("Failed controlling sensor");
         return false;
     }
@@ -225,12 +228,12 @@ bool bmp280_init(bmp280_t *dev, bmp280_params_t *params)
 bool bmp280_force_measurement(bmp280_t *dev)
 {
     uint8_t ctrl;
-    if (!i2c_slave_read(dev->i2c_addr, BMP280_REG_CTRL, &ctrl, 1))
+    if (read_data(dev->i2c_addr, BMP280_REG_CTRL, &ctrl, 1))
         return false;
     ctrl &= ~0b11;  // clear two lower bits
     ctrl |= BMP280_MODE_FORCED;
     debug("Writing ctrl reg=%x", ctrl);
-    if (!write_register8(dev->i2c_addr, BMP280_REG_CTRL, ctrl)) {
+    if (write_register8(dev->i2c_addr, BMP280_REG_CTRL, ctrl)) {
         debug("Failed starting forced mode");
         return false;
     }
@@ -240,7 +243,7 @@ bool bmp280_force_measurement(bmp280_t *dev)
 bool bmp280_is_measuring(bmp280_t *dev)
 {
     uint8_t status;
-    if (!i2c_slave_read(dev->i2c_addr, BMP280_REG_STATUS, &status, 1))
+    if (read_data(dev->i2c_addr, BMP280_REG_STATUS, &status, 1))
         return false;
     if (status & (1 << 3)) {
         debug("Status: measuring");
@@ -342,7 +345,7 @@ bool bmp280_read_fixed(bmp280_t *dev, int32_t *temperature,
 
     // Need to read in one sequence to ensure they match.
     size_t size = humidity ? 8 : 6;
-    if (!i2c_slave_read(dev->i2c_addr, 0xf7, data, size)) {
+    if (read_data(dev->i2c_addr, 0xf7, data, size)) {
         debug("Failed reading");
         return false;
     }

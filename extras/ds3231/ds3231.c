@@ -28,47 +28,43 @@ static inline uint8_t  bcdToDec(uint8_t bcd)
 /* Send a number of bytes to the rtc over i2c
  * returns true to indicate success
  */
-static inline bool ds3231_send(uint8_t *data, uint8_t len)
+static inline int ds3231_send(uint8_t reg, uint8_t *data, uint8_t len)
 {
-    return i2c_slave_write(DS3231_ADDR, data, len);
+    return i2c_slave_write(DS3231_ADDR, &reg, data, len, false);
 }
 
 /* Read a number of bytes from the rtc over i2c
  * returns true to indicate success
  */
-static inline bool ds3231_recv(uint8_t *data, uint8_t len)
+static inline int ds3231_recv(uint8_t reg, uint8_t *data, uint8_t len)
 {
-    return i2c_slave_read(DS3231_ADDR, data[0], data, len);
+    return i2c_slave_read(DS3231_ADDR, &reg, data, len, false);
 }
 
-bool ds3231_setTime(struct tm *time)
+int ds3231_setTime(struct tm *time)
 {
-    uint8_t data[8];
+    uint8_t data[7];
 
-    /* start register */
-    data[0] = DS3231_ADDR_TIME;
     /* time/date data */
-    data[1] = decToBcd(time->tm_sec);
-    data[2] = decToBcd(time->tm_min);
-    data[3] = decToBcd(time->tm_hour);
-    data[4] = decToBcd(time->tm_wday + 1);
-    data[5] = decToBcd(time->tm_mday);
-    data[6] = decToBcd(time->tm_mon + 1);
-    data[7] = decToBcd(time->tm_year - 100);
+    data[0] = decToBcd(time->tm_sec);
+    data[1] = decToBcd(time->tm_min);
+    data[2] = decToBcd(time->tm_hour);
+    data[3] = decToBcd(time->tm_wday + 1);
+    data[4] = decToBcd(time->tm_mday);
+    data[5] = decToBcd(time->tm_mon + 1);
+    data[6] = decToBcd(time->tm_year - 100);
 
-    return ds3231_send(data, 8);
+    return ds3231_send(DS3231_ADDR_TIME, data, 7);
 }
 
-bool ds3231_setAlarm(uint8_t alarms, struct tm *time1, uint8_t option1, struct tm *time2, uint8_t option2)
+int ds3231_setAlarm(uint8_t alarms, struct tm *time1, uint8_t option1, struct tm *time2, uint8_t option2)
 {
     int i = 0;
-    uint8_t data[8];
-
-    /* start register */
-    data[i++] = (alarms == DS3231_ALARM_2 ? DS3231_ADDR_ALARM2 : DS3231_ADDR_ALARM1);
+    uint8_t data[7];
 
     /* alarm 1 data */
-    if (alarms != DS3231_ALARM_2) {
+    if (alarms != DS3231_ALARM_2)
+    {
         data[i++] = (option1 >= DS3231_ALARM1_MATCH_SEC ? decToBcd(time1->tm_sec) : DS3231_ALARM_NOTSET);
         data[i++] = (option1 >= DS3231_ALARM1_MATCH_SECMIN ? decToBcd(time1->tm_min) : DS3231_ALARM_NOTSET);
         data[i++] = (option1 >= DS3231_ALARM1_MATCH_SECMINHOUR ? decToBcd(time1->tm_hour) : DS3231_ALARM_NOTSET);
@@ -77,14 +73,15 @@ bool ds3231_setAlarm(uint8_t alarms, struct tm *time1, uint8_t option1, struct t
     }
 
     /* alarm 2 data */
-    if (alarms != DS3231_ALARM_1) {
+    if (alarms != DS3231_ALARM_1)
+    {
         data[i++] = (option2 >= DS3231_ALARM2_MATCH_MIN ? decToBcd(time2->tm_min) : DS3231_ALARM_NOTSET);
         data[i++] = (option2 >= DS3231_ALARM2_MATCH_MINHOUR ? decToBcd(time2->tm_hour) : DS3231_ALARM_NOTSET);
         data[i++] = (option2 == DS3231_ALARM2_MATCH_MINHOURDAY ? (decToBcd(time2->tm_wday + 1) & DS3231_ALARM_WDAY) :
             (option2 == DS3231_ALARM2_MATCH_MINHOURDATE ? decToBcd(time2->tm_mday) : DS3231_ALARM_NOTSET));
     }
 
-    return ds3231_send(data, i);
+    return ds3231_send((alarms == DS3231_ALARM_2 ? DS3231_ADDR_ALARM2 : DS3231_ADDR_ALARM1), data, i);
 }
 
 /* Get a byte containing just the requested bits
@@ -99,8 +96,10 @@ bool ds3231_getFlag(uint8_t addr, uint8_t mask, uint8_t *flag)
     uint8_t data[1];
 
     /* get register */
-    data[0] = addr;
-    if (ds3231_send(data, 1) && ds3231_recv(data, 1)) {
+   // data[0] = addr;
+    //if (ds3231_send(&addr, NULL, 0) && ds3231_recv(data, 1)) {  //Test with ds3231_recv(addr, data, 1)
+    if (!ds3231_recv(addr,data, 1))
+    {
         /* return only requested flag */
         *flag = (data[0] & mask);
         return true;
@@ -117,22 +116,23 @@ bool ds3231_getFlag(uint8_t addr, uint8_t mask, uint8_t *flag)
  */
 bool ds3231_setFlag(uint8_t addr, uint8_t bits, uint8_t mode)
 {
-    uint8_t data[2];
+    uint8_t data[1];
 
-    data[0] = addr;
     /* get status register */
-    if (ds3231_send(data, 1) && ds3231_recv(data+1, 1)) {
+    //if (ds3231_send(data, 1) && ds3231_recv(data+1, 1)) {
+    if (!ds3231_recv(addr, data, 1))
+    {
         /* clear the flag */
         if (mode == DS3231_REPLACE)
-            data[1] = bits;
+            data[0] = bits;
         else if (mode == DS3231_SET)
-            data[1] |= bits;
+            data[0] |= bits;
         else
-            data[1] &= ~bits;
+            data[0] &= ~bits;
 
-        if (ds3231_send(data, 2)) {
+        //if (ds3231_send(data, 2)) {
+        if (!ds3231_send(addr, data, 1))
             return true;
-        }
     }
 
     return false;
@@ -142,7 +142,8 @@ bool ds3231_getOscillatorStopFlag(bool *flag)
 {
     uint8_t f;
 
-    if (ds3231_getFlag(DS3231_ADDR_STATUS, DS3231_STAT_OSCILLATOR, &f)) {
+    if (ds3231_getFlag(DS3231_ADDR_STATUS, DS3231_STAT_OSCILLATOR, &f))
+    {
         *flag = (f ? true : false);
         return true;
     }
@@ -202,7 +203,8 @@ bool ds3231_setSquarewaveFreq(uint8_t freq)
 {
     uint8_t flag = 0;
 
-    if (ds3231_getFlag(DS3231_ADDR_CONTROL, 0xff, &flag)) {
+    if (ds3231_getFlag(DS3231_ADDR_CONTROL, 0xff, &flag))
+    {
         /* clear current rate */
         flag &= ~DS3231_CTRL_SQWAVE_8192HZ;
         /* set new rate */
@@ -218,7 +220,9 @@ bool ds3231_getRawTemp(int16_t *temp)
     uint8_t data[2];
 
     data[0] = DS3231_ADDR_TEMP;
-    if (ds3231_send(data, 1) && ds3231_recv(data, 2)) {
+    //if (ds3231_send(data, 1) && ds3231_recv(data, 2)) {
+    if (!ds3231_send(DS3231_ADDR_TEMP,data, 2))
+    {
         *temp = (int16_t)(int8_t)data[0] << 2 | data[1] >> 6;
         return true;
     }
@@ -254,14 +258,16 @@ bool ds3231_getTime(struct tm *time)
 {
     uint8_t data[7];
 
-    /* start register address */
+    /* start register address
     data[0] = DS3231_ADDR_TIME;
     if (!ds3231_send(data, 1)) {
         return false;
     }
+    */
 
     /* read time */
-    if (!ds3231_recv(data, 7)) {
+    if (ds3231_recv(DS3231_ADDR_TIME, data, 7))
+    {
         return false;
     }
 

@@ -39,6 +39,7 @@
 
 static bool started;
 static bool flag;
+static uint8_t freq ;
 static uint8_t g_scl_pin;
 static uint8_t g_sda_pin;
 
@@ -75,7 +76,7 @@ void i2c_init(uint8_t scl_pin, uint8_t sda_pin)
 static inline void i2c_delay(void)
 {
     uint32_t delay;
-    if (sdk_system_get_cpu_freq() == SYS_CPU_160MHZ)
+    if (freq == SYS_CPU_160MHZ)
     {
         __asm volatile (
             "movi %0, %1" "\n"
@@ -127,6 +128,7 @@ static inline void clear_sda(void)
 void i2c_start(void)
 {
     uint32_t clk_stretch = CLK_STRETCH;
+    freq = sdk_system_get_cpu_freq();
     if (started) { // if started, do a restart cond
         // Set SDA to 1
         (void) read_sda();
@@ -240,7 +242,6 @@ static int i2c_bus_test(bool force)
         taskEXIT_CRITICAL();
         if(status)
            i2c_stop(); //Bus was busy, stop it.
-
     }
     else
     {
@@ -249,7 +250,7 @@ static int i2c_bus_test(bool force)
             taskEXIT_CRITICAL();
             debug("busy");
             taskYIELD(); // If bus busy, change task to try finish last com.
-            return -EBUSY ;  // If bus busy, dont read
+            return -EBUSY ;  // If bus busy, inform user
         }
         else
         {
@@ -260,86 +261,33 @@ static int i2c_bus_test(bool force)
     return 0 ;
 }
 
-bool i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t len)
-{
-    bool success = false;
-    if (i2c_status()) return success ; // If bus busy, dont write
-    do {
-        i2c_start();
-        if (!i2c_write(slave_addr << 1))
-            break;
-        while (len--) {
-            if (!i2c_write(*data++)) {
-                debug("Device dont Ack");
-                break;
-            }
-        }
-        i2c_stop();
-        success = true;
-    } while(0);
-    return success;
-}
-
-bool i2c_slave_read(uint8_t slave_addr, uint8_t data, uint8_t *buf, uint32_t len)
-{
-    bool success = false;
-    if (i2c_status()) return success ; // If bus busy, dont read
-    do {
-        i2c_start();
-        if (!i2c_write(slave_addr << 1)) {
-            debug("Device dont Ack");
-            break;
-        }
-        i2c_write(data);
-        i2c_stop();
-        i2c_start();
-        if (!i2c_write(slave_addr << 1 | 1)) { // Slave address + read
-            debug("Device dont Ack");
-            break;
-        }
-        while(len) {
-            *buf = i2c_read(len == 1);
-            buf++;
-            len--;
-        }
-        success = true;
-    } while(0);
-    i2c_stop();
-    if (!success) {
-        debug("write error");
-    }
-    return success;
-}
-
-int i2c_slave_write_16(uint8_t slave_addr, uint8_t *data, uint16_t *buf, uint8_t len, bool force)
+int i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len, bool force)
 {
     if(i2c_bus_test(force))
         return -EBUSY ;
     i2c_start();
     if (!i2c_write(slave_addr << 1))
         goto error;
-    if(data != NULL) {
+    if(data != NULL)
         if (!i2c_write(*data))
             goto error;
-    }
     while (len--) {
-        if (!i2c_write((uint8_t)(*buf >> 8)))
-            goto error;
-        if (!i2c_write((uint8_t)(*buf++)))
+        if (!i2c_write(*buf++))
             goto error;
     }
-    i2c_stop();
+    if (!i2c_stop())
+        goto error;
     flag = false ; // Bus free
     return 0;
 
     error:
-    debug("Device dont Ack");
+    debug("Write Error");
     i2c_stop();
     flag = false ; // Bus free
     return -EIO;
 }
 
-int i2c_slave_read_16(uint8_t slave_addr, uint8_t *data, uint16_t *buf, uint32_t len, bool force)
+int i2c_slave_read(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len, bool force)
 {
     if(i2c_bus_test(force))
         return -EBUSY ;
@@ -349,22 +297,24 @@ int i2c_slave_read_16(uint8_t slave_addr, uint8_t *data, uint16_t *buf, uint32_t
             goto error;
         if (!i2c_write(*data))
             goto error;
-        i2c_stop();
+        if (!i2c_stop())
+            goto error;
     }
     i2c_start();
     if (!i2c_write(slave_addr << 1 | 1)) // Slave address + read
         goto error;
     while(len) {
-        *buf = i2c_read(0) << 8  |  i2c_read(len == 1) ;
+        *buf = i2c_read(len == 1);
         buf++;
         len--;
     }
-    i2c_stop();
+    if (i2c_stop())
+        goto error;
     flag = false ; // Bus free
     return 0;
 
     error:
-    debug("Device dont Ack");
+    debug("Read Error");
     i2c_stop();
     flag = false ; // Bus free
     return -EIO;

@@ -14,11 +14,7 @@
 
 static void read_data(uint8_t addr, uint8_t *buf, uint8_t size)
 {
-    i2c_start();
-    i2c_write(addr << 1 | 1);
-    while (size--)
-        *(buf++) = i2c_read(!size);
-    i2c_stop();
+    i2c_slave_read(addr, NULL, buf, size, false);
 }
 
 bool mcp4725_eeprom_busy(uint8_t addr)
@@ -45,7 +41,7 @@ void mcp4725_set_power_mode(uint8_t addr, mcp4725_power_mode_t mode, bool eeprom
         value >> 4,
         value << 4
     };
-    i2c_slave_write(addr, data, 3);
+    i2c_slave_write(addr, &data[0], &data[1], 2, false);
 }
 
 uint16_t mcp4725_get_raw_output(uint8_t addr, bool eeprom)
@@ -65,7 +61,7 @@ void mcp4725_set_raw_output(uint8_t addr, uint16_t value, bool eeprom)
         value >> 4,
         value << 4
     };
-    i2c_slave_write(addr, data, 3);
+    i2c_slave_write(addr, &data[0], &data[1], 2, false);
 }
 
 

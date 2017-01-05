@@ -93,18 +93,18 @@ void ds1307_set_output(bool value);
  * \param offset Start byte, 0..55
  * \param buf Buffer
  * \param len Bytes to read, 1..56
- * \return false if error occured
+ * \return Non-zero if error occured
  */
-bool ds1307_read_ram(uint8_t offset, uint8_t *buf, uint8_t len);
+int ds1307_read_ram(uint8_t offset, uint8_t *buf, uint8_t len);
 
 /**
  * \brief Write buffer to RTC RAM
  * \param offset Start byte, 0..55
  * \param buf Buffer
  * \param len Bytes to write, 1..56
- * \return false if error occured
+ * \return Non-zero if error occured
  */
-bool ds1307_write_ram(uint8_t offset, uint8_t *buf, uint8_t len);
+int ds1307_write_ram(uint8_t offset, uint8_t *buf, uint8_t len);
 
 
 #ifdef __cplusplus

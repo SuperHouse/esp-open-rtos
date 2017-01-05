@@ -61,15 +61,14 @@ inline static uint32_t round_div(uint32_t x, uint32_t y)
 
 inline static void write_reg(uint8_t addr, uint8_t reg, uint8_t val)
 {
-    uint8_t data[2] = { reg, val };
-    if (!i2c_slave_write(addr, data, 2))
+    if (i2c_slave_write(addr, &reg, &val, 1, false))
         debug("Could not write 0x%02x to 0x%02x, addr = 0x%02x", reg, val, addr);
 }
 
 inline static uint8_t read_reg(uint8_t addr, uint8_t reg)
 {
     uint8_t res = 0;
-    if (!i2c_slave_read(addr, reg, &res, 1))
+    if (i2c_slave_read(addr, &reg, &res, 1, false))
         debug("Could not read from 0x%02x, addr = 0x%02x", reg, addr);
     return res;
 }
@@ -192,8 +191,8 @@ void pca9685_set_pwm_value(uint8_t addr, uint8_t channel, uint16_t val)
     else if (val < 4096)
     {
         // Normal
-        uint8_t buf[5] = { reg, 0, 0, val, val >> 8 };
-        i2c_slave_write(addr, buf, 5);
+        uint8_t buf[4] = { 0, 0, val, val >> 8 };
+        i2c_slave_write(addr, &reg, buf, 4, false);
     }
     else
     {
