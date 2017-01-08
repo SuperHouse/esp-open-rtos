@@ -3,16 +3,13 @@
  *
  * This sample code is in the public domain.
  */
+#include <espressif/esp_common.h>
 #include <esp8266.h>
 #include <esp/uart.h>
 #include <string.h>
 #include <stdio.h>
-#include <c_types.h>
 #include <FreeRTOS.h>
 #include <task.h>
-#include <queue.h>
-#include <sdk_internal.h>
-#include <espressif/esp_common.h>
 #include <ssid_config.h>
 #include <httpd/httpd.h>
 
