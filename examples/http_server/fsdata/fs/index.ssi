@@ -6,7 +6,7 @@
 
 		<link rel="stylesheet" type="text/css" href="css/siimple.min.css">
 		<link rel="stylesheet" type="text/css" href="css/style.css">
-		<link rel="shortcut icon" href="img/favicon.ico">
+		<link rel="shortcut icon" href="img/favicon.png">
 
 		<title>HTTP Server</title>
 	</head>
@@ -21,7 +21,7 @@
 
 			<div class="alert alert-done">HTTP Server is up and running.</div>
 
-			<p>This is an example HTTP server with CGI and SSI support. The switch below will allow you to test CGI handler and switch
+			<p>This is an example HTTP server with CGI and SSI support. The switch below will allow you to test CGI handler and turn
 			the blue LED on or off.</p>
 
 			<div class="cover" align="center">

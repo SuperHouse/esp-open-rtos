@@ -24,19 +24,23 @@ while($file = <FILES>) {
         } else {
             print(HEADER "HTTP/1.0 200 OK\r\n");
         }
-        print(HEADER "Server: lwIP/pre-0.6 (http://www.sics.se/~adam/lwip/)\r\n");
-        if($file =~ /\.html$/ || $file =~ /\.shtml$/ || $file =~ /\.shtm$/ || $file =~ /\.ssi$/) {
+        print(HEADER "lwIP/1.4.1 (http://savannah.nongnu.org/projects/lwip)\r\n");
+        if($file =~ /\.html$/ || $file =~ /\.htm$/ || $file =~ /\.shtml$/ || $file =~ /\.shtm$/ || $file =~ /\.ssi$/) {
             print(HEADER "Content-type: text/html\r\n");
         } elsif($file =~ /\.js$/) {
             print(HEADER "Content-type: application/x-javascript\r\n\r\n");
         } elsif($file =~ /\.css$/) {
             print(HEADER "Content-type: text/css\r\n\r\n");
+        } elsif($file =~ /\.ico$/) {
+            print(HEADER "Content-type: image/x-icon\r\n\r\n");
         } elsif($file =~ /\.gif$/) {
             print(HEADER "Content-type: image/gif\r\n");
         } elsif($file =~ /\.png$/) {
             print(HEADER "Content-type: image/png\r\n");
         } elsif($file =~ /\.jpg$/) {
             print(HEADER "Content-type: image/jpeg\r\n");
+        } elsif($file =~ /\.bmp$/) {
+            print(HEADER "Content-type: image/bmp\r\n\r\n");
         } elsif($file =~ /\.class$/) {
             print(HEADER "Content-type: application/octet-stream\r\n");
         } elsif($file =~ /\.ram$/) {

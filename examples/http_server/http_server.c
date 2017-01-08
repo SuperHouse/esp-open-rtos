@@ -24,7 +24,7 @@ enum {
     SSI_LED_STATE
 };
 
-char *gpio_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+char *gpio_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
 {
     for (int i = 0; i < iNumParams; i++) {
         if (strcmp(pcParam[i], "on") == 0) {
@@ -44,7 +44,7 @@ char *gpio_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
     return "/index.ssi";
 }
 
-char *about_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+char *about_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
 {
     return "/about.html";
 }
@@ -74,8 +74,8 @@ int32_t ssi_handler(int32_t iIndex, char *pcInsert, int32_t iInsertLen)
 void httpd_task(void *pvParameters)
 {
     tCGI pCGIs[] = {
-        {"/gpio", (tCGIHandler) gpio_handler},
-        {"/about", (tCGIHandler) about_handler},
+        {"/gpio", (tCGIHandler) gpio_cgi_handler},
+        {"/about", (tCGIHandler) about_cgi_handler},
     };
 
     const char *pcConfigSSITags[] = {

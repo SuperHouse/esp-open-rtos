@@ -54,7 +54,7 @@ ul.navbar li a.active {
 .onoffswitch-inner:after {
 	content: "OFF";
 	padding-right: 14px;
-	background-color: #F1F5FA; color: #999999;
+	background-color: #FFFFFF; color: #999999;
 	text-align: right;
 }
 .onoffswitch-switch {
