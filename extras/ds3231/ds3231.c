@@ -93,15 +93,13 @@ int ds3231_setAlarm(uint8_t alarms, struct tm *time1, uint8_t option1, struct tm
  */
 bool ds3231_getFlag(uint8_t addr, uint8_t mask, uint8_t *flag)
 {
-    uint8_t data[1];
+    uint8_t data;
 
     /* get register */
-   // data[0] = addr;
-    //if (ds3231_send(&addr, NULL, 0) && ds3231_recv(data, 1)) {  //Test with ds3231_recv(addr, data, 1)
-    if (!ds3231_recv(addr,data, 1))
+    if (!ds3231_recv(addr, &data, 1))
     {
         /* return only requested flag */
-        *flag = (data[0] & mask);
+        *flag = (data & mask);
         return true;
     }
 
@@ -116,22 +114,20 @@ bool ds3231_getFlag(uint8_t addr, uint8_t mask, uint8_t *flag)
  */
 bool ds3231_setFlag(uint8_t addr, uint8_t bits, uint8_t mode)
 {
-    uint8_t data[1];
+    uint8_t data;
 
     /* get status register */
-    //if (ds3231_send(data, 1) && ds3231_recv(data+1, 1)) {
-    if (!ds3231_recv(addr, data, 1))
+    if (!ds3231_recv(addr, &data, 1))
     {
         /* clear the flag */
         if (mode == DS3231_REPLACE)
-            data[0] = bits;
+            data = bits;
         else if (mode == DS3231_SET)
-            data[0] |= bits;
+            data |= bits;
         else
-            data[0] &= ~bits;
+            data &= ~bits;
 
-        //if (ds3231_send(data, 2)) {
-        if (!ds3231_send(addr, data, 1))
+        if (!ds3231_send(addr, &data, 1))
             return true;
     }
 
@@ -220,7 +216,6 @@ bool ds3231_getRawTemp(int16_t *temp)
     uint8_t data[2];
 
     data[0] = DS3231_ADDR_TEMP;
-    //if (ds3231_send(data, 1) && ds3231_recv(data, 2)) {
     if (!ds3231_send(DS3231_ADDR_TEMP,data, 2))
     {
         *temp = (int16_t)(int8_t)data[0] << 2 | data[1] >> 6;
@@ -257,13 +252,6 @@ bool ds3231_getTempFloat(float *temp)
 bool ds3231_getTime(struct tm *time)
 {
     uint8_t data[7];
-
-    /* start register address
-    data[0] = DS3231_ADDR_TIME;
-    if (!ds3231_send(data, 1)) {
-        return false;
-    }
-    */
 
     /* read time */
     if (ds3231_recv(DS3231_ADDR_TIME, data, 7))

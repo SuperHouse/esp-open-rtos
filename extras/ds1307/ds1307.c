@@ -49,12 +49,9 @@ static uint8_t read_register(uint8_t reg)
 
 static void update_register(uint8_t reg, uint8_t mask, uint8_t val)
 {
-    uint8_t buf[2];
+    uint8_t buf = (read_register(reg) & mask) | val;
 
-    buf[0] = reg;
-    buf[1] = (read_register(reg) & mask) | val;
-
-    i2c_slave_write(ADDR, &buf[0], &buf[1], 1, false);
+    i2c_slave_write(ADDR, &reg, &buf, 1, false);
 }
 
 void ds1307_start(bool start)

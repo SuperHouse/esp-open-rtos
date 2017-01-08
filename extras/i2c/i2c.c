@@ -45,7 +45,7 @@ static uint8_t g_sda_pin;
 
 inline bool i2c_status(void)
 {
-    return flag;
+    return started;
 }
 
 void i2c_init(uint8_t scl_pin, uint8_t sda_pin)

@@ -64,7 +64,7 @@ static uint16_t read_reg(uint8_t addr, uint8_t reg)
 static void write_reg(uint8_t addr, uint8_t reg, uint16_t val)
 {
     //debug("Write %d: 0x%04x", reg, val);
-    uint8_t buf[3] = { val >> 8, val};
+    uint8_t buf[2] = { val >> 8, val};
     if (i2c_slave_write(addr, &reg, buf, 2, false))
         debug("Could not write 0x%04x to register %d", val, reg);
 }
