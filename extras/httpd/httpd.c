@@ -431,7 +431,7 @@ strnstr(const char* buffer, const char* token, size_t n)
     }
   }
   return NULL;
-} 
+}
 #endif /* LWIP_HTTPD_STRNSTR_PRIVATE */
 
 #if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
@@ -614,7 +614,7 @@ http_write(struct tcp_pcb *pcb, const void* ptr, u16_t *length, u8_t apiflags)
      return ERR_OK;
    }
    do {
-     LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("Trying go send %d bytes\n", len));
+     LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("Trying to send %d bytes\n", len));
      err = tcp_write(pcb, ptr, len, apiflags);
      if (err == ERR_MEM) {
        if ((tcp_sndbuf(pcb) == 0) ||
@@ -624,7 +624,7 @@ http_write(struct tcp_pcb *pcb, const void* ptr, u16_t *length, u8_t apiflags)
        } else {
          len /= 2;
        }
-       LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, 
+       LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE,
                    ("Send failed, trying less (%d bytes)\n", len));
      }
    } while ((err == ERR_MEM) && (len > 1));
@@ -898,7 +898,7 @@ get_http_headers(struct http_state *pState, char *pszURI)
       pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_OK];
     }
 
-    /* Determine if the URI has any variables and, if so, temporarily remove 
+    /* Determine if the URI has any variables and, if so, temporarily remove
        them. */
     pszVars = strchr(pszURI, '?');
     if(pszVars) {
@@ -1159,9 +1159,6 @@ http_send_data_ssi(struct tcp_pcb *pcb, struct http_state *hs)
    * straddle the boundary of two blocks read from the file and we may also
    * have to split the insert string between two tcp_write operations. */
 
-  /* How much data could we send? */
-  len = tcp_sndbuf(pcb);
-
   /* Do we have remaining data to send before parsing more? */
   if(ssi->parsed > hs->file) {
     /* We cannot send more data than space available in the send
@@ -1196,7 +1193,8 @@ http_send_data_ssi(struct tcp_pcb *pcb, struct http_state *hs)
   /* We have sent all the data that was already parsed so continue parsing
    * the buffer contents looking for SSI tags. */
   while((ssi->parse_left) && (err == ERR_OK)) {
-    /* @todo: somewhere in this loop, 'len' should grow again... */
+    /* How much data could we send? */
+    len = tcp_sndbuf(pcb);
     if (len == 0) {
       return data_to_send;
     }
@@ -2497,7 +2495,7 @@ http_set_cgi_handlers(const tCGI *cgis, int num_handlers)
 {
   LWIP_ASSERT("no cgis given", cgis != NULL);
   LWIP_ASSERT("invalid number of handlers", num_handlers > 0);
-  
+
   g_pCGIs = cgis;
   g_iNumCGIs = num_handlers;
 }
