@@ -178,7 +178,7 @@ static bool process_directory(const char *direcotry)
 {
     DIR *dp;
     struct dirent *ep;
-    char path[256];
+    char path[256], *filename;
 
     dp = opendir(direcotry);
     if (dp != NULL) {
@@ -187,12 +187,22 @@ static bool process_directory(const char *direcotry)
                 !strcmp(ep->d_name, "..")) {
                 continue;
             }
+            if(ep->d_type == DT_DIR) {
+                char *new_dir_name = malloc(strlen(direcotry) + strlen(ep->d_name) + 2);
+                sprintf(new_dir_name, "%s/%s", direcotry, ep->d_name);
+                process_directory(new_dir_name);
+                free(new_dir_name);
+                continue;
+            }
             if (ep->d_type != DT_REG) {
                 continue;  // not a regular file
             }
             sprintf(path, "%s/%s", direcotry, ep->d_name);
-            printf("Processing file %s\n", path);
-            if (!process_file(path, ep->d_name)) {
+            filename = strchr(path, '/');
+            filename = filename ? &filename[1] : path;
+            
+            printf("Processing file source %s, dest: %s\n", path, filename);
+            if (!process_file(path, filename)) {
                 printf("Error processing file\n");
                 break;
             }
