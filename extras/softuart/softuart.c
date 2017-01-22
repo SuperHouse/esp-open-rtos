@@ -79,7 +79,43 @@ void handle_rx(uint8_t gpio_num)
     // Reenable interrupt
     gpio_set_interrupt(rx_pin, GPIO_INTTYPE_EDGE_NEG, handle_rx);
 }
-
+static uint8_t inline chbit(uint8_t data, uint8_t bit)
+{
+    if((data & bit) != 0)
+    {
+        return 1;
+    } else 
+    {
+        return 0;
+    }
+}
+uint8_t softuart_putchar( char data)
+{
+    unsigned i;
+    unsigned start_time = 0x7FFFFFFF & sdk_system_get_time();
+    gpio_write(tx_pin, 0);
+    for(i = 0; i <= 8; i++)
+    {
+        while((0x7FFFFFFF & sdk_system_get_time()) < (start_time + (s.bit_time*(i+1))))
+        {
+            if((0x7FFFFFFF & sdk_system_get_time()) < start_time) { break;}
+        }
+        gpio_write(tx_pin, chbit(data, 1<<i));
+    }
+    while((0x7FFFFFFF & sdk_system_get_time()) < (start_time + (s.bit_time*9)))
+    {
+        if((0x7FFFFFFF & sdk_system_get_time()) < start_time){ break;}
+    }
+    gpio_write(tx_pin, 1);
+    sdk_os_delay_us(s.bit_time*6);
+    return 0;
+}
+void softuart_puts(const char *c)
+{
+    while( *c ) {
+        softuart_putchar((uint8_t)*c++);
+    }
+}
 bool softuart_init(uint32_t baudrate)
 {
     if (baudrate == 0)
@@ -89,12 +125,16 @@ bool softuart_init(uint32_t baudrate)
     s.bit_time = (1000000 / baudrate);
     if ( ((100000000 / baudrate) - (100*s.bit_time)) > 50 )
         s.bit_time++;
-
+    //Set Rx
     gpio_enable(rx_pin, GPIO_INPUT);
     gpio_set_pullup(rx_pin, true, false);
     // Set up the interrupt handler to get the startbit
     gpio_set_interrupt(rx_pin, GPIO_INTTYPE_EDGE_NEG, handle_rx);
-
+    //Set Tx
+    gpio_enable(tx_pin, GPIO_OUTPUT);
+    gpio_set_pullup(tx_pin, true, false);
+    gpio_write(tx_pin, 1);
+    sdk_os_delay_us(100000);
     return true;
 }
 

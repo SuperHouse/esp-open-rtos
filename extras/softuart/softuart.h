@@ -28,7 +28,8 @@ extern "C"
 #endif
 
 // FIXME: for now you need to provide the gpio number for RX here
-#define rx_pin 13
+#define rx_pin 4
+#define tx_pin 5
 
 #define SOFTUART_MAX_RX_BUFF 64
 #define SOFTUART_GPIO_COUNT 16
@@ -79,7 +80,8 @@ bool softuart_available();
  * @return current byte
  */
 uint8_t softuart_read();
-
+uint8_t softuart_putchar(char data);
+void softuart_puts(const char *c);
 #ifdef __cplusplus
 }
 #endif

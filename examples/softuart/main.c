@@ -25,6 +25,8 @@ void user_init(void)
     {
         if (!softuart_available())
             continue;
-        printf("%c",softuart_read());
+        char c = softuart_read();
+        printf("input:%c\n",c);
+        softuart_puts("start\r\n");
     }
 }
