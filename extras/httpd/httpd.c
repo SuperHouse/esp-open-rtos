@@ -268,6 +268,29 @@
 #define HTTP_ALLOC_HTTP_STATE() (struct http_state *)mem_malloc(sizeof(struct http_state))
 #endif /* HTTPD_USE_MEM_POOL */
 
+#include <mbedtls/sha1.h>
+#include <mbedtls/base64.h>
+#include "strcasestr.h"
+
+static const char WS_HEADER[] = "Upgrade: websocket\r\n";
+static const char WS_GUID[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+static const char WS_RSP[] = "HTTP/1.1 101 Switching Protocols\r\n" \
+                             "Upgrade: websocket\r\n" \
+                             "Connection: Upgrade\r\n" \
+                             "Sec-WebSocket-Accept: ";
+
+/* Response buffer length (30 = base64 encoded key max length) */
+#define WS_BUF_LEN           (sizeof(WS_RSP) + sizeof(CRLF CRLF) + 30 - 2)
+
+/* WebSocket timeout: X*(HTTPD_POLL_INTERVAL), default is 10*4*500ms = 20s */
+#ifndef WS_TIMEOUT
+#define WS_TIMEOUT           10
+#endif
+
+/* Callback functions */
+static tWsHandler websocket_cb = NULL;
+static tWsOpenHandler websocket_open_cb = NULL;
+
 typedef struct
 {
   const char *name;
@@ -341,6 +364,8 @@ struct http_state {
   struct fs_file *handle;
   char *file;       /* Pointer to first unsent byte in buf. */
 
+  u8_t is_websocket;
+
   struct tcp_pcb *pcb;
 #if LWIP_HTTPD_SUPPORT_REQUESTLIST
   struct pbuf *req;
@@ -386,6 +411,9 @@ static err_t http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs
 static err_t http_find_file(struct http_state *hs, const char *uri, int is_09);
 static err_t http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri, u8_t tag_check);
 static err_t http_poll(void *arg, struct tcp_pcb *pcb);
+
+static err_t websocket_send_close(struct tcp_pcb *pcb);
+
 #if LWIP_HTTPD_FS_ASYNC_READ
 static void http_continue(void *connection);
 #endif /* LWIP_HTTPD_FS_ASYNC_READ */
@@ -666,6 +694,17 @@ http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs, u8_t abort_
   }
 #endif /* LWIP_HTTPD_SUPPORT_POST*/
 
+  if (hs != NULL) {
+    if (hs->is_websocket)
+      websocket_send_close(pcb);
+
+    if (hs->req != NULL) {
+      /* this should not happen */
+      LWIP_DEBUGF(HTTPD_DEBUG, ("Freeing buffer (malformed request?)\n"));
+      pbuf_free(hs->req);
+      hs->req = NULL;
+    }
+  }
 
   tcp_arg(pcb, NULL);
   tcp_recv(pcb, NULL);
@@ -699,7 +738,7 @@ http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs, u8_t abort_
 static err_t
 http_close_conn(struct tcp_pcb *pcb, struct http_state *hs)
 {
-   return http_close_or_abort_conn(pcb, hs, 0);
+  return http_close_or_abort_conn(pcb, hs, 0);
 }
 
 /** End of file: either close the connection (Connection: close) or
@@ -716,7 +755,11 @@ http_eof(struct tcp_pcb *pcb, struct http_state *hs)
     hs->keepalive = 1;
   } else
 #endif /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
-  {
+  if (hs->is_websocket) {
+    http_state_eof(hs);
+    http_state_init(hs);
+    hs->is_websocket = 1;
+  } else {
     http_close_conn(pcb, hs);
   }
 }
@@ -1915,6 +1958,60 @@ http_parse_request(struct pbuf **inp, struct http_state *hs, struct tcp_pcb *pcb
     }
   }
 
+  /* Parse WebSocket request */
+  hs->is_websocket = 0;
+  unsigned char *retval = NULL;
+  if (strncasestr(data, WS_HEADER, data_len)) {
+    LWIP_DEBUGF(HTTPD_DEBUG, ("WebSocket opening handshake\n"));
+    char *key_start = strncasestr(data, "Sec-WebSocket-Key: ", data_len);
+    if (key_start) {
+      key_start += 19;
+      char *key_end = strncasestr(key_start, "\r\n", data_len);
+      if (key_end) {
+        char key[64];
+        int len = sizeof (char) * (key_end - key_start);
+        if ((len + sizeof (WS_GUID) < sizeof (key)) && (len > 0)) {
+          /* Allocate response buffer */
+          retval = mem_malloc(WS_BUF_LEN);
+          if (retval == NULL) {
+            LWIP_DEBUGF(HTTPD_DEBUG, ("Out of memory\n"));
+            return ERR_MEM;
+          }
+          unsigned char *retval_ptr;
+          retval_ptr = memcpy(retval, WS_RSP, sizeof(WS_RSP));
+          retval_ptr += sizeof(WS_RSP) - 1;
+
+          /* Concatenate key */
+          memcpy(key, key_start, len);
+          strlcpy(&key[len], WS_GUID, sizeof(key));
+          LWIP_DEBUGF(HTTPD_DEBUG, ("Resulting key: %s\n", key));
+
+          /* Get SHA1 */
+          int key_len = sizeof(WS_GUID) - 1 + len;
+          unsigned char sha1sum[20];
+          mbedtls_sha1((unsigned char *) key, key_len, sha1sum);
+
+          /* Base64 encode */
+          unsigned int olen;
+          mbedtls_base64_encode(NULL, 0, &olen, sha1sum, 20); //get length
+          int ok = mbedtls_base64_encode(retval_ptr, WS_BUF_LEN, &olen, sha1sum, 20);
+
+          if (ok == 0) {
+            memcpy(&retval_ptr[olen], CRLF CRLF, sizeof(CRLF CRLF));
+            hs->is_websocket = 1;
+            LWIP_DEBUGF(HTTPD_DEBUG, ("Base64 encoded: %s\n", retval_ptr));
+          }
+        } else {
+          LWIP_DEBUGF(HTTPD_DEBUG, ("Key overflow"));
+          return ERR_MEM;
+        }
+      }
+    } else {
+      LWIP_DEBUGF(HTTPD_DEBUG, ("error: malformed packet\n"));
+      return ERR_ARG;
+    }
+  }
+
   /* received enough data for minimal request? */
   if (data_len >= MIN_REQ_LEN) {
     /* wait for CRLF before parsing anything */
@@ -2000,7 +2097,17 @@ http_parse_request(struct pbuf **inp, struct http_state *hs, struct tcp_pcb *pcb
           } else
 #endif /* LWIP_HTTPD_SUPPORT_POST */
           {
-            return http_find_file(hs, uri, is_09);
+            if (hs->is_websocket && retval != NULL) {
+              LWIP_DEBUGF(HTTPD_DEBUG, ("Sending:\n%s\n", retval));
+              u16_t len = strlen((char *) retval);
+              http_write(pcb, retval, &len, 0);
+              mem_free(retval);
+              if(websocket_open_cb)
+                websocket_open_cb(pcb, uri);
+              return ERR_OK; // We handled this
+            } else {
+              return http_find_file(hs, uri, is_09);
+            }
           }
         }
       } else {
@@ -2272,7 +2379,7 @@ http_poll(void *arg, struct tcp_pcb *pcb)
     return ERR_OK;
   } else {
     hs->retries++;
-    if (hs->retries == HTTPD_MAX_RETRIES) {
+    if (hs->retries == ((hs->is_websocket) ? WS_TIMEOUT : HTTPD_MAX_RETRIES)) {
       LWIP_DEBUGF(HTTPD_DEBUG, ("http_poll: too many retries, close\n"));
       http_close_conn(pcb, hs);
       return ERR_OK;
@@ -2294,6 +2401,94 @@ http_poll(void *arg, struct tcp_pcb *pcb)
   return ERR_OK;
 }
 
+void
+websocket_register_callbacks(tWsOpenHandler ws_open_cb, tWsHandler ws_cb)
+{
+  websocket_open_cb = ws_open_cb;
+  websocket_cb = ws_cb;
+}
+
+err_t
+websocket_write(struct tcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t mode)
+{
+  if (len > 125)
+    return ERR_BUF;
+
+  unsigned char buf[len + 2];
+  buf[0] = 0x80 | mode;
+  buf[1] = len;
+  memcpy(&buf[2], data, len);
+  len += 2;
+
+  LWIP_DEBUGF(HTTPD_DEBUG, ("[wsoc] sending packet\n"));
+
+  return http_write(pcb, buf, &len, TCP_WRITE_FLAG_COPY);
+}
+
+/**
+ * Send status code 1000 (normal closure).
+ */
+static err_t
+websocket_send_close(struct tcp_pcb *pcb)
+{
+  const char buf[] = {0x88, 0x02, 0x03, 0xe8};
+  u16_t len = sizeof (buf);
+  LWIP_DEBUGF(HTTPD_DEBUG, ("[wsoc] closing connection\n"));
+  return tcp_write(pcb, buf, len, TCP_WRITE_FLAG_COPY);
+}
+
+/**
+ * Parse websocket frame.
+ *
+ * @return ERR_OK: frame parsed
+ *         ERR_CLSD: close request from client
+ *         ERR_VAL: invalid frame.
+ */
+static err_t
+websocket_parse(struct tcp_pcb *pcb, struct pbuf *p)
+{
+  unsigned char *data;
+  data = (unsigned char*) p->payload;
+  u16_t data_len = p->len;
+
+  if (data != NULL && data_len > 1) {
+    LWIP_DEBUGF(HTTPD_DEBUG, ("[wsoc] frame received\n"));
+    u8_t opcode = data[0] & 0x0F;
+    switch (opcode) {
+      case WS_TEXT_MODE:
+      case WS_BIN_MODE:
+        LWIP_DEBUGF(HTTPD_DEBUG, ("Opcode: 0x%hX, frame length: %d\n", opcode, data_len));
+        if (data_len > 6) {
+          u8_t len = data[1] & 0x7F;
+          if (len > data_len || len > 125) {
+            LWIP_DEBUGF(HTTPD_DEBUG, ("Error: large frames not supported\n"));
+            return ERR_VAL;
+          } else {
+            if (data_len - 6 != len)
+              LWIP_DEBUGF(HTTPD_DEBUG, ("Multiple frames received\n"));
+            data_len = len;
+          }
+          /* unmask */
+          for (int i = 0; i < data_len; i++)
+            data[i + 6] = (data[i + 6] ^ data[2 + i % 4]);
+          /* user callback */
+          if (websocket_cb)
+            websocket_cb(pcb, &data[6], data_len, opcode);
+        }
+        break;
+      case 0x08: // close
+        LWIP_DEBUGF(HTTPD_DEBUG, ("Close request\n"));
+        return ERR_CLSD;
+        break;
+      default:
+        LWIP_DEBUGF(HTTPD_DEBUG, ("Unsupported opcode 0x%hX\n", opcode));
+        break;
+    }
+    return ERR_OK;
+  }
+  return ERR_VAL;
+}
+
 /**
  * Data has been received on this pcb.
  * For HTTP 1.0, this should normally only happen once (if the request fits in one packet).
@@ -2305,6 +2500,29 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   struct http_state *hs = (struct http_state *)arg;
   LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("http_recv: pcb=%p pbuf=%p err=%s\n", (void*)pcb,
     (void*)p, lwip_strerr(err)));
+
+  if (hs != NULL && hs->is_websocket) {
+    if (p == NULL) {
+      LWIP_DEBUGF(HTTPD_DEBUG, ("http_recv: buffer error\n"));
+      http_close_or_abort_conn(pcb, hs, 0);
+      return ERR_BUF;
+    }
+    tcp_recved(pcb, p->tot_len);
+
+    err_t err = websocket_parse(pcb, p);
+
+    if (p != NULL) {
+      /* otherwise tcp buffer hogs */
+      LWIP_DEBUGF(HTTPD_DEBUG, ("[wsoc] freeing buffer\n"));
+      pbuf_free(p);
+    }
+
+    if (err == ERR_CLSD) {
+      http_close_conn(pcb, hs);
+    }
+
+    return ERR_OK;
+  }
 
   if ((err != ERR_OK) || (p == NULL) || (hs == NULL)) {
     /* error or closed by other side? */
@@ -2349,7 +2567,8 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     if (hs->handle == NULL) {
       parsed = http_parse_request(&p, hs, pcb);
       LWIP_ASSERT("http_parse_request: unexpected return value", parsed == ERR_OK
-        || parsed == ERR_INPROGRESS ||parsed == ERR_ARG || parsed == ERR_USE);
+        || parsed == ERR_INPROGRESS ||parsed == ERR_ARG
+        || parsed == ERR_USE || parsed == ERR_MEM);
     } else {
       LWIP_DEBUGF(HTTPD_DEBUG, ("http_recv: already sending data\n"));
     }
@@ -2375,7 +2594,7 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
         LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("http_recv: data %p len %"S32_F"\n", hs->file, hs->left));
         http_send(pcb, hs);
       }
-    } else if (parsed == ERR_ARG) {
+    } else if (parsed == ERR_ARG || parsed == ERR_MEM) {
       /* @todo: close on ERR_USE? */
       http_close_conn(pcb, hs);
     }

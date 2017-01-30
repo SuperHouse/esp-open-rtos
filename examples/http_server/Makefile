@@ -1,10 +1,11 @@
 PROGRAM=http_server
 
-#ESPBAUD=921600
-
 EXTRA_CFLAGS=-DLWIP_HTTPD_CGI=1 -DLWIP_HTTPD_SSI=1 -I./fsdata
 
-EXTRA_COMPONENTS=extras/httpd
+#Enable debugging
+#EXTRA_CFLAGS+=-DLWIP_DEBUG=1 -DHTTPD_DEBUG=LWIP_DBG_ON
+
+EXTRA_COMPONENTS=extras/mbedtls extras/httpd
 
 include ../../common.mk
 
