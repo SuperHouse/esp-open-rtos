@@ -308,7 +308,7 @@ int i2c_slave_read(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len
         buf++;
         len--;
     }
-    if (i2c_stop())
+    if (!i2c_stop())
         goto error;
     flag = false ; // Bus free
     return 0;

@@ -216,7 +216,7 @@ bool ds3231_getRawTemp(int16_t *temp)
     uint8_t data[2];
 
     data[0] = DS3231_ADDR_TEMP;
-    if (!ds3231_send(DS3231_ADDR_TEMP,data, 2))
+    if (!ds3231_recv(DS3231_ADDR_TEMP,data, 2))
     {
         *temp = (int16_t)(int8_t)data[0] << 2 | data[1] >> 6;
         return true;

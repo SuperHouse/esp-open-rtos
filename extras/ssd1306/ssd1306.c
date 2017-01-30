@@ -256,6 +256,7 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
             {
                 if(dev->screen == SH1106_SCREEN && i%dev->width == 0) sh1106_go_coordinate(dev,0,i/dev->width);
                 i2c_send(dev, 0x40, buf ? &buf[i] : tab, 16);
+                i+=15 ;
             }
             break;
 #endif
