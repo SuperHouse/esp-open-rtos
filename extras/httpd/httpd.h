@@ -39,6 +39,7 @@
 #include "lwip/opt.h"
 #include "lwip/err.h"
 #include "lwip/pbuf.h"
+#include "lwip/tcp.h"
 
 
 /** Set this to 1 to support CGI */
@@ -55,7 +56,6 @@
 #ifndef LWIP_HTTPD_SUPPORT_POST
 #define LWIP_HTTPD_SUPPORT_POST   0
 #endif
-
 
 #if LWIP_HTTPD_CGI
 
@@ -230,6 +230,33 @@ void httpd_post_data_recved(void *connection, u16_t recved_len);
 #endif /* LWIP_HTTPD_POST_MANUAL_WND */
 
 #endif /* LWIP_HTTPD_SUPPORT_POST */
+
+enum {
+  WS_TEXT_MODE = 0x01,
+  WS_BIN_MODE  = 0x02,
+} WS_MODE;
+
+typedef void (*tWsHandler)(struct tcp_pcb *pcb, uint8_t *data, u16_t data_len, uint8_t mode);
+typedef void (*tWsOpenHandler)(struct tcp_pcb *pcb, const char *uri);
+
+/**
+ * Write data into a websocket.
+ *
+ * @param pcb tcp_pcb to send.
+ * @param data data to send.
+ * @param len data length (should not exceed 125).
+ * @param mode WS_TEXT_MODE or WS_BIN_MODE.
+ * @return ERR_OK if write succeeded.
+ */
+err_t websocket_write(struct tcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t mode);
+
+/**
+ * Register websocket callback functions. Use NULL if callback is not needed.
+ *
+ * @param ws_open_cb called when new websocket is opened.
+ * @param ws_cb called when data is received from client.
+ */
+void websocket_register_callbacks(tWsOpenHandler ws_open_cb, tWsHandler ws_cb);
 
 void httpd_init(void);
 
