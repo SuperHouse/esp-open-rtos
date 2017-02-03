@@ -244,7 +244,7 @@ typedef void (*tWsOpenHandler)(struct tcp_pcb *pcb, const char *uri);
  *
  * @param pcb tcp_pcb to send.
  * @param data data to send.
- * @param len data length (should not exceed 125).
+ * @param len data length.
  * @param mode WS_TEXT_MODE or WS_BIN_MODE.
  * @return ERR_OK if write succeeded.
  */

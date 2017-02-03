@@ -2411,18 +2411,31 @@ websocket_register_callbacks(tWsOpenHandler ws_open_cb, tWsHandler ws_cb)
 err_t
 websocket_write(struct tcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t mode)
 {
-  if (len > 125)
-    return ERR_BUF;
+  uint8_t *buf = mem_malloc(len + 4);
+  if (buf == NULL) {
+    LWIP_DEBUGF(HTTPD_DEBUG, ("[websocket_write] out of memory\n"));
+    return ERR_MEM;
+  }
 
-  unsigned char buf[len + 2];
+  int offset = 2;
   buf[0] = 0x80 | mode;
-  buf[1] = len;
-  memcpy(&buf[2], data, len);
-  len += 2;
+  if (len > 125) {
+    offset = 4;
+    buf[1] = 126;
+    buf[2] = len >> 8;
+    buf[3] = len;
+  } else {
+    buf[1] = len;
+  }
 
-  LWIP_DEBUGF(HTTPD_DEBUG, ("[wsoc] sending packet\n"));
+  memcpy(&buf[offset], data, len);
+  len += offset;
 
-  return http_write(pcb, buf, &len, TCP_WRITE_FLAG_COPY);
+  LWIP_DEBUGF(HTTPD_DEBUG, ("[websocket_write] sending packet\n"));
+  err_t retval = http_write(pcb, buf, &len, TCP_WRITE_FLAG_COPY);
+  mem_free(buf);
+
+  return retval;
 }
 
 /**
@@ -2431,7 +2444,7 @@ websocket_write(struct tcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t 
 static err_t
 websocket_send_close(struct tcp_pcb *pcb)
 {
-  const char buf[] = {0x88, 0x02, 0x03, 0xe8};
+  const u8_t buf[] = {0x88, 0x02, 0x03, 0xe8};
   u16_t len = sizeof (buf);
   LWIP_DEBUGF(HTTPD_DEBUG, ("[wsoc] closing connection\n"));
   return tcp_write(pcb, buf, len, TCP_WRITE_FLAG_COPY);
@@ -2447,39 +2460,59 @@ websocket_send_close(struct tcp_pcb *pcb)
 static err_t
 websocket_parse(struct tcp_pcb *pcb, struct pbuf *p)
 {
-  unsigned char *data;
-  data = (unsigned char*) p->payload;
+  u8_t *data = (u8_t *) p->payload;
   u16_t data_len = p->len;
 
   if (data != NULL && data_len > 1) {
     LWIP_DEBUGF(HTTPD_DEBUG, ("[wsoc] frame received\n"));
+    if ((data[0] & 0x80) == 0) {
+      LWIP_DEBUGF(HTTPD_DEBUG, ("Warning: continuation frames not supported\n"));
+      return ERR_OK;
+    }
     u8_t opcode = data[0] & 0x0F;
     switch (opcode) {
       case WS_TEXT_MODE:
       case WS_BIN_MODE:
         LWIP_DEBUGF(HTTPD_DEBUG, ("Opcode: 0x%hX, frame length: %d\n", opcode, data_len));
-        if (data_len > 6) {
-          u8_t len = data[1] & 0x7F;
-          if (len > data_len || len > 125) {
-            LWIP_DEBUGF(HTTPD_DEBUG, ("Error: large frames not supported\n"));
-            return ERR_VAL;
-          } else {
-            if (data_len - 6 != len)
-              LWIP_DEBUGF(HTTPD_DEBUG, ("Multiple frames received\n"));
-            data_len = len;
+        if (data_len > 6 && websocket_cb != NULL) {
+          int data_offset = 6;
+          u8_t *dptr = &data[6];
+          u8_t *kptr = &data[2];
+          u16_t len = data[1] & 0x7F;
+
+          if (len == 127) {
+            /* most likely won't happen inside non-fragmented frame */
+            LWIP_DEBUGF(HTTPD_DEBUG, ("Warning: frame is too long\n"));
+            return ERR_OK;
+          } else if (len == 126) {
+            /* extended length */
+            dptr += 2;
+            kptr += 2;
+            data_offset += 2;
+            len = (data[2] << 8) | data[3];
           }
+
+          data_len -= data_offset;
+
+          if (len > data_len) {
+            LWIP_DEBUGF(HTTPD_DEBUG, ("Error: incorrect frame size\n"));
+            return ERR_VAL;
+          }
+
+          if (data_len != len)
+            LWIP_DEBUGF(HTTPD_DEBUG, ("Warning: segmented frame received\n"));
+
           /* unmask */
-          for (int i = 0; i < data_len; i++)
-            data[i + 6] = (data[i + 6] ^ data[2 + i % 4]);
+          for (int i = 0; i < len; i++)
+            *(dptr++) ^= kptr[i % 4];
+
           /* user callback */
-          if (websocket_cb)
-            websocket_cb(pcb, &data[6], data_len, opcode);
+          websocket_cb(pcb, &data[data_offset], len, opcode);
         }
         break;
       case 0x08: // close
         LWIP_DEBUGF(HTTPD_DEBUG, ("Close request\n"));
         return ERR_CLSD;
-        break;
       default:
         LWIP_DEBUGF(HTTPD_DEBUG, ("Unsupported opcode 0x%hX\n", opcode));
         break;
@@ -2508,19 +2541,17 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
       return ERR_BUF;
     }
     tcp_recved(pcb, p->tot_len);
-
     err_t err = websocket_parse(pcb, p);
-
     if (p != NULL) {
       /* otherwise tcp buffer hogs */
       LWIP_DEBUGF(HTTPD_DEBUG, ("[wsoc] freeing buffer\n"));
       pbuf_free(p);
     }
-
     if (err == ERR_CLSD) {
       http_close_conn(pcb, hs);
     }
-
+    /* reset timeout */
+    hs->retries = 0;
     return ERR_OK;
   }
 
