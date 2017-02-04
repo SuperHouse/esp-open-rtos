@@ -92,7 +92,7 @@
 #if (SSD1306_I2C_SUPPORT)
 static int inline i2c_send(const ssd1306_t *dev, uint8_t reg, uint8_t* data, uint8_t len)
 {
-    return i2c_slave_write(dev->addr, &reg, data, len, false);
+    return i2c_slave_write(dev->addr, &reg, data, len);
 }
 #endif
 

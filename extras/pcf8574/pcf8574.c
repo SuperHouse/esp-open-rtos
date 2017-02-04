@@ -4,7 +4,7 @@
 uint8_t pcf8574_port_read(uint8_t addr)
 {
     uint8_t res;
-    if (i2c_slave_read(addr, NULL, &res, 1, false))
+    if (i2c_slave_read(addr, NULL, &res, 1))
             return 0;
     return res;
 }
@@ -14,7 +14,7 @@ size_t pcf8574_port_read_buf(uint8_t addr, void *buf, size_t len)
     if (!len || !buf) return 0;
     uint8_t *_buf = (uint8_t *)buf;
 
-    if (i2c_slave_read(addr, NULL, _buf, len, false))
+    if (i2c_slave_read(addr, NULL, _buf, len))
         return 0;
     return len;
 }
@@ -24,14 +24,14 @@ size_t pcf8574_port_write_buf(uint8_t addr, void *buf, size_t len)
     if (!len || !buf) return 0;
     uint8_t *_buf = (uint8_t *)buf;
 
-    if (i2c_slave_write(addr, NULL, _buf, len, false))
+    if (i2c_slave_write(addr, NULL, _buf, len))
         return 0;
     return len;
 }
 
 void pcf8574_port_write(uint8_t addr, uint8_t value)
 {
-    i2c_slave_write(addr, NULL, &value, 1, false);
+    i2c_slave_write(addr, NULL, &value, 1);
 }
 
 bool pcf8574_gpio_read(uint8_t addr, uint8_t num)

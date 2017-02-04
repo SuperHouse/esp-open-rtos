@@ -30,7 +30,7 @@ static inline uint8_t  bcdToDec(uint8_t bcd)
  */
 static inline int ds3231_send(uint8_t reg, uint8_t *data, uint8_t len)
 {
-    return i2c_slave_write(DS3231_ADDR, &reg, data, len, false);
+    return i2c_slave_write(DS3231_ADDR, &reg, data, len);
 }
 
 /* Read a number of bytes from the rtc over i2c
@@ -38,7 +38,7 @@ static inline int ds3231_send(uint8_t reg, uint8_t *data, uint8_t len)
  */
 static inline int ds3231_recv(uint8_t reg, uint8_t *data, uint8_t len)
 {
-    return i2c_slave_read(DS3231_ADDR, &reg, data, len, false);
+    return i2c_slave_read(DS3231_ADDR, &reg, data, len);
 }
 
 int ds3231_setTime(struct tm *time)

@@ -99,7 +99,7 @@
 static int write_register(uint8_t i2c_addr, uint8_t reg, uint8_t value)
 {
     reg = TSL2561_REG_COMMAND | reg;
-    return i2c_slave_write(i2c_addr, &reg, &value, 1, false);
+    return i2c_slave_write(i2c_addr, &reg, &value, 1);
 }
 
 static uint8_t read_register(uint8_t i2c_addr, uint8_t reg)
@@ -107,7 +107,7 @@ static uint8_t read_register(uint8_t i2c_addr, uint8_t reg)
     uint8_t data[1];
     reg = TSL2561_REG_COMMAND | reg;
 
-    if (i2c_slave_read(i2c_addr, &reg , data, 1, false))
+    if (i2c_slave_read(i2c_addr, &reg , data, 1))
     {
         printf("Error in tsl261 read_register\n");
     }
@@ -121,7 +121,7 @@ static uint16_t read_register_16(uint8_t i2c_addr, uint8_t low_register_addr)
     uint8_t data[2];
     low_register_addr = TSL2561_REG_COMMAND | TSL2561_READ_WORD | low_register_addr;
 
-    if (i2c_slave_read(i2c_addr, &low_register_addr, data, 2, false))
+    if (i2c_slave_read(i2c_addr, &low_register_addr, data, 2))
     {
         printf("Error with i2c_slave_read in read_register_16\n");
     }

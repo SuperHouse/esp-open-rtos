@@ -69,7 +69,7 @@ void bmp280_init_default_params(bmp280_params_t *params)
 static bool read_register16(uint8_t i2c_addr, uint8_t addr, uint16_t *value)
 {
     uint8_t d[] = {0, 0};
-    if (!i2c_slave_read(i2c_addr, &addr, d, sizeof(d), false)) {
+    if (!i2c_slave_read(i2c_addr, &addr, d, sizeof(d))) {
         *value = d[0] | (d[1] << 8);
         return true;
     }
@@ -78,7 +78,7 @@ static bool read_register16(uint8_t i2c_addr, uint8_t addr, uint16_t *value)
 
 static inline int read_data(uint8_t i2c_addr, uint8_t addr, uint8_t *value, uint8_t len)
 {
-    return i2c_slave_read(i2c_addr, &addr, value, len, false);
+    return i2c_slave_read(i2c_addr, &addr, value, len);
 }
 
 static bool read_calibration_data(bmp280_t *dev)
@@ -146,7 +146,7 @@ static bool read_hum_calibration_data(bmp280_t *dev)
 
 static int write_register8(uint8_t i2c_addr, uint8_t addr, uint8_t value)
 {
-    return i2c_slave_write(i2c_addr, &addr, &value, 1, false);
+    return i2c_slave_write(i2c_addr, &addr, &value, 1);
 }
 
 bool bmp280_init(bmp280_t *dev, bmp280_params_t *params)

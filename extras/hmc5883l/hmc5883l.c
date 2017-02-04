@@ -54,13 +54,13 @@ static hmc5883l_operating_mode_t current_mode;
 
 static inline void write_register(uint8_t reg, uint8_t val)
 {
-    i2c_slave_write(ADDR, &reg, &val, 1, false);
+    i2c_slave_write(ADDR, &reg, &val, 1);
 }
 
 static inline uint8_t read_register(uint8_t reg)
 {
     uint8_t res;
-    i2c_slave_read(ADDR, &reg, &res, 1, false);
+    i2c_slave_read(ADDR, &reg, &res, 1);
     return res;
 }
 
@@ -82,7 +82,7 @@ uint32_t hmc5883l_get_id()
 {
     uint32_t res = 0;
     uint8_t reg = REG_ID_A;
-    i2c_slave_read(ADDR, &reg, (uint8_t *)&res, 3, false);
+    i2c_slave_read(ADDR, &reg, (uint8_t *)&res, 3);
     return res;
 }
 
@@ -165,7 +165,7 @@ bool hmc5883l_get_raw_data(hmc5883l_raw_data_t *data)
     }
     uint8_t buf[6];
     uint8_t reg = REG_DX_H;
-    i2c_slave_read(ADDR, &reg, buf, 6, false);
+    i2c_slave_read(ADDR, &reg, buf, 6);
     data->x = ((int16_t)buf[REG_DX_H - REG_DX_H] << 8) | buf[REG_DX_L - REG_DX_H];
     data->y = ((int16_t)buf[REG_DY_H - REG_DX_H] << 8) | buf[REG_DY_L - REG_DX_H];
     data->z = ((int16_t)buf[REG_DZ_H - REG_DX_H] << 8) | buf[REG_DZ_L - REG_DX_H];

@@ -24,13 +24,13 @@ static int _wireWriteRegister (uint8_t addr, uint8_t reg, uint16_t value)
     d[1] = value  & 0x00FF;
     d[0] = (value >> 8) & 0x00FF;
     debug("Data write to %02X : %02X+%04X\n",addr,reg,value);
-    return i2c_slave_write(addr, &reg, d, sizeof(d), false);
+    return i2c_slave_write(addr, &reg, d, sizeof(d));
 }
 
 static int _wireReadRegister(uint8_t addr, uint8_t reg, uint16_t *value)
 {
     uint8_t d[] = {0, 0};
-    int error = i2c_slave_read(addr, &reg, d, sizeof(d), false)
+    int error = i2c_slave_read(addr, &reg, d, sizeof(d))
     debug("Data read from %02X: %02X+%04X\n",addr,reg,*value);
     *value = d[1] | (d[0] << 8);
     return error;

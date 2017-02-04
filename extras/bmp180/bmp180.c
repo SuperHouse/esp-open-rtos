@@ -44,7 +44,7 @@ static int bmp180_readRegister16(uint8_t reg, int16_t *r)
     uint8_t d[] = { 0, 0 };
     int error ;
 
-    if ((error = i2c_slave_read(BMP180_DEVICE_ADDRESS, &reg, d, 2, false)))
+    if ((error = i2c_slave_read(BMP180_DEVICE_ADDRESS, &reg, d, 2)))
         return error;
 
     *r = ((int16_t)d[0] << 8) | (d[1]);
@@ -55,7 +55,7 @@ static int bmp180_start_Messurement(uint8_t cmd)
 {
     uint8_t reg = BMP180_CONTROL_REG ;
 
-    return i2c_slave_write(BMP180_DEVICE_ADDRESS, &reg, &cmd, 1, false);
+    return i2c_slave_write(BMP180_DEVICE_ADDRESS, &reg, &cmd, 1);
 }
 
 static bool bmp180_get_uncompensated_temperature(int32_t *ut)
@@ -96,7 +96,7 @@ static bool bmp180_get_uncompensated_pressure(uint8_t oss, uint32_t *up)
 
     uint8_t d[] = { 0, 0, 0 };
     uint8_t reg = BMP180_OUT_MSB_REG;
-    if (i2c_slave_read(BMP180_DEVICE_ADDRESS, &reg, d, 3, false))
+    if (i2c_slave_read(BMP180_DEVICE_ADDRESS, &reg, d, 3))
         return false;
 
     uint32_t r = ((uint32_t)d[0] << 16) | ((uint32_t)d[1] << 8) | d[2];
@@ -143,7 +143,7 @@ bool bmp180_is_available()
 {
     uint8_t id;
     uint8_t reg = BMP180_VERSION_REG;
-    if (i2c_slave_read(BMP180_DEVICE_ADDRESS, &reg, &id, 1, false))
+    if (i2c_slave_read(BMP180_DEVICE_ADDRESS, &reg, &id, 1))
         return false;
     return id == BMP180_CHIP_ID;
 }

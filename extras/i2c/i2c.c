@@ -39,6 +39,7 @@
 
 static bool started;
 static bool flag;
+static bool force;
 static uint8_t freq ;
 static uint8_t g_scl_pin;
 static uint8_t g_sda_pin;
@@ -232,7 +233,13 @@ uint8_t i2c_read(bool ack)
     return byte;
 }
 
-static int i2c_bus_test(bool force)
+void i2c_force_bus(bool state)
+{
+    force = state ;
+}
+
+
+static int i2c_bus_test()
 {
     taskENTER_CRITICAL(); // To prevent task swaping after checking flag and before set it!
     bool status = flag ; // get current status
@@ -261,9 +268,9 @@ static int i2c_bus_test(bool force)
     return 0 ;
 }
 
-int i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len, bool force)
+int i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len)
 {
-    if(i2c_bus_test(force))
+    if(i2c_bus_test())
         return -EBUSY ;
     i2c_start();
     if (!i2c_write(slave_addr << 1))
@@ -287,9 +294,9 @@ int i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t le
     return -EIO;
 }
 
-int i2c_slave_read(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len, bool force)
+int i2c_slave_read(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len)
 {
-    if(i2c_bus_test(force))
+    if(i2c_bus_test())
         return -EBUSY ;
     if(data != NULL) {
         i2c_start();
