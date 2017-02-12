@@ -8,7 +8,7 @@
 #include "espressif/esp_common.h"
 #include "FreeRTOS.h"
 
-#define CRC_DEBUG 1
+#define CRC_DEBUG 0
 #define CRC_4BYTE_SUPPORT 0
 /* Use the defaults for everything else */
 #include_next "crc_config.h"
