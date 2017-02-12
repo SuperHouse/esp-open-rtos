@@ -22,3 +22,6 @@
 [submodule "extras/http-parser/http-parser"]
 	path = extras/http-parser/http-parser
 	url = https://github.com/nodejs/http-parser
+[submodule "extras/crc_generic/crc_lib"]
+	path = extras/crc_generic/crc_lib
+	url = https://github.com/Zaltora/crc_generic_lib.git
