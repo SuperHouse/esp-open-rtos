@@ -84,7 +84,8 @@ static uint8_t inline chbit(uint8_t data, uint8_t bit)
     if((data & bit) != 0)
     {
         return 1;
-    } else 
+    }
+    else
     {
         return 0;
     }
@@ -98,13 +99,19 @@ uint8_t softuart_putchar( char data)
     {
         while((0x7FFFFFFF & sdk_system_get_time()) < (start_time + (s.bit_time*(i+1))))
         {
-            if((0x7FFFFFFF & sdk_system_get_time()) < start_time) { break;}
+            if((0x7FFFFFFF & sdk_system_get_time()) < start_time)
+            {
+                break;
+            }
         }
         gpio_write(tx_pin, chbit(data, 1<<i));
     }
     while((0x7FFFFFFF & sdk_system_get_time()) < (start_time + (s.bit_time*9)))
     {
-        if((0x7FFFFFFF & sdk_system_get_time()) < start_time){ break;}
+        if((0x7FFFFFFF & sdk_system_get_time()) < start_time)
+        {
+            break;
+        }
     }
     gpio_write(tx_pin, 1);
     sdk_os_delay_us(s.bit_time*6);
@@ -112,7 +119,8 @@ uint8_t softuart_putchar( char data)
 }
 void softuart_puts(const char *c)
 {
-    while( *c ) {
+    while( *c )
+    {
         softuart_putchar((uint8_t)*c++);
     }
 }
