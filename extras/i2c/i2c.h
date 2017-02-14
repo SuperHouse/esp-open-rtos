@@ -103,7 +103,8 @@ bool i2c_status(void);
 //Level 1 API (Don't need functions above)
 
 /**
- * This function will allow you to force a transmission I2C, canceled the current one.
+ * This function will allow you to force a transmission I2C, cancel current transmission.
+ * Warning: Use with precaution. Don't use it if you can avoid it. Usefull for priority transmission.
  * @param state Force the next I2C transmission if true (Use with precaution)
  */
 void i2c_force_bus(bool state);
@@ -116,7 +117,7 @@ void i2c_force_bus(bool state);
  * @param len Number of byte to send
  * @return Non-Zero if error occured
  */
-int i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len);
+int i2c_slave_write(uint8_t slave_addr, const uint8_t *data, const uint8_t *buf, uint32_t len);
 
 /**
  * Issue a send operation of 'data' register adress, followed by reading 'len' bytes
@@ -127,7 +128,7 @@ int i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t le
  * @param len Number of byte to read
  * @return Non-Zero if error occured
  */
-int i2c_slave_read(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len);
+int i2c_slave_read(uint8_t slave_addr, const uint8_t *data, uint8_t *buf, uint32_t len);
 
 #ifdef	__cplusplus
 }

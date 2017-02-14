@@ -238,7 +238,6 @@ void i2c_force_bus(bool state)
     force = state ;
 }
 
-
 static int i2c_bus_test()
 {
     taskENTER_CRITICAL(); // To prevent task swaping after checking flag and before set it!
@@ -268,7 +267,7 @@ static int i2c_bus_test()
     return 0 ;
 }
 
-int i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len)
+int i2c_slave_write(uint8_t slave_addr, const uint8_t *data, const uint8_t *buf, uint32_t len)
 {
     if(i2c_bus_test())
         return -EBUSY ;
@@ -294,7 +293,7 @@ int i2c_slave_write(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t le
     return -EIO;
 }
 
-int i2c_slave_read(uint8_t slave_addr, uint8_t *data, uint8_t *buf, uint32_t len)
+int i2c_slave_read(uint8_t slave_addr, const uint8_t *data, uint8_t *buf, uint32_t len)
 {
     if(i2c_bus_test())
         return -EBUSY ;
