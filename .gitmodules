@@ -19,6 +19,9 @@
 [submodule "tests/fs-test"]
 	path = tests/fs-test
 	url = https://github.com/sheinz/fs-test
+[submodule "extras/bearssl/BearSSL"]
+	path = extras/bearssl/BearSSL
+	url = https://www.bearssl.org/git/BearSSL
 [submodule "extras/http-parser/http-parser"]
 	path = extras/http-parser/http-parser
 	url = https://github.com/nodejs/http-parser
