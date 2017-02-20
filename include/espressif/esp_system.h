@@ -28,6 +28,8 @@ struct sdk_rst_info{
 	uint32_t rtn_addr;
 };
 
+struct netif *sdk_system_get_netif(uint32_t mode);
+
 struct sdk_rst_info* sdk_system_get_rst_info(void);
 
 const char* sdk_system_get_sdk_version(void);

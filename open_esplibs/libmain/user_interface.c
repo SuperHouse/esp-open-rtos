@@ -517,6 +517,10 @@ struct sdk_rst_info *sdk_system_get_rst_info(void) {
     return &sdk_rst_if;
 }
 
+struct netif *sdk_system_get_netif(uint32_t mode) {
+    return _get_netif(mode);
+}
+
 static struct netif *_get_netif(uint32_t mode) {
     struct sdk_g_ic_netif_info *info;
 
