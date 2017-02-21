@@ -1,6 +1,7 @@
 /*
  * Softuart for esp-open-rtos
  *
+ * Copyright (C) 2017 Ruslan V. Uss <unclerus@gmail.com>
  * Copyright (C) 2016 Bernhard Guillon <Bernhard.Guillon@web.de>
  *
  * This code is based on Softuart from here [1] and reworked to
@@ -27,61 +28,64 @@ extern "C"
 {
 #endif
 
-// FIXME: for now you need to provide the gpio number for RX here
-#define rx_pin 4
-#define tx_pin 5
+#ifndef SOFTUART_MAX_UARTS
+    #define SOFTUART_MAX_UARTS 2
+#endif
 
-#define SOFTUART_MAX_RX_BUFF 64
-#define SOFTUART_GPIO_COUNT 16
-
-/**
- * Private data buffer
- */
-typedef struct softuart_buffer_t
-{
-    char receive_buffer[SOFTUART_MAX_RX_BUFF];
-    uint8_t receive_buffer_tail;
-    uint8_t receive_buffer_head;
-    uint8_t buffer_overflow;
-} softuart_buffer_t;
+#ifndef SOFTUART_MAX_RX_BUFF
+    #define SOFTUART_MAX_RX_BUFF 64 //!< Must be power of two: 2, 4, 8, 16 etc.
+#endif
 
 /**
- * Private softuart descriptor
- */
-typedef struct
-{
-    uint8_t pin_rx;                    //!< This value is ignored by now but planned to get added again
-    volatile softuart_buffer_t buffer; //!< Internal buffer
-    uint16_t bit_time;                 //!< Time for one bit, filled by softuart
-} softuart;
-
-/**
- * Initialize software uart and setup interrup handlers
- *
- * FIXME: For now you will have to set up the
- *        rx_pin and handle_rx your self.
- *
- * @param baudrate actual baudrate
+ * Initialize software uart and setup interrupt handler
+ * @param uart_no Software uart index, 0..SOFTUART_MAX_UARTS
+ * @param baudrate Baudrate, e.g. 9600, 19200, etc
+ * @param rx_pin GPIO pin number for RX
+ * @param tx_pin GPIO pin number for TX
  * @return true if no errors occured otherwise false
  */
-bool softuart_init(uint32_t baudrate);
+bool softuart_open(uint8_t uart_no, uint32_t baudrate, uint8_t rx_pin, uint8_t tx_pin);
+
+/**
+ * Deinitialize software uart
+ * @param uart_no Software uart index, 0..SOFTUART_MAX_UARTS
+ * @return true if no errors occured otherwise false
+ */
+bool softuart_close(uint8_t uart_no);
+
+/**
+ * Put char to software uart
+ * @param uart_no Software uart index, 0..SOFTUART_MAX_UARTS
+ * @param c Char
+ * @return true if no errors occured otherwise false
+ */
+bool softuart_put(uint8_t uart_no, char c);
+
+/**
+ * Put string to software uart
+ * @param uart_no Software uart index, 0..SOFTUART_MAX_UARTS
+ * @param s Null-terminated string
+ * @return true if no errors occured otherwise false
+ */
+bool softuart_puts(uint8_t uart_no, const char *s);
 
 /**
  * Check if data is available
+ * @param uart_no Software uart index, 0..SOFTUART_MAX_UARTS
  * @return true if data is available otherwise false
  */
-bool softuart_available();
+bool softuart_available(uint8_t uart_no);
 
 /**
  * Read current byte from internal buffer if available.
  *
  * NOTE: This call is non blocking.
- * NOTE: You have to check softuart_available first.
- * @return current byte
+ * NOTE: You have to check softuart_available() first.
+ * @param uart_no Software uart index, 0..SOFTUART_MAX_UARTS
+ * @return current byte if available otherwise 0
  */
-uint8_t softuart_read();
-uint8_t softuart_putchar(char data);
-void softuart_puts(const char *c);
+uint8_t softuart_read(uint8_t uart_no);
+
 #ifdef __cplusplus
 }
 #endif
