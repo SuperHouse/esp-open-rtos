@@ -9,7 +9,7 @@
 #include "esp8266.h"
 #include <esp/hwrand.h>
 
-//extras
+//crc lib
 #include "crc_generic.h"
 
 #define NUMBER_COMPUTE_TEST 1000

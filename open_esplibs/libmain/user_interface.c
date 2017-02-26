@@ -21,6 +21,8 @@
 #include "esp/sar_regs.h"
 #include "esp/wdev_regs.h"
 #include "esp/uart.h"
+#include "esp/rtc_regs.h"
+#include "esp/iomux.h"
 
 #include "etstimer.h"
 #include "espressif/sdk_private.h"
@@ -513,6 +515,10 @@ uint32_t sdk_system_get_rtc_time(void) {
 
 struct sdk_rst_info *sdk_system_get_rst_info(void) {
     return &sdk_rst_if;
+}
+
+struct netif *sdk_system_get_netif(uint32_t mode) {
+    return _get_netif(mode);
 }
 
 static struct netif *_get_netif(uint32_t mode) {

@@ -19,6 +19,7 @@
 #include "xtensa_ops.h"
 #include "esp/rom.h"
 #include "esp/uart.h"
+#include "esp/dport_regs.h"
 #include "espressif/esp_common.h"
 #include "esplibs/libmain.h"
 

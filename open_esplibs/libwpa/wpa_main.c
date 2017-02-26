@@ -15,6 +15,7 @@
 #include "esplibs/libwpa.h"
 #include "esplibs/libpp.h"
 #include "lwip/dhcp.h"
+#include "esp/rtcmem_regs.h"
 
 static void wpa_callback1(struct pbuf* pb) {
     struct netif *netif = sdk_g_ic.v.station_netif_info->netif;
