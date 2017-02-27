@@ -9,25 +9,24 @@
 #include "esp8266.h"
 #include <esp/hwrand.h>
 
-//extras
-#include "crc_config_perso.h"
+//crc lib
+#include "crc_generic.h"
 
 #define NUMBER_COMPUTE_TEST 1000
 
 unsigned char check_data[] = { "123456789" };
-uint8_t tab_data[512];  //
+uint8_t tab_data[512];
 
 void crc_8bit(void *pvParameters) {
 
     config_crc_8 customcrc ; // my crc object
-    uint8_t tabsrc[256]; // my crc look-up table
+    crc_8 tabsrc[256]; // my crc look-up table
 
     //init crc parameters  (MAXIM parameters)
     crc_8_generic_init(&customcrc,0x31, 8, 0x00, 0x00, 1, 1, 1);
 
-    // Use table algorithm / generate table
-    crc_8_generic_select_algo(&customcrc, tabsrc, CRC_TABLE, 0);
-
+    //generate table
+    crc_8_generate_table(&customcrc, tabsrc, sizeof(tabsrc));
 
     //show setting of crc
     printf("\nCRC library v1.0 written on 11/02/2017 by Zaltora\n");
@@ -45,7 +44,6 @@ void crc_8bit(void *pvParameters) {
     printf("check_data   :  '%s' (%d bytes)\n", check_data, sizeof(check_data));
     printf("\n");
 
-
     //show table
     printf("Lookup table generated:\n");
     printf("\n");
@@ -61,15 +59,15 @@ void crc_8bit(void *pvParameters) {
     printf("\n");
 
     //try different crc algorithm
-    crc_8_generic_select_algo(&customcrc, (crc_8*)tabsrc, CRC_TABLE, 0);
+    crc_8_generic_select_algo(&customcrc, tabsrc, sizeof(tabsrc), CRC_TABLE);
     printf("CRC_TABLE\t\t: 0x%02X\n", crc_8_generic_compute(&customcrc, check_data, sizeof(check_data)));
-    crc_8_generic_select_algo(&customcrc, (crc_8*)tabsrc, CRC_TABLE_FAST, 0);
+    crc_8_generic_select_algo(&customcrc, tabsrc,  sizeof(tabsrc), CRC_TABLE_FAST);
     printf("CRC_TABLE_FAST\t\t: 0x%02X\n", crc_8_generic_compute(&customcrc, check_data, sizeof(check_data)));
-    crc_8_generic_select_algo(&customcrc, NULL, CRC_BIT_TO_BIT, 0);
+    crc_8_generic_select_algo(&customcrc, NULL, 0, CRC_BIT_TO_BIT);
     printf("CRC_BIT_TO_BIT\t\t: 0x%02X\n", crc_8_generic_compute(&customcrc, check_data, sizeof(check_data)));
-    crc_8_generic_select_algo(&customcrc, NULL, CRC_BIT_TO_BIT_FAST, 0);
+    crc_8_generic_select_algo(&customcrc, NULL, 0, CRC_BIT_TO_BIT_FAST);
     printf("CRC_BIT_TO_BIT_FAST\t: 0x%02X\n", crc_8_generic_compute(&customcrc, check_data, sizeof(check_data)));
-    crc_8_generic_select_algo(&customcrc, (crc_8*)crc_8_tab_MAXIM, CRC_TABLE_FAST, 1);
+    crc_8_generic_select_algo(&customcrc, crc_8_tab_MAXIM, sizeof(crc_8_tab_MAXIM), CRC_TABLE_FAST);
     printf("CRC_TABLE_BUILTIN\t: 0x%02X\n\n", crc_8_generic_compute(&customcrc, check_data, sizeof(check_data)));
 
     printf("Test speed algorithms with random data:\n");
@@ -94,27 +92,26 @@ void crc_8bit(void *pvParameters) {
     {
         switch(select){
         case 0:
-            crc_8_generic_select_algo(&customcrc, NULL, CRC_BIT_TO_BIT, 0);
+            crc_8_generic_select_algo(&customcrc, NULL, 0, CRC_BIT_TO_BIT);
             sprintf(algo_txt,"CRC_BIT_TO_BIT");
             break;
         case 1:
-            crc_8_generic_select_algo(&customcrc, NULL, CRC_BIT_TO_BIT_FAST, 0);
+            crc_8_generic_select_algo(&customcrc, NULL, 0, CRC_BIT_TO_BIT_FAST);
             sprintf(algo_txt,"CRC_BIT_TO_BIT_FAST");
             break;
         case 2:
-            crc_8_generic_select_algo(&customcrc, tabsrc, CRC_TABLE, 0);
+            crc_8_generic_select_algo(&customcrc, tabsrc, sizeof(tabsrc), CRC_TABLE);
             sprintf(algo_txt,"CRC_TABLE");
             break;
         case 3:
-            crc_8_generic_select_algo(&customcrc,  tabsrc, CRC_TABLE_FAST, 0);
+            crc_8_generic_select_algo(&customcrc, tabsrc, sizeof(tabsrc), CRC_TABLE_FAST);
             sprintf(algo_txt,"CRC_TABLE_FAST");
             break;
         case 4:
-            crc_8_generic_select_algo(&customcrc, (crc_8*)crc_8_tab_MAXIM, CRC_TABLE_FAST, 1);
+            crc_8_generic_select_algo(&customcrc, crc_8_tab_MAXIM, sizeof(crc_8_tab_MAXIM), CRC_TABLE_FAST);
             sprintf(algo_txt,"CRC_TABLE_FAST_BUILTIN");
             break;
         }
-        vTaskDelay(1000 / portTICK_PERIOD_MS) ;
         printf("test speed algorithm %s \n",algo_txt);
         time = sdk_system_get_time();
         for (uint32_t i = 0 ; i < cst ; i++)
@@ -125,8 +122,8 @@ void crc_8bit(void *pvParameters) {
         printf("Speed algorithm: %.3f us\n",(float)time/(float)cst);
         printf("Result algorithm: %02X\n\n",result);
     }
-
-    while (1) {
+    while (1)
+    {
         vTaskDelay(10000 / portTICK_PERIOD_MS) ;
     }
 }
