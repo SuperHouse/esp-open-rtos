@@ -32,8 +32,8 @@
 #include "mdnsresponder.h"
 
 #define qDebugLog             // Log activity generally
-//#define qLogIncoming          // Log all arriving multicast packets
-//#define qLogAllTraffic        // Log and decode all mDNS packets
+#define qLogIncoming          // Log all arriving multicast packets
+#define qLogAllTraffic        // Log and decode all mDNS packets
 
 #define kMDNSStackSize            800
 
@@ -500,10 +500,10 @@ void mdns_add_facility( const char* instanceName,   // Friendly name, need not b
     
     #ifdef qDebugLog
         printf("\nmDNS advertising instance %s protocol %s text %s on port %d %s TTL %d secs\n",
-                instanceName,serviceName,addText,onPort,(flags & mdns_TCP) ? "TCP" : "UDP", ttl);
+                instanceName,serviceName,addText,onPort,(flags & mdns_UDP) ? "UDP" : "TCP", ttl);
     #endif
             
-    snprintf(key,sizeof(key),"%s.%s.local.",serviceName,(flags & mdns_TCP) ? "_tcp" :"_udp");
+    snprintf(key,sizeof(key),"%s.%s.local.",serviceName,(flags & mdns_UDP) ? "_udp" :"_tcp");
     snprintf(fullName,sizeof(fullName),"%s.%s",instanceName,key);
     snprintf(devName,sizeof(devName),"%s.local.",instanceName);
     
@@ -519,6 +519,7 @@ void mdns_add_facility( const char* instanceName,   // Friendly name, need not b
     // Optional, makes us browsable
     if (flags & mdns_Browsable)
         mdns_add_PTR("_services._dns-sd._udp.local.",ttl,key);
+        
 }
 
 static void mdns_update_ipaddr(struct ip_info* ipInfo)
