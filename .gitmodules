@@ -28,3 +28,12 @@
 [submodule "extras/crc_generic/crc_lib"]
 	path = extras/crc_generic/crc_lib
 	url = https://github.com/Zaltora/crc_generic_lib.git
+[submodule "extras/kt0803l"]
+	path = extras/kt0803l
+	url = https://github.com/ccbruce0812/kt0803l.git
+[submodule "extras/rda5807m"]
+	path = extras/rda5807m
+	url = https://github.com/ccbruce0812/rda5807m.git
+[submodule "examples/rda5807m_test"]
+	path = examples/rda5807m_test
+	url = https://github.com/ccbruce0812/rda5807m_test.git
