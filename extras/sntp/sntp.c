@@ -730,10 +730,8 @@ int sntp_set_servers(char *server_url[], int num_servers)
 
   /* Allocate memory and copy servers */
   for (i = 0; i < num_servers; i++) {
-    sntp_server_addresses[i] = malloc(strlen(server_url[i]));
-    if (sntp_server_addresses[i]) {
-   	  strcpy(sntp_server_addresses[i], server_url[i]);
-    } else {
+    sntp_server_addresses[i] = strdup(server_url[i]);
+    if (!sntp_server_addresses[i]) {
 	  sntp_num_servers = i;
       return -2;
     }
