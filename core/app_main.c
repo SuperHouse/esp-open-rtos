@@ -236,12 +236,12 @@ void IRAM vApplicationStackOverflowHook(TaskHandle_t task, char *task_name) {
 }
 
 // .text+0x3d8
-void IRAM vApplicationIdleHook(void) {
+void __attribute__((weak)) IRAM vApplicationIdleHook(void) {
     printf("idle %u\n", WDEV.SYS_TIME);
 }
 
 // .text+0x404
-void IRAM vApplicationTickHook(void) {
+void __attribute__((weak)) IRAM vApplicationTickHook(void) {
     printf("tick %u\n", WDEV.SYS_TIME);
 }
 
