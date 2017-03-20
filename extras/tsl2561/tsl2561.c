@@ -107,9 +107,9 @@ static uint8_t read_register(uint8_t i2c_addr, uint8_t reg)
     uint8_t data[1];
     reg = TSL2561_REG_COMMAND | reg;
 
-    if (i2c_slave_read(i2c_addr, &reg , data, 1))
+    if (i2c_slave_read(i2c_addr, &reg, data, 1))
     {
-        printf("Error in tsl261 read_register\n");
+        printf("Error in tsl2561 read_register\n");
     }
 
     return data[0];
