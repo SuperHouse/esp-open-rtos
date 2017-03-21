@@ -21,14 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef __ESP_SPIFFS_FLASH_H__
-#define __ESP_SPIFFS_FLASH_H__
+#ifndef __SPIFLASH_H__
+#define __SPIFLASH_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "common_macros.h"
 
-#define ESP_SPIFFS_FLASH_OK        0
-#define ESP_SPIFFS_FLASH_ERROR     1
+#define SPI_FLASH_SECTOR_SIZE      4096
 
 /**
  * Read data from SPI flash.
@@ -37,9 +37,9 @@
  * @param buf Buffer to read to. Doesn't have to be aligned.
  * @param size Size of data to read. Buffer size must be >= than data size.
  *
- * @return ESP_SPIFFS_FLASH_OK or ESP_SPIFFS_FLASH_ERROR
+ * @return true if success, otherwise false
  */
-uint32_t IRAM esp_spiffs_flash_read(uint32_t addr, uint8_t *buf, uint32_t size);
+bool IRAM spiflash_read(uint32_t addr, uint8_t *buf, uint32_t size);
 
 /**
  * Write data to SPI flash.
@@ -48,17 +48,17 @@ uint32_t IRAM esp_spiffs_flash_read(uint32_t addr, uint8_t *buf, uint32_t size);
  * @param buf Buffer of data to write to flash. Doesn't have to be aligned.
  * @param size Size of data to write. Buffer size must be >= than data size.
  *
- * @return ESP_SPIFFS_FLASH_OK or ESP_SPIFFS_FLASH_ERROR
+ * @return true if success, otherwise false
  */
-uint32_t IRAM esp_spiffs_flash_write(uint32_t addr, uint8_t *buf, uint32_t size);
+bool IRAM spiflash_write(uint32_t addr, uint8_t *buf, uint32_t size);
 
 /**
  * Erase a sector.
  *
  * @param addr Address of sector to erase. Must be sector aligned.
  *
- * @return ESP_SPIFFS_FLASH_OK or ESP_SPIFFS_FLASH_ERROR
+ * @return true if success, otherwise false
  */
-uint32_t IRAM esp_spiffs_flash_erase_sector(uint32_t addr);
+bool IRAM spiflash_erase_sector(uint32_t addr);
 
-#endif  // __ESP_SPIFFS_FLASH_H__
+#endif  // __SPIFLASH_H__

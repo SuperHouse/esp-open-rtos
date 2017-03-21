@@ -8,13 +8,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <sysparam.h>
-#include <espressif/spi_flash.h>
+#include "spiflash.h"
+#include "flashchip.h"
 #include <common_macros.h>
 #include "FreeRTOS.h"
 #include "semphr.h"
-
-//TODO: make this properly threadsafe
-//TODO: reduce stack usage
 
 /* The "magic" value that indicates the start of a sysparam region in flash.
  */
@@ -33,11 +31,14 @@
  */
 #define SCAN_BUFFER_SIZE 8 // words
 
-/* The size of the temporary buffer used for reading back and verifying data
- * written to flash.  Making this larger will make the write-and-verify
- * operation slightly faster, but will use more heap during writes
+/* The size in words of the buffer used for reading keys when searching for a
+ * match, for reading payloads to check if the value has changed, and reading
+ * back from the flash to verify writes. Will work well if big enough for
+ * commonly used keys, and must be at least one word. Stack allocated so not too
+ * large!
  */
-#define VERIFY_BUF_SIZE 64
+#define BOUNCE_BUFFER_WORDS 3
+#define BOUNCE_BUFFER_SIZE (BOUNCE_BUFFER_WORDS * sizeof(uint32_t))
 
 /* Size of region/entry headers.  These should not normally need tweaking (and
  * will probably require some code changes if they are tweaked).
@@ -76,14 +77,16 @@
 /******************************* Useful Macros *******************************/
 
 #define ROUND_TO_WORD_BOUNDARY(x) (((x) + 3) & 0xfffffffc)
-#define ENTRY_SIZE(payload_len) (ENTRY_HEADER_SIZE + ROUND_TO_WORD_BOUNDARY(payload_len))
+#define ENTRY_SIZE(payload_len) (ENTRY_HEADER_SIZE + payload_len)
 
 #define max(x, y) ((x) > (y) ? (x) : (y))
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
 #define debug(level, format, ...) if (SYSPARAM_DEBUG >= (level)) { printf("%s" format "\n", "sysparam: ", ## __VA_ARGS__); }
 
-#define CHECK_FLASH_OP(x) do { int __x = (x); if ((__x) != SPI_FLASH_RESULT_OK) { debug(1, "FLASH ERR: %d", __x); return SYSPARAM_ERR_IO; } } while (0);
+#define CHECK_FLASH_OP(x) do { bool __x = (x); if (!(__x)) { \
+        debug(1, "FLASH ERR: %d", __x); return SYSPARAM_ERR_IO; \
+    } } while (0);
 
 /********************* Internal datatypes and structures *********************/
 
@@ -119,50 +122,28 @@ static struct {
 
 /***************************** Internal routines *****************************/
 
-static inline IRAM sysparam_status_t _do_write(uint32_t addr, const void *data, size_t data_size) {
-    CHECK_FLASH_OP(sdk_spi_flash_write(addr, (void*) data, data_size));
-    return SYSPARAM_OK;
-}
+static sysparam_status_t _write_and_verify(uint32_t addr, const void *data, size_t data_size) {
+    uint8_t bounce[BOUNCE_BUFFER_SIZE];
 
-static inline IRAM sysparam_status_t _do_verify(uint32_t addr, const void *data, void *buffer, size_t len) {
-    CHECK_FLASH_OP(sdk_spi_flash_read(addr, buffer, len));
-    if (memcmp(data, buffer, len)) {
-        return SYSPARAM_ERR_IO;
+    for (int i = 0; i < data_size; i += BOUNCE_BUFFER_SIZE) {
+        size_t count = min(data_size - i, BOUNCE_BUFFER_SIZE);
+        memcpy(bounce, data + i, count);
+        CHECK_FLASH_OP(spiflash_write(addr + i, bounce, count));
+        CHECK_FLASH_OP(spiflash_read(addr + i, bounce, count));
+        if (memcmp(data + i, bounce, count) != 0) {
+            debug(1, "Flash write (@ 0x%08x) verify failed!", addr);
+            return SYSPARAM_ERR_IO;
+        }
     }
     return SYSPARAM_OK;
 }
 
-/*FIXME: Eventually, this should probably be implemented down at the SPI flash library layer, where it can just compare bytes/words straight from the SPI hardware buffer instead of allocating a whole separate temp buffer, reading chunks into that, and then doing a memcmp.. */
-static IRAM sysparam_status_t _write_and_verify(uint32_t addr, const void *data, size_t data_size) {
-    int i;
-    size_t count;
-    sysparam_status_t status = SYSPARAM_OK;
-    uint8_t *verify_buf = malloc(VERIFY_BUF_SIZE);
-
-    if (!verify_buf) return SYSPARAM_ERR_NOMEM;
-    do {
-        status = _do_write(addr, data, data_size);
-        if (status != SYSPARAM_OK) break;
-        for (i = 0; i < data_size; i += VERIFY_BUF_SIZE) {
-            count = min(data_size - i, VERIFY_BUF_SIZE);
-            status = _do_verify(addr + i, data + i, verify_buf, count);
-            if (status != SYSPARAM_OK) {
-                debug(1, "Flash write (@ 0x%08x) verify failed!", addr);
-                break;
-            }
-        }
-    } while (false);
-    free(verify_buf);
-    return status;
-}
-
 /** Erase the sectors of a region */
 static sysparam_status_t _format_region(uint32_t addr, uint16_t num_sectors) {
-    uint16_t sector = addr / sdk_flashchip.sector_size;
     int i;
 
     for (i = 0; i < num_sectors; i++) {
-        CHECK_FLASH_OP(sdk_spi_flash_erase_sector(sector + i));
+        CHECK_FLASH_OP(spiflash_erase_sector(addr + (i * SPI_FLASH_SECTOR_SIZE)));
     }
     return SYSPARAM_OK;
 }
@@ -212,7 +193,7 @@ static sysparam_status_t init_write_context(struct sysparam_context *ctx) {
     memset(ctx, 0, sizeof(*ctx));
     ctx->addr = _sysparam_info.end_addr;
     debug(3, "read entry header @ 0x%08x", ctx->addr);
-    CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
+    CHECK_FLASH_OP(spiflash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
     return SYSPARAM_OK;
 }
 
@@ -238,7 +219,10 @@ static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint16_t matc
                 // workaround is to make sure that the next write operation
                 // will always start with a compaction, which will leave off
                 // the invalid data at the end and fix the issue going forward.
-                debug(1, "Encountered entry with invalid length (0x%04x) @ 0x%08x (region end is 0x%08x).  Truncating entries.", ctx->entry.len, ctx->addr, _sysparam_info.end_addr);
+                debug(1, "Encountered entry with invalid length (0x%04x) @ 0x%08x (region end is 0x%08x).  Truncating entries.",
+                        ctx->entry.len,
+                        ctx->addr, _sysparam_info.end_addr);
+
                 _sysparam_info.force_compact = true;
                 break;
             }
@@ -251,7 +235,7 @@ static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint16_t matc
         }
 
         debug(3, "read entry header @ 0x%08x", ctx->addr);
-        CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
+        CHECK_FLASH_OP(spiflash_read(ctx->addr, (void*) &ctx->entry, ENTRY_HEADER_SIZE));
         debug(3, "  idflags = 0x%04x", ctx->entry.idflags);
         if (ctx->entry.idflags == 0xffff) {
             // 0xffff is never a valid id field, so this means we've hit the
@@ -295,17 +279,39 @@ static sysparam_status_t _find_entry(struct sysparam_context *ctx, uint16_t matc
 }
 
 /** Read the payload from the current entry pointed to by `ctx` */
+
 static inline sysparam_status_t _read_payload(struct sysparam_context *ctx, uint8_t *buffer, size_t buffer_size) {
-    debug(3, "read payload (%d) @ 0x%08x", min(buffer_size, ctx->entry.len), ctx->addr);
-    CHECK_FLASH_OP(sdk_spi_flash_read(ctx->addr + ENTRY_HEADER_SIZE, (void*) buffer, min(buffer_size, ctx->entry.len)));
+    uint32_t addr = ctx->addr + ENTRY_HEADER_SIZE;
+    size_t size = min(buffer_size, ctx->entry.len);
+    debug(3, "read payload (%d) @ 0x%08x", size, addr);
+
+    CHECK_FLASH_OP(spiflash_read(addr, buffer, buffer_size));
+
+    return SYSPARAM_OK;
+}
+
+static inline sysparam_status_t _compare_payload(struct sysparam_context *ctx, uint8_t *value, size_t size) {
+    debug(3, "compare payload (%d) @ 0x%08x", size, ctx->addr);
+    if (ctx->entry.len != size) return SYSPARAM_NOTFOUND;
+    uint32_t bounce[BOUNCE_BUFFER_WORDS];
+    uint32_t addr = ctx->addr + ENTRY_HEADER_SIZE;
+    int i;
+    for (i = 0; i < size; i += BOUNCE_BUFFER_SIZE) {
+        int len = min(size - i, BOUNCE_BUFFER_SIZE);
+        CHECK_FLASH_OP(spiflash_read(addr + i, (void*)bounce, len));
+        if (memcmp(value + i, bounce, len)) {
+            // Mismatch.
+            return SYSPARAM_NOTFOUND;
+        }
+    }
     return SYSPARAM_OK;
 }
 
 /** Find the entry corresponding to the specified key name */
-static sysparam_status_t _find_key(struct sysparam_context *ctx, const char *key, uint16_t key_len, uint8_t *buffer) {
+static sysparam_status_t _find_key(struct sysparam_context *ctx, const char *key, uint16_t key_len) {
     sysparam_status_t status;
 
-    debug(3, "find key: %s", key ? key : "(null)");
+    debug(3, "find key len %d: %s", key_len, key ? key : "(null)");
     while (true) {
         // Find the next key entry
         status = _find_entry(ctx, ENTRY_ID_ANY, false);
@@ -316,12 +322,12 @@ static sysparam_status_t _find_key(struct sysparam_context *ctx, const char *key
             break;
         }
         if (ctx->entry.len == key_len) {
-            status = _read_payload(ctx, buffer, key_len);
-            if (status < 0) return status;
-            if (!memcmp(key, buffer, key_len)) {
+            status = _compare_payload(ctx, (uint8_t *)key, key_len);
+            if (status == SYSPARAM_OK) {
                 // We have a match
                 break;
             }
+            if (status != SYSPARAM_NOTFOUND) return status;
             debug(3, "entry payload does not match");
         } else {
             debug(3, "key length (%d) does not match (%d)", ctx->entry.len, key_len);
@@ -394,13 +400,11 @@ static inline sysparam_status_t _delete_entry(uint32_t addr) {
 
     debug(2, "Deleting entry @ 0x%08x", addr);
     debug(3, "read entry header @ 0x%08x", addr);
-    CHECK_FLASH_OP(sdk_spi_flash_read(addr, (void*) &entry, ENTRY_HEADER_SIZE));
+    CHECK_FLASH_OP(spiflash_read(addr, (uint8_t*) &entry, ENTRY_HEADER_SIZE));
     // Set the ID to zero to mark it as "deleted"
     entry.idflags &= ~ENTRY_FLAG_ALIVE;
     debug(3, "write entry header @ 0x%08x", addr);
-    CHECK_FLASH_OP(sdk_spi_flash_write(addr, (void*) &entry, ENTRY_HEADER_SIZE));
-
-    return SYSPARAM_OK;
+    return _write_and_verify(addr, &entry, ENTRY_HEADER_SIZE);
 }
 
 /** Compact the current region, removing all deleted/unused entries, and write
@@ -424,7 +428,11 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, int *key_
     uint16_t binary_flag;
     uint16_t num_sectors = _sysparam_info.region_size / sdk_flashchip.sector_size;
 
-    debug(1, "compacting region (current size %d, expect to recover %d%s bytes)...", _sysparam_info.end_addr - _sysparam_info.cur_base, ctx ? ctx->compactable : 0, (ctx && ctx->unused_keys > 0) ? "+ (unused keys present)" : "");
+    debug(1, "compacting region (current size %d, expect to recover %d%s bytes)...",
+            _sysparam_info.end_addr - _sysparam_info.cur_base,
+            ctx ? ctx->compactable : 0,
+            (ctx && ctx->unused_keys > 0) ? "+ (unused keys present)" : "");
+
     status = _format_region(new_base, num_sectors);
     if (status < 0) return status;
     status = sysparam_iter_start(&iter);
@@ -505,7 +513,7 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
         top_addr = base_addr + sdk_flashchip.sector_size;
     }
     for (addr0 = base_addr; addr0 < top_addr; addr0 += sdk_flashchip.sector_size) {
-        CHECK_FLASH_OP(sdk_spi_flash_read(addr0, (void*) &header0, REGION_HEADER_SIZE));
+        CHECK_FLASH_OP(spiflash_read(addr0, (void*) &header0, REGION_HEADER_SIZE));
         if (header0.magic == SYSPARAM_MAGIC) {
             // Found a starting point...
             break;
@@ -523,7 +531,7 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
     } else {
         addr1 = addr0 + num_sectors * sdk_flashchip.sector_size;
     }
-    CHECK_FLASH_OP(sdk_spi_flash_read(addr1, (void*) &header1, REGION_HEADER_SIZE));
+    CHECK_FLASH_OP(spiflash_read(addr1, (uint8_t*) &header1, REGION_HEADER_SIZE));
 
     if (header1.magic == SYSPARAM_MAGIC) {
         // Yay! Found the other one.  Sanity-check it..
@@ -600,7 +608,7 @@ sysparam_status_t sysparam_create_area(uint32_t base_addr, uint16_t num_sectors,
         // we're not going to be clobbering something else important.
         for (addr = base_addr; addr < base_addr + region_size * 2; addr += SCAN_BUFFER_SIZE) {
             debug(3, "read %d words @ 0x%08x", SCAN_BUFFER_SIZE, addr);
-            CHECK_FLASH_OP(sdk_spi_flash_read(addr, buffer, SCAN_BUFFER_SIZE * 4));
+            CHECK_FLASH_OP(spiflash_read(addr, (uint8_t*)buffer, SCAN_BUFFER_SIZE * 4));
             for (i = 0; i < SCAN_BUFFER_SIZE; i++) {
                 if (buffer[i] != 0xffffffff) {
                     // Uh oh, not empty.
@@ -655,70 +663,79 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
     sysparam_status_t status;
     size_t key_len = strlen(key);
     uint8_t *buffer;
-    uint8_t *newbuf;
-   
-    if (!_sysparam_info.cur_base) return SYSPARAM_ERR_NOINIT;
 
-    buffer = malloc(key_len + 2);
-    if (!buffer) return SYSPARAM_ERR_NOMEM;
-    do {
-        _init_context(&ctx);
-        status = _find_key(&ctx, key, key_len, buffer);
-        if (status != SYSPARAM_OK) break;
+    xSemaphoreTake(_sysparam_info.sem, portMAX_DELAY);
 
-        // Find the associated value
-        status = _find_value(&ctx, ctx.entry.idflags);
-        if (status != SYSPARAM_OK) break;
-
-        newbuf = realloc(buffer, ctx.entry.len + 1);
-        if (!newbuf) {
-            status = SYSPARAM_ERR_NOMEM;
-            break;
-        }
-        buffer = newbuf;
-        status = _read_payload(&ctx, buffer, ctx.entry.len);
-        if (status != SYSPARAM_OK) break;
-
-        // Zero-terminate the result, just in case (doesn't hurt anything for
-        // non-string data, and can avoid nasty mistakes if the caller wants to
-        // interpret the result as a string).
-        buffer[ctx.entry.len] = 0;
-
-        *destptr = buffer;
-        if (actual_length) *actual_length = ctx.entry.len;
-        if (is_binary) *is_binary = (bool)(ctx.entry.idflags & ENTRY_FLAG_BINARY);
-        return SYSPARAM_OK;
-    } while (false);
-
-    free(buffer);
     if (actual_length) *actual_length = 0;
+
+    if (!_sysparam_info.cur_base) {
+        status = SYSPARAM_ERR_NOINIT;
+        goto done;
+    }
+
+    _init_context(&ctx);
+    status = _find_key(&ctx, key, key_len);
+    if (status != SYSPARAM_OK) goto done;
+
+    // Find the associated value
+    status = _find_value(&ctx, ctx.entry.idflags);
+    if (status != SYSPARAM_OK) goto done;
+
+    buffer = malloc(ctx.entry.len + 1);
+    if (!buffer) {
+        status = SYSPARAM_ERR_NOMEM;
+        goto done;
+    }
+
+    status = _read_payload(&ctx, buffer, ctx.entry.len);
+    if (status != SYSPARAM_OK) {
+        free(buffer);
+        goto done;
+    }
+
+    // Zero-terminate the result, just in case (doesn't hurt anything for
+    // non-string data, and can avoid nasty mistakes if the caller wants to
+    // interpret the result as a string).
+    buffer[ctx.entry.len] = 0;
+
+    *destptr = buffer;
+    if (actual_length) *actual_length = ctx.entry.len;
+    if (is_binary) *is_binary = (bool)(ctx.entry.idflags & ENTRY_FLAG_BINARY);
+    status = SYSPARAM_OK;
+
+ done:
+    xSemaphoreGive(_sysparam_info.sem);
     return status;
 }
 
-sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *buffer, size_t buffer_size, size_t *actual_length, bool *is_binary) {
+sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *dest, size_t dest_size, size_t *actual_length, bool *is_binary) {
     struct sysparam_context ctx;
     sysparam_status_t status = SYSPARAM_OK;
     size_t key_len = strlen(key);
 
-    if (!_sysparam_info.cur_base) return SYSPARAM_ERR_NOINIT;
-
-    // Supplied buffer must be at least as large as the key, or 2 bytes,
-    // whichever is larger.
-    if (buffer_size < max(key_len, 2)) return SYSPARAM_ERR_NOMEM;
+    xSemaphoreTake(_sysparam_info.sem, portMAX_DELAY);
 
     if (actual_length) *actual_length = 0;
 
+    if (!_sysparam_info.cur_base) {
+        status = SYSPARAM_ERR_NOINIT;
+        goto done;
+    }
+
     _init_context(&ctx);
-    status = _find_key(&ctx, key, key_len, buffer);
-    if (status != SYSPARAM_OK) return status;
+    status = _find_key(&ctx, key, key_len);
+    if (status != SYSPARAM_OK) goto done;
     status = _find_value(&ctx, ctx.entry.idflags);
-    if (status != SYSPARAM_OK) return status;
-    status = _read_payload(&ctx, buffer, buffer_size);
-    if (status != SYSPARAM_OK) return status;
+    if (status != SYSPARAM_OK) goto done;
+    status = _read_payload(&ctx, dest, dest_size);
+    if (status != SYSPARAM_OK) goto done;
 
     if (actual_length) *actual_length = ctx.entry.len;
     if (is_binary) *is_binary = (bool)(ctx.entry.idflags & ENTRY_FLAG_BINARY);
-    return SYSPARAM_OK;
+
+ done:
+    xSemaphoreGive(_sysparam_info.sem);
+    return status;
 }
 
 sysparam_status_t sysparam_get_string(const char *key, char **destptr) {
@@ -741,63 +758,78 @@ sysparam_status_t sysparam_get_string(const char *key, char **destptr) {
 }
 
 sysparam_status_t sysparam_get_int32(const char *key, int32_t *result) {
-    char *buffer;
-    char *endptr;
     int32_t value;
+    size_t actual_length;
+    bool is_binary;
     sysparam_status_t status;
 
-    status = sysparam_get_string(key, &buffer);
+    status = sysparam_get_data_static(key, (uint8_t *)&value, sizeof(int32_t),
+                                      &actual_length, &is_binary);
     if (status != SYSPARAM_OK) return status;
-    value = strtol(buffer, &endptr, 0);
-    if (*endptr) {
-        // There was extra crap at the end of the string.
-        free(buffer);
+    if (!is_binary || actual_length != sizeof(int32_t))
         return SYSPARAM_PARSEFAILED;
-    }
-
     *result = value;
-    free(buffer);
-    return SYSPARAM_OK;
+    return status;
 }
 
 sysparam_status_t sysparam_get_int8(const char *key, int8_t *result) {
-    int32_t value;
+    int8_t value;
+    size_t actual_length;
+    bool is_binary;
     sysparam_status_t status;
 
-    status = sysparam_get_int32(key, &value);
-    if (status == SYSPARAM_OK) {
-        *result = value;
-    }
+    status = sysparam_get_data_static(key, (uint8_t *)&value, sizeof(int8_t),
+                                      &actual_length, &is_binary);
+    if (status != SYSPARAM_OK) return status;
+    if (!is_binary || actual_length != sizeof(int8_t))
+        return SYSPARAM_PARSEFAILED;
+    *result = value;
     return status;
 }
 
 sysparam_status_t sysparam_get_bool(const char *key, bool *result) {
-    char *buffer;
+    const size_t buf_size = 8;
+    char buf[buf_size + 1];  // extra byte for zero termination
+    size_t data_len = 0;
+    bool binary = false;
     sysparam_status_t status;
 
-    status = sysparam_get_string(key, &buffer);
+    status = sysparam_get_data_static(key, (uint8_t*)buf,
+            buf_size, &data_len, &binary);
+
     if (status != SYSPARAM_OK) return status;
     do {
-        if (!strcasecmp(buffer, "y")    ||
-            !strcasecmp(buffer, "yes")  ||
-            !strcasecmp(buffer, "t")    ||
-            !strcasecmp(buffer, "true") ||
-            !strcmp(buffer, "1")) {
+        if (binary) {
+            if (data_len == 1) {  // int8 value
+                *result = (int8_t)(*buf) ? true : false;
+            } else if (data_len == 4) {  // int32 value
+                *result = (int32_t)(*buf) ? true : false;
+            } else {
+                status = SYSPARAM_PARSEFAILED;
+            }
+            break;
+        }
+        buf[data_len] = 0;
+
+        if (!strcasecmp(buf, "y")    ||
+            !strcasecmp(buf, "yes")  ||
+            !strcasecmp(buf, "t")    ||
+            !strcasecmp(buf, "true") ||
+            !strcmp(buf, "1")) {
                 *result = true;
                 break;
         }
-        if (!strcasecmp(buffer, "n")     ||
-            !strcasecmp(buffer, "no")    ||
-            !strcasecmp(buffer, "f")     ||
-            !strcasecmp(buffer, "false") ||
-            !strcmp(buffer, "0")) {
+        if (!strcasecmp(buf, "n")     ||
+            !strcasecmp(buf, "no")    ||
+            !strcasecmp(buf, "f")     ||
+            !strcasecmp(buf, "false") ||
+            !strcmp(buf, "0")) {
                 *result = false;
                 break;
         }
         status = SYSPARAM_PARSEFAILED;
     } while (0);
 
-    free(buffer);
     return status;
 }
 
@@ -806,48 +838,30 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
     struct sysparam_context write_ctx;
     sysparam_status_t status = SYSPARAM_OK;
     uint16_t key_len = strlen(key);
-    uint8_t *buffer;
-    uint8_t *newbuf;
     size_t free_space;
     size_t needed_space;
-    bool free_value = false;
     int key_id = -1;
     uint32_t old_value_addr = 0;
     uint16_t binary_flag;
-   
-    if (!_sysparam_info.cur_base) return SYSPARAM_ERR_NOINIT;
+
     if (!key_len) return SYSPARAM_ERR_BADVALUE;
     if (key_len > MAX_KEY_LEN) return SYSPARAM_ERR_BADVALUE;
     if (value_len > MAX_VALUE_LEN) return SYSPARAM_ERR_BADVALUE;
 
-    xSemaphoreTake(_sysparam_info.sem, portMAX_DELAY);
-
     if (!value) value_len = 0;
 
     debug(1, "updating value for '%s' (%d bytes)", key, value_len);
-    if (value_len && ((intptr_t)value & 0x3)) {
-        // The passed value isn't word-aligned.  This will be a problem later
-        // when calling `sdk_spi_flash_write`, so make a word-aligned copy.
-        buffer = malloc(value_len);
-        if (!buffer) {
-            status = SYSPARAM_ERR_NOMEM;
-            goto done;
-        }
-        memcpy(buffer, value, value_len);
-        value = buffer;
-        free_value = true;
-    }
-    // Create a working buffer for `_find_key` to use.
-    buffer = malloc(key_len);
-    if (!buffer) {
-        if (free_value) free((void *)value);
-        status = SYSPARAM_ERR_NOMEM;
+
+    xSemaphoreTake(_sysparam_info.sem, portMAX_DELAY);
+
+    if (!_sysparam_info.cur_base) {
+        status = SYSPARAM_ERR_NOINIT;
         goto done;
     }
 
     do {
         _init_context(&ctx);
-        status = _find_key(&ctx, key, key_len, buffer);
+        status = _find_key(&ctx, key, key_len);
         if (status == SYSPARAM_OK) {
             // Key already exists, see if there's a current value.
             key_id = ctx.entry.idflags & ENTRY_MASK_ID;
@@ -862,24 +876,17 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
 
         if (value_len) {
             if (old_value_addr) {
-                if ((ctx.entry.idflags & ENTRY_FLAG_BINARY) == binary_flag && ctx.entry.len == value_len) {
+                if ((ctx.entry.idflags & ENTRY_FLAG_BINARY) == binary_flag &&
+                    ctx.entry.len == value_len) {
                     // Are we trying to write the same value that's already there?
-                    if (value_len > key_len) {
-                        newbuf = realloc(buffer, value_len);
-                        if (!newbuf) {
-                            status = SYSPARAM_ERR_NOMEM;
-                            break;
-                        }
-                        buffer = newbuf;
-                    }
-                    status = _read_payload(&ctx, buffer, value_len);
-                    if (status < 0) break;
-                    if (!memcmp(buffer, value, value_len)) {
+                    status = _compare_payload(&ctx, (uint8_t *)value, value_len);
+                    if (status == SYSPARAM_OK) {
                         // Yup, it's a match! No need to do anything further,
                         // just leave the current value as-is.
                         status = SYSPARAM_OK;
                         break;
                     }
+                    if (status != SYSPARAM_NOTFOUND) goto done;
                 }
 
                 // Since we will be deleting the old value (if any) make sure
@@ -981,9 +988,6 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
         debug(1, "New addr is 0x%08x (%d bytes remaining)", _sysparam_info.end_addr, _sysparam_info.cur_base + _sysparam_info.region_size - _sysparam_info.end_addr);
     } while (false);
 
-    if (free_value) free((void *)value);
-    free(buffer);
-
  done:
     xSemaphoreGive(_sysparam_info.sem);
 
@@ -995,15 +999,11 @@ sysparam_status_t sysparam_set_string(const char *key, const char *value) {
 }
 
 sysparam_status_t sysparam_set_int32(const char *key, int32_t value) {
-    uint8_t buffer[12];
-    int len;
-    
-    len = snprintf((char *)buffer, 12, "%d", value);
-    return sysparam_set_data(key, buffer, len, false);
+    return sysparam_set_data(key, (const uint8_t *)&value, sizeof(value), true);
 }
 
 sysparam_status_t sysparam_set_int8(const char *key, int8_t value) {
-    return sysparam_set_int32(key, value);
+    return sysparam_set_data(key, (const uint8_t *)&value, sizeof(value), true);
 }
 
 sysparam_status_t sysparam_set_bool(const char *key, bool value) {
@@ -1043,7 +1043,6 @@ sysparam_status_t sysparam_iter_start(sysparam_iter_t *iter) {
 }
 
 sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
-    uint8_t buffer[2];
     sysparam_status_t status;
     size_t required_len;
     struct sysparam_context *ctx = iter->ctx;
@@ -1052,7 +1051,7 @@ sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
     char *newbuf;
 
     while (true) {
-        status = _find_key(ctx, NULL, 0, buffer);
+        status = _find_key(ctx, NULL, 0);
         if (status != SYSPARAM_OK) return status;
         memcpy(&value_ctx, ctx, sizeof(value_ctx));
 
@@ -1060,7 +1059,7 @@ sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
         if (status < 0) return status;
         if (status == SYSPARAM_NOTFOUND) continue;
 
-        key_space = ROUND_TO_WORD_BOUNDARY(ctx->entry.len + 1);
+        key_space = ctx->entry.len + 1;
         required_len = key_space + value_ctx.entry.len + 1;
         if (required_len > iter->bufsize) {
             newbuf = realloc(iter->key, required_len);

@@ -36,4 +36,6 @@ typedef struct {
     uint32_t status_mask;
 } sdk_flashchip_t;
 
+extern sdk_flashchip_t sdk_flashchip;
+
 #endif /* _FLASHCHIP_H */
