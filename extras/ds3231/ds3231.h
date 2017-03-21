@@ -87,7 +87,7 @@ enum {
  * I suggest using GMT and applying timezone and DST when read back
  * returns true to indicate success
  */
-bool ds3231_setTime(struct tm *time);
+int ds3231_setTime(struct tm *time);
 
 /* Set alarms
  * alarm1 works with seconds, minutes, hours and day of week/month, or fires every second
@@ -100,7 +100,7 @@ bool ds3231_setTime(struct tm *time);
  * if you want to enable interrupts for the alarms you need to do that separately
  * returns true to indicate success
  */
-bool ds3231_setAlarm(uint8_t alarms, struct tm *time1, uint8_t option1, struct tm *time2, uint8_t option2);
+int ds3231_setAlarm(uint8_t alarms, struct tm *time1, uint8_t option1, struct tm *time2, uint8_t option2);
 
 /* Check if oscillator has previously stopped, e.g. no power/battery or disabled
  * sets flag to true if there has been a stop

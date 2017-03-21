@@ -10,6 +10,8 @@
 
 #include "ina3221.h"
 
+//#define INA3221_DEBUG true
+
 #ifdef INA3221_DEBUG
 #define debug(fmt, ...) printf("%s: " fmt "\n", "INA3221", ## __VA_ARGS__)
 #else
@@ -18,51 +20,20 @@
 
 static int _wireWriteRegister (uint8_t addr, uint8_t reg, uint16_t value)
 {
-    i2c_start();
-    if (!i2c_write(addr<<1)) // adress + W
-        goto error;
-    if (!i2c_write(reg))
-        goto error;
-    if (!i2c_write((value >> 8) & 0xFF))
-        goto error;
-    if (!i2c_write(value & 0xFF))
-        goto error;
-    i2c_stop();
+    uint8_t d[2] = { 0 , 0 };
+    d[1] = value  & 0x00FF;
+    d[0] = (value >> 8) & 0x00FF;
     debug("Data write to %02X : %02X+%04X\n",addr,reg,value);
-
-    return 0 ;
-
-    error:
-    debug("Error while xmitting I2C slave\n");
-    i2c_stop();
-    return -EIO;
+    return i2c_slave_write(addr, &reg, d, sizeof(d));
 }
 
 static int _wireReadRegister(uint8_t addr, uint8_t reg, uint16_t *value)
 {
-    uint8_t tampon[2] = { 0 } ;
-
-    i2c_start();
-    if (!i2c_write(addr<<1)) // adress + W
-        goto error;
-    if (!i2c_write(reg))
-        goto error;
-    i2c_stop();
-    i2c_start(); // restart condition
-    if (!i2c_write((addr<<1) | 1)) // adress + R
-        goto error;
-    tampon[1] = i2c_read(0);
-    tampon[0] = i2c_read(1);
-    i2c_stop();
-    *value = tampon[1]<<8 | tampon[0] ;
+    uint8_t d[] = {0, 0};
+    int error = i2c_slave_read(addr, &reg, d, sizeof(d))
     debug("Data read from %02X: %02X+%04X\n",addr,reg,*value);
-
-    return 0;
-
-    error:
-    debug("Error while xmitting I2C slave\n");
-    i2c_stop();
-    return -EIO;
+    *value = d[1] | (d[0] << 8);
+    return error;
 }
 
 int ina3221_trigger(ina3221_t *dev)

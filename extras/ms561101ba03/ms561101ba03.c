@@ -26,60 +26,67 @@
  */
 #define CONVERSION_TIME     20 / portTICK_PERIOD_MS // milliseconds
 
-static inline bool reset(uint8_t addr)
+static inline int reset(uint8_t addr)
 {
     uint8_t buf[1] = { RESET };
-    return i2c_slave_write(addr, buf, 1);
+    return i2c_slave_write(addr, NULL, buf, 1);
 }
 
 static inline bool read_prom(ms561101ba03_t *dev)
 {
     uint8_t tmp[2] = { 0, 0 };
+    uint8_t reg = 0xA2 ;
 
-    if (!i2c_slave_read(dev->addr, 0xA2, tmp, 2))
+    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
         return false;
     dev->config_data.sens = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xA4, tmp, 2))
+    reg = 0xA4 ;
+    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
         return false;
     dev->config_data.off = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xA6, tmp, 2))
+    reg = 0xA6 ;
+    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
         return false;
     dev->config_data.tcs = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xA8, tmp, 2))
+    reg = 0xA8 ;
+    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
         return false;
     dev->config_data.tco = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xAA, tmp, 2))
+    reg = 0xAA ;
+    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
         return false;
     dev->config_data.t_ref = tmp[0] << 8 | tmp[1];
 
-    if (!i2c_slave_read(dev->addr, 0xAC, tmp, 2))
+    reg = 0xAC ;
+    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
         return false;
     dev->config_data.tempsens = tmp[0] << 8 | tmp[1];
 
     return true;
 }
 
-static inline bool start_pressure_conversion(ms561101ba03_t *dev) //D1
+static inline int start_pressure_conversion(ms561101ba03_t *dev) //D1
 {
     uint8_t buf = CONVERT_D1 + dev->osr;
-    return i2c_slave_write(dev->addr, &buf, 1);
+    return i2c_slave_write(dev->addr, NULL, &buf, 1);
 }
 
-static inline bool start_temperature_conversion(ms561101ba03_t *dev) //D2
+static inline int start_temperature_conversion(ms561101ba03_t *dev) //D2
 {
     uint8_t buf = CONVERT_D2 + dev->osr;
-    return i2c_slave_write(dev->addr, &buf, 1);
+    return i2c_slave_write(dev->addr, NULL, &buf, 1);
 }
 
 static inline bool read_adc(uint8_t addr, uint32_t *result)
 {
     *result = 0;
     uint8_t tmp[3];
-    if (!i2c_slave_read(addr, 0x00, tmp, 3))
+    uint8_t reg = 0x00 ;
+    if (i2c_slave_read(addr, &reg, tmp, 3))
         return false;
 
     *result = (tmp[0] << 16) | (tmp[1] << 8) | tmp[2];
@@ -132,7 +139,7 @@ static inline int32_t calc_p(uint32_t digital_pressure, int64_t sens, int64_t of
 
 static inline bool get_raw_temperature(ms561101ba03_t *dev, uint32_t *result)
 {
-    if (!start_temperature_conversion(dev))
+    if (start_temperature_conversion(dev))
         return false;
 
     vTaskDelay(CONVERSION_TIME);
@@ -145,7 +152,7 @@ static inline bool get_raw_temperature(ms561101ba03_t *dev, uint32_t *result)
 
 static inline bool get_raw_pressure(ms561101ba03_t *dev, uint32_t *result)
 {
-    if (!start_pressure_conversion(dev))
+    if (start_pressure_conversion(dev))
     	return false;
 
     vTaskDelay(CONVERSION_TIME);
@@ -209,7 +216,7 @@ bool ms561101ba03_get_sensor_data(ms561101ba03_t *dev)
 bool ms561101ba03_init(ms561101ba03_t *dev)
 {
     // First of all we need to reset the chip
-    if (!reset(dev->addr))
+    if (reset(dev->addr))
     	return false;
     // Wait a bit for the device to reset
     vTaskDelay(CONVERSION_TIME);

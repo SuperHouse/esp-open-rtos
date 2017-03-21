@@ -96,19 +96,18 @@
 #define B8C 0x0000 // 0.000 * 2^LUX_SCALE
 #define M8C 0x0000 // 0.000 * 2^LUX_SCALE
 
-static bool write_register(uint8_t i2c_addr, uint8_t reg, uint8_t value)
+static int write_register(uint8_t i2c_addr, uint8_t reg, uint8_t value)
 {
-    uint8_t data[2];
-    data[0] = TSL2561_REG_COMMAND | reg;
-    data[1] = value;
-    return i2c_slave_write(i2c_addr, data, 2);
+    reg = TSL2561_REG_COMMAND | reg;
+    return i2c_slave_write(i2c_addr, &reg, &value, 1);
 }
 
 static uint8_t read_register(uint8_t i2c_addr, uint8_t reg)
 {
     uint8_t data[1];
+    reg = TSL2561_REG_COMMAND | reg;
 
-    if (!i2c_slave_read(i2c_addr, TSL2561_REG_COMMAND | reg, data, 1))
+    if (i2c_slave_read(i2c_addr, &reg , data, 1))
     {
         printf("Error in tsl261 read_register\n");
     }
@@ -120,8 +119,9 @@ static uint16_t read_register_16(uint8_t i2c_addr, uint8_t low_register_addr)
 {
     uint16_t value = 0;
     uint8_t data[2];
+    low_register_addr = TSL2561_REG_COMMAND | TSL2561_READ_WORD | low_register_addr;
 
-    if (!i2c_slave_read(i2c_addr, TSL2561_REG_COMMAND | TSL2561_READ_WORD | low_register_addr, data, 2))
+    if (i2c_slave_read(i2c_addr, &low_register_addr, data, 2))
     {
         printf("Error with i2c_slave_read in read_register_16\n");
     }
@@ -131,19 +131,19 @@ static uint16_t read_register_16(uint8_t i2c_addr, uint8_t low_register_addr)
     return value;
 }
 
-static bool enable(uint8_t i2c_addr)
+static int enable(uint8_t i2c_addr)
 {
     return write_register(i2c_addr, TSL2561_REG_CONTROL, TSL2561_ON);
 }
 
-static bool disable(uint8_t i2c_addr)
+static int disable(uint8_t i2c_addr)
 {
     return write_register(i2c_addr, TSL2561_REG_CONTROL, TSL2561_OFF);
 }
 
 void tsl2561_init(tsl2561_t *device)
 {
-    if (!enable(device->i2c_addr))
+    if (enable(device->i2c_addr))
     {
         printf("Error initializing tsl2561\n");
     }

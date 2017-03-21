@@ -43,18 +43,15 @@ static uint8_t dec2bcd(uint8_t val)
 static uint8_t read_register(uint8_t reg)
 {
     uint8_t val;
-    i2c_slave_read(ADDR, reg, &val, 1);
+    i2c_slave_read(ADDR, &reg, &val, 1);
     return val;
 }
 
 static void update_register(uint8_t reg, uint8_t mask, uint8_t val)
 {
-    uint8_t buf[2];
+    uint8_t buf = (read_register(reg) & mask) | val;
 
-    buf[0] = reg;
-    buf[1] = (read_register(reg) & mask) | val;
-
-    i2c_slave_write(ADDR, buf, 2);
+    i2c_slave_write(ADDR, &reg, &buf, 1);
 }
 
 void ds1307_start(bool start)
@@ -70,8 +67,9 @@ bool ds1307_is_running()
 void ds1307_get_time(struct tm *time)
 {
     uint8_t buf[7];
+    uint8_t reg = TIME_REG ;
 
-    i2c_slave_read(ADDR, TIME_REG, buf, 7);
+    i2c_slave_read(ADDR, &reg , buf, 7);
 
     time->tm_sec = bcd2dec(buf[0] & SECONDS_MASK);
     time->tm_min = bcd2dec(buf[1]);
@@ -101,7 +99,7 @@ void ds1307_set_time(const struct tm *time)
     buf[6] = dec2bcd(time->tm_mon + 1);
     buf[7] = dec2bcd(time->tm_year - 2000);
 
-    i2c_slave_write(ADDR, buf, 8);
+    i2c_slave_write(ADDR, &buf[0], &buf[1] , 7);
 }
 
 void ds1307_enable_squarewave(bool enable)
@@ -134,31 +132,18 @@ void ds1307_set_output(bool value)
     update_register(CONTROL_REG, OUT_MASK, value ? OUT_BIT : 0);
 }
 
-bool ds1307_read_ram(uint8_t offset, uint8_t *buf, uint8_t len)
+int ds1307_read_ram(uint8_t offset, uint8_t *buf, uint8_t len)
 {
     if (offset + len > RAM_SIZE) return false;
+    uint8_t reg = RAM_REG + offset ;
 
-    return i2c_slave_read(ADDR, RAM_REG + offset, buf, len);
+    return i2c_slave_read(ADDR, &reg, buf, len);
 }
 
-bool ds1307_write_ram(uint8_t offset, uint8_t *buf, uint8_t len)
+int ds1307_write_ram(uint8_t offset, uint8_t *buf, uint8_t len)
 {
     if (offset + len > RAM_SIZE) return false;
+    uint8_t reg = RAM_REG + offset ;
 
-    // temporary buffer on the stack is not good so copy-paste :(
-    bool success = false;
-    do {
-        i2c_start();
-        if (!i2c_write(ADDR << 1))
-            break;
-        if (!i2c_write(RAM_REG + offset))
-            break;
-        while (len--) {
-            if (!i2c_write(*buf++))
-                break;
-        }
-        i2c_stop();
-        success = true;
-    } while(0);
-    return success;
+    return i2c_slave_write(ADDR, &reg, buf, len);
 }

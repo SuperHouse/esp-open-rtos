@@ -39,35 +39,36 @@
 //
 #define BMP180_RESET_VALUE        0xB6
 
-static bool bmp180_readRegister16(uint8_t reg, int16_t *r)
+static int bmp180_readRegister16(uint8_t reg, int16_t *r)
 {
     uint8_t d[] = { 0, 0 };
+    int error ;
 
-    if (!i2c_slave_read(BMP180_DEVICE_ADDRESS, reg, d, 2))
-        return false;
+    if ((error = i2c_slave_read(BMP180_DEVICE_ADDRESS, &reg, d, 2)))
+        return error;
 
     *r = ((int16_t)d[0] << 8) | (d[1]);
-    return true;
+    return 0;
 }
 
-static bool bmp180_start_Messurement(uint8_t cmd)
+static int bmp180_start_Messurement(uint8_t cmd)
 {
-    uint8_t d[] = { BMP180_CONTROL_REG, cmd };
+    uint8_t reg = BMP180_CONTROL_REG ;
 
-    return i2c_slave_write(BMP180_DEVICE_ADDRESS, d, 2);
+    return i2c_slave_write(BMP180_DEVICE_ADDRESS, &reg, &cmd, 1);
 }
 
 static bool bmp180_get_uncompensated_temperature(int32_t *ut)
 {
     // Write Start Code into reg 0xF4.
-    if (!bmp180_start_Messurement(BMP180_MEASURE_TEMP))
+    if (bmp180_start_Messurement(BMP180_MEASURE_TEMP))
         return false;
 
     // Wait 5ms, datasheet states 4.5ms
     sdk_os_delay_us(5000);
 
     int16_t v;
-    if (!bmp180_readRegister16(BMP180_OUT_MSB_REG, &v))
+    if (bmp180_readRegister16(BMP180_OUT_MSB_REG, &v))
         return false;
 
     *ut = v;
@@ -88,13 +89,14 @@ static bool bmp180_get_uncompensated_pressure(uint8_t oss, uint32_t *up)
     }
 
     // Write Start Code into reg 0xF4
-    if (!bmp180_start_Messurement(BMP180_MEASURE_PRESS | (oss << 6)))
+    if (bmp180_start_Messurement(BMP180_MEASURE_PRESS | (oss << 6)))
         return false;
 
     sdk_os_delay_us(us);
 
     uint8_t d[] = { 0, 0, 0 };
-    if (!i2c_slave_read(BMP180_DEVICE_ADDRESS, BMP180_OUT_MSB_REG, d, 3))
+    uint8_t reg = BMP180_OUT_MSB_REG;
+    if (i2c_slave_read(BMP180_DEVICE_ADDRESS, &reg, d, 3))
         return false;
 
     uint32_t r = ((uint32_t)d[0] << 16) | ((uint32_t)d[1] << 8) | d[2];
@@ -106,17 +108,17 @@ static bool bmp180_get_uncompensated_pressure(uint8_t oss, uint32_t *up)
 // Returns true of success else false.
 bool bmp180_fillInternalConstants(bmp180_constants_t *c)
 {
-    if (!bmp180_readRegister16(BMP180_CALIBRATION_REG+0, &c->AC1) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+2, &c->AC2) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+4, &c->AC3) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+6, (int16_t *)&c->AC4) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+8, (int16_t *)&c->AC5) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+10, (int16_t *)&c->AC6) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+12, &c->B1) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+14, &c->B2) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+16, &c->MB) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+18, &c->MC) ||
-        !bmp180_readRegister16(BMP180_CALIBRATION_REG+20, &c->MD)) {
+    if (bmp180_readRegister16(BMP180_CALIBRATION_REG+0, &c->AC1) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+2, &c->AC2) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+4, &c->AC3) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+6, (int16_t *)&c->AC4) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+8, (int16_t *)&c->AC5) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+10, (int16_t *)&c->AC6) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+12, &c->B1) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+14, &c->B2) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+16, &c->MB) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+18, &c->MC) ||
+        bmp180_readRegister16(BMP180_CALIBRATION_REG+20, &c->MD)) {
         return false;
     }
 
@@ -140,8 +142,10 @@ bool bmp180_fillInternalConstants(bmp180_constants_t *c)
 bool bmp180_is_available()
 {
     uint8_t id;
-    return i2c_slave_read(BMP180_DEVICE_ADDRESS, BMP180_VERSION_REG, &id, 1) &&
-        id == BMP180_CHIP_ID;
+    uint8_t reg = BMP180_VERSION_REG;
+    if (i2c_slave_read(BMP180_DEVICE_ADDRESS, &reg, &id, 1))
+        return false;
+    return id == BMP180_CHIP_ID;
 }
 
 bool bmp180_measure(bmp180_constants_t *c, int32_t *temperature,
@@ -207,8 +211,6 @@ bool bmp180_measure(bmp180_constants_t *c, int32_t *temperature,
     }
     return true;
 }
-
-
 
 // BMP180_Event_Command
 typedef struct
