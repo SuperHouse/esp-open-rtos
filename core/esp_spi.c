@@ -189,9 +189,9 @@ static void _spi_buf_transfer(uint8_t bus, const void *out_data, void *in_data,
     _wait(bus);
     size_t bytes = len * (uint8_t)word_size;
     _set_size(bus, bytes);
-    // memcpy((void *)SPI(bus).W, out_data, bytes); // <- It's buggy
-    for (uint8_t i = 0; i < bytes; i ++)
-        ((uint8_t *)SPI(bus).W)[i] = ((uint8_t *)out_data)[i];
+    memcpy((void *)SPI(bus).W, out_data, bytes); // FIXME: It's buggy when bytes = 2 or 3
+//    for (uint8_t i = 0; i < bytes; i ++)
+//        ((uint8_t *)SPI(bus).W)[i] = ((uint8_t *)out_data)[i];
     _spi_buf_prepare(bus, len, e, word_size);
     _start(bus);
     _wait(bus);
