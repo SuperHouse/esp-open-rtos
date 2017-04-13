@@ -90,7 +90,7 @@ C_CXX_FLAGS ?= -Wall -Wl,-EL -nostdlib $(EXTRA_C_CXX_FLAGS)
 # Flags for C only
 CFLAGS		?= $(C_CXX_FLAGS) -std=gnu99 $(EXTRA_CFLAGS)
 # Flags for C++ only
-CXXFLAGS	?= $(C_CXX_FLAGS) -fno-exceptions -fno-rtti $(EXTRA_CXXFLAGS)
+CXXFLAGS	?= $(C_CXX_FLAGS) -std=c++0x -fno-exceptions -fno-rtti $(EXTRA_CXXFLAGS)
 
 # these aren't all technically preprocesor args, but used by all 3 of C, C++, assembler
 CPPFLAGS	+= -mlongcalls -mtext-section-literals

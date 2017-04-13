@@ -283,6 +283,10 @@
 #define __IEEE_BIG_ENDIAN
 #endif
 
+#ifdef __FT32__
+#define __IEEE_LITTLE_ENDIAN
+#endif
+
 #ifdef __mcore__
 #define __IEEE_BIG_ENDIAN
 #endif
@@ -413,6 +417,10 @@
 # else
 #  define __IEEE_LITTLE_ENDIAN
 # endif
+#endif
+
+#ifdef __VISIUM__
+#define __IEEE_BIG_ENDIAN
 #endif
 
 #if (defined(__XTENSA__))
