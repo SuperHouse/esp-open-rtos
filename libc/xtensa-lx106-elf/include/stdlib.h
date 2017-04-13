@@ -26,6 +26,10 @@
 #include <cygwin/stdlib.h>
 #endif
 
+#if __GNU_VISIBLE
+#include <xlocale.h>
+#endif
+
 _BEGIN_STD_C
 
 typedef struct 
@@ -40,9 +44,7 @@ typedef struct
   long rem; /* remainder */
 } ldiv_t;
 
-#if !defined(__STRICT_ANSI__) || \
-  (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-  (defined(__cplusplus) && __cplusplus >= 201103L)
+#if __ISO_C_VISIBLE >= 1999
 typedef struct
 {
   long long int quot; /* quotient */
@@ -70,9 +72,14 @@ int	_EXFUN(__locale_mb_cur_max,(_VOID));
 
 _VOID	_EXFUN(abort,(_VOID) _ATTRIBUTE ((__noreturn__)));
 int	_EXFUN(abs,(int));
+#if __BSD_VISIBLE
+__uint32_t _EXFUN(arc4random, (void));
+__uint32_t _EXFUN(arc4random_uniform, (__uint32_t));
+void    _EXFUN(arc4random_buf, (void *, size_t));
+#endif
 int	_EXFUN(atexit,(_VOID (*__func)(_VOID)));
 double	_EXFUN(atof,(const char *__nptr));
-#ifndef __STRICT_ANSI__
+#if __MISC_VISIBLE
 float	_EXFUN(atoff,(const char *__nptr));
 #endif
 int	_EXFUN(atoi,(const char *__nptr));
@@ -92,7 +99,7 @@ char *  _EXFUN(getenv,(const char *__string));
 char *	_EXFUN(_getenv_r,(struct _reent *, const char *__string));
 char *	_EXFUN(_findenv,(_CONST char *, int *));
 char *	_EXFUN(_findenv_r,(struct _reent *, _CONST char *, int *));
-#ifndef __STRICT_ANSI__
+#if __POSIX_VISIBLE >= 200809
 extern char *suboptarg;			/* getsubopt(3) external variable */
 int	_EXFUN(getsubopt,(char **, char * const *, char **));
 #endif
@@ -109,48 +116,64 @@ size_t	_EXFUN(mbstowcs,(wchar_t *__restrict, const char *__restrict, size_t));
 size_t	_EXFUN(_mbstowcs_r,(struct _reent *, wchar_t *__restrict, const char *__restrict, size_t, _mbstate_t *));
 size_t	_EXFUN(wcstombs,(char *__restrict, const wchar_t *__restrict, size_t));
 size_t	_EXFUN(_wcstombs_r,(struct _reent *, char *__restrict, const wchar_t *__restrict, size_t, _mbstate_t *));
-#ifndef __STRICT_ANSI__
 #ifndef _REENT_ONLY
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
 char *	_EXFUN(mkdtemp,(char *));
+#endif
+#if __GNU_VISIBLE
 int	_EXFUN(mkostemp,(char *, int));
 int	_EXFUN(mkostemps,(char *, int, int));
+#endif
+#if __MISC_VISIBLE || __POSIX_VISIBLE >= 200112 || __XSI_VISIBLE >= 4
 int	_EXFUN(mkstemp,(char *));
+#endif
+#if __MISC_VISIBLE
 int	_EXFUN(mkstemps,(char *, int));
+#endif
 #if (__GNUC__ < 4) || defined(__XTENSA__)
 char *	_EXFUN(mktemp,(char *));
 #else
-char *	_EXFUN(mktemp,(char *) _ATTRIBUTE ((__warning__ ("the use of `mktemp' is dangerous; use `mkstemp' instead"))));
+#if __BSD_VISIBLE || (__XSI_VISIBLE >= 4 && __POSIX_VISIBLE < 200112)
+char *	_EXFUN(mktemp,(char *) _ATTRIBUTE ((__deprecated__("the use of `mktemp' is dangerous; use `mkstemp' instead"))));
 #endif
 #endif
+#endif /* !_REENT_ONLY */
 char *	_EXFUN(_mkdtemp_r, (struct _reent *, char *));
 int	_EXFUN(_mkostemp_r, (struct _reent *, char *, int));
 int	_EXFUN(_mkostemps_r, (struct _reent *, char *, int, int));
 int	_EXFUN(_mkstemp_r, (struct _reent *, char *));
 int	_EXFUN(_mkstemps_r, (struct _reent *, char *, int));
 #if (__GNUC__ < 4) || defined(__XTENSA__)
-char *	_EXFUN(_mktemp_r, (struct _reent *, char *)); 
+char *	_EXFUN(_mktemp_r, (struct _reent *, char *));
 #else
-char *	_EXFUN(_mktemp_r, (struct _reent *, char *) _ATTRIBUTE ((__warning__ ("the use of `mktemp' is dangerous; use `mkstemp' instead"))));
-#endif
+char *	_EXFUN(_mktemp_r, (struct _reent *, char *) _ATTRIBUTE ((__deprecated__("the use of `mktemp' is dangerous; use `mkstemp' instead"))));
 #endif
 _VOID	_EXFUN(qsort,(_PTR __base, size_t __nmemb, size_t __size, __compar_fn_t _compar));
 int	_EXFUN(rand,(_VOID));
 _PTR	_EXFUN_NOTHROW(realloc,(_PTR __r, size_t __size));
-#ifndef __STRICT_ANSI__
+#if __BSD_VISIBLE
+void	*reallocarray(void *, size_t, size_t) __result_use_check __alloc_size(2)
+	    __alloc_size(3);
 _PTR	_EXFUN(reallocf,(_PTR __r, size_t __size));
+#endif
+#if __BSD_VISIBLE || __XSI_VISIBLE >= 4
 char *	_EXFUN(realpath, (const char *__restrict path, char *__restrict resolved_path));
+#endif
+#if __BSD_VISIBLE
+int	_EXFUN(rpmatch, (const char *response));
+#endif
+#if __XSI_VISIBLE
+_VOID	_EXFUN(setkey, (const char *__key));
 #endif
 _VOID	_EXFUN(srand,(unsigned __seed));
 double	_EXFUN(strtod,(const char *__restrict __n, char **__restrict __end_PTR));
 double	_EXFUN(_strtod_r,(struct _reent *,const char *__restrict __n, char **__restrict __end_PTR));
-#if !defined(__STRICT_ANSI__) || \
-  (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-  (defined(__cplusplus) && __cplusplus >= 201103L)
+#if __ISO_C_VISIBLE >= 1999
 float	_EXFUN(strtof,(const char *__restrict __n, char **__restrict __end_PTR));
 #endif
-#ifndef __STRICT_ANSI__
+#if __MISC_VISIBLE
 /* the following strtodf interface is deprecated...use strtof instead */
-# ifndef strtodf 
+# ifndef strtodf
 #  define strtodf strtof
 # endif
 #endif
@@ -159,26 +182,45 @@ long	_EXFUN(_strtol_r,(struct _reent *,const char *__restrict __n, char **__rest
 unsigned long _EXFUN(strtoul,(const char *__restrict __n, char **__restrict __end_PTR, int __base));
 unsigned long _EXFUN(_strtoul_r,(struct _reent *,const char *__restrict __n, char **__restrict __end_PTR, int __base));
 
+#if __GNU_VISIBLE
+double	strtod_l (const char *__restrict, char **__restrict, locale_t);
+float	strtof_l (const char *__restrict, char **__restrict, locale_t);
+#ifdef _HAVE_LONG_DOUBLE
+extern long double strtold_l (const char *__restrict, char **__restrict,
+			      locale_t);
+#endif /* _HAVE_LONG_DOUBLE */
+long	strtol_l (const char *__restrict, char **__restrict, int, locale_t);
+unsigned long strtoul_l (const char *__restrict, char **__restrict, int,
+			 locale_t __loc);
+long long strtoll_l (const char *__restrict, char **__restrict, int, locale_t);
+unsigned long long strtoull_l (const char *__restrict, char **__restrict, int,
+			       locale_t __loc);
+#endif
+
 int	_EXFUN(system,(const char *__string));
 
-#ifndef __STRICT_ANSI__
+#if __SVID_VISIBLE || __XSI_VISIBLE >= 4
 long    _EXFUN(a64l,(const char *__input));
 char *  _EXFUN(l64a,(long __input));
 char *  _EXFUN(_l64a_r,(struct _reent *,long __input));
+#endif
+#if __MISC_VISIBLE
 int	_EXFUN(on_exit,(_VOID (*__func)(int, _PTR),_PTR __arg));
-#endif /* ! __STRICT_ANSI__ */
-#if !defined(__STRICT_ANSI__) || \
-  (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-  (defined(__cplusplus) && __cplusplus >= 201103L)
+#endif
+#if __ISO_C_VISIBLE >= 1999
 _VOID	_EXFUN(_Exit,(int __status) _ATTRIBUTE ((__noreturn__)));
 #endif
-#ifndef __STRICT_ANSI__
+#if __SVID_VISIBLE || __XSI_VISIBLE
 int	_EXFUN(putenv,(char *__string));
+#endif
 int	_EXFUN(_putenv_r,(struct _reent *, char *__string));
 _PTR	_EXFUN(_reallocf_r,(struct _reent *, _PTR, size_t));
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112
 int	_EXFUN(setenv,(const char *__string, const char *__value, int __overwrite));
+#endif
 int	_EXFUN(_setenv_r,(struct _reent *, const char *__string, const char *__value, int __overwrite));
 
+#if __XSI_VISIBLE >= 4 && __POSIX_VISIBLE < 200112
 char *	_EXFUN(gcvt,(double,int,char *));
 char *	_EXFUN(gcvtf,(float,int,char *));
 char *	_EXFUN(fcvt,(double,int,int *,int *));
@@ -187,15 +229,18 @@ char *	_EXFUN(ecvt,(double,int,int *,int *));
 char *	_EXFUN(ecvtbuf,(double, int, int*, int*, char *));
 char *	_EXFUN(fcvtbuf,(double, int, int*, int*, char *));
 char *	_EXFUN(ecvtf,(float,int,int *,int *));
-char *	_EXFUN(dtoa,(double, int, int, int *, int*, char**));
 #endif
 char *	_EXFUN(__itoa,(int, char *, int));
 char *	_EXFUN(__utoa,(unsigned, char *, int));
-#ifndef __STRICT_ANSI__
+#if __MISC_VISIBLE
 char *	_EXFUN(itoa,(int, char *, int));
 char *	_EXFUN(utoa,(unsigned, char *, int));
+#endif
+#if __POSIX_VISIBLE
 int	_EXFUN(rand_r,(unsigned *__seed));
+#endif
 
+#if __SVID_VISIBLE || __XSI_VISIBLE
 double _EXFUN(drand48,(_VOID));
 double _EXFUN(_drand48_r,(struct _reent *));
 double _EXFUN(erand48,(unsigned short [3]));
@@ -216,44 +261,41 @@ unsigned short *
        _EXFUN(_seed48_r,(struct _reent *, unsigned short [3]));
 _VOID  _EXFUN(srand48,(long));
 _VOID  _EXFUN(_srand48_r,(struct _reent *, long));
-#endif /* ! __STRICT_ANSI__ */
-#if !defined(__STRICT_ANSI__) || \
-  (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-  (defined(__cplusplus) && __cplusplus >= 201103L)
+#endif /* __SVID_VISIBLE || __XSI_VISIBLE */
+#if __SVID_VISIBLE || __XSI_VISIBLE >= 4 || __BSD_VISIBLE
+char *	_EXFUN(initstate,(unsigned, char *, size_t));
+long	_EXFUN(random,(_VOID));
+char *	_EXFUN(setstate,(char *));
+_VOID	_EXFUN(srandom,(unsigned));
+#endif
+#if __ISO_C_VISIBLE >= 1999
 long long _EXFUN(atoll,(const char *__nptr));
 #endif
-#ifndef __STRICT_ANSI__
 long long _EXFUN(_atoll_r,(struct _reent *, const char *__nptr));
-#endif /* ! __STRICT_ANSI__ */
-#if !defined(__STRICT_ANSI__) || \
-  (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-  (defined(__cplusplus) && __cplusplus >= 201103L)
+#if __ISO_C_VISIBLE >= 1999
 long long _EXFUN(llabs,(long long));
 lldiv_t	_EXFUN(lldiv,(long long __numer, long long __denom));
 long long _EXFUN(strtoll,(const char *__restrict __n, char **__restrict __end_PTR, int __base));
 #endif
-#ifndef __STRICT_ANSI__
 long long _EXFUN(_strtoll_r,(struct _reent *, const char *__restrict __n, char **__restrict __end_PTR, int __base));
-#endif /* ! __STRICT_ANSI__ */
-#if !defined(__STRICT_ANSI__) || \
-  (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-  (defined(__cplusplus) && __cplusplus >= 201103L)
+#if __ISO_C_VISIBLE >= 1999
 unsigned long long _EXFUN(strtoull,(const char *__restrict __n, char **__restrict __end_PTR, int __base));
 #endif
-#ifndef __STRICT_ANSI__
 unsigned long long _EXFUN(_strtoull_r,(struct _reent *, const char *__restrict __n, char **__restrict __end_PTR, int __base));
 
 #ifndef __CYGWIN__
+#if __MISC_VISIBLE
 _VOID	_EXFUN(cfree,(_PTR));
+#endif
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112
 int	_EXFUN(unsetenv,(const char *__string));
+#endif
 int	_EXFUN(_unsetenv_r,(struct _reent *, const char *__string));
-#endif
+#endif /* !__CYGWIN__ */
 
-#ifdef __rtems__
-int _EXFUN(posix_memalign,(void **, size_t, size_t));
+#if __POSIX_VISIBLE >= 200112
+int _EXFUN(__nonnull (1) posix_memalign,(void **, size_t, size_t));
 #endif
-
-#endif /* ! __STRICT_ANSI__ */
 
 char *	_EXFUN(_dtoa_r,(struct _reent *, double, int, int, int *, int*, char**));
 #ifndef __CYGWIN__
@@ -271,7 +313,9 @@ _VOID	_EXFUN(__eprintf,(const char *, const char *, unsigned int, const char *))
    _BSD_SOURCE, you get the BSD version; otherwise you get the GNU
    version.  We want that #undef qsort_r will still let you
    invoke the underlying function, but that requires gcc support. */
-#ifdef _BSD_SOURCE
+#if __GNU_VISIBLE
+_VOID	_EXFUN(qsort_r,(_PTR __base, size_t __nmemb, size_t __size, int (*_compar)(const _PTR, const _PTR, _PTR), _PTR __thunk));
+#elif __BSD_VISIBLE
 # ifdef __GNUC__
 _VOID	_EXFUN(qsort_r,(_PTR __base, size_t __nmemb, size_t __size, _PTR __thunk, int (*_compar)(_PTR, const _PTR, const _PTR)))
              __asm__ (__ASMNAME ("__bsd_qsort_r"));
@@ -279,18 +323,26 @@ _VOID	_EXFUN(qsort_r,(_PTR __base, size_t __nmemb, size_t __size, _PTR __thunk, 
 _VOID	_EXFUN(__bsd_qsort_r,(_PTR __base, size_t __nmemb, size_t __size, _PTR __thunk, int (*_compar)(_PTR, const _PTR, const _PTR)));
 #  define qsort_r __bsd_qsort_r
 # endif
-#elif __GNU_VISIBLE
-_VOID	_EXFUN(qsort_r,(_PTR __base, size_t __nmemb, size_t __size, int (*_compar)(const _PTR, const _PTR, _PTR), _PTR __thunk));
 #endif
 
 /* On platforms where long double equals double.  */
 #ifdef _HAVE_LONG_DOUBLE
-#if !defined(__STRICT_ANSI__) || \
-  (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-  (defined(__cplusplus) && __cplusplus >= 201103L)
+extern long double _strtold_r (struct _reent *, const char *__restrict, char **__restrict);
+#if __ISO_C_VISIBLE >= 1999
 extern long double strtold (const char *__restrict, char **__restrict);
 #endif
 #endif /* _HAVE_LONG_DOUBLE */
+
+/*
+ * If we're in a mode greater than C99, expose C11 functions.
+ */
+#if __ISO_C_VISIBLE >= 2011
+void *	aligned_alloc(size_t, size_t) __malloc_like __alloc_align(1)
+	    __alloc_size(2);
+int	at_quick_exit(void (*)(void));
+_Noreturn void
+	quick_exit(int);
+#endif /* __ISO_C_VISIBLE >= 2011 */
 
 _END_STD_C
 
