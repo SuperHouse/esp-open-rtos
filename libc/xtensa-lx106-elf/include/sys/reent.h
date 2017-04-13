@@ -37,6 +37,8 @@ typedef __uint32_t __ULong;
 
 struct _reent;
 
+struct __locale_t;
+
 /*
  * If _REENT_SMALL is defined, we make struct _reent as small as possible,
  * by having nearly everything possible allocated at first use.
@@ -384,8 +386,8 @@ struct _reent
 
   int __sdidinit;		/* 1 means stdio has been init'd */
 
-  int _current_category;	/* unused */
-  _CONST char *_current_locale;	/* unused */
+  int _unspecified_locale_info;	/* unused, reserved for locale stuff */
+  struct __locale_t *_locale;/* per-thread locale */
 
   struct _mprec *_mp;
 
@@ -429,7 +431,7 @@ extern const struct __sFILE_fake __sf_fake_stderr;
     _NULL, \
     0, \
     0, \
-    "C", \
+    _NULL, \
     _NULL, \
     _NULL, \
     0, \
@@ -446,16 +448,14 @@ extern const struct __sFILE_fake __sf_fake_stderr;
     _NULL \
   }
 
-#define _REENT_INIT_PTR(var) \
-  { memset((var), 0, sizeof(*(var))); \
-    (var)->_stdin = (__FILE *)&__sf_fake_stdin; \
+#define _REENT_INIT_PTR_ZEROED(var) \
+  { (var)->_stdin = (__FILE *)&__sf_fake_stdin; \
     (var)->_stdout = (__FILE *)&__sf_fake_stdout; \
     (var)->_stderr = (__FILE *)&__sf_fake_stderr; \
-    (var)->_current_locale = "C"; \
   }
 
-/* Only built the assert() calls if we are built with debugging.  */
-#if DEBUG
+/* Only add assert() calls if we are specified to debug.  */
+#ifdef _REENT_CHECK_DEBUG
 #include <assert.h>
 #define __reent_assert(x) assert(x)
 #else
@@ -578,8 +578,9 @@ struct _reent
   int  _inc;			/* used by tmpnam */
   char _emergency[_REENT_EMERGENCY_SIZE];
 
-  int _current_category;	/* used by setlocale */
-  _CONST char *_current_locale;
+  /* TODO */
+  int _unspecified_locale_info;	/* unused, reserved for locale stuff */
+  struct __locale_t *_locale;/* per-thread locale */
 
   int __sdidinit;		/* 1 means stdio has been init'd */
 
@@ -643,18 +644,27 @@ struct _reent
      of the above members (on the off chance that future binary compatibility
      would be broken otherwise).  */
   struct _glue __sglue;		/* root of glue chain */
+# ifndef _REENT_GLOBAL_STDIO_STREAMS
   __FILE __sf[3];  		/* first three file descriptors */
+# endif
 };
+
+#ifdef _REENT_GLOBAL_STDIO_STREAMS
+extern __FILE __sf[3];
+#define _REENT_STDIO_STREAM(var, index) &__sf[index]
+#else
+#define _REENT_STDIO_STREAM(var, index) &(var)->__sf[index]
+#endif
 
 #define _REENT_INIT(var) \
   { 0, \
-    &(var).__sf[0], \
-    &(var).__sf[1], \
-    &(var).__sf[2], \
+    _REENT_STDIO_STREAM(&(var), 0), \
+    _REENT_STDIO_STREAM(&(var), 1), \
+    _REENT_STDIO_STREAM(&(var), 2), \
     0, \
     "", \
     0, \
-    "C", \
+    _NULL, \
     0, \
     _NULL, \
     _NULL, \
@@ -694,12 +704,10 @@ struct _reent
     {_NULL, 0, _NULL} \
   }
 
-#define _REENT_INIT_PTR(var) \
-  { memset((var), 0, sizeof(*(var))); \
-    (var)->_stdin = &(var)->__sf[0]; \
-    (var)->_stdout = &(var)->__sf[1]; \
-    (var)->_stderr = &(var)->__sf[2]; \
-    (var)->_current_locale = "C"; \
+#define _REENT_INIT_PTR_ZEROED(var) \
+  { (var)->_stdin = _REENT_STDIO_STREAM(var, 0); \
+    (var)->_stdout = _REENT_STDIO_STREAM(var, 1); \
+    (var)->_stderr = _REENT_STDIO_STREAM(var, 2); \
     (var)->_new._reent._rand_next = 1; \
     (var)->_new._reent._r48._seed[0] = _RAND48_SEED_0; \
     (var)->_new._reent._r48._seed[1] = _RAND48_SEED_1; \
@@ -744,6 +752,11 @@ struct _reent
 #define _REENT_GETDATE_ERR_P(ptr) (&((ptr)->_new._reent._getdate_err))
 
 #endif /* !_REENT_SMALL */
+
+#define _REENT_INIT_PTR(var) \
+  { memset((var), 0, sizeof(*(var))); \
+    _REENT_INIT_PTR_ZEROED(var); \
+  }
 
 /* This value is used in stdlib/misc.c.  reent/reent.c has to know it
    as well to make sure the freelist is correctly free'd.  Therefore

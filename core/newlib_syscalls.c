@@ -13,6 +13,7 @@
 #include <esp/uart.h>
 #include <stdlib.h>
 #include <stdout_redirect.h>
+#include <sys/time.h>
 
 extern void *xPortSupervisorStackPointer;
 
@@ -134,6 +135,14 @@ int _stat_r(struct _reent *r, const char *pathname, void *buf);
 
 __attribute__((weak, alias("syscall_returns_enosys"))) 
 off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence);
+
+__attribute__((weak, alias("_gettimeofday_r")))
+int _gettimeofday_r _PARAMS ((struct _reent *r, struct timeval *now, void *p)) {
+  now->tv_sec = 0;
+  now->tv_usec = 0;
+  errno = ENOSYS;
+  return -1;
+}
 
 /* Generic stub for any newlib syscall that fails with errno ENOSYS
    ("Function not implemented") and a return value equivalent to

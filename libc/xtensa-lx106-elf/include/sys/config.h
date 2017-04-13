@@ -92,7 +92,6 @@
 /* we want the reentrancy structure to be returned by a function */
 #define __DYNAMIC_REENT__
 #define HAVE_GETDATE
-#define _HAVE_SYSTYPES
 #define _READ_WRITE_RETURN_TYPE _ssize_t
 #define __LARGE64_FILES 1
 /* we use some glibc header files so turn on glibc large file feature */
@@ -185,6 +184,10 @@
 #define __CUSTOM_FILE_IO__
 #endif
 
+#if defined(__or1k__) || defined(__or1knd__)
+#define __DYNAMIC_REENT__
+#endif
+
 #ifdef __XTENSA__
 #include <xtensa/config/core-isa.h>
 #define MALLOC_ALIGNMENT ((XCHAL_DATA_WIDTH) < 16 ? 16 : (XCHAL_DATA_WIDTH))
@@ -235,9 +238,6 @@
 
 #if defined(__CYGWIN__)
 #include <cygwin/config.h>
-#if !defined (__STRICT_ANSI__) || (__STDC_VERSION__ >= 199901L)
-#define __USE_XOPEN2K 1
-#endif
 #endif
 
 #if defined(__rtems__)
@@ -245,6 +245,7 @@
 #define _READ_WRITE_RETURN_TYPE _ssize_t
 #define __DYNAMIC_REENT__
 #define _REENT_GLOBAL_ATEXIT
+#define _REENT_GLOBAL_STDIO_STREAMS
 #endif
 
 #ifndef __EXPORT
@@ -279,6 +280,12 @@
 #ifdef _WANT_REENT_SMALL
 #ifndef _REENT_SMALL
 #define _REENT_SMALL
+#endif
+#endif
+
+#ifdef _WANT_REENT_GLOBAL_STDIO_STREAMS
+#ifndef _REENT_GLOBAL_STDIO_STREAMS
+#define _REENT_GLOBAL_STDIO_STREAMS
 #endif
 #endif
 
