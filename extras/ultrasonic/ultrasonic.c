@@ -15,6 +15,8 @@
 #define PING_TIMEOUT 6000
 #define ROUNDTRIP 58
 
+#define timeout_expired(start, len) ((uint32_t)(sdk_system_get_time() - (start)) >= (len))
+
 void ultrasoinc_init(const ultrasonic_sensor_t *dev)
 {
     gpio_enable(dev->trigger_pin, GPIO_OUTPUT);
@@ -36,21 +38,21 @@ int32_t ultrasoinc_measure_cm(const ultrasonic_sensor_t *dev, uint32_t max_dista
         return ULTRASONIC_ERROR_PING;
 
     // Wait for echo
-    uint32_t timeout = sdk_system_get_time() + PING_TIMEOUT;
+    uint32_t start = sdk_system_get_time();
     while (!gpio_read(dev->echo_pin))
     {
-        if (sdk_system_get_time() >= timeout)
+        if (timeout_expired(start, PING_TIMEOUT))
             return ULTRASONIC_ERROR_PING_TIMEOUT;
     }
 
     // got echo, measuring
     uint32_t echo_start = sdk_system_get_time();
     uint32_t time = echo_start;
-    timeout = echo_start + max_distance * ROUNDTRIP;
+    uint32_t meas_timeout = echo_start + max_distance * ROUNDTRIP;
     while (gpio_read(dev->echo_pin))
     {
         time = sdk_system_get_time();
-        if (time >= timeout)
+        if (timeout_expired(echo_start, meas_timeout))
             return ULTRASONIC_ERROR_ECHO_TIMEOUT;
     }
 
