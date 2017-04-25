@@ -14,14 +14,25 @@ extern "C"
 {
 #endif
 
-#define PCF8591_DEFAULT_ADDRESS 0x90
+/**
+ * CAUTION: PLEASE SET I2C_FREQUENCY_400K IS 'false' IN 'i2c.h' FILE
+ */
+
+#define PCF8591_DEFAULT_ADDRESS 0x48
+
+void pcf8591_init(void);
 
 /**
- * Set new sensor address for switching another.
+ * Read input value of an analog pin.
  * @param[in] addr Pointer to device
- * @return none
+ * @param[in] analog_pin pin number:
+ *            0 - AIN0
+ *            1 - AIN1
+ *            2 - AIN2
+ *            3 - AIN3
+ * @return analog value
  */
-void pcf8591_set_address(uint8_t addr);
+uint8_t pcf8591_read(uint8_t addr, uint8_t analog_pin);
 
 
 #ifdef __cplusplus
