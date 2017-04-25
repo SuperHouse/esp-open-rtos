@@ -38,6 +38,8 @@
 
 #define MEASUREMENT_TIMEOUT 6000
 
+#define timeout_expired(start, len) ((uint32_t)(sdk_system_get_time() - (start)) >= (len))
+
 static const float gain_values [] = {
     [HMC5883L_GAIN_1370] = 0.73,
     [HMC5883L_GAIN_1090] = 0.92,
@@ -156,10 +158,10 @@ bool hmc5883l_get_raw_data(hmc5883l_raw_data_t *data)
         // overwrite mode register for measurement
         hmc5883l_set_operating_mode(current_mode);
         // wait for data
-        uint32_t timeout = sdk_system_get_time() + MEASUREMENT_TIMEOUT;
+        uint32_t start = sdk_system_get_time();
         while (!hmc5883l_data_is_ready())
         {
-            if (sdk_system_get_time() >= timeout)
+            if (timeout_expired(start, MEASUREMENT_TIMEOUT))
                 return false;
         }
     }
