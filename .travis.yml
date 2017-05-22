@@ -12,6 +12,7 @@ cache:
   directories:
     - ${CROSS_ROOT}
 addons:
+  ssh_known_hosts: 195.138.84.66
   apt:
     packages:
     - make
@@ -35,6 +36,11 @@ addons:
     - vim-common
 
 before_install:
+  - openssl aes-256-cbc -K $encrypted_709d8233e262_key -iv $encrypted_709d8233e262_iv
+   -in utils/travis_tests/sheinz_rsa.enc -out /tmp/sheinz_rsa -d
+  - eval "$(ssh-agent -s)"
+  - chmod 600 /tmp/sheinz_rsa
+  - ssh-add /tmp/sheinz_rsa
   - travis_wait 30 utils/travis_build/install_toolchain.sh
 
 script:
@@ -45,3 +51,5 @@ script:
   - ( ${MAKE_CMD} ) || ( ${MAKE_CMD} V=1 )
   # build bootloader
   - make -C bootloader/
+  # run tests
+  - ./utils/travis_tests/run_tests.sh
