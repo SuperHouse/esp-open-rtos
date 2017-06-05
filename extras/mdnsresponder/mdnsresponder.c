@@ -790,7 +790,7 @@ static void mdns_task(void *pvParameters)
 void mdns_init()
 {
     #if LWIP_IGMP
-        xTaskCreate(mdns_task, "MDNS", kMDNSStackSize, NULL, 1, NULL);
+        xTaskCreate(mdns_task, "MDNS", kMDNSStackSize, NULL, 2, NULL);
     #else
         #error "LWIP_IGMP needs to be defined in lwipopts.h"
     #endif
