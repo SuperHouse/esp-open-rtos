@@ -289,6 +289,7 @@ os_timer_disarm sdk_os_timer_disarm
 os_timer_setfn sdk_os_timer_setfn
 os_update_cpu_frequency sdk_os_update_cpu_frequency
 pbkdf2_sha1 sdk_pbkdf2_sha1
+pbuf_alloc sdk_pbuf_alloc
 pbus_set_rxbbgain sdk_pbus_set_rxbbgain
 pend_flag_noise_check sdk_pend_flag_noise_check
 pend_flag_periodic_cal sdk_pend_flag_periodic_cal
