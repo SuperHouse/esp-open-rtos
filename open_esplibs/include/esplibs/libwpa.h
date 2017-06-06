@@ -53,6 +53,7 @@ int sdk_os_get_random(uint8_t *dst, uint32_t size);
 
 // wpa_auth.o
 uint32_t *sdk_wpa_init(uint8_t (*hwaddr)[], struct _unknown_wpa1 *, int);
+void sdk_wpa_auth_sta_deinit(void *);
 
 // wpabuf.o
 

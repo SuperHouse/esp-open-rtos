@@ -202,9 +202,8 @@ void tls_server_task(void *pvParameters)
         socklen_t peer_addr_len = sizeof(struct sockaddr_in);
         getpeername(client_ctx.fd, (struct sockaddr *)&peer_addr, &peer_addr_len);
         unsigned char buf[256];
-        int len = sprintf((char *) buf, "O hai, client %d.%d.%d.%d:%d\nFree heap size is %d bytes\n",
-                          ip4_addr1(&peer_addr.sin_addr), ip4_addr2(&peer_addr.sin_addr),
-                          ip4_addr3(&peer_addr.sin_addr), ip4_addr4(&peer_addr.sin_addr),
+        int len = sprintf((char *) buf, "O hai, client " IPSTR ":%d\nFree heap size is %d bytes\n",
+                          IP2STR((ip4_addr_t *)&peer_addr.sin_addr.s_addr),
                           peer_addr.sin_port, xPortGetFreeHeapSize());
         while((ret = mbedtls_ssl_write(&ssl, buf, len)) <= 0)
         {
