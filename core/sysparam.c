@@ -801,9 +801,13 @@ sysparam_status_t sysparam_get_bool(const char *key, bool *result) {
     do {
         if (binary) {
             if (data_len == 1) {  // int8 value
-                *result = (int8_t)(*buf) ? true : false;
+                uint8_t value;
+                memcpy(&value, buf, sizeof(value));
+                *result = value ? true : false;
             } else if (data_len == 4) {  // int32 value
-                *result = (int32_t)(*buf) ? true : false;
+                uint32_t value;
+                memcpy(&value, buf, sizeof(value));
+                *result = value ? true : false;
             } else {
                 status = SYSPARAM_PARSEFAILED;
             }
