@@ -23,6 +23,7 @@ extern uint8_t sdk_interface_mask;
 void sdk_ic_set_vif(int, int, uint8_t (*)[6], int, int);
 void sdk_ic_bss_info_update(int, uint8_t (*hwaddr)[], int, int);
 void sdk_ic_set_sta(int, int, void *, int, int, int, int, int);
+void sdk_ic_remove_key(uint32_t);
 
 // lmac.o
 extern uint32_t sdk_lmacConfMib;

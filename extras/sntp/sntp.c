@@ -38,7 +38,7 @@
 
 #include "sntp.h"
 
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 #include "lwip/udp.h"
 #include "lwip/dns.h"
 #include "lwip/ip_addr.h"
@@ -136,12 +136,12 @@
 #define SNTP_STARTUP_DELAY          0
 #endif
 
-/** SNTP receive timeout - in milliseconds
+/** SNTP receive timeout - in seconds
  * Also used as retry timeout - this shouldn't be too low.
  * Default is 3 seconds.
  */
 #ifndef SNTP_RECV_TIMEOUT
-#define SNTP_RECV_TIMEOUT           3000
+#define SNTP_RECV_TIMEOUT           3
 #endif
 
 /** SNTP update delay - in milliseconds
@@ -384,8 +384,8 @@ sntp_request(void *arg)
       /* bind to local address */
       if (lwip_bind(sock, (struct sockaddr *)&local, sizeof(local)) == 0) {
         /* set recv timeout */
-        timeout = SNTP_RECV_TIMEOUT;
-        lwip_setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+        const struct timeval timeout = { SNTP_RECV_TIMEOUT, 0 };
+        setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
         /* prepare SNTP request */
         sntp_initialize_request(&sntpmsg);
@@ -511,7 +511,7 @@ sntp_try_next_server(void* arg)
 
 /** UDP recv callback for the sntp pcb */
 static void
-sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, ip_addr_t *addr, u16_t port)
+sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   u8_t mode;
   u8_t stratum;
@@ -597,7 +597,7 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, ip_addr_t *addr, u16_t
  * @param server_addr resolved IP address of the SNTP server
  */
 static void
-sntp_send_request(ip_addr_t *server_addr)
+sntp_send_request(const ip_addr_t *server_addr)
 {
   struct pbuf* p;
   p = pbuf_alloc(PBUF_TRANSPORT, SNTP_MSG_LEN, PBUF_RAM);
@@ -611,7 +611,7 @@ sntp_send_request(ip_addr_t *server_addr)
     pbuf_free(p);
 
     /* set up receive timeout: try next server or retry on timeout */
-    sys_timeout((u32_t)SNTP_RECV_TIMEOUT, sntp_try_next_server, NULL);
+    sys_timeout((u32_t)SNTP_RECV_TIMEOUT * 1000, sntp_try_next_server, NULL);
 #if SNTP_CHECK_RESPONSE >= 1
     /* save server address to verify it in sntp_recv */ 
     ip_addr_set(&sntp_last_server_address, server_addr);
@@ -629,7 +629,7 @@ sntp_send_request(ip_addr_t *server_addr)
  * DNS found callback when using DNS names as server address.
  */
 static void
-sntp_dns_found(const char* hostname, ip_addr_t *ipaddr, void *arg)
+sntp_dns_found(const char* hostname, const ip_addr_t *ipaddr, void *arg)
 {
   LWIP_UNUSED_ARG(hostname);
   LWIP_UNUSED_ARG(arg);

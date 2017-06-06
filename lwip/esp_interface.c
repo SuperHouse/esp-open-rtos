@@ -37,6 +37,7 @@
  * Original Author: Simon Goldschmidt
  * Modified by Angus Gratton based on work by @kadamski/Espressif via esp-lwip project.
  */
+#include <string.h>
 #include "lwip/opt.h"
 
 #include "lwip/def.h"
@@ -44,71 +45,138 @@
 #include "lwip/pbuf.h"
 #include <lwip/stats.h>
 #include <lwip/snmp.h>
+#include "lwip/ip.h"
+#include "lwip/ethip6.h"
 #include "netif/etharp.h"
+#include "sysparam.h"
+#include "netif/ppp/pppoe.h"
 
 /* declared in libnet80211.a */
 int8_t sdk_ieee80211_output_pbuf(struct netif *ifp, struct pbuf* pb);
 
+/* Define those to better describe your network interface. */
+#define IFNAME0 'e'
+#define IFNAME1 'n'
+
+/**
+ * In this function, the hardware should be initialized.
+ * Called from ethernetif_init().
+ *
+ * @param netif the already initialized lwip network interface structure
+ *        for this ethernetif
+ */
+static void
+low_level_init(struct netif *netif)
+{
+    /* set MAC hardware address length */
+    netif->hwaddr_len = ETHARP_HWADDR_LEN;
+
+    /* maximum transfer unit */
+    netif->mtu = 1500;
+
+    /* device capabilities */
+    /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
+    netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP | NETIF_FLAG_IGMP | NETIF_FLAG_MLD6;
+
+    /* Do whatever else is needed to initialize interface. */
+}
+
+/**
+ * This function should do the actual transmission of the packet. The packet is
+ * contained in the pbuf that is passed to the function. This pbuf
+ * might be chained.
+ *
+ * @param netif the lwip network interface structure for this ethernetif
+ * @param p the MAC packet to send (e.g. IP packet including MAC addresses and type)
+ * @return ERR_OK if the packet could be sent
+ *         an err_t value if the packet couldn't be sent
+ *
+ * @note Returning ERR_MEM here if a DMA queue of your MAC is full can lead to
+ *       strange results. You might consider waiting for space in the DMA queue
+ *       to become available since the stack doesn't retry to send a packet
+ *       dropped because of memory failure (except for the TCP timers).
+ */
+#define SIZEOF_STRUCT_PBUF        LWIP_MEM_ALIGN_SIZE(sizeof(struct pbuf))
 static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
 {
-  struct pbuf *q;
+    /*
+     * Note the pbuf reference count is generally one here, but not always. For
+     * example a buffer that had been queued by etharp_query() would have had
+     * its reference count increased to two, and the caller will free it on that
+     * return path.
+     */
 
-  for(q = p; q != NULL; q = q->next) {
-      sdk_ieee80211_output_pbuf(netif, q);
-  }
+    /* If the pbuf does not have contiguous data, or there is not enough room
+     * for the link layer header, or there are multiple pbufs in the chain then
+     * clone a pbuf to output. */
+    if ((p->type_internal & PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS) == 0 ||
+        (u8_t *)p->payload < (u8_t *)p + SIZEOF_STRUCT_PBUF + PBUF_LINK_ENCAPSULATION_HLEN ||
+        p->next) {
+        struct pbuf *q = pbuf_clone(PBUF_RAW_TX, PBUF_RAM, p);
+        if (q == NULL) {
+            return ERR_MEM;
+        }
+        sdk_ieee80211_output_pbuf(netif, q);
+        /* The sdk will pbuf_ref the pbuf before returning and free it later
+         * when it has been sent so free the link to it here. */
+        pbuf_free(q);
+    } else {
+        /* The SDK modifies the eth_hdr, well the first 12 bytes of it at least,
+         * but otherwise leaves the payload unmodified so it can be reused by
+         * the caller. The only paths that appear to reuse the pbuf are in
+         * tcp_out for re-transmission of TCP segments, and these paths check
+         * that the number of references has returned to one before reusing the
+         * pbuf.
+         */
+        sdk_ieee80211_output_pbuf(netif, p);
+    }
 
-  LINK_STATS_INC(link.xmit);
-
-  return ERR_OK;
+    LINK_STATS_INC(link.xmit);
+    return ERR_OK;
 }
 
 
-err_t ethernetif_init(struct netif *netif)
-{
-  LWIP_ASSERT("netif != NULL", (netif != NULL));
-
-#if LWIP_NETIF_HOSTNAME
-  /* Initialize interface hostname */
-  netif->hostname = "lwip";
-#endif /* LWIP_NETIF_HOSTNAME */
-
-  /*
-   * Initialize the snmp variables and counters inside the struct netif.
-   * The last argument should be replaced with your link speed, in units
-   * of bits per second.
-   */
-  NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, LINK_SPEED_OF_YOUR_NETIF_IN_BPS);
-
-  // don't touch netif->state here, the field is used internally in the ESP SDK layers
-  netif->name[0] = 'e';
-  netif->name[1] = 'n';
-  netif->output = etharp_output;
-  netif->linkoutput = low_level_output;
-
-  /* low_level_init components */
-  netif->hwaddr_len = 6;
-  /* hwaddr seems to be set elsewhere, or (more likely) is set on tx by MAC layer */
-  netif->mtu = 1500;
-  netif->flags = NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
-
-  return ERR_OK;
-}
-
+/**
+ * This function should be called when a packet is ready to be read
+ * from the interface. It uses the function low_level_input() that
+ * should handle the actual reception of bytes from the network
+ * interface. Then the type of the received packet is determined and
+ * the appropriate input function is called.
+ *
+ * @param netif the lwip network interface structure for this ethernetif
+ */
 /* called from ieee80211_deliver_data with new IP frames */
 void ethernetif_input(struct netif *netif, struct pbuf *p)
 {
-    struct eth_hdr *ethhdr = p->payload;
-  /* examine packet payloads ethernet header */
+    struct eth_hdr *ethhdr;
 
+    if (p == NULL) {
+        return;
+    }
+
+    if (p->payload == NULL) {
+        return;
+    }
+
+    if (netif == NULL) {
+        return;
+    }
+
+    ethhdr = p->payload;
 
     switch(htons(ethhdr->type)) {
 	/* IP or ARP packet? */
     case ETHTYPE_IP:
+    case ETHTYPE_IPV6:
     case ETHTYPE_ARP:
-//  case ETHTYPE_IPV6:
+#if PPPOE_SUPPORT
+        /* PPPoE packet? */
+    case ETHTYPE_PPPOEDISC:
+    case ETHTYPE_PPPOE:
+#endif /* PPPOE_SUPPORT */
 	/* full packet send to tcpip_thread to process */
-	if (netif->input(p, netif)!=ERR_OK)
+	if (netif->input(p, netif) != ERR_OK)
 	{
 	    LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
 	    pbuf_free(p);
@@ -121,4 +189,99 @@ void ethernetif_input(struct netif *netif, struct pbuf *p)
 	p = NULL;
 	break;
     }
+}
+
+/* Since the pbuf_type definition has changed in lwip v2 and it is used by the
+ * sdk when calling pbuf_alloc, the SDK libraries have been modified to rename
+ * their references to pbuf_alloc to _pbufalloc allowing the pbuf_type to be
+ * rewritten here. Doing this here keeps this hack out of the lwip code, and
+ * ensures that this re-writing is only applied to the sdk calls to pbuf_alloc.
+ *
+ * The only pbuf types used by the SDK are type 0 for PBUF_RAM when writing
+ * data, and type 2 for the received data. The receive data path references
+ * internal buffer objects that need to be freed with custom code so a custom
+ * pbuf allocation type is used for these.
+ *
+ * The pbuf_layer is now also the header offset, but the sdk calls only call
+ * with a value of 3 which was PBUF_RAW and is now translated to a header
+ * offset of zero.
+ */
+struct pbuf *sdk_pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type) {
+    if (type == 0) {
+        LWIP_ASSERT("Unexpected sdk_pbuf_alloc layer", layer == 3 || layer == 4);
+        return pbuf_alloc(PBUF_RAW_TX, length, PBUF_RAM);
+    } else if (type == 2) {
+        LWIP_ASSERT("Unexpected sdk_pbuf_alloc layer", layer == 3);
+        return pbuf_alloc_reference(NULL, length, PBUF_ALLOC_FLAG_RX | PBUF_TYPE_ALLOC_SRC_MASK_ESP_RX);
+    } else {
+        LWIP_ASSERT("Unexpected pbuf_alloc type", 0);
+        for (;;);
+    }
+}
+
+/**
+ * Should be called at the beginning of the program to set up the
+ * network interface. It calls the function low_level_init() to do the
+ * actual setup of the hardware.
+ *
+ * This function should be passed as a parameter to netif_add().
+ *
+ * @param netif the lwip network interface structure for this ethernetif
+ * @return ERR_OK if the loopif is initialized
+ *         ERR_MEM if private data couldn't be allocated
+ *         any other err_t on error
+ */
+err_t
+ethernetif_init(struct netif *netif)
+{
+    LWIP_ASSERT("netif != NULL", (netif != NULL));
+
+    /* The hwaddr is currently set by sdk_wifi_station_start or
+     * sdk_wifi_softap_start. */
+
+#if LWIP_IPV6
+    // Where to do this???
+    netif_create_ip6_linklocal_address(netif, 1);
+    netif->ip6_autoconfig_enabled = 1;
+    printf("ip6 link local address %s\n", ip6addr_ntoa(netif_ip6_addr(netif, 0)));
+#endif
+
+#if LWIP_NETIF_HOSTNAME
+    /* Initialize interface hostname */
+    char *hostname = NULL;
+    /* Disabled for now as there were reports of crashes here, sysparam issues */
+    /* sysparam_get_string("hostname", &hostname); */
+    if (hostname && strlen(hostname) == 0) {
+        free(hostname);
+        hostname = NULL;
+    }
+    netif->hostname = hostname;
+#endif /* LWIP_NETIF_HOSTNAME */
+
+    /*
+     * Initialize the snmp variables and counters inside the struct netif.
+     * The last argument should be replaced with your link speed, in units
+     * of bits per second.
+     */
+    NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, LINK_SPEED_OF_YOUR_NETIF_IN_BPS);
+
+    // don't touch netif->state here, the field is used internally in the ESP SDK layers
+    netif->name[0] = IFNAME0;
+    netif->name[1] = IFNAME1;
+    /* We directly use etharp_output() here to save a function call.
+     * You can instead declare your own function an call etharp_output()
+     * from it if you have to do some checks before sending (e.g. if link
+     * is available...) */
+#if LWIP_IPV4
+    netif->output = etharp_output;
+#endif /* LWIP_IPV4 */
+#if LWIP_IPV6
+    netif->output_ip6 = ethip6_output;
+#endif /* LWIP_IPV6 */
+    netif->linkoutput = low_level_output;
+
+    /* initialize the hardware */
+    low_level_init(netif);
+
+    return ERR_OK;
 }
