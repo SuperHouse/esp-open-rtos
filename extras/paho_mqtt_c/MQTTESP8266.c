@@ -32,7 +32,7 @@ char  mqtt_timer_expired(mqtt_timer_t* timer)
 {
     TickType_t now = xTaskGetTickCount();
     int32_t left = timer->end_time - now;
-    return (left < 0);
+    return (left <= 0);
 }
 
 
