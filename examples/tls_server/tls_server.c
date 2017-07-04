@@ -43,7 +43,7 @@ extern const char *server_key;
    errors at link time if functions don't exist.) */
 #include "mbedtls/config.h"
 
-#include "mbedtls/net.h"
+#include "mbedtls/net_sockets.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
@@ -216,6 +216,7 @@ void tls_server_task(void *pvParameters)
         }
 
         len = ret;
+        ret = 0;
         printf(" %d bytes written. Closing socket on client.\n\n%s", len, (char *) buf);
 
         mbedtls_ssl_close_notify(&ssl);

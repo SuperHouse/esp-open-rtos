@@ -33,7 +33,7 @@
    errors at link time if functions don't exist.) */
 #include "mbedtls/config.h"
 
-#include "mbedtls/net.h"
+#include "mbedtls/net_sockets.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
