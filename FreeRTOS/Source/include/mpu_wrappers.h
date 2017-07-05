@@ -1,5 +1,5 @@
 /*
-    FreeRTOS V9.0.0 - Copyright (C) 2016 Real Time Engineers Ltd.
+    FreeRTOS V9.0.1 - Copyright (C) 2017 Real Time Engineers Ltd.
     All rights reserved
 
     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
@@ -130,7 +130,9 @@ only for ports that are using the MPU. */
 
 		/* Map standard queue.h API functions to the MPU equivalents. */
 		#define xQueueGenericSend						MPU_xQueueGenericSend
-		#define xQueueGenericReceive					MPU_xQueueGenericReceive
+		#define xQueueReceive							MPU_xQueueReceive
+		#define xQueuePeek								MPU_xQueuePeek
+		#define xQueueSemaphoreTake						MPU_xQueueSemaphoreTake
 		#define uxQueueMessagesWaiting					MPU_uxQueueMessagesWaiting
 		#define uxQueueSpacesAvailable					MPU_uxQueueSpacesAvailable
 		#define vQueueDelete							MPU_vQueueDelete
@@ -177,8 +179,11 @@ only for ports that are using the MPU. */
 		#define xEventGroupSync							MPU_xEventGroupSync
 		#define vEventGroupDelete						MPU_vEventGroupDelete
 
-		/* Remove the privileged function macro. */
+		/* Remove the privileged function macro, but keep the PRIVILEGED_DATA
+		macro so applications can place data in privileged access sections
+		(useful when using statically allocated objects). */
 		#define PRIVILEGED_FUNCTION
+		#define PRIVILEGED_DATA __attribute__((section("privileged_data")))
 
 	#else /* MPU_WRAPPERS_INCLUDED_FROM_API_FILE */
 
