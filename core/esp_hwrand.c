@@ -10,8 +10,13 @@
 #include <esp/wdev_regs.h>
 #include <string.h>
 
-/* Return a random 32-bit number */
-uint32_t hwrand(void)
+/* Return a random 32-bit number.
+ *
+ * This is also used as a substitute for rand() called from
+ * lmac.a:sdk_lmacTxFrame to avoid touching the newlib reent structures within
+ * the NMI and the NMI code needs to be in IRAM.
+ */
+uint32_t IRAM hwrand(void)
 {
     return WDEV.HWRNG;
 }

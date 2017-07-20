@@ -419,6 +419,7 @@ ram_set_txbb_atten sdk_ram_set_txbb_atten
 ram_start_noisefloor sdk_ram_start_noisefloor
 ram_tx_mac_disable sdk_ram_tx_mac_disable
 ram_tx_mac_enable sdk_ram_tx_mac_enable
+rand hwrand
 rc4_skip sdk_rc4_skip
 rcAttach sdk_rcAttach
 rc_cal sdk_rc_cal
