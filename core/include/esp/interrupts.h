@@ -35,18 +35,36 @@ typedef enum {
     INUM_TIMER_FRC2 = 10,
 } xt_isr_num_t;
 
-void sdk__xt_int_exit (void);
-void _xt_user_exit (void);
-void sdk__xt_tick_timer_init (void);
-void sdk__xt_timer_int(void);
+void sdk__xt_int_exit(void);
+void _xt_user_exit(void);
+void sdk__xt_tick_timer_init(void);
+void sdk__xt_timer_int(void *);
 void sdk__xt_timer_int1(void);
 
+/* The normal running level is 0.
+ * The system tick isr, timer frc2_isr, sv_isr etc  run at level 1.
+ * Debug exceptions run at level 2?
+ * The wdev nmi runs at level 3.
+ */
 static inline uint32_t _xt_get_intlevel(void)
 {
     uint32_t level;
-    __asm__ volatile("rsr %0, intlevel" : "=a"(level));
-    return level;
+    __asm__ volatile("rsr %0, ps" : "=a"(level));
+    return level & 0xf;
 }
+
+/*
+ * There are conflicting definitions for XCHAL_EXCM_LEVEL. Newlib
+ * defines it to be 1 and xtensa_rtos.h defines it to be 3. Don't want
+ * 3 as that is for the NMI and might want to check that the OS apis
+ * are not entered in level 3. Setting the interrupt level to 3 does
+ * not disable the NMI anyway. So set the level to 2.
+ */
+
+#ifdef XCHAL_EXCM_LEVEL
+#undef XCHAL_EXCM_LEVEL
+#define XCHAL_EXCM_LEVEL 2
+#endif
 
 /* Disable interrupts and return the old ps value, to pass into
    _xt_restore_interrupts later.
@@ -68,25 +86,27 @@ static inline void _xt_restore_interrupts(uint32_t new_ps)
     __asm__ volatile ("wsr %0, ps; rsync" :: "a" (new_ps));
 }
 
-/* ESPTODO: the mask/unmask functions aren't thread safe */
-
-static inline void _xt_isr_unmask(uint32_t unmask)
+static inline uint32_t _xt_isr_unmask(uint32_t unmask)
 {
+    uint32_t old_level = _xt_disable_interrupts();
     uint32_t intenable;
     asm volatile ("rsr %0, intenable" : "=a" (intenable));
-    intenable |= unmask;
-    asm volatile ("wsr %0, intenable; esync" :: "a" (intenable));
+    asm volatile ("wsr %0, intenable;" :: "a" (intenable | unmask));
+    _xt_restore_interrupts(old_level);
+    return intenable;
 }
 
-static inline void _xt_isr_mask (uint32_t mask)
+static inline uint32_t _xt_isr_mask(uint32_t mask)
 {
+    uint32_t old_level = _xt_disable_interrupts();
     uint32_t intenable;
     asm volatile ("rsr %0, intenable" : "=a" (intenable));
-    intenable &= ~mask;
-    asm volatile ("wsr %0, intenable; esync" :: "a" (intenable));
+    asm volatile ("wsr %0, intenable;" :: "a" (intenable & ~mask));
+    _xt_restore_interrupts(old_level);
+    return intenable;
 }
 
-static inline uint32_t _xt_read_ints (void)
+static inline uint32_t _xt_read_ints(void)
 {
     uint32_t interrupt;
     asm volatile ("rsr %0, interrupt" : "=a" (interrupt));
@@ -98,9 +118,7 @@ static inline void _xt_clear_ints(uint32_t mask)
     asm volatile ("wsr %0, intclear; esync" :: "a" (mask));
 }
 
-typedef void (* _xt_isr)(void);
-/* This function is implemeneted in FreeRTOS port.c at the moment,
-   should be moved or converted to an inline */
-void        _xt_isr_attach (uint8_t i, _xt_isr func);
+typedef void (* _xt_isr)(void *arg);
+void _xt_isr_attach (uint8_t i, _xt_isr func, void *arg);
 
 #endif
