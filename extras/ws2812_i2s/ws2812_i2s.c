@@ -60,7 +60,7 @@ volatile uint32_t dma_isr_counter = 0;
 
 static volatile bool i2s_dma_processing = false;
 
-static void dma_isr_handler(void)
+static void dma_isr_handler(void *arg)
 {
     if (i2s_dma_is_eof_interrupt()) {
 #ifdef WS2812_I2S_DEBUG
@@ -145,7 +145,7 @@ void ws2812_i2s_init(uint32_t pixels_number)
     debug("i2s clock dividers, bclk=%d, clkm=%d\n",
             clock_div.bclk_div, clock_div.clkm_div);
 
-    i2s_dma_init(dma_isr_handler, clock_div, i2s_pins);
+    i2s_dma_init(dma_isr_handler, NULL, clock_div, i2s_pins);
 }
 
 const IRAM_DATA int16_t bitpatterns[16] =
