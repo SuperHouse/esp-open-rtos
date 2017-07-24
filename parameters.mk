@@ -66,7 +66,7 @@ COMPONENTS     ?= $(EXTRA_COMPONENTS) FreeRTOS lwip core open_esplibs
 SDK_LIBS		?= main net80211 phy pp wpa
 
 # open source libraries linked in
-LIBS ?= hal gcc c
+LIBS ?= hal
 
 # set to 0 if you want to use the toolchain libc instead of esp-open-rtos newlib
 OWN_LIBC ?= 1
