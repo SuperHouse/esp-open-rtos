@@ -13,8 +13,13 @@
 // In normal mode measurement is done continuously with specified standby time. 
 // #define MODE_FORCED
 
+#ifdef ESP8285
 const uint8_t scl_pin = 0;
 const uint8_t sda_pin = 2;
+#else // ESP8266
+const uint8_t scl_pin = 5;
+const uint8_t sda_pin = 4;
+#endif
 
 #ifdef MODE_FORCED
 static void bmp280_task_forced(void *pvParameters)
