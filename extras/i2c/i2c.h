@@ -36,8 +36,6 @@ extern "C" {
 #endif
 
 
-#define I2C_FREQUENCY_400K true  // for test WIP
-
 /*
  *  Some bit can be transmit slower.
  *  Selected frequency fix the speed of a bit transmission
