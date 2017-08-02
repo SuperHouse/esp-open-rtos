@@ -13,6 +13,8 @@
 
 #include "i2c/i2c.h"
 
+static uint8_t _bus;
+
 /* Convert normal decimal to binary coded decimal */
 static inline uint8_t  decToBcd(uint8_t dec)
 {
@@ -30,7 +32,7 @@ static inline uint8_t  bcdToDec(uint8_t bcd)
  */
 static inline int ds3231_send(uint8_t reg, uint8_t *data, uint8_t len)
 {
-    return i2c_slave_write(DS3231_ADDR, &reg, data, len);
+    return i2c_slave_write(_bus, DS3231_ADDR, &reg, data, len);
 }
 
 /* Read a number of bytes from the rtc over i2c
@@ -38,7 +40,7 @@ static inline int ds3231_send(uint8_t reg, uint8_t *data, uint8_t len)
  */
 static inline int ds3231_recv(uint8_t reg, uint8_t *data, uint8_t len)
 {
-    return i2c_slave_read(DS3231_ADDR, &reg, data, len);
+    return i2c_slave_read(_bus, DS3231_ADDR, &reg, data, len);
 }
 
 int ds3231_setTime(struct tm *time)
@@ -281,10 +283,11 @@ bool ds3231_getTime(struct tm *time)
     //applyTZ(time);
 
     return true;
-    
+
 }
 
-void ds3231_Init(uint8_t scl, uint8_t sda)
+void ds3231_Init(uint8_t bus)
 {
-    i2c_init(scl, sda);
+    _bus = bus;
+    //i2c_init(0, scl, sda);
 }

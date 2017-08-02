@@ -1,4 +1,4 @@
-/* Test code for DS3231 high precision RTC module 
+/* Test code for DS3231 high precision RTC module
  *
  * Part of esp-open-rtos
  * Copyright (C) 2016 Bhuvanchandra DV <bhuvanchandra.dv@gmail.com>
@@ -35,7 +35,8 @@ void user_init(void)
     printf("SDK version : %s\n", sdk_system_get_sdk_version());
     printf("GIT version : %s\n", GITSHORTREV);
 
-    ds3231_Init(scl, sda);
+    i2c_init(0,scl,sda,I2C_FREQ_400K);
+    ds3231_Init(0);
 
     xTaskCreate(task1, "tsk1", 256, NULL, 2, NULL);
 }
