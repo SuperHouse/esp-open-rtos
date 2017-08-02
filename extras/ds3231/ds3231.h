@@ -186,7 +186,7 @@ bool ds3231_getTempFloat(float *temp);
  * returns true to indicate success
  */
 bool ds3231_getTime(struct tm *time);
-void ds3231_Init(uint8_t scl, uint8_t sda);
+void ds3231_Init(uint8_t bus);
 
 #ifdef	__cplusplus
 }
