@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <i2c/i2c.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -60,7 +61,7 @@ typedef struct
  */
 typedef struct
 {
-    uint8_t addr;                           //!< I2C address
+    i2c_dev_t i2c_dev;                           //!< I2C device settings
     ms561101ba03_osr_t osr;                 //!< Oversampling setting
     ms561101ba03_config_data_t config_data; //!< Device configuration, filled upon initalize
     ms561101ba03_result_t result;           //!< Result, filled upon co
