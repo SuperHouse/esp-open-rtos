@@ -48,10 +48,6 @@ void user_init(void)
     };
     sdk_wifi_softap_set_config(&ap_config);
 
-    ip_addr_t first_client_ip;
-    IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
-    dhcpserver_start(&first_client_ip, 4);
-
     xTaskCreate(telnetTask, "telnetTask", 512, NULL, 2, NULL);
 }
 
@@ -60,6 +56,10 @@ void user_init(void)
 */
 static void telnetTask(void *pvParameters)
 {
+  ip_addr_t first_client_ip;
+  IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
+  dhcpserver_start(sdk_system_get_netif(SOFTAP_IF), &first_client_ip, 4);
+
   struct netconn *nc = netconn_new (NETCONN_TCP);
   if(!nc) {
     printf("Status monitor: Failed to allocate socket.\r\n");

@@ -77,8 +77,12 @@ inline static void sprintf_ipaddr(const ip_addr_t *addr, char *dest)
                 ip4_addr2(addr), ip4_addr3(addr), ip4_addr4(addr));
 }
 
-void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases)
+void dhcpserver_start(struct netif *server_if, const ip_addr_t *first_client_addr, uint8_t max_leases)
 {
+    if(!server_if){
+        printf("DHCP Server Error: server_if is NULL.\r\n");
+        return;
+    }
     /* Stop any existing running dhcpserver */
     if(dhcpserver_task_handle)
         dhcpserver_stop();
@@ -89,7 +93,7 @@ void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases)
     // state->server_if is assigned once the task is running - see comment in dhcpserver_task()
     ip_addr_copy(state->first_client_addr, *first_client_addr);
 
-    xTaskCreate(dhcpserver_task, "DHCPServer", 768, NULL, 8, &dhcpserver_task_handle);
+    xTaskCreate(dhcpserver_task, "DHCPServer", 768, server_if, 8, &dhcpserver_task_handle);
 }
 
 void dhcpserver_stop(void)
@@ -104,7 +108,7 @@ void dhcpserver_stop(void)
 static void dhcpserver_task(void *pxParameter)
 {
     /* netif_list isn't assigned until after user_init completes, which is why we do it inside the task */
-    state->server_if = netif_list; /* TODO: Make this configurable */
+    state->server_if = pxParameter;
 
     state->nc = netconn_new (NETCONN_UDP);
     if(!state->nc) {
