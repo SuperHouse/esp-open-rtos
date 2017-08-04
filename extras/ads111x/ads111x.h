@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <i2c/i2c.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -124,20 +125,20 @@ typedef enum
  * @param addr Deivce address
  * @return true when device performing conversion
  */
-bool ads111x_busy(uint8_t addr);
+bool ads111x_busy(i2c_dev_t* dev);
 
 /**
  * Begin a single conversion (when in single-shot mode)
  * @param addr Deivce address
  */
-void ads111x_start_conversion(uint8_t addr);
+void ads111x_start_conversion(i2c_dev_t* dev);
 
 /**
  * Read last conversion result
  * @param addr
  * @return Last conversion result
  */
-int16_t ads111x_get_value(uint8_t addr);
+int16_t ads111x_get_value(i2c_dev_t* dev);
 
 /**
  * Read the programmable gain amplifier configuration
@@ -145,70 +146,70 @@ int16_t ads111x_get_value(uint8_t addr);
  * @param addr Deivce address
  * @return Gain value
  */
-ads111x_gain_t ads111x_get_gain(uint8_t addr);
+ads111x_gain_t ads111x_get_gain(i2c_dev_t* dev);
 
 /**
  * Configure the programmable gain amplifier (ADS1114 and ADS1115 only)
  * @param addr Deivce address
  * @param gain Gain value
  */
-void ads111x_set_gain(uint8_t addr, ads111x_gain_t gain);
+void ads111x_set_gain(i2c_dev_t* dev, ads111x_gain_t gain);
 
 /**
  * Read the input multiplexer configuration (ADS1115 only)
  * @param addr Deivce address
  * @return Input multiplexer configuration
  */
-ads111x_mux_t ads111x_get_input_mux(uint8_t addr);
+ads111x_mux_t ads111x_get_input_mux(i2c_dev_t* dev);
 
 /**
  * Configure the input multiplexer configuration (ADS1115 only)
  * @param addr Deivce address
  * @param mux Input multiplexer configuration
  */
-void ads111x_set_input_mux(uint8_t addr, ads111x_mux_t mux);
+void ads111x_set_input_mux(i2c_dev_t* dev, ads111x_mux_t mux);
 
 /**
  * Read the device operating mode
  * @param addr Deivce address
  * @return Device operating mode
  */
-ads111x_mode_t ads111x_get_mode(uint8_t addr);
+ads111x_mode_t ads111x_get_mode(i2c_dev_t* dev);
 
 /**
  * Set the device operating mode
  * @param addr Deivce address
  * @param mode Device operating mode
  */
-void ads111x_set_mode(uint8_t addr, ads111x_mode_t mode);
+void ads111x_set_mode(i2c_dev_t* dev, ads111x_mode_t mode);
 
 /**
  * Read the data rate
  * @param addr Deivce address
  * @return Data rate
  */
-ads111x_data_rate_t ads111x_get_data_rate(uint8_t addr);
+ads111x_data_rate_t ads111x_get_data_rate(i2c_dev_t* dev);
 
 /**
  * Configure the data rate
  * @param addr Deivce address
  * @param rate Data rate
  */
-void ads111x_set_data_rate(uint8_t addr, ads111x_data_rate_t rate);
+void ads111x_set_data_rate(i2c_dev_t* dev, ads111x_data_rate_t rate);
 
 /**
  * Get comparator mode (ADS1114 and ADS1115 only)
  * @param addr Deivce address
  * @return Comparator mode
  */
-ads111x_comp_mode_t ads111x_get_comp_mode(uint8_t addr);
+ads111x_comp_mode_t ads111x_get_comp_mode(i2c_dev_t* dev);
 
 /**
  * Set comparator mode (ADS1114 and ADS1115 only)
  * @param addr Deivce address
  * @param mode Comparator mode
  */
-void ads111x_set_comp_mode(uint8_t addr, ads111x_comp_mode_t mode);
+void ads111x_set_comp_mode(i2c_dev_t* dev, ads111x_comp_mode_t mode);
 
 /**
  * Get polarity of the comparator output pin ALERT/RDY
@@ -216,7 +217,7 @@ void ads111x_set_comp_mode(uint8_t addr, ads111x_comp_mode_t mode);
  * @param addr Deivce address
  * @return Comparator output pin polarity
  */
-ads111x_comp_polarity_t ads111x_get_comp_polarity(uint8_t addr);
+ads111x_comp_polarity_t ads111x_get_comp_polarity(i2c_dev_t* dev);
 
 /**
  * Set polarity of the comparator output pin ALERT/RDY
@@ -224,7 +225,7 @@ ads111x_comp_polarity_t ads111x_get_comp_polarity(uint8_t addr);
  * @param addr Deivce address
  * @param polarity Comparator output pin polarity
  */
-void ads111x_set_comp_polarity(uint8_t addr, ads111x_comp_polarity_t polarity);
+void ads111x_set_comp_polarity(i2c_dev_t* dev, ads111x_comp_polarity_t polarity);
 
 /**
  * Get comparator output latch mode, see datasheet.
@@ -232,14 +233,14 @@ void ads111x_set_comp_polarity(uint8_t addr, ads111x_comp_polarity_t polarity);
  * @param addr Deivce address
  * @return Comparator output latch mode
  */
-ads111x_comp_latch_t ads111x_get_comp_latch(uint8_t addr);
+ads111x_comp_latch_t ads111x_get_comp_latch(i2c_dev_t* dev);
 
 /**
  * Set comparator output latch mode (ADS1114 and ADS1115 only)
  * @param addr Deivce address
  * @param latch Comparator output latch mode
  */
-void ads111x_set_comp_latch(uint8_t addr, ads111x_comp_latch_t latch);
+void ads111x_set_comp_latch(i2c_dev_t* dev, ads111x_comp_latch_t latch);
 
 /**
  * Set number of the comparator conversions before pin ALERT/RDY
@@ -247,7 +248,7 @@ void ads111x_set_comp_latch(uint8_t addr, ads111x_comp_latch_t latch);
  * @param addr Deivce address
  * @return Number of the comparator conversions
  */
-ads111x_comp_queue_t ads111x_get_comp_queue(uint8_t addr);
+ads111x_comp_queue_t ads111x_get_comp_queue(i2c_dev_t* dev);
 
 /**
  * Get number of the comparator conversions before pin ALERT/RDY
@@ -255,35 +256,35 @@ ads111x_comp_queue_t ads111x_get_comp_queue(uint8_t addr);
  * @param addr Deivce address
  * @param queue Number of the comparator conversions
  */
-void ads111x_set_comp_queue(uint8_t addr, ads111x_comp_queue_t queue);
+void ads111x_set_comp_queue(i2c_dev_t* dev, ads111x_comp_queue_t queue);
 
 /**
  * Get the lower threshold value used by comparator
  * @param addr Deivce address
  * @return Lower threshold value
  */
-int16_t ads111x_get_comp_low_thresh(uint8_t addr);
+int16_t ads111x_get_comp_low_thresh(i2c_dev_t* dev);
 
 /**
  * Set the lower threshold value used by comparator
  * @param addr Deivce address
  * @param thresh Lower threshold value
  */
-void ads111x_set_comp_low_thresh(uint8_t addr, int16_t thresh);
+void ads111x_set_comp_low_thresh(i2c_dev_t* dev, int16_t thresh);
 
 /**
  * Get the upper threshold value used by comparator
  * @param addr Deivce address
  * @return Upper threshold value
  */
-int16_t ads111x_get_comp_high_thresh(uint8_t addr);
+int16_t ads111x_get_comp_high_thresh(i2c_dev_t* dev);
 
 /**
  * Set the upper threshold value used by comparator
  * @param addr Deivce address
  * @param thresh Upper threshold value
  */
-void ads111x_set_comp_high_thresh(uint8_t addr, int16_t thresh);
+void ads111x_set_comp_high_thresh(i2c_dev_t* dev, int16_t thresh);
 
 #ifdef __cplusplus
 }

@@ -66,7 +66,7 @@ void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, uint8_t freq)
 
     // Prevent user, if frequency is high
     if (sdk_system_get_cpu_freq() == SYS_CPU_80MHZ)
-        if (I2C_CUSTOM_DELAY_80MHZ == 1)
+        if (i2c_freq_array[i2c_bus[bus].frequency][1] == 1)
             debug("Max frequency is 320Khz at 80MHz");
 
 }
@@ -130,12 +130,12 @@ static inline void clear_sda(uint8_t bus)
 // Output start condition
 void i2c_start(uint8_t bus)
 {
-    uint32_t clk_stretch = CLK_STRETCH;
     freq = sdk_system_get_cpu_freq();
     if (i2c_bus[bus].started) { // if started, do a restart cond
         // Set SDA to 1
         (void) read_sda(bus);
         i2c_delay(bus);
+        uint32_t clk_stretch = CLK_STRETCH;
         while (read_scl(bus) == 0 && clk_stretch--) ;
         // Repeated start setup time, minimum 4.7us
         i2c_delay(bus);
@@ -229,7 +229,7 @@ uint8_t i2c_read(uint8_t bus, bool ack)
     uint8_t byte = 0;
     uint8_t bit;
     for (bit = 0; bit < 8; bit++) {
-        byte = (byte << 1) | i2c_read_bit(bus);
+        byte = ((byte << 1)) | (i2c_read_bit(bus));
     }
     i2c_write_bit(bus,ack);
     return byte;
