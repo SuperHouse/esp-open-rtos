@@ -132,7 +132,7 @@ typedef union
  *  Device description
  */
 typedef struct {
-    const uint8_t addr; // ina3221 I2C address
+    const i2c_dev_t i2c_dev; // ina3221 I2C address
     const uint16_t shunt[BUS_NUMBER]; //Memory of shunt value  (mOhm)
     ina3221_config_t config; //Memory of ina3221 config
     ina3221_mask_t mask; //Memory of mask_config

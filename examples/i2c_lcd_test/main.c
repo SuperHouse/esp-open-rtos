@@ -13,6 +13,7 @@
 
 #include <hd44780/hd44780.h>
 
+#define I2C_BUS 0
 #define SCL_PIN 5
 #define SDA_PIN 4
 #define ADDR 0x27
@@ -27,10 +28,11 @@ void user_init(void)
     uart_set_baud(0, 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
-    i2c_init(SCL_PIN, SDA_PIN);
+    i2c_init(I2C_BUS, SCL_PIN, SDA_PIN, I2C_FREQ_100K);
 
     hd44780_t lcd = {
-        .addr = ADDR,
+        .i2c_dev.bus = I2C_BUS,
+        .i2c_dev.addr = ADDR,
         .font = HD44780_FONT_5X8,
         .lines = 2,
         .pins = {

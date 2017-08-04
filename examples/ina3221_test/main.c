@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include "ina3221/ina3221.h"
 
+#define I2C_BUS 0
 #define PIN_SCL 5
 #define PIN_SDA 2
 #define ADDR INA3221_ADDR_0
@@ -33,7 +34,8 @@ void ina_measure(void *pvParameters)
 
     // Create ina3221 device
     ina3221_t dev = {
-            .addr = ADDR,
+            .i2c_dev.bus = I2C_BUS,
+            .i2c_dev.addr = ADDR,
             .shunt = { 100 ,100 ,100 },  // shunt values are 100 mOhm for each channel
             .mask.mask_register = INA3221_DEFAULT_MASK, // Init
             .config.config_register = INA3221_DEFAULT_CONFIG, // Init
@@ -120,7 +122,7 @@ void user_init(void)
     uart_set_baud(0, 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
-    i2c_init(PIN_SCL,PIN_SDA);
+    i2c_init(I2C_BUS, PIN_SCL, PIN_SDA, I2C_FREQ_400K);
 
     xTaskCreate(ina_measure, "Measurements_task", 512, NULL, 2, NULL);
 }
