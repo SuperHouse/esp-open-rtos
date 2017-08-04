@@ -12,7 +12,10 @@
 #include <stdbool.h>
 
 #ifndef HD44780_I2C
-#define HD44780_I2C 0
+#define HD44780_I2C 1
+#endif
+#if (HD44780_I2C)
+#include <i2c/i2c.h>
 #endif
 
 #ifdef __cplusplus
@@ -36,7 +39,9 @@ typedef enum
  */
 typedef struct
 {
-    uint8_t addr;          //!< PCF8574 address (0b0100<A2><A1><A0>)
+#if (HD44780_I2C)
+      i2c_dev_t i2c_dev;          //!< PCF8574 device settings (0b0100<A2><A1><A0>)
+#endif
     struct
     {
         uint8_t rs;        //!< gpio/register bit used for RS pin

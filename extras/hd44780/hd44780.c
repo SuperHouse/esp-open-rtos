@@ -60,8 +60,8 @@ static void write_nibble(const hd44780_t *lcd, uint8_t b, bool rs)
                  | (rs ? 1 << lcd->pins.rs : 0)
                  | (lcd->backlight ? 1 << lcd->pins.bl : 0);
 
-    pcf8574_port_write(lcd->addr, data | (1 << lcd->pins.e));
-    pcf8574_port_write(lcd->addr, data);
+    pcf8574_port_write(&lcd->i2c_dev, data | (1 << lcd->pins.e));
+    pcf8574_port_write(&lcd->i2c_dev, data);
 #else
     gpio_write(lcd->pins.d7, (b >> 3) & 1);
     gpio_write(lcd->pins.d6, (b >> 2) & 1);
@@ -164,7 +164,7 @@ void hd44780_set_backlight(hd44780_t *lcd, bool on)
         return;
 
 #if (HD44780_I2C)
-    pcf8574_gpio_write(lcd->addr, lcd->pins.bl, on);
+    pcf8574_gpio_write(&lcd->i2c_dev, lcd->pins.bl, on);
 #else
      gpio_write(lcd->pins.bl, on);
 #endif
