@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
+#include <i2c/i2c.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,7 +66,7 @@ extern "C" {
  *
  * Example: BH1750_ADDR_LO, BH1750_CONTINUOUS_MODE | BH1750_HIGH_RES_MODE
  */
-void bh1750_configure(uint8_t addr, uint8_t mode);
+void bh1750_configure(i2c_dev_t *dev, uint8_t mode);
 
 /**
  * Read LUX value from the device.
@@ -73,7 +74,7 @@ void bh1750_configure(uint8_t addr, uint8_t mode);
  * @param addr Device address
  * @returns read value in lux units
  */
-uint16_t bh1750_read(uint8_t addr);
+uint16_t bh1750_read(i2c_dev_t *dev);
 
 #ifdef __cplusplus
 }

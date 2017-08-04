@@ -8,7 +8,6 @@
 #include <esp/uart.h>
 #include <espressif/esp_common.h>
 #include <stdio.h>
-#include <i2c/i2c.h>
 #include <ad770x/ad770x.h>
 #include <FreeRTOS.h>
 #include <task.h>

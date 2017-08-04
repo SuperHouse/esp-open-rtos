@@ -51,8 +51,17 @@ extern "C" {
 
 const static uint8_t i2c_freq_array[3][2] = { {100,20}, {10,1}, {6,1} } ;
 
+/**
+ * Device descriptor
+ */
+typedef struct i2c_dev {
+  uint8_t bus ;
+  uint8_t addr ;
+} i2c_dev_t ;
 
-
+/**
+ * Bus settings
+ */
 typedef struct i2c_bus_description {
   uint8_t g_scl_pin;  // Scl pin
   uint8_t g_sda_pin;  // Sda pin
