@@ -29,6 +29,7 @@
 #ifdef I2C_CONNECTION
     #define PROTOCOL SSD1306_PROTO_I2C
     #define ADDR     SSD1306_I2C_ADDR_0
+    #define I2C_BUS  0
     #define SCL_PIN  5
     #define SDA_PIN  4
 #else
@@ -43,7 +44,8 @@
 static const ssd1306_t dev = {
     .protocol = PROTOCOL,
 #ifdef I2C_CONNECTION
-    .addr     = ADDR,
+.i2c_dev.bus      = I2C_BUS,
+.i2c_dev.addr     = ADDR,
 #else
     .cs_pin   = CS_PIN,
     .dc_pin   = DC_PIN,
@@ -162,7 +164,7 @@ void user_init(void)
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
 #ifdef I2C_CONNECTION
-    i2c_init(SCL_PIN, SDA_PIN);
+    i2c_init(I2C_BUS, SCL_PIN, SDA_PIN, I2C_FREQ_400K);
 #endif
 
     while (ssd1306_init(&dev) != 0) {

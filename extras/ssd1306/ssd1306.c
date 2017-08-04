@@ -11,9 +11,6 @@
  */
 #include "ssd1306.h"
 #include <stdio.h>
-#if (SSD1306_I2C_SUPPORT)
-    #include <i2c/i2c.h>
-#endif
 #if (SSD1306_SPI4_SUPPORT) || (SSD1306_SPI3_SUPPORT)
     #include <esp/spi.h>
 #endif
@@ -92,14 +89,14 @@
 #if (SSD1306_I2C_SUPPORT)
 static int inline i2c_send(const ssd1306_t *dev, uint8_t reg, uint8_t* data, uint8_t len)
 {
-    return i2c_slave_write(dev->addr, &reg, data, len);
+    return i2c_slave_write(dev->i2c_dev.bus, dev->i2c_dev.addr , &reg, data, len);
 }
 #endif
 
 /* Issue a command to SSD1306 device
  * I2C proto format:
  * |S|Slave Address|W|ACK|0x00|Command|Ack|P|
- * 
+ *
  * in case of two-bytes command here will be Data byte
  * right after the command byte.
  */
