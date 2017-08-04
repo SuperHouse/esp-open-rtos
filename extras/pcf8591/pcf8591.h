@@ -9,6 +9,8 @@
 #ifndef _EXTRAS_PCF8591_H_
 #define _EXTRAS_PCF8591_H_
 
+#include <i2c/i2c.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -20,7 +22,7 @@ extern "C"
 
 #define PCF8591_DEFAULT_ADDRESS 0x48
 
-void pcf8591_init(void);
+void pcf8591_init(void); //FIXME : library incomplete ?
 
 /**
  * Read input value of an analog pin.
@@ -32,7 +34,7 @@ void pcf8591_init(void);
  *            3 - AIN3
  * @return analog value
  */
-uint8_t pcf8591_read(uint8_t addr, uint8_t analog_pin);
+uint8_t pcf8591_read(i2c_dev_t* dev, uint8_t analog_pin);
 
 
 #ifdef __cplusplus
