@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <i2c/i2c.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +39,7 @@ typedef enum
 } tsl2561_gain_t;
 
 typedef struct {
-    tsl2561_i2c_addr_t i2c_addr;
+    i2c_dev_t i2c_dev;
     uint8_t integration_time;
     uint8_t gain;
     uint8_t package_type;
