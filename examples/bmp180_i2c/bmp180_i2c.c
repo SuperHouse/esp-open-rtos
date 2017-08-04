@@ -13,17 +13,24 @@
 // BMP180 driver
 #include "bmp180/bmp180.h"
 
-#define MY_EVT_TIMER  0x01
-#define MY_EVT_BMP180 0x02
-
+#define I2C_BUS 0
 #define SCL_PIN GPIO_ID_PIN((0))
 #define SDA_PIN GPIO_ID_PIN((2))
+
+#define MY_EVT_TIMER  0x01
+#define MY_EVT_BMP180 0x02
 
 typedef struct
 {
     uint8_t event_type;
     bmp180_result_t bmp180_data;
 } my_event_t;
+
+//device descriptor
+i2c_dev_t dev = {
+    .addr = BMP180_DEVICE_ADDRESS,
+    .bus = I2C_BUS,
+};
 
 // Communication Queue
 static QueueHandle_t mainqueue;
@@ -70,7 +77,7 @@ void bmp180_task(void *pvParameters)
         case MY_EVT_TIMER:
             printf("%s: Received Timer Event\n", __FUNCTION__);
 
-            bmp180_trigger_measurement(com_queue);
+            bmp180_trigger_measurement(&dev, com_queue);
             break;
         case MY_EVT_BMP180:
             printf("%s: Received BMP180 Event temp:=%d.%dC press=%d.%02dhPa\n", __FUNCTION__, \
@@ -91,6 +98,9 @@ void user_setup(void)
 
     // Give the UART some time to settle
     sdk_os_delay_us(500);
+
+    // Init I2C bus Interface
+    i2c_init(I2C_BUS, SCL_PIN, SDA_PIN, I2C_FREQ_100K);
 }
 
 void user_init(void)
@@ -107,7 +117,7 @@ void user_init(void)
     bmp180_informUser = bmp180_i2c_informUser;
 
     // Init BMP180 Interface
-    bmp180_init(SCL_PIN, SDA_PIN);
+    bmp180_init(&dev);
 
     // Create Main Communication Queue
     mainqueue = xQueueCreate(10, sizeof(my_event_t));
