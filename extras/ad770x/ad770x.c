@@ -179,4 +179,3 @@ uint16_t ad770x_raw_adc_value(const ad770x_params_t *params, uint8_t channel)
     prepare(channel, REG_DATA, true, params->cs_pin, false);
     return read_word(params->cs_pin);
 }
-

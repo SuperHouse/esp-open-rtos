@@ -11,6 +11,7 @@
 #include <ds1307/ds1307.h>
 #include <stdio.h>
 
+#define I2C_BUS 0
 #define SCL_PIN 5
 #define SDA_PIN 4
 
@@ -19,8 +20,12 @@ void user_init(void)
     uart_set_baud(0, 115200);
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
-    i2c_init(SCL_PIN, SDA_PIN);
-    ds1307_start(true);
+    i2c_init(I2C_BUS, SCL_PIN, SDA_PIN, I2C_FREQ_400K);
+    i2c_dev_t dev = {
+        .addr = DS1307_ADDR,
+        .bus = I2C_BUS,
+    };
+    ds1307_start(&dev, true);
 
     // setup datetime: 2016-10-09 13:50:10
     struct tm time = {
@@ -31,11 +36,11 @@ void user_init(void)
         .tm_min  = 50,
         .tm_sec  = 10
     };
-    ds1307_set_time(&time);
+    ds1307_set_time(&dev, &time);
 
     while (true)
     {
-        ds1307_get_time(&time);
+        ds1307_get_time(&dev, &time);
 
         printf("%04d-%02d-%02d %02d:%02d:%02d\n", time.tm_year, time.tm_mon + 1,
             time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);

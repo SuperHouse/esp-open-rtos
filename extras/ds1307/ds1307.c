@@ -6,10 +6,8 @@
  * BSD Licensed as described in the file LICENSE
  */
 #include "ds1307.h"
-#include <i2c/i2c.h>
 #include <stdio.h>
 
-#define ADDR 0x68
 #define RAM_SIZE 56
 
 #define TIME_REG    0
@@ -40,36 +38,36 @@ static uint8_t dec2bcd(uint8_t val)
     return ((val / 10) << 4) + (val % 10);
 }
 
-static uint8_t read_register(uint8_t reg)
+static uint8_t read_register(i2c_dev_t* dev, uint8_t reg)
 {
     uint8_t val;
-    i2c_slave_read(ADDR, &reg, &val, 1);
+    i2c_slave_read(dev->bus, dev->addr, &reg, &val, 1);
     return val;
 }
 
-static void update_register(uint8_t reg, uint8_t mask, uint8_t val)
+static void update_register(i2c_dev_t* dev, uint8_t reg, uint8_t mask, uint8_t val)
 {
-    uint8_t buf = (read_register(reg) & mask) | val;
+    uint8_t buf = (read_register(dev,reg) & mask) | val;
 
-    i2c_slave_write(ADDR, &reg, &buf, 1);
+    i2c_slave_write(dev->bus, dev->addr, &reg, &buf, 1);
 }
 
-void ds1307_start(bool start)
+void ds1307_start(i2c_dev_t* dev, bool start)
 {
-    update_register(TIME_REG, CH_MASK, start ? 0 : CH_BIT);
+    update_register(dev, TIME_REG, CH_MASK, start ? 0 : CH_BIT);
 }
 
-bool ds1307_is_running()
+bool ds1307_is_running(i2c_dev_t* dev)
 {
-    return !(read_register(TIME_REG) & CH_BIT);
+    return !(read_register(dev, TIME_REG) & CH_BIT);
 }
 
-void ds1307_get_time(struct tm *time)
+void ds1307_get_time(i2c_dev_t* dev, struct tm *time)
 {
     uint8_t buf[7];
     uint8_t reg = TIME_REG ;
 
-    i2c_slave_read(ADDR, &reg , buf, 7);
+    i2c_slave_read(dev->bus, dev->addr, &reg , buf, 7);
 
     time->tm_sec = bcd2dec(buf[0] & SECONDS_MASK);
     time->tm_min = bcd2dec(buf[1]);
@@ -87,7 +85,7 @@ void ds1307_get_time(struct tm *time)
     time->tm_year = bcd2dec(buf[6]) + 2000;
 }
 
-void ds1307_set_time(const struct tm *time)
+void ds1307_set_time(i2c_dev_t* dev, const struct tm *time)
 {
     uint8_t buf[8];
     buf[0] = TIME_REG;
@@ -99,51 +97,51 @@ void ds1307_set_time(const struct tm *time)
     buf[6] = dec2bcd(time->tm_mon + 1);
     buf[7] = dec2bcd(time->tm_year - 2000);
 
-    i2c_slave_write(ADDR, &buf[0], &buf[1] , 7);
+    i2c_slave_write(dev->bus, dev->addr, &buf[0], &buf[1] , 7);
 }
 
-void ds1307_enable_squarewave(bool enable)
+void ds1307_enable_squarewave(i2c_dev_t* dev, bool enable)
 {
-    update_register(CONTROL_REG, SQWE_MASK, enable ? SQWE_BIT : 0);
+    update_register(dev, CONTROL_REG, SQWE_MASK, enable ? SQWE_BIT : 0);
 }
 
-bool ds1307_is_squarewave_enabled()
+bool ds1307_is_squarewave_enabled(i2c_dev_t* dev)
 {
-    return read_register(CONTROL_REG) & SQWE_BIT;
+    return read_register(dev, CONTROL_REG) & SQWE_BIT;
 }
 
-void ds1307_set_squarewave_freq(ds1307_squarewave_freq_t freq)
+void ds1307_set_squarewave_freq(i2c_dev_t* dev, ds1307_squarewave_freq_t freq)
 {
-    update_register(CONTROL_REG, SQWEF_MASK, (uint8_t)freq);
+    update_register(dev, CONTROL_REG, SQWEF_MASK, (uint8_t)freq);
 }
 
-ds1307_squarewave_freq_t ds1307_get_squarewave_freq()
+ds1307_squarewave_freq_t ds1307_get_squarewave_freq(i2c_dev_t* dev)
 {
-    return (ds1307_squarewave_freq_t)(read_register(CONTROL_REG) & SQWEF_MASK);
+    return (ds1307_squarewave_freq_t)(read_register(dev, CONTROL_REG) & SQWEF_MASK);
 }
 
-bool ds1307_get_output()
+bool ds1307_get_output(i2c_dev_t* dev)
 {
-    return read_register(CONTROL_REG) & OUT_BIT;
+    return read_register(dev, CONTROL_REG) & OUT_BIT;
 }
 
-void ds1307_set_output(bool value)
+void ds1307_set_output(i2c_dev_t* dev, bool value)
 {
-    update_register(CONTROL_REG, OUT_MASK, value ? OUT_BIT : 0);
+    update_register(dev, CONTROL_REG, OUT_MASK, value ? OUT_BIT : 0);
 }
 
-int ds1307_read_ram(uint8_t offset, uint8_t *buf, uint8_t len)
-{
-    if (offset + len > RAM_SIZE) return false;
-    uint8_t reg = RAM_REG + offset ;
-
-    return i2c_slave_read(ADDR, &reg, buf, len);
-}
-
-int ds1307_write_ram(uint8_t offset, uint8_t *buf, uint8_t len)
+int ds1307_read_ram(i2c_dev_t* dev, uint8_t offset, uint8_t *buf, uint8_t len)
 {
     if (offset + len > RAM_SIZE) return false;
     uint8_t reg = RAM_REG + offset ;
 
-    return i2c_slave_write(ADDR, &reg, buf, len);
+    return i2c_slave_read(dev->bus, dev->addr, &reg, buf, len);
+}
+
+int ds1307_write_ram(i2c_dev_t* dev, uint8_t offset, uint8_t *buf, uint8_t len)
+{
+    if (offset + len > RAM_SIZE) return false;
+    uint8_t reg = RAM_REG + offset ;
+
+    return i2c_slave_write(dev->bus, dev->addr, &reg, buf, len);
 }

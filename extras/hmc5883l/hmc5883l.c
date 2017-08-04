@@ -6,10 +6,8 @@
  * BSD Licensed as described in the file LICENSE
  */
 #include "hmc5883l.h"
-#include <i2c/i2c.h>
 #include <espressif/esp_common.h>
 
-#define ADDR 0x1e
 
 #define REG_CR_A 0x00
 #define REG_CR_B 0x01
@@ -54,112 +52,112 @@ static const float gain_values [] = {
 static float current_gain;
 static hmc5883l_operating_mode_t current_mode;
 
-static inline void write_register(uint8_t reg, uint8_t val)
+static inline void write_register(i2c_dev_t* dev, uint8_t reg, uint8_t val)
 {
-    i2c_slave_write(ADDR, &reg, &val, 1);
+    i2c_slave_write(dev->bus, dev->addr, &reg, &val, 1);
 }
 
-static inline uint8_t read_register(uint8_t reg)
+static inline uint8_t read_register(i2c_dev_t* dev, uint8_t reg)
 {
     uint8_t res;
-    i2c_slave_read(ADDR, &reg, &res, 1);
+    i2c_slave_read(dev->bus, dev->addr, &reg, &res, 1);
     return res;
 }
 
-static inline void update_register(uint8_t reg, uint8_t mask, uint8_t val)
+static inline void update_register(i2c_dev_t* dev, uint8_t reg, uint8_t mask, uint8_t val)
 {
-    write_register(reg, (read_register(reg) & mask) | val);
+    write_register(dev, reg, (read_register(dev, reg) & mask) | val);
 }
 
-bool hmc5883l_init()
+bool hmc5883l_init(i2c_dev_t* dev)
 {
-    if (hmc5883l_get_id() != HMC5883L_ID)
+    if (hmc5883l_get_id(dev) != HMC5883L_ID)
         return false;
-    current_gain = gain_values[hmc5883l_get_gain()];
-    current_mode = hmc5883l_get_operating_mode();
+    current_gain = gain_values[hmc5883l_get_gain(dev)];
+    current_mode = hmc5883l_get_operating_mode(dev);
     return true;
 }
 
-uint32_t hmc5883l_get_id()
+uint32_t hmc5883l_get_id(i2c_dev_t* dev)
 {
     uint32_t res = 0;
     uint8_t reg = REG_ID_A;
-    i2c_slave_read(ADDR, &reg, (uint8_t *)&res, 3);
+    i2c_slave_read(dev->bus, dev->addr, &reg, (uint8_t *)&res, 3);
     return res;
 }
 
-hmc5883l_operating_mode_t hmc5883l_get_operating_mode()
+hmc5883l_operating_mode_t hmc5883l_get_operating_mode(i2c_dev_t* dev)
 {
-    uint8_t res = read_register(REG_MODE) & MASK_MD;
+    uint8_t res = read_register(dev, REG_MODE) & MASK_MD;
     return res == 0 ? HMC5883L_MODE_CONTINUOUS : HMC5883L_MODE_SINGLE;
 }
 
-void hmc5883l_set_operating_mode(hmc5883l_operating_mode_t mode)
+void hmc5883l_set_operating_mode(i2c_dev_t* dev, hmc5883l_operating_mode_t mode)
 {
-    write_register(REG_MODE, mode);
+    write_register(dev, REG_MODE, mode);
     current_mode = mode;
 }
 
-hmc5883l_samples_averaged_t hmc5883l_get_samples_averaged()
+hmc5883l_samples_averaged_t hmc5883l_get_samples_averaged(i2c_dev_t* dev)
 {
-    return (read_register(REG_CR_A) & MASK_MA) >> BIT_MA;
+    return (read_register(dev, REG_CR_A) & MASK_MA) >> BIT_MA;
 }
 
-void hmc5883l_set_samples_averaged(hmc5883l_samples_averaged_t samples)
+void hmc5883l_set_samples_averaged(i2c_dev_t* dev, hmc5883l_samples_averaged_t samples)
 {
-    update_register(REG_CR_A, MASK_MA, samples << BIT_MA);
+    update_register(dev, REG_CR_A, MASK_MA, samples << BIT_MA);
 }
 
-hmc5883l_data_rate_t hmc5883l_get_data_rate()
+hmc5883l_data_rate_t hmc5883l_get_data_rate(i2c_dev_t* dev)
 {
-    return (read_register(REG_CR_A) & MASK_DO) >> BIT_DO;
+    return (read_register(dev, REG_CR_A) & MASK_DO) >> BIT_DO;
 }
 
-void hmc5883l_set_data_rate(hmc5883l_data_rate_t rate)
+void hmc5883l_set_data_rate(i2c_dev_t* dev, hmc5883l_data_rate_t rate)
 {
-    update_register(REG_CR_A, MASK_DO, rate << BIT_DO);
+    update_register(dev, REG_CR_A, MASK_DO, rate << BIT_DO);
 }
 
-hmc5883l_bias_t hmc5883l_get_bias()
+hmc5883l_bias_t hmc5883l_get_bias(i2c_dev_t* dev)
 {
-    return read_register(REG_CR_A) & MASK_MS;
+    return read_register(dev, REG_CR_A) & MASK_MS;
 }
 
-void hmc5883l_set_bias(hmc5883l_bias_t bias)
+void hmc5883l_set_bias(i2c_dev_t* dev, hmc5883l_bias_t bias)
 {
-    update_register(REG_CR_A, MASK_MS, bias);
+    update_register(dev, REG_CR_A, MASK_MS, bias);
 }
 
-hmc5883l_gain_t hmc5883l_get_gain()
+hmc5883l_gain_t hmc5883l_get_gain(i2c_dev_t* dev)
 {
-    return read_register(REG_CR_B) >> BIT_GN;
+    return read_register(dev, REG_CR_B) >> BIT_GN;
 }
 
-void hmc5883l_set_gain(hmc5883l_gain_t gain)
+void hmc5883l_set_gain(i2c_dev_t* dev, hmc5883l_gain_t gain)
 {
-    write_register(REG_CR_B, gain << BIT_GN);
+    write_register(dev, REG_CR_B, gain << BIT_GN);
     current_gain = gain_values[gain];
 }
 
-bool hmc5883l_data_is_locked()
+bool hmc5883l_data_is_locked(i2c_dev_t* dev)
 {
-    return read_register(REG_STAT) & MASK_DL;
+    return read_register(dev, REG_STAT) & MASK_DL;
 }
 
-bool hmc5883l_data_is_ready()
+bool hmc5883l_data_is_ready(i2c_dev_t* dev)
 {
-    return read_register(REG_STAT) & MASK_DR;
+    return read_register(dev, REG_STAT) & MASK_DR;
 }
 
-bool hmc5883l_get_raw_data(hmc5883l_raw_data_t *data)
+bool hmc5883l_get_raw_data(i2c_dev_t* dev, hmc5883l_raw_data_t *data)
 {
     if (current_mode == HMC5883L_MODE_SINGLE)
     {
         // overwrite mode register for measurement
-        hmc5883l_set_operating_mode(current_mode);
+        hmc5883l_set_operating_mode(dev, current_mode);
         // wait for data
         uint32_t start = sdk_system_get_time();
-        while (!hmc5883l_data_is_ready())
+        while (!hmc5883l_data_is_ready(dev))
         {
             if (timeout_expired(start, MEASUREMENT_TIMEOUT))
                 return false;
@@ -167,7 +165,7 @@ bool hmc5883l_get_raw_data(hmc5883l_raw_data_t *data)
     }
     uint8_t buf[6];
     uint8_t reg = REG_DX_H;
-    i2c_slave_read(ADDR, &reg, buf, 6);
+    i2c_slave_read(dev->bus, dev->addr, &reg, buf, 6);
     data->x = ((int16_t)buf[REG_DX_H - REG_DX_H] << 8) | buf[REG_DX_L - REG_DX_H];
     data->y = ((int16_t)buf[REG_DY_H - REG_DX_H] << 8) | buf[REG_DY_L - REG_DX_H];
     data->z = ((int16_t)buf[REG_DZ_H - REG_DX_H] << 8) | buf[REG_DZ_L - REG_DX_H];
@@ -181,11 +179,11 @@ void hmc5883l_raw_to_mg(const hmc5883l_raw_data_t *raw, hmc5883l_data_t *mg)
     mg->z = raw->z * current_gain;
 }
 
-bool hmc5883l_get_data(hmc5883l_data_t *data)
+bool hmc5883l_get_data(i2c_dev_t* dev, hmc5883l_data_t *data)
 {
     hmc5883l_raw_data_t raw;
 
-    if (!hmc5883l_get_raw_data(&raw))
+    if (!hmc5883l_get_raw_data(dev, &raw))
         return false;
     hmc5883l_raw_to_mg(&raw, data);
     return true;

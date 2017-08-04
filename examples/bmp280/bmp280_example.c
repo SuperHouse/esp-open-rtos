@@ -10,9 +10,9 @@
 #include "bmp280/bmp280.h"
 
 // In forced mode user initiate measurement each time.
-// In normal mode measurement is done continuously with specified standby time. 
+// In normal mode measurement is done continuously with specified standby time.
 // #define MODE_FORCED
-
+const uint8_t i2c_bus = 0;
 const uint8_t scl_pin = 0;
 const uint8_t sda_pin = 2;
 
@@ -26,7 +26,8 @@ static void bmp280_task_forced(void *pvParameters)
     params.mode = BMP280_MODE_FORCED;
 
     bmp280_t bmp280_dev;
-    bmp280_dev.i2c_addr = BMP280_I2C_ADDRESS_0;
+    bmp280_dev.i2c_dev.bus = i2c_bus;
+    bmp280_dev.i2c_dev.addr = BMP280_I2C_ADDRESS_0;
 
     while (1) {
         while (!bmp280_init(&bmp280_dev, &params)) {
@@ -67,7 +68,8 @@ static void bmp280_task_normal(void *pvParameters)
     bmp280_init_default_params(&params);
 
     bmp280_t bmp280_dev;
-    bmp280_dev.i2c_addr = BMP280_I2C_ADDRESS_0;
+    bmp280_dev.i2c_dev.bus = i2c_bus;
+    bmp280_dev.i2c_dev.addr = BMP280_I2C_ADDRESS_0;
 
     while (1) {
         while (!bmp280_init(&bmp280_dev, &params)) {
@@ -103,7 +105,7 @@ void user_init(void)
     printf("SDK version : %s\n", sdk_system_get_sdk_version());
     printf("GIT version : %s\n", GITSHORTREV);
 
-    i2c_init(scl_pin, sda_pin);
+    i2c_init(i2c_bus, scl_pin, sda_pin, I2C_FREQ_400K);
 
 #ifdef MODE_FORCED
     xTaskCreate(bmp280_task_forced, "bmp280_task", 256, NULL, 2, NULL);
