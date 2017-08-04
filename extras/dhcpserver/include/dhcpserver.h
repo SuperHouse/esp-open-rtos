@@ -26,7 +26,7 @@ extern "C" {
    to a client.  Subsequent lease addresses are calculated by
    incrementing the final octet of the IPv4 address, up to max_leases.
 */
-void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases);
+void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases, bool dns);
 
 void dhcpserver_get_lease(const ip_addr_t *first_client_addr, uint8_t max_leases);
 
