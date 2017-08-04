@@ -150,7 +150,7 @@ typedef void (* gpio_interrupt_handler_t)(uint8_t gpio_num);
  *
  *   Example:
  *
- *   void IRAM gpio_interrupt_handler(void) {
+ *   void IRAM gpio_interrupt_handler(void *arg) {
  *        // check GPIO.STATUS
  *        // write GPIO.STATUS_CLEAR
  *        // Do something when GPIO changes

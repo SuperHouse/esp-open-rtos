@@ -43,7 +43,7 @@ typedef struct pwmInfoDefinition
 
 static PWMInfo pwmInfo;
 
-static void frc1_interrupt_handler(void)
+static void frc1_interrupt_handler(void *arg)
 {
     uint8_t i = 0;
     bool out = true;
@@ -97,7 +97,7 @@ void pwm_init(uint8_t npins, const uint8_t* pins)
     pwm_stop();
 
     /* set up ISRs */
-    _xt_isr_attach(INUM_TIMER_FRC1, frc1_interrupt_handler);
+    _xt_isr_attach(INUM_TIMER_FRC1, frc1_interrupt_handler, NULL);
 
     /* Flag not running */
     pwmInfo.running = 0;

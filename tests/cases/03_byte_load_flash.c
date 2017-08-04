@@ -290,7 +290,7 @@ static void a_03_byte_load_test_isr()
     printf("Testing behaviour inside ISRs...\r\n");
     timer_set_interrupts(FRC1, false);
     timer_set_run(FRC1, false);
-    _xt_isr_attach(INUM_TIMER_FRC1, frc1_interrupt_handler);
+    _xt_isr_attach(INUM_TIMER_FRC1, frc1_interrupt_handler, NULL);
     timer_set_frequency(FRC1, 1000);
     timer_set_interrupts(FRC1, true);
     timer_set_run(FRC1, true);

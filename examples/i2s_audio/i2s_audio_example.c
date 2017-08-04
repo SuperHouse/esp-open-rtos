@@ -88,7 +88,7 @@ static inline void init_descriptors_list()
 }
 
 // DMA interrupt handler. It is called each time a DMA block is finished processing.
-static void dma_isr_handler(void)
+static void dma_isr_handler(void *args)
 {
     portBASE_TYPE task_awoken = pdFALSE;
 
@@ -168,7 +168,7 @@ void play_task(void *pvParameters)
 
     i2s_pins_t i2s_pins = {.data = true, .clock = true, .ws = true};
 
-    i2s_dma_init(dma_isr_handler, clock_div, i2s_pins);
+    i2s_dma_init(dma_isr_handler, NULL, clock_div, i2s_pins);
 
     while (1) {
         init_descriptors_list();

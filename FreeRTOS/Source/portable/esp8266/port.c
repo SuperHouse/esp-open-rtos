@@ -153,7 +153,7 @@ void IRAM PendSV(enum SVC_ReqType req)
  */
 extern portBASE_TYPE sdk_MacIsrSigPostDefHdl(void);
 
-void IRAM SV_ISR(void)
+void IRAM SV_ISR(void *arg)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken=pdFALSE ;
 	if(pending_maclayer_sv)
@@ -185,11 +185,11 @@ void xPortSysTickHandle (void)
  */
 portBASE_TYPE xPortStartScheduler( void )
 {
-    _xt_isr_attach(INUM_SOFT, SV_ISR);
+    _xt_isr_attach(INUM_SOFT, SV_ISR, NULL);
     _xt_isr_unmask(BIT(INUM_SOFT));
 
     /* Initialize system tick timer interrupt and schedule the first tick. */
-    _xt_isr_attach(INUM_TICK, sdk__xt_timer_int);
+    _xt_isr_attach(INUM_TICK, sdk__xt_timer_int, NULL);
     _xt_isr_unmask(BIT(INUM_TICK));
     sdk__xt_tick_timer_init();
 
