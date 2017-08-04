@@ -29,7 +29,7 @@ addons:
     - libncurses5-dev
     - libexpat1-dev
     - python
-    - python-serial
+    - python3-serial
     - sed
     - git
     - help2man
