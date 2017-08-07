@@ -45,7 +45,7 @@ size_t tty_readline(char *buffer, size_t buf_size, bool echo) {
 
     while (true) {
         c = getchar();
-        if (c == '\r') {
+        if (c == '\r' || c == '\n') {
             if (echo) putchar('\n');
             break;
         } else if (c == '\b' || c == 0x7f) {
