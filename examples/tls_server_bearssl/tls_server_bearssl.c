@@ -146,9 +146,8 @@ void tls_server_task(void *pvParameters)
 
         /* Prepare a message to the client */
         unsigned char buf[100];
-        int len = sprintf((char *) buf, "O hai, client %d.%d.%d.%d:%d\r\nFree heap size is %d bytes\r\n",
-                          ip4_addr1(&sa.sin_addr), ip4_addr2(&sa.sin_addr),
-                          ip4_addr3(&sa.sin_addr), ip4_addr4(&sa.sin_addr),
+        int len = sprintf((char *) buf, "O hai, client " IPSTR ":%d\r\nFree heap size is %d bytes\r\n",
+                          IP2STR((ip4_addr_t *)&sa.sin_addr.s_addr),
                           ntohs(sa.sin_port), xPortGetFreeHeapSize());
 
         /* Send the message and close the connection */

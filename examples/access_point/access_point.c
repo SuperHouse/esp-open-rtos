@@ -48,7 +48,7 @@ void user_init(void)
     };
     sdk_wifi_softap_set_config(&ap_config);
 
-    ip_addr_t first_client_ip;
+    ip4_addr_t first_client_ip;
     IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
     dhcpserver_start(&first_client_ip, 4);
 
@@ -65,14 +65,14 @@ static void telnetTask(void *pvParameters)
     printf("Status monitor: Failed to allocate socket.\r\n");
     return;
   }
-  netconn_bind(nc, IP_ADDR_ANY, TELNET_PORT);
+  netconn_bind(nc, IP_ANY_TYPE, TELNET_PORT);
   netconn_listen(nc);
 
   while(1) {
     struct netconn *client = NULL;
     err_t err = netconn_accept(nc, &client);
 
-    if ( err != ERR_OK ) {
+    if (err != ERR_OK) {
       if(client)
 	netconn_delete(client);
       continue;
@@ -88,9 +88,8 @@ static void telnetTask(void *pvParameters)
     netconn_write(client, buf, strlen(buf), NETCONN_COPY);
     snprintf(buf, sizeof(buf), "Free heap %d bytes\r\n", (int)xPortGetFreeHeapSize());
     netconn_write(client, buf, strlen(buf), NETCONN_COPY);
-    snprintf(buf, sizeof(buf), "Your address is %d.%d.%d.%d\r\n\r\n",
-             ip4_addr1(&client_addr), ip4_addr2(&client_addr),
-             ip4_addr3(&client_addr), ip4_addr4(&client_addr));
+    char abuf[40];
+    snprintf(buf, sizeof(buf), "Your address is %s\r\n\r\n", ipaddr_ntoa_r(&client_addr, abuf, sizeof(abuf)));
     netconn_write(client, buf, strlen(buf), NETCONN_COPY);
     netconn_delete(client);
   }

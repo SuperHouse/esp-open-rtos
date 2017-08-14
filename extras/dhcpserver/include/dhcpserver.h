@@ -26,13 +26,19 @@ extern "C" {
    to a client.  Subsequent lease addresses are calculated by
    incrementing the final octet of the IPv4 address, up to max_leases.
 */
-void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases);
+void dhcpserver_start(const ip4_addr_t *first_client_addr, uint8_t max_leases);
 
-void dhcpserver_get_lease(const ip_addr_t *first_client_addr, uint8_t max_leases);
+void dhcpserver_get_lease(const ip4_addr_t *first_client_addr, uint8_t max_leases);
 
 /* Stop DHCP server.
  */
 void dhcpserver_stop(void);
+
+/* Set a router address to send as an option. */
+void dhcpserver_set_router(const ip4_addr_t *router);
+
+/* Set a DNS address to send as an option. */
+void dhcpserver_set_dns(const ip4_addr_t *dns);
 
 #ifdef __cplusplus
 }
