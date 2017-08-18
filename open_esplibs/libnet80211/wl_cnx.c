@@ -11,8 +11,10 @@
 #include <string.h>
 #include "lwip/dhcp.h"
 
-ETSTimer sdk_sta_con_timer;
-void *sdk_g_cnx_probe_rc_list_cb;
+/* Need to use the sdk versions of these for now as there are reference to them
+ * relative to other data structres. */
+extern ETSTimer sdk_sta_con_timer;
+extern void *sdk_g_cnx_probe_rc_list_cb;
 
 /*
  * Called from the ESP sdk_cnx_sta_leave function. Split out via a hack to the
@@ -24,6 +26,79 @@ void dhcp_if_down(struct netif *netif)
 {
     dhcp_release_and_stop(netif);
     netif_set_down(netif);
+}
+
+struct sdk_cnx_node *sdk_cnx_rc_search(uint8_t *hwaddr) {
+    size_t len = *(uint8_t *)(sdk_g_ic.v._unknown0 + 0x689);
+    struct sdk_cnx_node **table = (struct sdk_cnx_node **)(sdk_g_ic.v._unknown0 + 0x670);
+    size_t i;
+
+    for (i = 0; i < len; i++) {
+        struct sdk_cnx_node *cnx_node = table[i];
+        if (cnx_node && memcmp(cnx_node->mac_addr, hwaddr, 6) == 0) {
+            return cnx_node;
+        }
+    }
+
+    return NULL;
+}
+
+int sdk_cnx_add_rc(struct sdk_cnx_node *cnx_node) {
+    size_t len = *(uint8_t *)(sdk_g_ic.v._unknown0 + 0x689);
+    struct sdk_cnx_node **table = (struct sdk_cnx_node **)(sdk_g_ic.v._unknown0 + 0x670);
+
+    if (len >= 6) {
+        return -1;
+    }
+
+    if (len < 2) {
+        table[len] = cnx_node;
+    } else {
+        struct wl_channel *channel = cnx_node->channel;
+        size_t found;
+        for (found = 0; found < len; found++) {
+            if (table[found]->channel == channel) {
+                break;
+            }
+        }
+
+        if (found >= len) {
+            /* Add to the end. */
+            table[len] = cnx_node;
+        } else {
+            /* Make room. */
+            size_t next = found + 1;
+            size_t i;
+            for (i = len; i > next; i--) {
+                table[i] = table[i - 1];;
+            }
+            table[next] = cnx_node;
+        }
+    }
+
+    *(uint8_t *)(sdk_g_ic.v._unknown0 + 0x689) += 1;
+    return 0;
+}
+
+void sdk_cnx_remove_rc(struct sdk_cnx_node *cnx_node) {
+    size_t len = *(uint8_t *)(sdk_g_ic.v._unknown0 + 0x689);
+    struct sdk_cnx_node **table = (struct sdk_cnx_node **)(sdk_g_ic.v._unknown0 + 0x670);
+    size_t i;
+
+    for (i = 0; i < len; i++) {
+        if (table[i] == cnx_node) {
+            bzero(cnx_node, 0x110);
+            table[i] = NULL;
+            len -= 1;
+            *(uint8_t *)(sdk_g_ic.v._unknown0 + 0x689) = len;
+            break;
+        }
+    }
+
+    /* Fill the hole */
+    for (; i < len; i++) {
+        table[i] = table[i + 1];
+    }
 }
 
 #if 0
