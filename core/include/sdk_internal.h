@@ -25,14 +25,14 @@ struct sdk_info_st {
 };
 
 
-struct _unknown_info1 {
+struct wl_channel {
     uint8_t _unknown00;
     uint8_t _unknown01;
     uint8_t _unknown02;
     uint8_t _unknown03;
     uint8_t _unknown04;
     uint8_t _unknown05;
-    uint8_t channel; // eagle_auth_done
+    uint8_t num; // eagle_auth_done
 };
 
 
@@ -98,7 +98,7 @@ struct sdk_cnx_node {
 
     uint32_t _unknown1c[23];
 
-    struct _unknown_info1 *_unknown78; // eagle_auth_done
+    struct wl_channel *channel; // 0x78 eagle_auth_done
 
     uint32_t _unknown7c[8];
 
@@ -322,7 +322,7 @@ struct esf_buf {
 _Static_assert(sizeof(struct sdk_info_st) == 0x24, "info_st is the wrong size!");
 _Static_assert(offsetof(struct sdk_info_st, sta_mac_addr) == 0x1e, "bad struct");
 
-_Static_assert(offsetof(struct _unknown_info1, channel) == 0x06, "bad struct");
+_Static_assert(offsetof(struct wl_channel, num) == 0x06, "bad struct");
 
 _Static_assert(sizeof(struct _unknown_softap2) == 0xcc, "_unknown_softap2 is the wrong size!");
 _Static_assert(offsetof(struct _unknown_softap2, _unknownb8) == 0xb8, "bad struct");
@@ -333,7 +333,7 @@ _Static_assert(offsetof(struct _unknown_softap1, _unknown18) == 0x18, "bad struc
 _Static_assert(sizeof(struct _unknown_wpa1) == 0x4c, "_unknown_wpa1 is the wrong size!");
 _Static_assert(offsetof(struct _unknown_wpa1, _unknown48) == 0x48, "bad struct");
 
-_Static_assert(offsetof(struct sdk_cnx_node, _unknown78) == 0x78, "bad struct");
+_Static_assert(offsetof(struct sdk_cnx_node, channel) == 0x78, "bad struct");
 _Static_assert(offsetof(struct sdk_cnx_node, _unknown108) == 0x108, "bad struct");
 
 _Static_assert(offsetof(struct sdk_g_ic_netif_info, started) == 0xbb, "bad struct");

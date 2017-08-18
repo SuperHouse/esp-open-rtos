@@ -77,7 +77,7 @@ void sdk_eagle_auth_done() {
     if (cnx_node->_unknown08 & 1)
         return;
 
-    uint32_t channel = cnx_node->_unknown78->channel;
+    uint32_t channel = cnx_node->channel->num;
     char *ssid = (char *)sdk_g_ic.s.sta_ssid.ssid;
     printf("\nconnected with %s, channel %d\n", ssid, channel);
 
