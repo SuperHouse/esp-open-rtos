@@ -29,13 +29,14 @@ addons:
     - libncurses5-dev
     - libexpat1-dev
     - python
-    - python-serial
+    - python-pip
     - sed
     - git
     - help2man
     - vim-common
 
 before_install:
+  - pip install --user pyserial
   - travis_wait 30 utils/travis_build/install_toolchain.sh
 
 script:
