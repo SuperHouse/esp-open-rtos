@@ -48,6 +48,7 @@ void http_get_task(void *pvParameters)
             continue;
         }
 
+#if LWIP_IPV6
         {
             struct netif *netif = sdk_system_get_netif(0);
             int i;
@@ -57,14 +58,17 @@ void http_get_task(void *pvParameters)
                     printf("  ip6 addr %d = %s\n", i, ip6addr_ntoa(netif_ip6_addr(netif, i)));
             }
         }
+#endif
 
         struct sockaddr *sa = res->ai_addr;
         if (sa->sa_family == AF_INET) {
             printf("DNS lookup succeeded. IP=%s\r\n", inet_ntoa(((struct sockaddr_in *)sa)->sin_addr));
         }
+#if LWIP_IPV6
         if (sa->sa_family == AF_INET6) {
             printf("DNS lookup succeeded. IP=%s\r\n", inet6_ntoa(((struct sockaddr_in6 *)sa)->sin6_addr));
         }
+#endif
 
         int s = socket(res->ai_family, res->ai_socktype, 0);
         if(s < 0) {
