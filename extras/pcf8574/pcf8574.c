@@ -18,7 +18,7 @@ size_t pcf8574_port_read_buf(i2c_dev_t* dev, void *buf, size_t len)
     return len;
 }
 
-size_t pcf8574_port_write_buf(i2c_dev_t* dev, void *buf, size_t len)
+size_t pcf8574_port_write_buf(const i2c_dev_t* dev, void *buf, size_t len)
 {
     if (!len || !buf) return 0;
     uint8_t *_buf = (uint8_t *)buf;
@@ -28,7 +28,7 @@ size_t pcf8574_port_write_buf(i2c_dev_t* dev, void *buf, size_t len)
     return len;
 }
 
-void pcf8574_port_write(i2c_dev_t* dev, uint8_t value)
+void pcf8574_port_write(const i2c_dev_t* dev, uint8_t value)
 {
     i2c_slave_write(dev->bus, dev->addr, NULL, &value, 1);
 }

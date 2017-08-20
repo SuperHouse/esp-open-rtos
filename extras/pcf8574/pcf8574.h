@@ -36,7 +36,7 @@ size_t pcf8574_port_read_buf(i2c_dev_t* dev, void *buf, size_t len);
  * \param addr I2C register address (0b0100<A2><A1><A0> for PCF8574)
  * \param value GPIO port value
  */
-void pcf8574_port_write(i2c_dev_t* dev, uint8_t value);
+void pcf8574_port_write(const i2c_dev_t* dev, uint8_t value);
 
 /**
  * \brief Continiously write GPIO values to GPIO port
@@ -45,7 +45,7 @@ void pcf8574_port_write(i2c_dev_t* dev, uint8_t value);
  * @param len Buffer length
  * @return Number of bytes written
  */
-size_t pcf8574_port_write_buf(i2c_dev_t* dev, void *buf, size_t len);
+size_t pcf8574_port_write_buf(const i2c_dev_t* dev, void *buf, size_t len);
 
 /**
  * \brief Read input value of a GPIO pin
