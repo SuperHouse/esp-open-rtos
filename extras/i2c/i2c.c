@@ -45,7 +45,7 @@ inline bool i2c_status(uint8_t bus)
     return i2c_bus[bus].started;
 }
 
-void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, uint8_t freq)
+void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
 {
     i2c_bus[bus].started = false;
     i2c_bus[bus].flag = false ;
@@ -71,7 +71,7 @@ void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, uint8_t freq)
 
 }
 
-void i2c_frequency(uint8_t bus, uint8_t freq)
+void i2c_frequency(uint8_t bus, i2c_freq_t freq)
 {
     i2c_bus[bus].frequency = freq ;
 }

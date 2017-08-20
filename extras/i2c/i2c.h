@@ -47,11 +47,16 @@ extern "C" {
  *  Warning : 1 is minimal, that mean at 80MHz clock, frequency max is 320kHz
  *  Array format is  { {160MHz, 80MHz} ,  {160MHz, 80MHz} , ... }
  */
- #define I2C_FREQ_100K 0
- #define I2C_FREQ_400K 1
- #define I2C_FREQ_500K 2
+#define NB_FREQ_AVAILABLE 4
 
-const static uint8_t i2c_freq_array[3][2] = { {100,20}, {10,1}, {6,1} } ;
+ typedef enum {
+ 	I2C_FREQ_80K = 0,
+ 	I2C_FREQ_100K,
+ 	I2C_FREQ_400K,
+ 	I2C_FREQ_500K,
+} i2c_freq_t;
+
+const static uint8_t i2c_freq_array[NB_FREQ_AVAILABLE][2] = { {255,35}, {100,20}, {10,1}, {6,1} } ;
 
 /**
  * Device descriptor
@@ -87,14 +92,14 @@ typedef struct i2c_bus_description {
  * @param sda_pin SDA pin for I2C
  * @param freq frequency of bus (ex : I2C_FREQ_400K)
  */
-void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, uint8_t freq);
+void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq);
 
 /**
  * Change bus frequency
  * @param bus Bus i2c selection
  * @param freq frequency of bus (ex : I2C_FREQ_400K)
  */
-void i2c_frequency(uint8_t bus, uint8_t freq);
+void i2c_frequency(uint8_t bus, i2c_freq_t freq);
 
 /**
  * Write a byte to I2C bus.
