@@ -99,7 +99,7 @@ static int inline i2c_send(const ssd1306_t *dev, uint8_t reg, uint8_t* data, uin
 /* Issue a command to SSD1306 device
  * I2C proto format:
  * |S|Slave Address|W|ACK|0x00|Command|Ack|P|
- * 
+ *
  * in case of two-bytes command here will be Data byte
  * right after the command byte.
  */
@@ -293,9 +293,19 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
             {
                 spi_set_command(SPI_BUS,1,1); // data mode
                 if (buf)
-                    spi_transfer(SPI_BUS, buf, NULL, len, SPI_8BIT);
+                {
+                    for (i = 0; i < len; i++)
+                    {
+                        spi_transfer(SPI_BUS, &buf[i], NULL, 1, SPI_8BIT);
+                    }
+                }
                 else
-                    spi_repeat_send_8(SPI_BUS,0,len);
+                {
+                    for (i = 0; i < len; i++)
+                    {
+                        spi_transfer_8(SPI_BUS, 0);
+                    }
+                }
             }
             else
             {
