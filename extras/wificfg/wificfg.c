@@ -1920,12 +1920,7 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
 
         int8_t wifi_ap_channel = 6;
         sysparam_get_int8("wifi_ap_channel", &wifi_ap_channel);
-        /* Hack, disallow channel 1 here as it is not working on multiple
-         * devices. It seems to only work in STATIONAP mode when connected, but
-         * and not if the station is still scanning. */
-        if (wifi_ap_channel < 2) {
-            wifi_ap_channel = 2;
-        }
+
         /* AU does not allow channels above 13, although 14 works. */
         if (wifi_ap_channel > 13) {
             wifi_ap_channel = 13;
