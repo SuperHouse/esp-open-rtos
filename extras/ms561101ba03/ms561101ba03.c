@@ -8,7 +8,6 @@
  * BSD Licensed as described in the file LICENSE
  */
 #include "ms561101ba03.h"
-#include <i2c/i2c.h>
 #include <espressif/esp_common.h>
 #include "FreeRTOS.h"
 #include "task.h"
@@ -26,10 +25,10 @@
  */
 #define CONVERSION_TIME     20 / portTICK_PERIOD_MS // milliseconds
 
-static inline int reset(uint8_t addr)
+static inline int reset(i2c_dev_t* i2c_dev)
 {
     uint8_t buf[1] = { RESET };
-    return i2c_slave_write(addr, NULL, buf, 1);
+    return i2c_slave_write(i2c_dev->bus, i2c_dev->addr, NULL, buf, 1);
 }
 
 static inline bool read_prom(ms561101ba03_t *dev)
@@ -37,32 +36,32 @@ static inline bool read_prom(ms561101ba03_t *dev)
     uint8_t tmp[2] = { 0, 0 };
     uint8_t reg = 0xA2 ;
 
-    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
+    if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.sens = tmp[0] << 8 | tmp[1];
 
     reg = 0xA4 ;
-    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
+    if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.off = tmp[0] << 8 | tmp[1];
 
     reg = 0xA6 ;
-    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
+    if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.tcs = tmp[0] << 8 | tmp[1];
 
     reg = 0xA8 ;
-    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
+    if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.tco = tmp[0] << 8 | tmp[1];
 
     reg = 0xAA ;
-    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
+    if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.t_ref = tmp[0] << 8 | tmp[1];
 
     reg = 0xAC ;
-    if (i2c_slave_read(dev->addr, &reg, tmp, 2))
+    if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.tempsens = tmp[0] << 8 | tmp[1];
 
@@ -72,21 +71,21 @@ static inline bool read_prom(ms561101ba03_t *dev)
 static inline int start_pressure_conversion(ms561101ba03_t *dev) //D1
 {
     uint8_t buf = CONVERT_D1 + dev->osr;
-    return i2c_slave_write(dev->addr, NULL, &buf, 1);
+    return i2c_slave_write(dev->i2c_dev.bus, dev->i2c_dev.addr, NULL, &buf, 1);
 }
 
 static inline int start_temperature_conversion(ms561101ba03_t *dev) //D2
 {
     uint8_t buf = CONVERT_D2 + dev->osr;
-    return i2c_slave_write(dev->addr, NULL, &buf, 1);
+    return i2c_slave_write(dev->i2c_dev.bus, dev->i2c_dev.addr, NULL, &buf, 1);
 }
 
-static inline bool read_adc(uint8_t addr, uint32_t *result)
+static inline bool read_adc(i2c_dev_t* i2c_dev, uint32_t *result)
 {
     *result = 0;
     uint8_t tmp[3];
     uint8_t reg = 0x00 ;
-    if (i2c_slave_read(addr, &reg, tmp, 3))
+    if (i2c_slave_read(i2c_dev->bus, i2c_dev->addr, &reg, tmp, 3))
         return false;
 
     *result = (tmp[0] << 16) | (tmp[1] << 8) | tmp[2];
@@ -144,7 +143,7 @@ static inline bool get_raw_temperature(ms561101ba03_t *dev, uint32_t *result)
 
     vTaskDelay(CONVERSION_TIME);
 
-    if (!read_adc(dev->addr, result))
+    if (!read_adc(&dev->i2c_dev, result))
         return false;
 
     return true;
@@ -157,7 +156,7 @@ static inline bool get_raw_pressure(ms561101ba03_t *dev, uint32_t *result)
 
     vTaskDelay(CONVERSION_TIME);
 
-    if (!read_adc(dev->addr, result))
+    if (!read_adc(&dev->i2c_dev, result))
     	return false;
 
     return true;
@@ -216,7 +215,7 @@ bool ms561101ba03_get_sensor_data(ms561101ba03_t *dev)
 bool ms561101ba03_init(ms561101ba03_t *dev)
 {
     // First of all we need to reset the chip
-    if (reset(dev->addr))
+    if (reset(&dev->i2c_dev))
     	return false;
     // Wait a bit for the device to reset
     vTaskDelay(CONVERSION_TIME);

@@ -11,17 +11,20 @@
 
 #define SCL_PIN 5
 #define SDA_PIN 4
+#define I2C_BUS 0
 
 static void measure(void *pvParameters)
 {
-    bh1750_configure(BH1750_ADDR_LO,
-                     BH1750_CONTINUOUS_MODE | BH1750_HIGH_RES_MODE);
+    i2c_dev_t dev = {
+        .addr = BH1750_ADDR_LO,
+        .bus = I2C_BUS,
+    };
+    bh1750_configure(&dev, BH1750_CONTINUOUS_MODE | BH1750_HIGH_RES_MODE);
 
     while (1) {
         while(1) {
             vTaskDelay(200 / portTICK_PERIOD_MS);
-            
-            printf("Lux: %d\n", bh1750_read(BH1750_ADDR_LO));
+            printf("Lux: %d\n", bh1750_read(&dev));
         }
     }
 }
@@ -35,7 +38,7 @@ void user_init(void)
     printf("SDK version : %s\n", sdk_system_get_sdk_version());
     printf("GIT version : %s\n", GITSHORTREV);
 
-    i2c_init(SCL_PIN, SDA_PIN);
+    i2c_init(I2C_BUS, SCL_PIN, SDA_PIN, I2C_FREQ_100K);
 
     xTaskCreate(measure, "measure_task", 256, NULL, 2, NULL);
 }

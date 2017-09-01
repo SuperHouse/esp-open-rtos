@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
+#include "i2c/i2c.h"
+
 
 #ifdef	__cplusplus
 extern "C" {
@@ -87,7 +89,7 @@ enum {
  * I suggest using GMT and applying timezone and DST when read back
  * returns true to indicate success
  */
-int ds3231_setTime(struct tm *time);
+int ds3231_setTime(i2c_dev_t *dev, struct tm *time);
 
 /* Set alarms
  * alarm1 works with seconds, minutes, hours and day of week/month, or fires every second
@@ -100,30 +102,30 @@ int ds3231_setTime(struct tm *time);
  * if you want to enable interrupts for the alarms you need to do that separately
  * returns true to indicate success
  */
-int ds3231_setAlarm(uint8_t alarms, struct tm *time1, uint8_t option1, struct tm *time2, uint8_t option2);
+int ds3231_setAlarm(i2c_dev_t *dev, uint8_t alarms, struct tm *time1, uint8_t option1, struct tm *time2, uint8_t option2);
 
 /* Check if oscillator has previously stopped, e.g. no power/battery or disabled
  * sets flag to true if there has been a stop
  * returns true to indicate success
  */
-bool ds3231_getOscillatorStopFlag(bool *flag);
+bool ds3231_getOscillatorStopFlag(i2c_dev_t *dev, bool *flag);
 
 /* Clear the oscillator stopped flag
  * returns true to indicate success
  */
-bool ds3231_clearOscillatorStopFlag();
+bool ds3231_clearOscillatorStopFlag(i2c_dev_t *dev);
 
 /* Check which alarm(s) have past
  * sets alarms to DS3231_ALARM_NONE/DS3231_ALARM_1/DS3231_ALARM_2/DS3231_ALARM_BOTH
  * returns true to indicate success
  */
-bool ds3231_getAlarmFlags(uint8_t *alarms);
+bool ds3231_getAlarmFlags(i2c_dev_t *dev, uint8_t *alarms);
 
 /* Clear alarm past flag(s)
  * pass DS3231_ALARM_1/DS3231_ALARM_2/DS3231_ALARM_BOTH
  * returns true to indicate success
  */
-bool ds3231_clearAlarmFlags(uint8_t alarm);
+bool ds3231_clearAlarmFlags(i2c_dev_t *dev, uint8_t alarm);
 
 /* enable alarm interrupts (and disables squarewave)
  * pass DS3231_ALARM_1/DS3231_ALARM_2/DS3231_ALARM_BOTH
@@ -132,61 +134,60 @@ bool ds3231_clearAlarmFlags(uint8_t alarm);
  * interrupt enabled, else it will trigger immediately
  * returns true to indicate success
  */
-bool ds3231_enableAlarmInts(uint8_t alarms);
+bool ds3231_enableAlarmInts(i2c_dev_t *dev, uint8_t alarms);
 
 /* Disable alarm interrupts (does not (re-)enable squarewave)
  * pass DS3231_ALARM_1/DS3231_ALARM_2/DS3231_ALARM_BOTH
  * returns true to indicate success
  */
-bool ds3231_disableAlarmInts(uint8_t alarms);
+bool ds3231_disableAlarmInts(i2c_dev_t *dev, uint8_t alarms);
 
 /* Enable the output of 32khz signal
  * returns true to indicate success
  */
-bool ds3231_enable32khz();
+bool ds3231_enable32khz(i2c_dev_t *dev);
 
 /* Disable the output of 32khz signal
  * returns true to indicate success
  */
-bool ds3231_disable32khz();
+bool ds3231_disable32khz(i2c_dev_t *dev);
 
 /* Enable the squarewave output (disables alarm interrupt functionality)
  * returns true to indicate success
  */
-bool ds3231_enableSquarewave();
+bool ds3231_enableSquarewave(i2c_dev_t *dev);
 
 /* Disable the squarewave output (which re-enables alarm interrupts, but individual
  * alarm interrupts also need to be enabled, if not already, before they will trigger)
  * returns true to indicate success
  */
-bool ds3231_disableSquarewave();
+bool ds3231_disableSquarewave(i2c_dev_t *dev);
 
 /* Set the frequency of the squarewave output (but does not enable it)
  * pass DS3231_SQUAREWAVE_RATE_1HZ/DS3231_SQUAREWAVE_RATE_1024HZ/DS3231_SQUAREWAVE_RATE_4096HZ/DS3231_SQUAREWAVE_RATE_8192HZ
  * returns true to indicate success
  */
-bool ds3231_setSquarewaveFreq(uint8_t freq);
+bool ds3231_setSquarewaveFreq(i2c_dev_t *dev, uint8_t freq);
 
 /* Get the raw value
  * returns true to indicate success
  */
-bool ds3231_getRawTemp(int16_t *temp);
+bool ds3231_getRawTemp(i2c_dev_t *dev, int16_t *temp);
 
 /* Get the temperature as an integer
  * returns true to indicate success
  */
-bool ds3231_getTempInteger(int8_t *temp);
+bool ds3231_getTempInteger(i2c_dev_t *dev, int8_t *temp);
 
 /* Get the temerapture as a float (in quarter degree increments)
  * returns true to indicate success
  */
-bool ds3231_getTempFloat(float *temp);
+bool ds3231_getTempFloat(i2c_dev_t *dev, float *temp);
 
 /* Get the time from the rtc, populates a supplied tm struct
  * returns true to indicate success
  */
-bool ds3231_getTime(struct tm *time);
-void ds3231_Init(uint8_t scl, uint8_t sda);
+bool ds3231_getTime(i2c_dev_t *dev, struct tm *time);
 
 #ifdef	__cplusplus
 }

@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include "FreeRTOS.h"
-#include "i2c/i2c.h"
 #include "task.h"
 #include "tsl2561.h"
 
@@ -96,18 +95,18 @@
 #define B8C 0x0000 // 0.000 * 2^LUX_SCALE
 #define M8C 0x0000 // 0.000 * 2^LUX_SCALE
 
-static int write_register(uint8_t i2c_addr, uint8_t reg, uint8_t value)
+static int write_register(i2c_dev_t* i2c_dev, uint8_t reg, uint8_t value)
 {
     reg = TSL2561_REG_COMMAND | reg;
-    return i2c_slave_write(i2c_addr, &reg, &value, 1);
+    return i2c_slave_write(i2c_dev->bus, i2c_dev->addr, &reg, &value, 1);
 }
 
-static uint8_t read_register(uint8_t i2c_addr, uint8_t reg)
+static uint8_t read_register(i2c_dev_t* i2c_dev, uint8_t reg)
 {
     uint8_t data[1];
     reg = TSL2561_REG_COMMAND | reg;
 
-    if (i2c_slave_read(i2c_addr, &reg, data, 1))
+    if (i2c_slave_read(i2c_dev->bus, i2c_dev->addr, &reg, data, 1))
     {
         printf("Error in tsl2561 read_register\n");
     }
@@ -115,13 +114,13 @@ static uint8_t read_register(uint8_t i2c_addr, uint8_t reg)
     return data[0];
 }
 
-static uint16_t read_register_16(uint8_t i2c_addr, uint8_t low_register_addr)
+static uint16_t read_register_16(i2c_dev_t* i2c_dev, uint8_t low_register_addr)
 {
     uint16_t value = 0;
     uint8_t data[2];
     low_register_addr = TSL2561_REG_COMMAND | TSL2561_READ_WORD | low_register_addr;
 
-    if (i2c_slave_read(i2c_addr, &low_register_addr, data, 2))
+    if (i2c_slave_read(i2c_dev->bus, i2c_dev->addr, &low_register_addr, data, 2))
     {
         printf("Error with i2c_slave_read in read_register_16\n");
     }
@@ -131,24 +130,24 @@ static uint16_t read_register_16(uint8_t i2c_addr, uint8_t low_register_addr)
     return value;
 }
 
-static int enable(uint8_t i2c_addr)
+static int enable(i2c_dev_t* i2c_dev)
 {
-    return write_register(i2c_addr, TSL2561_REG_CONTROL, TSL2561_ON);
+    return write_register(i2c_dev, TSL2561_REG_CONTROL, TSL2561_ON);
 }
 
-static int disable(uint8_t i2c_addr)
+static int disable(i2c_dev_t* i2c_dev)
 {
-    return write_register(i2c_addr, TSL2561_REG_CONTROL, TSL2561_OFF);
+    return write_register(i2c_dev, TSL2561_REG_CONTROL, TSL2561_OFF);
 }
 
 void tsl2561_init(tsl2561_t *device)
 {
-    if (enable(device->i2c_addr))
+    if (enable(&device->i2c_dev))
     {
         printf("Error initializing tsl2561\n");
     }
 
-    uint8_t control_reg = (read_register(device->i2c_addr, TSL2561_REG_CONTROL) & TSL2561_ON);
+    uint8_t control_reg = (read_register(&device->i2c_dev, TSL2561_REG_CONTROL) & TSL2561_ON);
 
     if (control_reg != TSL2561_ON)
     {
@@ -156,39 +155,39 @@ void tsl2561_init(tsl2561_t *device)
     }
 
     // Fetch the package type
-    uint8_t part_reg = read_register(device->i2c_addr, TSL2561_REG_PART_ID);
+    uint8_t part_reg = read_register(&device->i2c_dev, TSL2561_REG_PART_ID);
     uint8_t package = part_reg >> 6;
     device->package_type = package;
 
     // Fetch the gain and integration time
-    uint8_t timing_register = read_register(device->i2c_addr, TSL2561_REG_TIMING);
+    uint8_t timing_register = read_register(&device->i2c_dev, TSL2561_REG_TIMING);
     device->gain = timing_register & 0x10;
     device->integration_time = timing_register & 0x03;
 
-    disable(device->i2c_addr);
+    disable(&device->i2c_dev);
 }
 
 void tsl2561_set_integration_time(tsl2561_t *device, tsl2561_integration_time_t integration_time_id)
 {
-    enable(device->i2c_addr);
-    write_register(device->i2c_addr, TSL2561_REG_TIMING, integration_time_id | device->gain);
-    disable(device->i2c_addr);
+    enable(&device->i2c_dev);
+    write_register(&device->i2c_dev, TSL2561_REG_TIMING, integration_time_id | device->gain);
+    disable(&device->i2c_dev);
 
     device->integration_time = integration_time_id;
 }
 
 void tsl2561_set_gain(tsl2561_t *device, tsl2561_gain_t gain)
 {
-    enable(device->i2c_addr);
-    write_register(device->i2c_addr, TSL2561_REG_TIMING, gain | device->integration_time);
-    disable(device->i2c_addr);
+    enable(&device->i2c_dev);
+    write_register(&device->i2c_dev, TSL2561_REG_TIMING, gain | device->integration_time);
+    disable(&device->i2c_dev);
 
     device->gain = gain;
 }
 
 static void get_channel_data(tsl2561_t *device, uint16_t *channel0, uint16_t *channel1)
 {
-    enable(device->i2c_addr);
+    enable(&device->i2c_dev);
 
     // Since we just enabled the chip, we need to sleep
     // for the chip's integration time so it can gather a reading
@@ -205,10 +204,10 @@ static void get_channel_data(tsl2561_t *device, uint16_t *channel0, uint16_t *ch
             break;
     }
 
-    *channel0 = read_register_16(device->i2c_addr, TSL2561_REG_CHANNEL_0_LOW);
-    *channel1 = read_register_16(device->i2c_addr, TSL2561_REG_CHANNEL_1_LOW);
+    *channel0 = read_register_16(&device->i2c_dev, TSL2561_REG_CHANNEL_0_LOW);
+    *channel1 = read_register_16(&device->i2c_dev, TSL2561_REG_CHANNEL_1_LOW);
 
-    disable(device->i2c_addr);
+    disable(&device->i2c_dev);
 }
 
 bool tsl2561_read_lux(tsl2561_t *device, uint32_t *lux)

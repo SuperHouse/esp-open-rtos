@@ -18,6 +18,7 @@
 #define CS_GPIO_PIN 2
 
 // ds1307
+#define I2C_BUS 0
 #define SCL_PIN 5
 #define SDA_PIN 4
 
@@ -29,7 +30,11 @@
 uint32_t get_fattime()
 {
     struct tm time;
-    ds1307_get_time(&time);
+    i2c_dev_t dev = {
+        .addr = DS1307_ADDR,
+        .bus = I2C_BUS,
+    };
+    ds1307_get_time(&dev, &time);
 
     return ((uint32_t)(time.tm_year - 1980) << 25)
         | ((uint32_t)time.tm_mon << 21)
@@ -127,7 +132,7 @@ void user_init(void)
     uart_set_baud(0, 115200);
     printf("SDK version:%s\n\n", sdk_system_get_sdk_version());
 
-    i2c_init (SCL_PIN, SDA_PIN);
+    i2c_init(I2C_BUS, SCL_PIN, SDA_PIN, I2C_FREQ_400K);
 
     xTaskCreate(rewrite_file_task, "task1", 512, NULL, 2, NULL);
 }

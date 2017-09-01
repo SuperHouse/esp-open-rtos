@@ -16,13 +16,15 @@
  * Connect 3.3v from the ESP to Vin and GND to GND
  */
 
+#define I2C_BUS (0)
 #define SCL_PIN (2)
 #define SDA_PIN (0)
 
 void tsl4531MeasurementTask(void *pvParameters)
 {
     tsl4531_t lightSensor;
-    lightSensor.i2c_addr = TSL4531_I2C_ADDR;
+    lightSensor.i2c_dev.bus= I2C_BUS;
+    lightSensor.i2c_dev.addr= TSL4531_I2C_ADDR;
     tsl4531_init(&lightSensor);
 
     tsl4531_set_integration_time(&lightSensor, TSL4531_INTEGRATION_400MS);
@@ -49,7 +51,7 @@ void tsl4531MeasurementTask(void *pvParameters)
 void user_init(void)
 {
     uart_set_baud(0, 115200);
-    i2c_init(SCL_PIN, SDA_PIN);
+    i2c_init(I2C_BUS, SCL_PIN, SDA_PIN, I2C_FREQ_100K);
 
     xTaskCreate(tsl4531MeasurementTask, "tsl4531MeasurementTask", 256, NULL, 2, NULL);
 }
