@@ -21,7 +21,7 @@
 #include "ssid_config.h"
 
 #define WEB_SERVER "chainxor.org"
-#define WEB_PORT 80
+#define WEB_PORT "80"
 #define WEB_URL "http://chainxor.org/"
 
 void http_get_task(void *pvParameters)
@@ -37,7 +37,7 @@ void http_get_task(void *pvParameters)
         struct addrinfo *res;
 
         printf("Running DNS lookup for %s...\r\n", WEB_SERVER);
-        int err = getaddrinfo(WEB_SERVER, "80", &hints, &res);
+        int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
 
         if(err != 0 || res == NULL) {
             printf("DNS lookup failed err=%d res=%p\r\n", err, res);
