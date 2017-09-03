@@ -45,6 +45,12 @@ struct esf_buf;
 void sdk_system_station_got_ip_set(struct ip4_addr *, struct ip4_addr *, struct ip4_addr *);
 void sdk_system_pp_recycle_rx_pkt(struct esf_buf *);
 
+struct pbuf;
+void pp_recycle_rx_pbuf(struct pbuf *);
+
+size_t ooseq_max_bytes(size_t n);
+size_t ooseq_max_pbufs(size_t n);
+
 /* Define generic types used in lwIP */
 typedef uint8_t    u8_t;
 typedef int8_t    s8_t;

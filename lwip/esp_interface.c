@@ -50,6 +50,8 @@
 #include "netif/etharp.h"
 #include "sysparam.h"
 #include "netif/ppp/pppoe.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 /* declared in libnet80211.a */
 int8_t sdk_ieee80211_output_pbuf(struct netif *ifp, struct pbuf* pb);
@@ -138,6 +140,51 @@ low_level_output(struct netif *netif, struct pbuf *p)
 
 
 /**
+ * Keep account of the number the PP RX pool buffers being used in lwip,
+ * to help make decision about the number of OOSEQ buffers to maintain etc.
+ */
+uint32_t pp_rx_pool_usage;
+
+/* Support for recycling a pbuf from the sdk rx pool, and accounting for the
+ * number of these used in lwip. */
+void pp_recycle_rx_pbuf(struct pbuf *p)
+{
+    LWIP_ASSERT("expected esf_buf", p->esf_buf);
+    sdk_system_pp_recycle_rx_pkt(p->esf_buf);
+    taskENTER_CRITICAL();
+    pp_rx_pool_usage--;
+    taskEXIT_CRITICAL();
+}
+
+/* Return the number of ooseq bytes that can be retained given the current
+ * size 'n'. */
+size_t ooseq_max_bytes(size_t n)
+{
+    size_t free = xPortGetFreeHeapSize();
+    size_t target = (free - 30000) + n;
+
+    if (target < 0) {
+        target = 0;
+    }
+
+    return target;
+}
+
+/* Return the number of ooseq pbufs that can be retained given the current
+ * size 'n'. */
+size_t ooseq_max_pbufs(size_t n)
+{
+    uint32_t usage = pp_rx_pool_usage;
+    size_t target = 3 - (usage - n);
+
+    if (target < 0) {
+        target = 0;
+    }
+
+    return target;
+}
+
+/**
  * This function should be called when a packet is ready to be read
  * from the interface. It uses the function low_level_input() that
  * should handle the actual reception of bytes from the network
@@ -165,24 +212,52 @@ void ethernetif_input(struct netif *netif, struct pbuf *p)
 
     ethhdr = p->payload;
 
+    /* Account for the number of rx pool buffers being used. */
+    taskENTER_CRITICAL();
+    uint32_t usage = pp_rx_pool_usage + 1;
+    pp_rx_pool_usage = usage;
+    taskEXIT_CRITICAL();
+
     switch(htons(ethhdr->type)) {
 	/* IP or ARP packet? */
     case ETHTYPE_IP:
     case ETHTYPE_IPV6:
+#if 0
+        /* Simulate IP packet loss. */
+        if ((random() & 0xff) < 0x10) {
+            pbuf_free(p);
+            return;
+        }
+#endif
+
     case ETHTYPE_ARP:
 #if PPPOE_SUPPORT
         /* PPPoE packet? */
     case ETHTYPE_PPPOEDISC:
     case ETHTYPE_PPPOE:
 #endif /* PPPOE_SUPPORT */
+    {
 	/* full packet send to tcpip_thread to process */
-	if (netif->input(p, netif) != ERR_OK)
-	{
+
+#if 0
+        /* Optionally copy the rx pool buffer and free it immediately. This
+         * helps avoid exhausting the limited rx buffer pool but uses more
+         * memory. */
+        struct pbuf *q = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
+        pbuf_free(p);
+        if (q == NULL) {
+            return;
+        }
+        p = q;
+#endif
+
+        if (netif->input(p, netif) != ERR_OK) {
 	    LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
 	    pbuf_free(p);
 	    p = NULL;
 	}
 	break;
+    }
 
     default:
 	pbuf_free(p);

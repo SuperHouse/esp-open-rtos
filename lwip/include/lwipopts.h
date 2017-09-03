@@ -308,6 +308,13 @@
 #endif
 
 /**
+ * LWIP_TCP_SACK_OUT==1: TCP will support sending selective acknowledgements (SACKs).
+ */
+#ifndef LWIP_TCP_SACK_OUT
+#define LWIP_TCP_SACK_OUT               1
+#endif
+
+/**
  * TCP_MSS: TCP Maximum segment size. (default is 536, a conservative default,
  * you might want to increase this.)
  * For the receive side, this MSS is advertised to the remote side
@@ -319,23 +326,21 @@
 #endif
 
 /**
- * TCP_OOSEQ_MAX_BYTES: The maximum number of bytes queued on ooseq per pcb.
- * Default is 0 (no limit). Only valid for TCP_QUEUE_OOSEQ==1.
+ * TCP_OOSEQ_MAX_BYTES(n):
+ * Return the maximum number of bytes to be queued on ooseq per pcb, given the
+ * current number queued on a pcb.  Only valid for TCP_QUEUE_OOSEQ==1.
  */
 #ifndef TCP_OOSEQ_MAX_BYTES
-#if TCP_OOSEQ_MAX_BYTES
-#define TCP_OOSEQ_MAX_BYTES             (2 * TCP_MSS)
-#endif
+#define TCP_OOSEQ_MAX_BYTES(n)           ooseq_max_bytes(n)
 #endif
 
 /**
- * TCP_OOSEQ_MAX_PBUFS: The maximum number of pbufs queued on ooseq per pcb.
- * Default is 0 (no limit). Only valid for TCP_QUEUE_OOSEQ==1.
+ * TCP_OOSEQ_MAX_PBUFS(n):
+ * Return the maximum number of pbufs to be queued on ooseq per pcb, given the
+ * current number queued on a pcb.  Only valid for TCP_QUEUE_OOSEQ==1.
  */
 #ifndef TCP_OOSEQ_MAX_PBUFS
-#if TCP_OOSEQ_MAX_PBUFS
-#define TCP_OOSEQ_MAX_PBUFS             2
-#endif
+#define TCP_OOSEQ_MAX_PBUFS(n)          ooseq_max_pbufs(n)
 #endif
 
 /**
@@ -352,6 +357,42 @@
  */
 #ifndef TCP_DEFAULT_LISTEN_BACKLOG
 #define TCP_DEFAULT_LISTEN_BACKLOG      2
+#endif
+
+/**
+ * TCP_OVERSIZE: The maximum number of bytes that tcp_write may
+ * allocate ahead of time in an attempt to create shorter pbuf chains
+ * for transmission. The meaningful range is 0 to TCP_MSS. Some
+ * suggested values are:
+ *
+ * 0:         Disable oversized allocation. Each tcp_write() allocates a new
+              pbuf (old behaviour).
+ * 1:         Allocate size-aligned pbufs with minimal excess. Use this if your
+ *            scatter-gather DMA requires aligned fragments.
+ * 128:       Limit the pbuf/memory overhead to 20%.
+ * TCP_MSS:   Try to create unfragmented TCP packets.
+ * TCP_MSS/4: Try to create 4 fragments or less per TCP packet.
+ */
+#ifndef TCP_OVERSIZE
+#define TCP_OVERSIZE                    TCP_MSS
+#endif
+
+/**
+ * LWIP_TCP_TIMESTAMPS==1: support the TCP timestamp option.
+ * The timestamp option is currently only used to help remote hosts, it is not
+ * really used locally. Therefore, it is only enabled when a TS option is
+ * received in the initial SYN packet from a remote host.
+ */
+#ifndef LWIP_TCP_TIMESTAMPS
+#define LWIP_TCP_TIMESTAMPS             1
+#endif
+
+/**
+ * TCP_WND_UPDATE_THRESHOLD: difference in window to trigger an
+ * explicit window update
+ */
+#ifndef TCP_WND_UPDATE_THRESHOLD
+#define TCP_WND_UPDATE_THRESHOLD   LWIP_MIN((TCP_WND / 4), (TCP_MSS * 4))
 #endif
 
 /*
