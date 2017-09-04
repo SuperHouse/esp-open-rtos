@@ -152,30 +152,51 @@ void pp_recycle_rx_pbuf(struct pbuf *p)
     LWIP_ASSERT("expected esf_buf", p->esf_buf);
     sdk_system_pp_recycle_rx_pkt(p->esf_buf);
     taskENTER_CRITICAL();
+    LWIP_ASSERT("pp_rx_pool_usage underflow", pp_rx_pool_usage > 0);
     pp_rx_pool_usage--;
     taskEXIT_CRITICAL();
 }
+
+/* Set to true to copy the rx pbufs on input and free them. The pp rx buffer
+ * pool is limited so this allows a large number at the expense of memory.
+ */
+
+#define COPY_PP_RX_PBUFS 0
 
 /* Return the number of ooseq bytes that can be retained given the current
  * size 'n'. */
 size_t ooseq_max_bytes(size_t n)
 {
+#if COPY_PP_RX_PBUFS
     size_t free = xPortGetFreeHeapSize();
-    size_t target = (free - 30000) + n;
+    ssize_t target = ((ssize_t)free - 30000) + n;
 
     if (target < 0) {
         target = 0;
     }
 
     return target;
+#else
+    /* The pool is pre-allocated so there is no need to look at the dynamic
+     * memory usage, just consider the number of them below. */
+    return 8000;
+#endif
 }
 
 /* Return the number of ooseq pbufs that can be retained given the current
  * size 'n'. */
 size_t ooseq_max_pbufs(size_t n)
 {
-    uint32_t usage = pp_rx_pool_usage;
-    size_t target = 3 - (usage - n);
+#if COPY_PP_RX_PBUFS
+    /* More likely memory limited, but set some limit. */
+    ssize_t limit = 10;
+#else
+    /* Set a small limit if using the pp rx pool, to avoid exhausting it. */
+    ssize_t limit = 2;
+#endif
+
+    size_t usage = pp_rx_pool_usage;
+    ssize_t target = limit - ((ssize_t)usage - n);
 
     if (target < 0) {
         target = 0;
@@ -239,7 +260,7 @@ void ethernetif_input(struct netif *netif, struct pbuf *p)
     {
 	/* full packet send to tcpip_thread to process */
 
-#if 0
+#if COPY_PP_RX_PBUFS
         /* Optionally copy the rx pool buffer and free it immediately. This
          * helps avoid exhausting the limited rx buffer pool but uses more
          * memory. */
