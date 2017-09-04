@@ -169,7 +169,7 @@ size_t ooseq_max_bytes(size_t n)
 {
 #if COPY_PP_RX_PBUFS
     size_t free = xPortGetFreeHeapSize();
-    ssize_t target = ((ssize_t)free - 30000) + n;
+    ssize_t target = ((ssize_t)free - 8000) + n;
 
     if (target < 0) {
         target = 0;
