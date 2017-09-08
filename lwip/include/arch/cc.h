@@ -48,8 +48,9 @@ void sdk_system_pp_recycle_rx_pkt(struct esf_buf *);
 struct pbuf;
 void pp_recycle_rx_pbuf(struct pbuf *);
 
-size_t ooseq_max_bytes(size_t n);
-size_t ooseq_max_pbufs(size_t n);
+struct tcp_seg;
+size_t ooseq_bytes_limit(struct tcp_seg *ooseq);
+size_t ooseq_pbufs_limit(struct tcp_seg *ooseq);
 
 /* Define generic types used in lwIP */
 typedef uint8_t    u8_t;
