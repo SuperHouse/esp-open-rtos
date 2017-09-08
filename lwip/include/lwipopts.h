@@ -125,6 +125,19 @@
  */
 #define MEM_ALIGNMENT           4
 
+/**
+ * MEMP_OVERFLOW_CHECK: memp overflow protection reserves a configurable
+ * amount of bytes before and after each memp element in every pool and fills
+ * it with a prominent default value.
+ *    MEMP_OVERFLOW_CHECK == 0 no checking
+ *    MEMP_OVERFLOW_CHECK == 1 checks each element when it is freed
+ *    MEMP_OVERFLOW_CHECK >= 2 checks each element in every pool every time
+ *      memp_malloc() or memp_free() is called (useful but slow!)
+ */
+#ifndef MEMP_OVERFLOW_CHECK
+#define MEMP_OVERFLOW_CHECK             0
+#endif
+
 /*
    ------------------------------------------------
    ---------- Internal Memory Pool Sizes ----------
@@ -326,21 +339,37 @@
 #endif
 
 /**
- * TCP_OOSEQ_MAX_BYTES(n):
- * Return the maximum number of bytes to be queued on ooseq per pcb, given the
- * current number queued on a pcb.  Only valid for TCP_QUEUE_OOSEQ==1.
+ * TCP_OOSEQ_MAX_BYTES: The default maximum number of bytes queued on ooseq per
+ * pcb if TCP_OOSEQ_BYTES_LIMIT is not defined. Default is 0 (no limit).
+ * Only valid for TCP_QUEUE_OOSEQ==1.
  */
 #ifndef TCP_OOSEQ_MAX_BYTES
-#define TCP_OOSEQ_MAX_BYTES(n)           ooseq_max_bytes(n)
+#define TCP_OOSEQ_MAX_BYTES             (2 * TCP_MSS)
 #endif
 
 /**
- * TCP_OOSEQ_MAX_PBUFS(n):
- * Return the maximum number of pbufs to be queued on ooseq per pcb, given the
- * current number queued on a pcb.  Only valid for TCP_QUEUE_OOSEQ==1.
+ * TCP_OOSEQ_BYTES_LIMIT(ooseq): Return the maximum number of bytes to be queued
+ * on ooseq per pcb, given the pcb.  Only valid for TCP_QUEUE_OOSEQ==1.
+ */
+#if !defined TCP_OOSEQ_BYTES_LIMIT
+#define TCP_OOSEQ_BYTES_LIMIT(ooseq)    ooseq_bytes_limit(ooseq)
+#endif
+
+/**
+ * TCP_OOSEQ_MAX_PBUFS: The default maximum number of pbufs queued on ooseq per
+ * pcb if TCP_OOSEQ_BYTES_LIMIT is not defined. Default is 0 (no limit).
+ * Only valid for TCP_QUEUE_OOSEQ==1.
  */
 #ifndef TCP_OOSEQ_MAX_PBUFS
-#define TCP_OOSEQ_MAX_PBUFS(n)          ooseq_max_pbufs(n)
+#define TCP_OOSEQ_MAX_PBUFS             2
+#endif
+
+/**
+ * TCP_OOSEQ_PBUFS_LIMIT(ooseq): Return the maximum number of pbufs to be queued
+ * on ooseq per pcb, given the pcb.  Only valid for TCP_QUEUE_OOSEQ==1.
+ */
+#ifndef TCP_OOSEQ_PBUFS_LIMIT
+#define TCP_OOSEQ_PBUFS_LIMIT(ooseq)        ooseq_pbufs_limit(ooseq)
 #endif
 
 /**

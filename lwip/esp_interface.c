@@ -47,6 +47,7 @@
 #include <lwip/snmp.h>
 #include "lwip/ip.h"
 #include "lwip/ethip6.h"
+#include "lwip/priv/tcp_priv.h"
 #include "netif/etharp.h"
 #include "sysparam.h"
 #include "netif/ppp/pppoe.h"
@@ -143,7 +144,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
  * Keep account of the number the PP RX pool buffers being used in lwip,
  * to help make decision about the number of OOSEQ buffers to maintain etc.
  */
-uint32_t pp_rx_pool_usage;
+volatile uint32_t pp_rx_pool_usage;
 
 /* Support for recycling a pbuf from the sdk rx pool, and accounting for the
  * number of these used in lwip. */
@@ -165,11 +166,17 @@ void pp_recycle_rx_pbuf(struct pbuf *p)
 
 /* Return the number of ooseq bytes that can be retained given the current
  * size 'n'. */
-size_t ooseq_max_bytes(size_t n)
+size_t ooseq_bytes_limit(struct tcp_seg *ooseq)
 {
 #if COPY_PP_RX_PBUFS
+    size_t ooseq_blen = 0;
+    for (; ooseq != NULL; ooseq = ooseq->next) {
+        struct pbuf *p = ooseq->p;
+        ooseq_blen += p->tot_len;
+    }
+
     size_t free = xPortGetFreeHeapSize();
-    ssize_t target = ((ssize_t)free - 8000) + n;
+    ssize_t target = ((ssize_t)free - 8000) + ooseq_blen;
 
     if (target < 0) {
         target = 0;
@@ -185,8 +192,14 @@ size_t ooseq_max_bytes(size_t n)
 
 /* Return the number of ooseq pbufs that can be retained given the current
  * size 'n'. */
-size_t ooseq_max_pbufs(size_t n)
+size_t ooseq_pbufs_limit(struct tcp_seg *ooseq)
 {
+    size_t ooseq_qlen = 0;
+    for (; ooseq != NULL; ooseq = ooseq->next) {
+        struct pbuf *p = ooseq->p;
+        ooseq_qlen += pbuf_clen(p);
+    }
+
 #if COPY_PP_RX_PBUFS
     /* More likely memory limited, but set some limit. */
     ssize_t limit = 10;
@@ -196,7 +209,7 @@ size_t ooseq_max_pbufs(size_t n)
 #endif
 
     size_t usage = pp_rx_pool_usage;
-    ssize_t target = limit - ((ssize_t)usage - n);
+    ssize_t target = limit - ((ssize_t)usage - ooseq_qlen);
 
     if (target < 0) {
         target = 0;
