@@ -2,7 +2,7 @@
 
 This driver is written for usage with the ESP8266 and FreeRTOS ([esp-open-rtos](https://github.com/SuperHouse/esp-open-rtos) and [esp-open-rtos-driver-i2c](https://github.com/kanflo/esp-open-rtos-driver-i2c)).
 
-Please note: The driver supports multiple sensor connected to different I2C with differen addresses.
+Please note: The driver supports multiple sensors connected to different I2C with differen addresses.
 
 ## About the sensor
 
