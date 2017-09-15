@@ -37,8 +37,8 @@ void my_user_task(void *pvParameters)
  
         printf("%.3f Sensor %d: %.2f (%.2f) C, %.2f (%.2f) F, %.2f (%.2f) \n", 
                (double)sdk_system_get_time()*1e-3, sensor, 
-               actual.c_temperature, average.c_temperature, 
-               actual.f_temperature, average.f_temperature, 
+               actual.temperature_c, average.temperature_c, 
+               actual.temperature_f, average.temperature_f, 
                actual.humidity, average.humidity);
  
         // Delay value has to be equal or greater than the period of measurment

@@ -34,8 +34,8 @@ static void my_callback_function (uint32_t sensor,
 {
     printf("%.3f Sensor %d: %.2f (%.2f) C, %.2f (%.2f) F, %.2f (%.2f) \n", 
            (double)sdk_system_get_time()*1e-3, sensor, 
-           actual.c_temperature, average.c_temperature, 
-           actual.f_temperature, average.f_temperature, 
+           actual.temperature_c, average.temperature_c, 
+           actual.temperature_f, average.temperature_f, 
            actual.humidity, average.humidity);
 }
 
