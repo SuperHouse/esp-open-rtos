@@ -21,15 +21,9 @@
 #define SHT3x_FETCH_DATA_CMD          0xE000
 
 #ifdef SHT3x_DEBUG
-#define DEBUG_PRINTF0(s)       printf(s);
-#define DEBUG_PRINTF1(s,a)     printf(s,a);
-#define DEBUG_PRINTF2(s,a,b)   printf(s,a,b);
-#define DEBUG_PRINTF3(s,a,b,c) printf(s,a,b,c);
+#define DEBUG_PRINTF(s, ...) printf("%s: " s "\n", "SHT3x", ## __VA_ARGS__)
 #else
-#define DEBUG_PRINTF0(s)
-#define DEBUG_PRINTF1(s,a)
-#define DEBUG_PRINTF2(s,a,b)
-#define DEBUG_PRINTF3(s,a,b,c)
+#define DEBUG_PRINTF(s, ...)
 #endif
 
 
@@ -40,12 +34,10 @@ static bool sht3x_send_command(uint32_t id, uint16_t cmd)
 {
     uint8_t data[2] = { cmd / 256, cmd % 256 };
 
-    DEBUG_PRINTF2("%s: Send MSB command byte %0x\n", __FUNCTION__, data[0]);
-    DEBUG_PRINTF2("%s: Send LSB command byte %0x\n", __FUNCTION__, data[1]);
+    DEBUG_PRINTF("%s: Send MSB command byte %0x", __FUNCTION__, data[0]);
+    DEBUG_PRINTF("%s: Send LSB command byte %0x", __FUNCTION__, data[1]);
 
-    taskENTER_CRITICAL();
     int error = i2c_slave_write(sht3x_sensors[id].bus, sht3x_sensors[id].addr, 0, data, 2);
-    taskEXIT_CRITICAL();
   
     if (error)
     {
@@ -60,9 +52,7 @@ static bool sht3x_send_command(uint32_t id, uint16_t cmd)
 
 static bool sht3x_read_data(uint32_t id, uint8_t *data,  uint32_t len)
 {
-    taskENTER_CRITICAL();
     int error = i2c_slave_read(sht3x_sensors[id].bus, sht3x_sensors[id].addr, 0, data, len);
-    taskEXIT_CRITICAL();
 
     if (error)
     {
@@ -72,7 +62,7 @@ static bool sht3x_read_data(uint32_t id, uint8_t *data,  uint32_t len)
     }
 
 #   ifdef SHT3x_DEBUG
-    printf("%s: Read following bytes: ", __FUNCTION__);
+    printf("SHT3x: %s: Read following bytes: ", __FUNCTION__);
     for (int i=0; i < len; i++)
         printf("%0x ", data[i]);
     printf("\n");
@@ -100,13 +90,13 @@ static bool sht3x_valid_sensor (uint32_t sensor, const char* function)
 {
     if (sensor < 0 || sensor > SHT3x_MAX_SENSORS)
     {
-        DEBUG_PRINTF2("%s: Wrong sensor id %d.\n", function, sensor);
+        DEBUG_PRINTF("%s: Wrong sensor id %d.", function, sensor);
         return false;
     }
     
     if (!sht3x_sensors[sensor].active)
     {
-        DEBUG_PRINTF2("%s: Sensor with id %d is not active.\n", function, sensor);
+        DEBUG_PRINTF("%s: Sensor with id %d is not active.", function, sensor);
         return false;
     }
     
@@ -149,7 +139,7 @@ static void sht3x_callback_task (void *pvParameters)
 
     while (1) 
     {
-        // DEBUG_PRINTF3("%.3f Sensor %d: %s\n", (double)sdk_system_get_time()*1e-3, sensor, __FUNCTION__);
+        // DEBUG_PRINTF("%.3f Sensor %d: %s", (double)sdk_system_get_time()*1e-3, sensor, __FUNCTION__);
 
         if (sht3x_send_command(sensor, SHT3x_MEASURE_ONE_SHOT_CMD))
         {
@@ -159,7 +149,7 @@ static void sht3x_callback_task (void *pvParameters)
             {
                 sht3x_compute_values(sensor, data);
                 
-                // DEBUG_PRINTF3("%.2f C, %.2f F, %.2f \n", 
+                // DEBUG_PRINTF("%.2f C, %.2f F, %.2f", 
                 //               sht3x_sensors[sensor].actual.temperature_c,
                 //               sht3x_sensors[sensor].actual.temperature_f,
                 //               sht3x_sensors[sensor].actual.humidity);
@@ -195,15 +185,15 @@ uint32_t sht3x_create_sensor(uint8_t bus, uint8_t addr)
     // search for first free sensor data structure
     for (id=0; id < SHT3x_MAX_SENSORS; id++)
     {
-        DEBUG_PRINTF3("%s: id=%d active=%d\n", __FUNCTION__, id, sht3x_sensors[id].active);
+        DEBUG_PRINTF("%s: id=%d active=%d", __FUNCTION__, id, sht3x_sensors[id].active);
         if (!sht3x_sensors[id].active)
             break;
     }
-    DEBUG_PRINTF2("%s: id=%d\n", __FUNCTION__, id);
+    DEBUG_PRINTF("%s: id=%d", __FUNCTION__, id);
     
     if (id == SHT3x_MAX_SENSORS)
     {
-        DEBUG_PRINTF1("%s: No more sensor data structures available.\n", __FUNCTION__);
+        DEBUG_PRINTF("%s: No more sensor data structures available.", __FUNCTION__);
         return -1;
     }
     
@@ -251,7 +241,7 @@ bool sht3x_delete_sensor(uint32_t sensor)
 
     if (memset(&sht3x_sensors[sensor], 1, sizeof(sht3x_sensor_t)) == NULL)
     {
-        DEBUG_PRINTF2("%s: Could not initialize memory for sensor with id %d.\n", __FUNCTION__, sensor);
+        DEBUG_PRINTF("%s: Could not initialize memory for sensor with id %d.", __FUNCTION__, sensor);
         return false;
     }
     
@@ -265,7 +255,7 @@ bool sht3x_set_measurement_period (uint32_t sensor, uint32_t period)
         return false;
 
     if (period < 20)
-        DEBUG_PRINTF3("%s: Period of %d ms is less than the minimum period of 20 ms for sensor with id %d.\n", __FUNCTION__, period, sensor);
+        DEBUG_PRINTF("%s: Period of %d ms is less than the minimum period of 20 ms for sensor with id %d.", __FUNCTION__, period, sensor);
 
     sht3x_sensors[sensor].period = period;
     
@@ -280,7 +270,7 @@ bool sht3x_set_callback_function (uint32_t sensor, sht3x_cb_function_t user_func
     
     sht3x_sensors[sensor].cb_function = user_function;
     
-    DEBUG_PRINTF1("%s: Set callback mode done.\n", __FUNCTION__);
+    DEBUG_PRINTF("%s: Set callback mode done.", __FUNCTION__);
 
     return false;
 }
