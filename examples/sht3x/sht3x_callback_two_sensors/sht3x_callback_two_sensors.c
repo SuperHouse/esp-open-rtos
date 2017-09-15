@@ -18,7 +18,7 @@
 #define I2C_1_SDA_PIN   GPIO_ID_PIN((4))
 
 #define I2C_2_BUS       1
-#define I2C_2_SCL_PIN   GPIO_ID_PIN((16))
+#define I2C_2_SCL_PIN   GPIO_ID_PIN((12))
 #define I2C_2_SDA_PIN   GPIO_ID_PIN((14))
 
 #define SHT3x_ADDR_1 0x44
@@ -66,8 +66,8 @@ void user_init(void)
     sht3x_init();
     
     // Create sensors
-    sensor1 = sht3x_create_sensor (I2C_1_BUS, SHT3x_ADDR_1);
-    sensor2 = sht3x_create_sensor (I2C_2_BUS, SHT3x_ADDR_2);
+    sensor1 = sht3x_create_sensor (I2C_2_BUS, SHT3x_ADDR_1);
+    sensor2 = sht3x_create_sensor (I2C_1_BUS, SHT3x_ADDR_2);
     
     // Set the callback function
     sht3x_set_callback_function (sensor1, &my_callback_function);
