@@ -1,4 +1,4 @@
-# Driver for SHT3x digital temperature and humity sensor
+# Driver for SHT3x digital temperature and humidity sensor
 
 This driver is written for usage with the ESP8266 and FreeRTOS ([esp-open-rtos](https://github.com/SuperHouse/esp-open-rtos) and [esp-open-rtos-driver-i2c](https://github.com/kanflo/esp-open-rtos-driver-i2c)).
 
@@ -6,7 +6,7 @@ Please note: The driver supports multiple sensors connected to different I2C wit
 
 ## About the sensor
 
-SHT3x is a digital temperature and humity sensor that uses I2C interface as slave with up to 1 MHz communication speed. It can operate with three levels of *repeatability* (low, medium and high) in two different modes, the *single shot data aquisition mode* and the *periodic data aquisition mode*.
+SHT3x is a digital temperature and humidity sensor that uses I2C interface as slave with up to 1 MHz communication speed. It can operate with three levels of *repeatability* (low, medium and high) in two different modes, the *single shot data aquisition mode* and the *periodic data aquisition mode*.
 
 ### Single shot data aquisition mode
 
