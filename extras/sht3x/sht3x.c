@@ -3,7 +3,6 @@
 #include "sht3x.h"
 
 #include "FreeRTOS.h"
-#include "queue.h"
 #include "task.h"
 
 #include "espressif/esp_common.h"
@@ -121,8 +120,8 @@ static void sht3x_compute_values (uint8_t id, uint8_t* data)
   sht3x_value_set_t  avg = sht3x_sensors[id].average;
   float w = sht3x_sensors[id].average_weight;
 
-  act.c_temperature = ((((data[0] * 256.0) + data[1]) * 175) / 65535.0) - 45;
-  act.f_temperature = ((((data[0] * 256.0) + data[1]) * 347) / 65535.0) - 49;
+  act.temperature_c = ((((data[0] * 256.0) + data[1]) * 175) / 65535.0) - 45;
+  act.temperature_f = ((((data[0] * 256.0) + data[1]) * 347) / 65535.0) - 49;
   act.humidity      = ((((data[3] * 256.0) + data[4]) * 100) / 65535.0);
   
   if (sht3x_sensors[id].first_measurement)
@@ -133,8 +132,8 @@ static void sht3x_compute_values (uint8_t id, uint8_t* data)
   }
   else
   {
-    avg.c_temperature = w * act.c_temperature + (1-w) * avg.c_temperature;
-    avg.f_temperature = w * act.f_temperature + (1-w) * avg.f_temperature;
+    avg.temperature_c = w * act.temperature_c + (1-w) * avg.temperature_c;
+    avg.temperature_f = w * act.temperature_f + (1-w) * avg.temperature_f;
     avg.humidity      = w * act.humidity      + (1-w) * avg.humidity;
   }
    
@@ -161,8 +160,8 @@ static void sht3x_callback_task (void *pvParameters)
                 sht3x_compute_values(sensor, data);
                 
                 // DEBUG_PRINTF3("%.2f C, %.2f F, %.2f \n", 
-                //               sht3x_sensors[sensor].actual.c_temperature,
-                //               sht3x_sensors[sensor].actual.f_temperature,
+                //               sht3x_sensors[sensor].actual.temperature_c,
+                //               sht3x_sensors[sensor].actual.temperature_f,
                 //               sht3x_sensors[sensor].actual.humidity);
 
                 if (sht3x_sensors[sensor].cb_function)
@@ -292,8 +291,8 @@ bool sht3x_get_values(uint32_t sensor, sht3x_value_set_t *actual, sht3x_value_se
     if (!sht3x_valid_sensor(sensor, __FUNCTION__))
         return false;
 
-    *actual  = sht3x_sensors[sensor].actual;
-    *average = sht3x_sensors[sensor].average;
+    if (actual)  *actual  = sht3x_sensors[sensor].actual;
+    if (average) *average = sht3x_sensors[sensor].average;
 
     return true;
 }

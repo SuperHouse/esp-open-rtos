@@ -19,7 +19,7 @@
 #include "i2c/i2c.h"
 
 // Uncomment to enable debug output
-#define SHT3x_DEBUG
+// #define SHT3x_DEBUG
 
 // Change this if you need more than 3 SHT3x sensors
 #define SHT3x_MAX_SENSORS 3
@@ -29,9 +29,9 @@ extern "C" {
 #endif
 
 typedef struct {
-    float   c_temperature;
-    float   f_temperature;
-    float   humidity;
+    float   temperature_c;    // temperature in degree Fahrenheit
+    float   temperature_f;    // temperature in degree Celcius
+    float   humidity;         // humidity in percent
 } sht3x_value_set_t;
 
 typedef void (*sht3x_cb_function_t)(uint32_t sensor,
@@ -72,10 +72,10 @@ bool sht3x_init ();
 /**
  * Initialize the SHT3x sensor connected to a certain bus with slave
  * address, check its availability and start a background task for
- * measurments.
+ * measurements.
  * 
  * The background task carries out measurements periodically using SHT3x's
- * single shot data aquisition mode with a default period of 1000 ms.
+ * single shot data acquisition mode with a default period of 1000 ms.
  * This period be changed using function @set_measurment_period.
  * 
  * At each measurement, actual sensor values are determined and exponential
@@ -139,7 +139,10 @@ bool sht3x_delete_sensor (uint32_t sensor);
 
 
 /**
- * Returns actual and average sensor values of last measurement. 
+ * Returns actual and average sensor values of last measurement. Parameters
+ * @actual and @average are pointer to data structures of type
+ * @sht3x_value_set_t which are filled with measurement results. Use NULL for
+ * that pointers parameters, if you are not interested on certain results. 
  *
  * This function is only needed, if there is no callback function registered
  * for the sensor.
@@ -156,8 +159,8 @@ bool sht3x_get_values (uint32_t sensor,
 
 /**
  * At each measurement carried out by the background task, actual
- * sensor values are determined and exponential moving avarage values are
- * computed accoroding to following equation
+ * sensor values are determined and exponential moving average values are
+ * computed according to following equation
  *
  *    Average[k] = W * Value + (1-W) * Average [k-1]
  *
