@@ -166,9 +166,10 @@ void pp_recycle_rx_pbuf(struct pbuf *p)
 
 /* Return the number of ooseq bytes that can be retained given the current
  * size 'n'. */
-size_t ooseq_bytes_limit(struct tcp_seg *ooseq)
+size_t ooseq_bytes_limit(struct tcp_pcb *pcb)
 {
 #if COPY_PP_RX_PBUFS
+    struct tcp_seg *ooseq = pcb->ooseq;
     size_t ooseq_blen = 0;
     for (; ooseq != NULL; ooseq = ooseq->next) {
         struct pbuf *p = ooseq->p;
@@ -192,8 +193,9 @@ size_t ooseq_bytes_limit(struct tcp_seg *ooseq)
 
 /* Return the number of ooseq pbufs that can be retained given the current
  * size 'n'. */
-size_t ooseq_pbufs_limit(struct tcp_seg *ooseq)
+size_t ooseq_pbufs_limit(struct tcp_pcb *pcb)
 {
+    struct tcp_seg *ooseq = pcb->ooseq;
     size_t ooseq_qlen = 0;
     for (; ooseq != NULL; ooseq = ooseq->next) {
         struct pbuf *p = ooseq->p;
