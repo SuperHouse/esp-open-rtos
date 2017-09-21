@@ -180,10 +180,17 @@ typedef _LOCK_RECURSIVE_T _flock_t;
 typedef void *_iconv_t;
 #endif
 
+#ifndef __machine_clock_t_defined
 #define	_CLOCK_T_	unsigned long	/* clock() */
+#endif
+
 typedef	_CLOCK_T_	__clock_t;
 
-#define	_TIME_T_	long		/* time() */
+#if defined(_USE_LONG_TIME_T) || __LONG_MAX__ > 0x7fffffffL
+#define	_TIME_T_ long
+#else
+#define	_TIME_T_ __int_least64_t
+#endif
 typedef	_TIME_T_	__time_t;
 
 #define	_CLOCKID_T_ 	unsigned long

@@ -139,7 +139,7 @@
 
 /** Set this to 1 on platforms where strnstr is not available */
 #ifndef LWIP_HTTPD_STRNSTR_PRIVATE
-#define LWIP_HTTPD_STRNSTR_PRIVATE          1
+#define LWIP_HTTPD_STRNSTR_PRIVATE          0
 #endif
 
 /** Set this to one to show error pages when parsing a request fails instead
