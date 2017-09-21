@@ -34,6 +34,12 @@ void dhcpserver_get_lease(const ip_addr_t *first_client_addr, uint8_t max_leases
  */
 void dhcpserver_stop(void);
 
+/* Set a router address to send as an option. */
+void dhcpserver_set_router(const ip_addr_t *router);
+
+/* Set a DNS address to send as an option. */
+void dhcpserver_set_dns(const ip_addr_t *dns);
+
 #ifdef __cplusplus
 }
 #endif
