@@ -681,6 +681,8 @@
 #endif
 
 /* Structure implements a lock. */
+/* FIXME: Use __lockable__, etc. to avoid colliding with user namespace macros,
+ * once clang is fixed: https://bugs.llvm.org/show_bug.cgi?id=34319 */
 #define	__lockable		__lock_annotate(lockable)
 
 /* Function acquires an exclusive or shared lock. */
