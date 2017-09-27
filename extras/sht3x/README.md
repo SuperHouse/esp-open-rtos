@@ -6,59 +6,68 @@ Please note: The driver supports multiple sensors connected to different I2C int
 
 ## About the sensor
 
-SHT3x is a digital temperature and humidity sensor that uses I2C interface with up to 1 MHz communication speed. It can operate with three levels of *repeatability* (low, medium and high) in two different modes, the *single shot data acquisition mode* and the *periodic data aquisition mode*.
+SHT3x is a digital temperature and humidity sensor that uses an I2C interface with up to 1 MHz communication speed. It can operate with three levels of *repeatability* (low, medium and high) in two different modes, the *single shot data acquisition mode* and the *periodic data aquisition mode*.
 
 ### Single shot data acquisition mode
 
-In this mode one issued measurement command triggers the acquisition of one data pair. Each data pair
-consists of temperature and humidity as 16 bit decimal values. 
+In this mode, a measurement command triggers the acquisition of one data pair. Each data pair consists of temperature and humidity as 16-bit decimal values.
 
-Repeatability setting influences the measurement duration as well as the current consumption of the sensor. The measurement takes 3 ms at low repeatability, 5 ms at low repeatability, and 13.5 ms at high repeatability, respectively. That is, the measurement produces a noticeable delay in execution. 
+The repeatability affects the measurement time as well as the power consumption of the sensor. The measurement takes 3 ms with low repeatability, 5 ms with medium repeatability and 13.5 ms with high repeatability. That is, the measurement produces a noticeable delay in execution.
 
-Average current consumption of while sensor is measuring at lowest repeatability is 800 uA. That is, the higher the repeatability level is, the longer the measurement takes and the higher the power consumption is. The sensor consumes only 0.2 uA in standby mode.
+While the sensor measures at the lowest repeatability, the average current consumption is 800 μA. That is, the higher the reproducibility level, the longer the measurement takes and the higher the power consumption. The sensor consumes only 0.2 μA in standby mode.
 
 ### Periodic data acquisition mode
 
-In this mode one issued measurement command yields a stream of data pairs. Each data pair
-consists of temperature and humidity as 16 bit decimal values. Once the measurement command is sent to the sensor, it executes measurements periodically by itself at a rate of 0.5, 1, 2, 4 or 10 measurements per second (mps). The data pairs can be read by a fetch command at the same rate.
+In this mode one issued measurement command yields a stream of data pairs. Each data pair consists of temperature and humidity as 16-bit decimal values. As soon as the measurement command has been sent to the sensor, it itself carries out measurements periodically at a rate of 0.5, 1, 2, 4 or 10 measurements per second (mps). The data pairs can be read with a fetch command at the same rate.
 
-As in *single shot data acquisition mode*, the repeatability setting influences the measurement duration as well as the current consumption of the sensor, see above.
+As in the *single shot data acquisition mode*, the repeatability setting affects both the measurement time and the current consumption of the sensor, see above.
 
 ## How the driver works
 
-To avoid blocking of user tasks during measurements due to their duration, separate tasks running in background are used to realize the measurements. These task are created implicitly when a user task calls function *sht3x_create_sensor* for each connected SHT3x sensor. The background tasks realize the measurement procedures which are executed periodically at a rate that can be defined by the user for each sensor separately using function *sht3x_set_measurement_period* (default period is 1000 ms).
+To avoid blocking of user tasks during measurements due to their duration, separate tasks running in background are used to realize the measurements. These background tasks are created implicitly when a user task calls function *sht3x_create_sensor* for each connected SHT3x sensor. The background tasks realize the measurement procedures which are executed periodically at a rate that can be defined by the user for each sensor separately using function *sht3x_set_measurement_period* (default period is 1000 ms).
 
-### Measurement
+### Measurement method
 
-Since predefined rates of *periodic data acquisition mode* of the sensor itself are normally not compatible with user requirements, the measurement procedures are realized in *single shot data acquisition mode* at the highest level of repeatability. Because of the sensor power characteristics, *single shot data acquisition mode* is more power efficient than using *periodic data acquisition mode* in most use cases. 
+Since the predefined rates of *periodic data acquisition mode* of the sensor itself are normally not compatible with user requirements, the measurements are realized by the background task in *single shot data acquisition mode* at the highest level of repeatability. Because of the sensor power characteristics, *single shot data acquisition mode* is more power efficient than using the *periodic data acquisition mode* in most use cases. 
 
-However, using the *single shot data acquisition mode* produces a delay of 20 ms for each measurement. This is the time needed from issuing the measurement command until measured sensor data are available and can be read. Since the delay is realized using *vTaskDelay* function in the background tasks, neither the system nor any user task is blocked during the measurements. 
+However, using the *single shot data acquisition mode* produces a delay of 20 ms for each measurement. This is just the time needed from issuing the measurement command until measured sensor data are available and can be read. Since this delay is realized using *vTaskDelay* function in the background tasks, neither the system nor any user task is blocked during the measurements. 
 
 Please note: Since each measurement produces a delay of 20 ms, the minimum period that can be defined with function *sht3x_set_measurement_period* is 20 ms. Therefore, a maximum measurement rate of 50 mps could be reached.
 
 ### Measured data
 
-At each measurement, *actual sensor values* for temperature as well as humidity are determined as floating point values from measured data pairs. Temperature is given in °C as well in °F. Humidity is given in percent. Based on these *actual sensor values* the background task also computes successively with each measurement the *average sensor values* using the exponential moving average 
+At each measurement, *actual sensor values* for temperature as well as humidity are determined as floating point values from the measured data pairs. Temperature is given in °C as well in °F. Humidity is given in percent. 
+
+If average value computation is enabled (default), the background task also computes successively at each measurement the *average sensor values* based on these *actual sensor values* using the exponential moving average 
 
     Average[k] = W * Actual + (1-W) * Average [k-1]
 
-where coefficient W represents the degree of weighting decrease, a constant smoothing factor between 0 and 1. A higher W discounts older observations faster. The coefficient W (smoothing factor) can be defined by the user using function *sht3x_set_average_weight*. The default value of W is 0.2.
+where coefficient W represents the degree of weighting decrease, a constant smoothing factor between 0 and 1. A higher W discounts older observations faster. The coefficient W (smoothing factor) can be defined by the user task using function *sht3x_set_average_weight*. The default value of W is 0.2. The average value computation can be enabled or disabled using function *sht3x_enable_average_computation*.
+
+If average computation is disabled, *average sensor values* correspont to the *actual sensor values*.
 
 ### Getting results.
 
-Once a measurement has been finished, *actual sensor values* and *average sensor values* can be read by user tasks. There are two possibilities to do that, defining a callback function or the calling function *sht3x_get_values* explicitly.
+As soon as a measurement is completed, the actual sensor values * and * average sensor values * can be read by user tasks. There are two ways to do this:
+
+- define a callback function or 
+- call the function * sht3x_get_values * explicitly.
 
 #### Using callback function
 
-For each connected SHT3 sensor, the user can register a callback function using function *sht3x_set_callback_function*. If a callback function is registered, it is called by the background task after each measurement to pass *actual sensor values* and *average sensor values* to user tasks. Thus, the user gets the results of measurements automatically with same rate as the periodic measurements are executed.
+For each connected SHT3 sensor, the user task can register a callback function using function *sht3x_set_callback_function*. If a callback function is registered, it is called by the background task after each measurement to pass *actual sensor values* and *average sensor values* to user tasks. Thus, the user gets the results of the measurements automatically with same rate as the periodic measurements are executed.
 
 Using the callback function is the easiest way to get the results.
 
 #### Using function sht3x_get_values
 
-If there is no callback function registered, the user has to use function *sht3x_get_values* explicitly to get *actual sensor values* and *average sensor values*. To ensure that these values are up-to-date, the rate of periodic measurement in background task should be at least the same or higher as the rate of using function *sht3x_get_values*. That is, the period of measurements in background task set with function *sht3x_set_measurement_period* has to be less or equal than the rate of using function *sht3x_get_values*.
+If there is no callback function registered, the user task has to call function *sht3x_get_values* to get *actual sensor values* and *average sensor values*. These values are stored in data structures that are specified as pointer parameters. Using NULL pointers for the parameters, the user task can decide which results are not interesting.
 
-Please remember: The minimum measurement period can be 20 ms.
+To ensure that the values are up-to-date, the rate of periodic measurement in background task should be at least the same or higher as the rate of using function *sht3x_get_values*. That is, the period of measurements in background task set with function *sht3x_set_measurement_period* has to be less or equal than the rate of using function *sht3x_get_values*.
+
+If average computation is disabled, *average sensor values* are just the same as *actual sensor values*.
+
+Please note: The minimum measurement period can be 20 ms.
 
 ## Usage
 
@@ -101,7 +110,7 @@ static void my_callback_function (uint32_t sensor,
 }
 ```
 
-you have to register this callback function using *sht3x_set_callback_function*.
+You have to register this callback function using *sht3x_set_callback_function*.
 
 ```
 sht3x_set_callback_function (sensor, &my_callback_function);
@@ -204,6 +213,7 @@ void user_init(void)
 ## Further Examples
 
 For further examples see [examples directory](../../examples/sht3x/README.md)
+
 
 
 

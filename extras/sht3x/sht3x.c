@@ -1,3 +1,43 @@
+/*
+ * The BSD License (3-clause license)
+ *
+ * Copyright (c) 2017 Gunar Schorcht (https://github.com/gschorcht
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its 
+ * contributors may be used to endorse or promote products derived from this
+ * software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * Driver for Sensirion SHT3x digital temperature and humity sensor
+ * connected to I2C
+ *
+ * Part of esp-open-rtos
+ */
+
 #include <string.h>
 
 #include "sht3x.h"
@@ -21,9 +61,9 @@
 #define SHT3x_FETCH_DATA_CMD          0xE000
 
 #ifdef SHT3x_DEBUG
-#define DEBUG_PRINTF(s, ...) printf("%s: " s "\n", "SHT3x", ## __VA_ARGS__)
+#define debug(s, ...) printf("%s: " s "\n", "SHT3x", ## __VA_ARGS__)
 #else
-#define DEBUG_PRINTF(s, ...)
+#define debug(s, ...)
 #endif
 
 
@@ -34,8 +74,8 @@ static bool sht3x_send_command(uint32_t id, uint16_t cmd)
 {
     uint8_t data[2] = { cmd / 256, cmd % 256 };
 
-    DEBUG_PRINTF("%s: Send MSB command byte %0x", __FUNCTION__, data[0]);
-    DEBUG_PRINTF("%s: Send LSB command byte %0x", __FUNCTION__, data[1]);
+    debug("%s: Send MSB command byte %0x", __FUNCTION__, data[0]);
+    debug("%s: Send LSB command byte %0x", __FUNCTION__, data[1]);
 
     int error = i2c_slave_write(sht3x_sensors[id].bus, sht3x_sensors[id].addr, 0, data, 2);
   
@@ -77,10 +117,16 @@ static bool sht3x_is_available (uint32_t sensor)
     uint8_t data[3];
 
     if (!sht3x_send_command(sensor, SHT3x_STATUS_CMD))
+    {
+	    debug("Called from %s", __FUNCTION__);
         return false;
+    }
         
     if (!sht3x_read_data(sensor, data, 3))
+    {
+	    debug("Called from %s", __FUNCTION__);
         return false;
+    }
 
     return true;
 }
@@ -90,13 +136,13 @@ static bool sht3x_valid_sensor (uint32_t sensor, const char* function)
 {
     if (sensor < 0 || sensor > SHT3x_MAX_SENSORS)
     {
-        DEBUG_PRINTF("%s: Wrong sensor id %d.", function, sensor);
+        debug("%s: Wrong sensor id %d.", function, sensor);
         return false;
     }
     
     if (!sht3x_sensors[sensor].active)
     {
-        DEBUG_PRINTF("%s: Sensor with id %d is not active.", function, sensor);
+        debug("%s: Sensor with id %d is not active.", function, sensor);
         return false;
     }
     
@@ -114,9 +160,9 @@ static void sht3x_compute_values (uint8_t id, uint8_t* data)
   act.temperature_f = ((((data[0] * 256.0) + data[1]) * 347) / 65535.0) - 49;
   act.humidity      = ((((data[3] * 256.0) + data[4]) * 100) / 65535.0);
   
-  if (sht3x_sensors[id].first_measurement)
+  if (sht3x_sensors[id].average_first_measurement || !sht3x_sensors[id].average_computation)
   {
-    sht3x_sensors[id].first_measurement = false;
+    sht3x_sensors[id].average_first_measurement = false;
 
     avg = act;
   }
@@ -139,7 +185,7 @@ static void sht3x_callback_task (void *pvParameters)
 
     while (1) 
     {
-        // DEBUG_PRINTF("%.3f Sensor %d: %s", (double)sdk_system_get_time()*1e-3, sensor, __FUNCTION__);
+        // debug("%.3f Sensor %d: %s", (double)sdk_system_get_time()*1e-3, sensor, __FUNCTION__);
 
         if (sht3x_send_command(sensor, SHT3x_MEASURE_ONE_SHOT_CMD))
         {
@@ -149,7 +195,7 @@ static void sht3x_callback_task (void *pvParameters)
             {
                 sht3x_compute_values(sensor, data);
                 
-                // DEBUG_PRINTF("%.2f C, %.2f F, %.2f", 
+                // debug("%.2f C, %.2f F, %.2f", 
                 //               sht3x_sensors[sensor].actual.temperature_c,
                 //               sht3x_sensors[sensor].actual.temperature_f,
                 //               sht3x_sensors[sensor].actual.humidity);
@@ -160,10 +206,17 @@ static void sht3x_callback_task (void *pvParameters)
                                                       sht3x_sensors[sensor].average);
                     
             }
+	        else
+                debug("Called from %s", __FUNCTION__);
+
             vTaskDelay((sht3x_sensors[sensor].period-20) / portTICK_PERIOD_MS);
         }
         else
+        {
+		    debug("Called from %s", __FUNCTION__);
+		    
             vTaskDelay(sht3x_sensors[sensor].period / portTICK_PERIOD_MS);
+        }
     }
 }
 
@@ -185,15 +238,15 @@ uint32_t sht3x_create_sensor(uint8_t bus, uint8_t addr)
     // search for first free sensor data structure
     for (id=0; id < SHT3x_MAX_SENSORS; id++)
     {
-        DEBUG_PRINTF("%s: id=%d active=%d", __FUNCTION__, id, sht3x_sensors[id].active);
+        debug("%s: id=%d active=%d", __FUNCTION__, id, sht3x_sensors[id].active);
         if (!sht3x_sensors[id].active)
             break;
     }
-    DEBUG_PRINTF("%s: id=%d", __FUNCTION__, id);
+    debug("%s: id=%d", __FUNCTION__, id);
     
     if (id == SHT3x_MAX_SENSORS)
     {
-        DEBUG_PRINTF("%s: No more sensor data structures available.", __FUNCTION__);
+        debug("%s: No more sensor data structures available.", __FUNCTION__);
         return -1;
     }
     
@@ -201,7 +254,8 @@ uint32_t sht3x_create_sensor(uint8_t bus, uint8_t addr)
     sht3x_sensors[id].bus  = bus;
     sht3x_sensors[id].addr = addr;
     sht3x_sensors[id].period = 1000;
-    sht3x_sensors[id].first_measurement = true;
+    sht3x_sensors[id].average_computation = true;
+    sht3x_sensors[id].average_first_measurement = true;
     sht3x_sensors[id].average_weight = 0.2;
     sht3x_sensors[id].cb_function = NULL;
     sht3x_sensors[id].cb_task = NULL;
@@ -212,7 +266,10 @@ uint32_t sht3x_create_sensor(uint8_t bus, uint8_t addr)
 
     // clear sensor status register
     if (!sht3x_send_command(id, SHT3x_CLEAR_STATUS_CMD))
+    {
+	    debug("Called from %s", __FUNCTION__);
         return -1;
+    }
 
     snprintf (cb_task_name, 20, "sht3x_cb_task_%d", id);
 
@@ -236,14 +293,10 @@ bool sht3x_delete_sensor(uint32_t sensor)
     if (!sht3x_valid_sensor(sensor, __FUNCTION__))
         return false;
 
+    sht3x_sensors[sensor].active = false;
+    
     if (sht3x_sensors[sensor].cb_task)
         vTaskDelete(sht3x_sensors[sensor].cb_task);
-
-    if (memset(&sht3x_sensors[sensor], 1, sizeof(sht3x_sensor_t)) == NULL)
-    {
-        DEBUG_PRINTF("%s: Could not initialize memory for sensor with id %d.", __FUNCTION__, sensor);
-        return false;
-    }
     
     return true;
 }
@@ -255,7 +308,7 @@ bool sht3x_set_measurement_period (uint32_t sensor, uint32_t period)
         return false;
 
     if (period < 20)
-        DEBUG_PRINTF("%s: Period of %d ms is less than the minimum period of 20 ms for sensor with id %d.", __FUNCTION__, period, sensor);
+        debug("%s: Period of %d ms is less than the minimum period of 20 ms for sensor with id %d.", __FUNCTION__, period, sensor);
 
     sht3x_sensors[sensor].period = period;
     
@@ -270,7 +323,7 @@ bool sht3x_set_callback_function (uint32_t sensor, sht3x_cb_function_t user_func
     
     sht3x_sensors[sensor].cb_function = user_function;
     
-    DEBUG_PRINTF("%s: Set callback mode done.", __FUNCTION__);
+    debug("%s: Set callback mode done.", __FUNCTION__);
 
     return false;
 }
@@ -287,9 +340,19 @@ bool sht3x_get_values(uint32_t sensor, sht3x_value_set_t *actual, sht3x_value_se
     return true;
 }
 
+
+bool sht3x_enable_average_computation (uint32_t sensor, bool enabled)
+{
+    sht3x_sensors[sensor].average_computation = enabled;
+    sht3x_sensors[sensor].average_first_measurement = enabled;
+
+    return true;
+}
+
+
 bool sht3x_set_average_weight (uint32_t sensor, float weight)
 {
-    sht3x_sensors[sensor].first_measurement = true;
+    sht3x_sensors[sensor].average_first_measurement = true;
     sht3x_sensors[sensor].average_weight = weight;
 
     return true;
