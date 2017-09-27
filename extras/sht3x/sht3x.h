@@ -45,7 +45,6 @@
 #include "stdbool.h"
 
 #include "FreeRTOS.h"
-#include "queue.h"
 
 #include "i2c/i2c.h"
 
@@ -63,8 +62,8 @@ extern "C" {
  * @brief	actual or average value set type
  */
 typedef struct {
-    float   temperature_c;    // temperature in degree Fahrenheit
-    float   temperature_f;    // temperature in degree Celcius
+    float   temperature_c;    // temperature in degree Celcius
+    float   temperature_f;    // temperature in degree Fahrenheit
     float   humidity;         // humidity in percent
 } sht3x_value_set_t;
 
