@@ -23,6 +23,7 @@
 #define AP_PSK "esp-open-rtos"
 #define ECHO_PORT_1 50
 #define ECHO_PORT_2 100
+#define EVENTS_QUEUE_SIZE 10
 
 #ifdef CALLBACK_DEBUG
 #define debug(s, ...) printf("%s: " s "\n", "Cb:", ## __VA_ARGS__)
@@ -33,7 +34,7 @@
 QueueHandle_t xQueue_events;
 typedef struct {
     struct netconn *nc ;
-    uint8_t evt ;
+    uint8_t type ;
 } socket_events;
 
 /*
@@ -52,10 +53,18 @@ static void netCallback(struct netconn *conn, enum netconn_evt evt, uint16_t len
     {
         return;
     }
+    //Treatments only on rcv events.
+    switch (evt) {
+    case NETCONN_EVT_RCVPLUS:
+        events.nc = conn ;
+        events.type = evt ;
+        break;
+    default:
+        return;
+        break;
+    }
 
     //Send the event to the queue
-    events.nc = conn ;
-    events.evt = evt ;
     xQueueSend(xQueue_events, &events, 1000);
 
 }
@@ -63,7 +72,7 @@ static void netCallback(struct netconn *conn, enum netconn_evt evt, uint16_t len
 /*
  *  Initialize a server netconn and listen port
  */
-static void set_tcp_server_socket(struct netconn **nc, uint16_t port, netconn_callback callback)
+static void set_tcp_server_netconn(struct netconn **nc, uint16_t port, netconn_callback callback)
 {
     if(nc == NULL)
     {
@@ -81,6 +90,13 @@ static void set_tcp_server_socket(struct netconn **nc, uint16_t port, netconn_ca
     netconn_listen(*nc);
 }
 
+static void close_tcp_netconn(struct netconn *nc)
+{
+    nc->last_err=ERR_CLSD; //It is hacky way to be sure than callback will don't do treatment on a socket closed and deleted
+    netconn_close(nc);
+    netconn_delete(nc);
+}
+
 /*
  *  This task manage each netconn connection without block anything
  */
@@ -89,9 +105,9 @@ static void nonBlockingTCP(void *pvParameters)
 
     struct netconn *nc = NULL; // To create servers
 
-    set_tcp_server_socket(&nc, ECHO_PORT_1, netCallback);
+    set_tcp_server_netconn(&nc, ECHO_PORT_1, netCallback);
     printf("Server netconn %u ready on port %u.\n",(uint32_t)nc, ECHO_PORT_1);
-    set_tcp_server_socket(&nc, ECHO_PORT_2, netCallback);
+    set_tcp_server_netconn(&nc, ECHO_PORT_2, netCallback);
     printf("Server netconn %u ready on port %u.\n",(uint32_t)nc, ECHO_PORT_2);
 
     struct netbuf *netbuf = NULL; // To store incoming Data
@@ -106,7 +122,7 @@ static void nonBlockingTCP(void *pvParameters)
         socket_events events;
         xQueueReceive(xQueue_events, &events, portMAX_DELAY); // Wait here an event on netconn
 
-        if (events.nc->state == NETCONN_LISTEN && events.evt == NETCONN_EVT_RCVPLUS) // If socket is a server and receive incoming event on it
+        if (events.nc->state == NETCONN_LISTEN) // If socket is a server and receive incoming event on it
         {
             printf("Client incoming on server %u.\n", (uint32_t)events.nc);
             int err = netconn_accept(events.nc, &nc_in);
@@ -126,7 +142,7 @@ static void nonBlockingTCP(void *pvParameters)
                     client_port);
             netconn_write(nc_in, buf, strlen(buf), NETCONN_COPY);
         }
-        else if(events.evt == NETCONN_EVT_RCVPLUS && events.nc->state != NETCONN_LISTEN) // If socket is the client and receive data
+        else if(events.nc->state != NETCONN_LISTEN) // If socket is the client and receive data
         {
             if ((netconn_recv(events.nc, &netbuf)) == ERR_OK) // data incoming ?
             {
@@ -142,8 +158,7 @@ static void nonBlockingTCP(void *pvParameters)
             else
             {
                 printf("Error read socket %u, close it \n",(uint32_t)events.nc);
-                netconn_close(events.nc);
-                netconn_delete(events.nc);
+                close_tcp_netconn(events.nc);
             }
         }
     }
@@ -180,7 +195,7 @@ void user_init(void)
     printf("DHCP started\n");
 
     //Create a queue to store events on netconns
-    xQueue_events = xQueueCreate( 20, sizeof(socket_events));
+    xQueue_events = xQueueCreate( EVENTS_QUEUE_SIZE, sizeof(socket_events));
 
     xTaskCreate(nonBlockingTCP, "lwiptest_noblock", 512, NULL, 2, NULL);
 }
