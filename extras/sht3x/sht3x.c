@@ -48,7 +48,7 @@
 #include "espressif/esp_common.h"
 #include "espressif/sdk_private.h"
 
-#define SHT3x_CB_TASK_PRIORITY        9
+#define SHT3x_BG_TASK_PRIORITY        9
 
 #define SHT3x_STATUS_CMD              0xF32D
 #define SHT3x_CLEAR_STATUS_CMD        0x3041
@@ -178,7 +178,7 @@ static void sht3x_compute_values (uint8_t id, uint8_t* data)
 }
 
 
-static void sht3x_callback_task (void *pvParameters)
+static void sht3x_background_task (void *pvParameters)
 {
     uint8_t  data[6];
     uint32_t sensor = (uint32_t)pvParameters;
@@ -187,7 +187,8 @@ static void sht3x_callback_task (void *pvParameters)
     {
         // debug("%.3f Sensor %d: %s", (double)sdk_system_get_time()*1e-3, sensor, __FUNCTION__);
 
-        if (sht3x_send_command(sensor, SHT3x_MEASURE_ONE_SHOT_CMD))
+        if (sht3x_valid_sensor(sensor, __FUNCTION__) &&
+            sht3x_send_command(sensor, SHT3x_MEASURE_ONE_SHOT_CMD))
         {
             vTaskDelay (20 / portTICK_PERIOD_MS);
 
@@ -213,7 +214,7 @@ static void sht3x_callback_task (void *pvParameters)
         }
         else
         {
-		    debug("Called from %s", __FUNCTION__);
+            debug("Called from %s", __FUNCTION__);
 		    
             vTaskDelay(sht3x_sensors[sensor].period / portTICK_PERIOD_MS);
         }
@@ -233,7 +234,7 @@ bool sht3x_init()
 uint32_t sht3x_create_sensor(uint8_t bus, uint8_t addr)
 {
     static uint32_t id;
-    static char cb_task_name[20];
+    static char bg_task_name[20];
     
     // search for first free sensor data structure
     for (id=0; id < SHT3x_MAX_SENSORS; id++)
@@ -258,7 +259,7 @@ uint32_t sht3x_create_sensor(uint8_t bus, uint8_t addr)
     sht3x_sensors[id].average_first_measurement = true;
     sht3x_sensors[id].average_weight = 0.2;
     sht3x_sensors[id].cb_function = NULL;
-    sht3x_sensors[id].cb_task = NULL;
+    sht3x_sensors[id].bg_task = NULL;
 
     // check whether sensor is available
     if (!sht3x_is_available(id))
@@ -271,14 +272,14 @@ uint32_t sht3x_create_sensor(uint8_t bus, uint8_t addr)
         return -1;
     }
 
-    snprintf (cb_task_name, 20, "sht3x_cb_task_%d", id);
+    snprintf (bg_task_name, 20, "sht3x_bg_task_%d", id);
 
-    if (xTaskCreate (sht3x_callback_task, cb_task_name, 256, (void*)id, 
-                     SHT3x_CB_TASK_PRIORITY, 
-                     &sht3x_sensors[id].cb_task) != pdPASS)
+    if (xTaskCreate (sht3x_background_task, bg_task_name, 256, (void*)id, 
+                     SHT3x_BG_TASK_PRIORITY, 
+                     &sht3x_sensors[id].bg_task) != pdPASS)
     {
-       vTaskDelete(sht3x_sensors[id].cb_task);
-       printf("%s: Could not create task %s\n", __FUNCTION__, cb_task_name);
+       vTaskDelete(sht3x_sensors[id].bg_task);
+       printf("%s: Could not create task %s\n", __FUNCTION__, bg_task_name);
        return false;
     }
 
@@ -295,8 +296,8 @@ bool sht3x_delete_sensor(uint32_t sensor)
 
     sht3x_sensors[sensor].active = false;
     
-    if (sht3x_sensors[sensor].cb_task)
-        vTaskDelete(sht3x_sensors[sensor].cb_task);
+    if (sht3x_sensors[sensor].bg_task)
+        vTaskDelete(sht3x_sensors[sensor].bg_task);
     
     return true;
 }

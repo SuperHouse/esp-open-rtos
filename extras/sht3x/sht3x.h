@@ -94,7 +94,7 @@ typedef struct {
     float   average_weight;
 
     sht3x_cb_function_t cb_function;
-    TaskHandle_t        cb_task;
+    TaskHandle_t        bg_task;
     
 } sht3x_sensor_t;
 
