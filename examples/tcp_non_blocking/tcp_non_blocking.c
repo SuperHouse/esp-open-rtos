@@ -24,6 +24,12 @@
 #define ECHO_PORT_1 50
 #define ECHO_PORT_2 100
 
+#ifdef CALLBACK_DEBUG
+#define debug(s, ...) printf("%s: " s "\n", "Cb:", ## __VA_ARGS__)
+#else
+#define debug(s, ...)
+#endif
+
 QueueHandle_t xQueue_events;
 typedef struct {
     struct netconn *nc ;
@@ -36,7 +42,7 @@ typedef struct {
 static void netCallback(struct netconn *conn, enum netconn_evt evt, uint16_t length)
 {
     //Show some callback information (debug)
-    printf("C:sock:%u\tsta:%u\tevt:%u\tlen:%u\ttyp:%u\tfla:%02X\terr:%d\n", \
+    debug("sock:%u\tsta:%u\tevt:%u\tlen:%u\ttyp:%u\tfla:%02X\terr:%d", \
             (uint32_t)conn,conn->state,evt,length,conn->type,conn->flags,conn->last_err);
 
     socket_events events ;
@@ -122,14 +128,13 @@ static void nonBlockingTCP(void *pvParameters)
         }
         else if(events.evt == NETCONN_EVT_RCVPLUS && events.nc != nc)
         {
-            printf("Client %u send a message.\n", (uint32_t)events.nc);
             if ((netconn_recv(events.nc, &netbuf)) == ERR_OK) // data incoming ?
             {
                 do
                 {
                     netbuf_data(netbuf, (void*)&buffer, &len_buf);
                     netconn_write(events.nc, buffer, strlen(buffer), NETCONN_COPY);
-                    printf("%s\n",buf);
+                    printf("Client %u send: %s\n",(uint32_t)events.nc,buffer);
                 }
                 while (netbuf_next(netbuf) >= 0);
                 netbuf_delete(netbuf);
