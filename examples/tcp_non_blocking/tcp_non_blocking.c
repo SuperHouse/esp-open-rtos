@@ -90,9 +90,9 @@ static void nonBlockingTCP(void *pvParameters)
     struct netconn *nc = NULL; // To create servers
 
     set_tcp_server_socket(&nc, ECHO_PORT_1, netCallback);
-    printf("Server netconn ready: %u\n",(uint32_t)nc);
+    printf("Server netconn %u ready on port %u.\n",(uint32_t)nc, ECHO_PORT_1);
     set_tcp_server_socket(&nc, ECHO_PORT_2, netCallback);
-    printf("Server netconn ready: %u\n",(uint32_t)nc);
+    printf("Server netconn %u ready on port %u.\n",(uint32_t)nc, ECHO_PORT_2);
 
     struct netbuf *netbuf = NULL; // To store incoming Data
     struct netconn *nc_in = NULL; // To accept incoming netconn
@@ -108,25 +108,25 @@ static void nonBlockingTCP(void *pvParameters)
 
         if (events.nc->state == NETCONN_LISTEN && events.evt == NETCONN_EVT_RCVPLUS) // If socket is a server and receive incoming event on it
         {
-            printf("client incoming on server %u\n", (uint32_t)events.nc);
+            printf("Client incoming on server %u.\n", (uint32_t)events.nc);
             int err = netconn_accept(events.nc, &nc_in);
             if (err != ERR_OK)
             {
                 if(nc_in)
                     netconn_delete(nc_in);
             }
-            printf("New client is %u\n",(uint32_t)nc_in);
+            printf("New client is %u.\n",(uint32_t)nc_in);
 
             ip_addr_t client_addr;
             uint16_t client_port; //Client port
             netconn_peer(nc_in, &client_addr, &client_port);
-            snprintf(buf, sizeof(buf), "Your address is %d.%d.%d.%d:%u\r\n",
+            snprintf(buf, sizeof(buf), "Your address is %d.%d.%d.%d:%u.\r\n",
                     ip4_addr1(&client_addr), ip4_addr2(&client_addr),
                     ip4_addr3(&client_addr), ip4_addr4(&client_addr),
                     client_port);
             netconn_write(nc_in, buf, strlen(buf), NETCONN_COPY);
         }
-        else if(events.evt == NETCONN_EVT_RCVPLUS && events.nc != nc)
+        else if(events.evt == NETCONN_EVT_RCVPLUS && events.nc->state != NETCONN_LISTEN) // If socket is the client and receive data
         {
             if ((netconn_recv(events.nc, &netbuf)) == ERR_OK) // data incoming ?
             {
@@ -141,7 +141,7 @@ static void nonBlockingTCP(void *pvParameters)
             }
             else
             {
-                printf("error read socket %u, close it \n",(uint32_t)events.nc);
+                printf("Error read socket %u, close it \n",(uint32_t)events.nc);
                 netconn_close(events.nc);
                 netconn_delete(events.nc);
             }
