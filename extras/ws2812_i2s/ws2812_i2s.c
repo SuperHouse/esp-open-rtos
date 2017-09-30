@@ -37,7 +37,7 @@
 #endif
 
 #define MAX_DMA_BLOCK_SIZE      4095
-#define DMA_PIXEL_SIZE          12    // each colour takes 4 bytes
+// #define DMA_PIXEL_SIZE          16    // each colour takes 4 bytes
 
 /**
  * Amount of zero data to produce WS2812 reset condition.
@@ -117,9 +117,9 @@ static inline void init_descriptors_list(uint8_t *buf, uint32_t total_dma_data_s
     }
 }
 
-void ws2812_i2s_init(uint32_t pixels_number)
+void ws2812_i2s_init(uint32_t pixels_number, pixeltype_t type)
 {
-    dma_buffer_size = pixels_number * DMA_PIXEL_SIZE;
+    dma_buffer_size = pixels_number * type;
     dma_block_list_size = dma_buffer_size / MAX_DMA_BLOCK_SIZE;
 
     if (dma_buffer_size % MAX_DMA_BLOCK_SIZE) {
@@ -156,13 +156,13 @@ const IRAM_DATA int16_t bitpatterns[16] =
     0b1110111010001000, 0b1110111010001110, 0b1110111011101000, 0b1110111011101110,
 };
 
-void ws2812_i2s_update(ws2812_pixel_t *pixels)
+void ws2812_i2s_update(ws2812_pixel_t *pixels, pixeltype_t type)
 {
     while (i2s_dma_processing) {};
 
     uint16_t *p_dma_buf = dma_buffer;
 
-    for (uint32_t i = 0; i < (dma_buffer_size / DMA_PIXEL_SIZE); i++) {
+    for (uint32_t i = 0; i < (dma_buffer_size / type); i++) {
         // green
         *p_dma_buf++ =  bitpatterns[pixels[i].green & 0x0F];
         *p_dma_buf++ =  bitpatterns[pixels[i].green >> 4];
@@ -174,6 +174,12 @@ void ws2812_i2s_update(ws2812_pixel_t *pixels)
         // blue
         *p_dma_buf++ =  bitpatterns[pixels[i].blue & 0x0F];
         *p_dma_buf++ =  bitpatterns[pixels[i].blue >> 4];
+        
+        if(type == PIXEL_RGBW) {
+          // white
+          *p_dma_buf++ =  bitpatterns[pixels[i].white & 0x0F];
+          *p_dma_buf++ =  bitpatterns[pixels[i].white >> 4];
+        }
     }
 
     i2s_dma_processing = true;

@@ -17,7 +17,7 @@
 
 #include "ws2812_i2s/ws2812_i2s.h"
 
-const uint32_t led_number = 60;
+const uint32_t led_number = 12;
 const uint32_t tail_fade_factor = 2;
 const uint32_t tail_length = 8;
 
@@ -26,6 +26,7 @@ static void fade_pixel(ws2812_pixel_t *pixel, uint32_t factor)
     pixel->red = pixel->red / factor;
     pixel->green = pixel->green / factor;
     pixel->blue = pixel->blue / factor;
+    pixel->white = pixel->white / factor;
 }
 
 static int fix_index(int index)
@@ -41,10 +42,11 @@ static int fix_index(int index)
 
 static ws2812_pixel_t next_colour()
 {
-    ws2812_pixel_t colour = {0, 0, 0};
+    ws2812_pixel_t colour = {0, 0, 0, 0};
     colour.red = rand() % 256;
     colour.green = rand() % 256;
     colour.blue = rand() % 256;
+    colour.white = rand() % 256; 
 
     return colour;
 }
@@ -54,7 +56,7 @@ static void demo(void *pvParameters)
     ws2812_pixel_t pixels[led_number];
     int head_index = 0;
 
-    ws2812_i2s_init(led_number);
+    ws2812_i2s_init(led_number, PIXEL_RGBW);
 
     memset(pixels, 0, sizeof(ws2812_pixel_t) * led_number);    
 
@@ -69,8 +71,8 @@ static void demo(void *pvParameters)
             memset(&pixels[fix_index(head_index - tail_length)], 0, 
                     sizeof(ws2812_pixel_t));
 
-            ws2812_i2s_update(pixels);
-            vTaskDelay(20 / portTICK_PERIOD_MS);
+            ws2812_i2s_update(pixels, PIXEL_RGBW);
+            vTaskDelay(50 / portTICK_PERIOD_MS);
         }
     }
 }
@@ -78,6 +80,14 @@ static void demo(void *pvParameters)
 void user_init(void)
 {
     uart_set_baud(0, 115200);
+    struct sdk_station_config config = {
+        .ssid = "Loading...",
+        .password = "morays59924_howitzer",
+    };
+
+    /* required to call wifi_set_opmode before station_set_config */
+    sdk_wifi_set_opmode(STATION_MODE);
+    sdk_wifi_station_set_config(&config);
 
     xTaskCreate(&demo, "ws2812_i2s", 256, NULL, 10, NULL);
 }
