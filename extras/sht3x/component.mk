@@ -1,6 +1,6 @@
 # Component makefile for extras/sht3x
 
-# expected anyone using bmp driver includes it as 'sht3x/sht3x.h'
+# expected anyone using SHT3x driver includes it as 'sht3x/sht3x.h'
 INC_DIRS += $(sht3x_ROOT)..
 
 # args for passing into compile rule generation
