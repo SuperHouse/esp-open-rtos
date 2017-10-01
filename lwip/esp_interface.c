@@ -164,6 +164,8 @@ void pp_recycle_rx_pbuf(struct pbuf *p)
 
 #define COPY_PP_RX_PBUFS 0
 
+#if TCP_QUEUE_OOSEQ
+
 /* Return the number of ooseq bytes that can be retained given the current
  * size 'n'. */
 size_t ooseq_bytes_limit(struct tcp_pcb *pcb)
@@ -219,6 +221,8 @@ size_t ooseq_pbufs_limit(struct tcp_pcb *pcb)
 
     return target;
 }
+
+#endif /* TCP_QUEUE_OOSEQ */
 
 /**
  * This function should be called when a packet is ready to be read
