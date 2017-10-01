@@ -299,13 +299,6 @@ uint32_t bme680_create_sensor(uint8_t bus, uint8_t addr, uint8_t cs)
             
     bme680_sensors[id].active = true;
     
- 	/* Set the default temperature, pressure and humidity settings */
-    bme680_set_oversampling_rates (id, os_1x, os_1x, os_1x);
-    bme680_set_filter_size (id, iir_size_3);
-
-	/* Set heater default profile 320 degree Celcius for 150 ms */
-    bme680_set_heater_profile (id, 320, 150);
-
     // check whether sensor is available
     if (!bme680_is_available(id))
     {
@@ -313,6 +306,13 @@ uint32_t bme680_create_sensor(uint8_t bus, uint8_t addr, uint8_t cs)
         bme680_sensors[id].active = false;    
         return -1;
     }
+
+ 	/* Set the default temperature, pressure and humidity settings */
+    bme680_set_oversampling_rates (id, os_1x, os_1x, os_1x);
+    bme680_set_filter_size (id, iir_size_3);
+
+	/* Set heater default profile 320 degree Celcius for 150 ms */
+    bme680_set_heater_profile (id, 320, 150);
 
     snprintf (bg_task_name, 20, "bme680_bg_task_%d", id);
 
@@ -324,7 +324,7 @@ uint32_t bme680_create_sensor(uint8_t bus, uint8_t addr, uint8_t cs)
         error("Could not create the background task %s for sensor with id %d\n",
                __FUNCTION__, bg_task_name, id);
         bme680_sensors[id].active = false;    
-        return false;
+        return -1;
     }
 
     return id;
