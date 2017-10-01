@@ -1,6 +1,7 @@
 #include <string.h>
 #include <lwip/udp.h>
 #include <lwip/igmp.h>
+#include <lwip/ip_addr.h>
 #include <espressif/esp_common.h>
 #include "upnp.h"
 
@@ -18,13 +19,13 @@ static const char* get_my_ip(void)
 }
 
 /**
-  * @brief This function joins a multicast group witht he specified ip/port
+  * @brief This function joins a multicast group with the specified ip/port
   * @param group_ip the specified multicast group ip
   * @param group_port the specified multicast port number
   * @param recv the lwip UDP callback
   * @retval udp_pcb* or NULL if joining failed
   */
-static struct udp_pcb* mcast_join_group(char *group_ip, uint16_t group_port, void (* recv)(void * arg, struct udp_pcb * upcb, struct pbuf * p, struct ip_addr * addr, u16_t port))
+static struct udp_pcb* mcast_join_group(char *group_ip, uint16_t group_port, void (* recv)(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port))
 {
     bool status = false;
     struct udp_pcb *upcb;
@@ -36,7 +37,7 @@ static struct udp_pcb* mcast_join_group(char *group_ip, uint16_t group_port, voi
             printf("Error, udp_new failed");
             break;
         }
-        udp_bind(upcb, IP_ADDR_ANY, group_port);
+        udp_bind(upcb, IP4_ADDR_ANY, group_port);
         struct netif* netif = sdk_system_get_netif(STATION_IF);
         if (!netif) {
             printf("Error, netif is null");
@@ -46,10 +47,10 @@ static struct udp_pcb* mcast_join_group(char *group_ip, uint16_t group_port, voi
             netif->flags |= NETIF_FLAG_IGMP;
             igmp_start(netif);
         }
-        ip_addr_t ipgroup;
-        ipaddr_aton(group_ip, &ipgroup);
-        err_t err = igmp_joingroup(&netif->ip_addr, &ipgroup);
-        if(ERR_OK != err) {
+        ip4_addr_t ipgroup;
+        ip4addr_aton(group_ip, &ipgroup);
+        err_t err = igmp_joingroup_netif(netif, &ipgroup);
+        if (ERR_OK != err) {
             printf("Failed to join multicast group: %d", err);
             break;
         }
@@ -68,7 +69,7 @@ static struct udp_pcb* mcast_join_group(char *group_ip, uint16_t group_port, voi
     return upcb;
 }
 
-static void send(struct udp_pcb *upcb, struct ip_addr *addr, u16_t port)
+static void send_udp(struct udp_pcb *upcb, const ip_addr_t *addr, u16_t port)
 {
     struct pbuf *p;
     char msg[500];
@@ -110,14 +111,14 @@ static void send(struct udp_pcb *upcb, struct ip_addr *addr, u16_t port)
   * @param port the remote port from which the packet was received
   * @retval None
   */
-static void receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
+static void receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
     if (p) {
         printf("Msg received port:%d len:%d\n", port, p->len);
         uint8_t *buf = (uint8_t*) p->payload;
         printf("Msg received port:%d len:%d\nbuf: %s\n", port, p->len, buf);
         
-        send(upcb, addr, port);
+        send_udp(upcb, addr, port);
 
         pbuf_free(p);
     }

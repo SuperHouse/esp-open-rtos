@@ -32,36 +32,25 @@
 #ifndef __ARCH_CC_H__
 #define __ARCH_CC_H__
 
-/* include ESP SDK prototypes as they're used in some LWIP routines */
-#include "espressif/sdk_private.h"
-
-/* ESP8266 SDK Interface
-
-   The lwip-esp stack is designed to be also compatible with other ESP8266 SDKs,
-   so we can't use our 'sdk_' prefixes there
-*/
-#define system_station_got_ip_set sdk_system_station_got_ip_set
-#define system_pp_recycle_rx_pkt sdk_system_pp_recycle_rx_pkt
-
 /* Include some files for defining library routines */
 #include <stdio.h> /* printf, fflush, FILE */
 #include <stdlib.h> /* abort */
 #include <stdint.h>
 #include <sys/time.h>
 #include <sys/errno.h>
+#include <esp/hwrand.h>
 
-#define ERRNO
+struct ip4_addr;
+struct esf_buf;
+void sdk_system_station_got_ip_set(struct ip4_addr *, struct ip4_addr *, struct ip4_addr *);
+void sdk_system_pp_recycle_rx_pkt(struct esf_buf *);
 
-#define BYTE_ORDER LITTLE_ENDIAN
+struct pbuf;
+void pp_recycle_rx_pbuf(struct pbuf *);
 
-/** @todo fix some warnings: don't use #pragma if compiling with cygwin gcc */
-#ifndef __GNUC__
-	#include <limits.h>
-	#pragma warning (disable: 4244) /* disable conversion warning (implicit integer promotion!) */
-	#pragma warning (disable: 4127) /* conditional expression is constant */
-	#pragma warning (disable: 4996) /* 'strncpy' was declared deprecated */
-	#pragma warning (disable: 4103) /* structure packing changed by including file */
-#endif
+struct tcp_pcb;
+size_t ooseq_bytes_limit(struct tcp_pcb *);
+size_t ooseq_pbufs_limit(struct tcp_pcb *);
 
 /* Define generic types used in lwIP */
 typedef uint8_t    u8_t;
@@ -111,5 +100,7 @@ typedef int sys_prot_t;
 
 #define LWIP_PLATFORM_HTONS(_n)  ((u16_t)((((_n) & 0xff) << 8) | (((_n) >> 8) & 0xff)))
 #define LWIP_PLATFORM_HTONL(_n)  ((u32_t)( (((_n) & 0xff) << 24) | (((_n) & 0xff00) << 8) | (((_n) >> 8)  & 0xff00) | (((_n) >> 24) & 0xff) ))
+
+#define LWIP_RAND()                         hwrand()
 
 #endif /* __ARCH_CC_H__ */

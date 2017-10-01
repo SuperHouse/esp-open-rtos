@@ -20,9 +20,9 @@
 
 #include "ssid_config.h"
 
-#define WEB_SERVER "chainxor.org"
+#define WEB_SERVER "ipv6.google.com"
 #define WEB_PORT 80
-#define WEB_URL "http://chainxor.org/"
+#define WEB_PATH "/"
 
 void http_get_task(void *pvParameters)
 {
@@ -31,7 +31,7 @@ void http_get_task(void *pvParameters)
 
     while(1) {
         const struct addrinfo hints = {
-            .ai_family = AF_INET,
+            .ai_family = AF_UNSPEC,
             .ai_socktype = SOCK_STREAM,
         };
         struct addrinfo *res;
@@ -39,7 +39,7 @@ void http_get_task(void *pvParameters)
         printf("Running DNS lookup for %s...\r\n", WEB_SERVER);
         int err = getaddrinfo(WEB_SERVER, "80", &hints, &res);
 
-        if(err != 0 || res == NULL) {
+        if (err != 0 || res == NULL) {
             printf("DNS lookup failed err=%d res=%p\r\n", err, res);
             if(res)
                 freeaddrinfo(res);
@@ -47,9 +47,28 @@ void http_get_task(void *pvParameters)
             failures++;
             continue;
         }
-        /* Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
-        struct in_addr *addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
-        printf("DNS lookup succeeded. IP=%s\r\n", inet_ntoa(*addr));
+
+#if LWIP_IPV6
+        {
+            struct netif *netif = sdk_system_get_netif(0);
+            int i;
+            for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+                printf("  ip6 %d state %x\n", i, netif_ip6_addr_state(netif, i));
+                if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)))
+                    printf("  ip6 addr %d = %s\n", i, ip6addr_ntoa(netif_ip6_addr(netif, i)));
+            }
+        }
+#endif
+
+        struct sockaddr *sa = res->ai_addr;
+        if (sa->sa_family == AF_INET) {
+            printf("DNS lookup succeeded. IP=%s\r\n", inet_ntoa(((struct sockaddr_in *)sa)->sin_addr));
+        }
+#if LWIP_IPV6
+        if (sa->sa_family == AF_INET6) {
+            printf("DNS lookup succeeded. IP=%s\r\n", inet6_ntoa(((struct sockaddr_in6 *)sa)->sin6_addr));
+        }
+#endif
 
         int s = socket(res->ai_family, res->ai_socktype, 0);
         if(s < 0) {
@@ -75,8 +94,10 @@ void http_get_task(void *pvParameters)
         freeaddrinfo(res);
 
         const char *req =
-            "GET "WEB_URL"\r\n"
+            "GET "WEB_PATH" HTTP/1.1\r\n"
+            "Host: "WEB_SERVER"\r\n"
             "User-Agent: esp-open-rtos/0.1 esp8266\r\n"
+            "Connection: close\r\n"
             "\r\n";
         if (write(s, req, strlen(req)) < 0) {
             printf("... socket send failed\r\n");
@@ -126,6 +147,6 @@ void user_init(void)
     sdk_wifi_set_opmode(STATION_MODE);
     sdk_wifi_station_set_config(&config);
 
-    xTaskCreate(&http_get_task, "get_task", 256, NULL, 2, NULL);
+    xTaskCreate(&http_get_task, "get_task", 384, NULL, 2, NULL);
 }
 

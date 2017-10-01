@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-struct ip_addr;
+struct ip4_addr;
 
 /*********************************************
 * Defined in libmain.a
@@ -42,17 +42,6 @@ int sdk_uart_rx_one_char(char *buf);
 /* Write a single character to the UART.
  */
 void sdk_os_putc(char c);
-
-/* Called when an IP gets set on the "station" (client) interface.
- */
-void sdk_system_station_got_ip_set(struct ip_addr *ip_addr, struct ip_addr *sn_mask, struct ip_addr *gw_addr);
-
-/* This is a no-op wrapper around ppRecycleRxPkt, which is defined in libpp.a
-
-   It's called when a pbuf is freed, and allows pp to reuse the 'eb' pointer to ESP-specific
-   pbuf data. (See esp-lwip pbuf.h)
- */
-void sdk_system_pp_recycle_rx_pkt(void *eb);
 
 #ifdef	__cplusplus
 }

@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-typedef void (*i2s_dma_isr_t)(void);
+typedef void (*i2s_dma_isr_t)(void *);
 
 typedef struct dma_descriptor {
     uint32_t blocksize:12;
@@ -61,10 +61,11 @@ typedef struct {
  * Initialize I2S and DMA subsystems.
  *
  * @param isr ISR handler. Can be NULL if interrupt handling is not needed.
+ * @param arg ISR handler arg.
  * @param clock_div I2S clock configuration.
  * @param pins I2S pin configuration. Specifies which pins are enabled in I2S.
  */
-void i2s_dma_init(i2s_dma_isr_t isr, i2s_clock_div_t clock_div, i2s_pins_t pins);
+void i2s_dma_init(i2s_dma_isr_t isr, void *arg, i2s_clock_div_t clock_div, i2s_pins_t pins);
 
 /**
  * Calculate I2S dividers for the specified frequency.

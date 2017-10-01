@@ -32,7 +32,7 @@ struct esf_buf *sdk_ieee80211_getmgtframe(void **arg0, uint32_t arg1, uint32_t a
 extern uint8_t sdk_TmpSTAAPCloseAP;
 extern uint8_t sdk_PendFreeBcnEb;
 void sdk_ieee80211_hostap_attach(struct sdk_g_ic_st *);
-void sdk_hostap_handle_timer(struct sdk_netif_conninfo *cnx_node);
+void sdk_hostap_handle_timer(struct sdk_cnx_node *cnx_node);
 bool sdk_wifi_softap_start();
 bool sdk_wifi_softap_stop();
 
@@ -85,10 +85,10 @@ int sdk_chm_check_same_channel();
 extern ETSTimer sdk_sta_con_timer;
 extern void *sdk_g_cnx_probe_rc_list_cb;
 void sdk_cnx_sta_leave(struct sdk_g_ic_netif_info *netif_info, void *);
-void *sdk_cnx_node_search(uint8_t mac[6]);
-void sdk_cnx_node_leave(struct sdk_g_ic_netif_info *netif, struct sdk_netif_conninfo *conn);
+struct sdk_cnx_node *sdk_cnx_node_search(uint8_t mac[6]);
+void sdk_cnx_node_leave(struct sdk_g_ic_netif_info *netif, struct sdk_cnx_node *conn);
 void sdk_cnx_rc_update_state_metric(void *, int, int);
-void sdk_cnx_remove_rc(void *);
+void sdk_cnx_node_remove(struct sdk_cnx_node *cnx_node);
 void sdk_cnx_attach(struct sdk_g_ic_st *);
 
 #endif /* _ESPLIBS_LIBNET80211_H */

@@ -7,13 +7,19 @@
  */
 #include <esp/interrupts.h>
 
-_xt_isr isr[16];
+typedef struct _xt_isr_entry_ {
+    _xt_isr handler;
+    void *arg;
+} _xt_isr_entry;
+
+_xt_isr_entry isr[16];
 
 bool esp_in_isr;
 
-void IRAM _xt_isr_attach(uint8_t i, _xt_isr func)
+void IRAM _xt_isr_attach(uint8_t i, _xt_isr func, void *arg)
 {
-    isr[i] = func;
+    isr[i].handler = func;
+    isr[i].arg = arg;
 }
 
 /* Generic ISR handler.
@@ -25,17 +31,20 @@ uint16_t IRAM _xt_isr_handler(uint16_t intset)
     esp_in_isr = true;
 
     /* WDT has highest priority (occasional WDT resets otherwise) */
-    if(intset & BIT(INUM_WDT)) {
+    if (intset & BIT(INUM_WDT)) {
         _xt_clear_ints(BIT(INUM_WDT));
-        isr[INUM_WDT]();
+        isr[INUM_WDT].handler(NULL);
         intset -= BIT(INUM_WDT);
     }
 
-    while(intset) {
+    while (intset) {
         uint8_t index = __builtin_ffs(intset) - 1;
         uint16_t mask = BIT(index);
         _xt_clear_ints(mask);
-        isr[index]();
+        _xt_isr handler = isr[index].handler;
+        if (handler) {
+            handler(isr[index].arg);
+        }
         intset -= mask;
     }
 

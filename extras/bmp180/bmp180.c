@@ -152,7 +152,7 @@ bool bmp180_measure(i2c_dev_t *dev, bmp180_constants_t *c, int32_t *temperature,
     if (!temperature && !pressure)
         return false;
 
-    // Temperature is always needed, allso required for pressure only.
+    // Temperature is always needed, also required for pressure only.
     //
     // Calculation taken from BMP180 Datasheet
     int32_t UT, X1, X2, B5;

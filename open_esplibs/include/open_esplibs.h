@@ -6,6 +6,10 @@
 // useful for quickly troubleshooting whether a bug is due to the
 // reimplementation of Espressif libraries, or something else.
 
+// Some source code is mandatory and these are not included as options here.
+// For example code referencing lwip structures and flags etc that has changed
+// since the initial binary code.
+
 #ifndef OPEN_ESPLIBS
 #define OPEN_ESPLIBS 1
 #endif
@@ -32,8 +36,11 @@
 #ifndef OPEN_LIBMAIN_XTENSA_CONTEXT
 #define OPEN_LIBMAIN_XTENSA_CONTEXT (OPEN_LIBMAIN)
 #endif
-#ifndef OPEN_LIBMAIN_USER_INTERFACE
-#define OPEN_LIBMAIN_USER_INTERFACE (OPEN_LIBMAIN)
+#ifndef OPEN_LIBMAIN_ETS_TIMER
+#define OPEN_LIBMAIN_ETS_TIMER (OPEN_LIBMAIN)
+#endif
+#ifndef OPEN_LIBMAIN_ETS_TIMER
+#define OPEN_LIBMAIN_ETS_TIMER (OPEN_LIBMAIN)
 #endif
 
 #ifndef OPEN_LIBNET80211
@@ -41,18 +48,6 @@
 #endif
 #ifndef OPEN_LIBNET80211_ETS
 #define OPEN_LIBNET80211_ETS (OPEN_LIBNET80211)
-#endif
-#ifndef OPEN_LIBNET80211_HOSTAP
-#define OPEN_LIBNET80211_HOSTAP (OPEN_LIBNET80211)
-#endif
-#ifndef OPEN_LIBNET80211_INPUT
-#define OPEN_LIBNET80211_INPUT (OPEN_LIBNET80211)
-#endif
-#ifndef OPEN_LIBNET80211_STA
-#define OPEN_LIBNET80211_STA (OPEN_LIBNET80211)
-#endif
-#ifndef OPEN_LIBNET80211_WL_CNX
-#define OPEN_LIBNET80211_WL_CNX (OPEN_LIBNET80211)
 #endif
 
 #ifndef OPEN_LIBPHY
@@ -113,10 +108,6 @@
 
 #ifndef OPEN_LIBWPA_OS_XTENSA
 #define OPEN_LIBWPA_OS_XTENSA (OPEN_LIBWPA)
-#endif
-
-#ifndef OPEN_LIBWPA_WPA_MAIN
-#define OPEN_LIBWPA_WPA_MAIN (OPEN_LIBWPA)
 #endif
 
 #endif /* _OPEN_ESPLIBS_H */

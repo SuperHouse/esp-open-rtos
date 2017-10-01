@@ -14,18 +14,22 @@
  * BSD Licensed as described in the file LICENSE
  */
 #include <string.h>
+#include <strings.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
 #include <lwip/netif.h>
 #include <lwip/api.h>
+#include "esplibs/libmain.h"
 
 /* Grow the size of the lwip dhcp_msg struct's options field, as LWIP
    defaults to a 68 octet options field for its DHCP client, and most
    full-sized clients send us more than this. */
 #define DHCP_OPTIONS_LEN 312
 
-#include <lwip/dhcp.h>
+#include <lwip/ip.h>
+#include <lwip/prot/dhcp.h>
+#include <lwip/prot/iana.h>
 
 _Static_assert(sizeof(struct dhcp_msg) == offsetof(struct dhcp_msg, options) + 312, "dhcp_msg_t should have extended options size");
 
@@ -35,15 +39,20 @@ _Static_assert(sizeof(struct dhcp_msg) == offsetof(struct dhcp_msg, options) + 3
 
 typedef struct {
     uint8_t hwaddr[NETIF_MAX_HWADDR_LEN];
+    uint8_t active;
     uint32_t expires;
 } dhcp_lease_t;
 
 typedef struct {
     struct netconn *nc;
     uint8_t max_leases;
-    ip_addr_t first_client_addr;
+    ip4_addr_t first_client_addr;
     struct netif *server_if;
     dhcp_lease_t *leases; /* length max_leases */
+    /* Optional router */
+    ip4_addr_t router;
+    /* Optional DNS server */
+    ip4_addr_t dns;
 } server_state_t;
 
 /* Only one DHCP server task can run at once, so we have global state
@@ -68,37 +77,52 @@ static uint8_t *add_dhcp_option_bytes(uint8_t *opt, uint8_t type, void *value, u
 static dhcp_lease_t *find_lease_slot(uint8_t *hwaddr);
 
 /* Copy IP address as dotted decimal to 'dest', must be at least 16 bytes long */
-inline static void sprintf_ipaddr(const ip_addr_t *addr, char *dest)
+inline static void sprintf_ipaddr(const ip4_addr_t *addr, char *dest)
 {
-    if(addr == NULL)
+    if (addr == NULL)
         sprintf(dest, "NULL");
     else
         sprintf(dest, "%d.%d.%d.%d", ip4_addr1(addr),
                 ip4_addr2(addr), ip4_addr3(addr), ip4_addr4(addr));
 }
 
-void dhcpserver_start(const ip_addr_t *first_client_addr, uint8_t max_leases)
+void dhcpserver_start(const ip4_addr_t *first_client_addr, uint8_t max_leases)
 {
     /* Stop any existing running dhcpserver */
-    if(dhcpserver_task_handle)
+    if (dhcpserver_task_handle)
         dhcpserver_stop();
 
     state = malloc(sizeof(server_state_t));
     state->max_leases = max_leases;
     state->leases = calloc(max_leases, sizeof(dhcp_lease_t));
+    bzero(state->leases, max_leases * sizeof(dhcp_lease_t));
     // state->server_if is assigned once the task is running - see comment in dhcpserver_task()
-    ip_addr_copy(state->first_client_addr, *first_client_addr);
+    ip4_addr_copy(state->first_client_addr, *first_client_addr);
 
-    xTaskCreate(dhcpserver_task, "DHCPServer", 768, NULL, 8, &dhcpserver_task_handle);
+    /* Clear options */
+    ip4_addr_set_zero(&state->router);
+    ip4_addr_set_zero(&state->dns);
+
+    xTaskCreate(dhcpserver_task, "DHCP Server", 448, NULL, 2, &dhcpserver_task_handle);
 }
 
 void dhcpserver_stop(void)
 {
-    if(dhcpserver_task_handle) {
+    if (dhcpserver_task_handle) {
         vTaskDelete(dhcpserver_task_handle);
         free(state);
         dhcpserver_task_handle = NULL;
     }
+}
+
+void dhcpserver_set_router(const ip4_addr_t *router)
+{
+    ip4_addr_copy(state->router, *router);
+}
+
+void dhcpserver_set_dns(const ip4_addr_t *dns)
+{
+    ip4_addr_copy(state->dns, *dns);
 }
 
 static void dhcpserver_task(void *pxParameter)
@@ -107,12 +131,13 @@ static void dhcpserver_task(void *pxParameter)
     state->server_if = netif_list; /* TODO: Make this configurable */
 
     state->nc = netconn_new (NETCONN_UDP);
-    if(!state->nc) {
+    if (!state->nc) {
         printf("DHCP Server Error: Failed to allocate socket.\r\n");
         return;
     }
 
-    netconn_bind(state->nc, IP_ADDR_ANY, DHCP_SERVER_PORT);
+    netconn_bind(state->nc, IP4_ADDR_ANY, LWIP_IANA_PORT_DHCP_SERVER);
+    netconn_bind_if (state->nc, netif_get_index(state->server_if));
 
     while(1)
     {
@@ -121,29 +146,32 @@ static void dhcpserver_task(void *pxParameter)
 
         /* Receive a DHCP packet */
         err_t err = netconn_recv(state->nc, &netbuf);
-        if(err != ERR_OK) {
+        if (err != ERR_OK) {
             printf("DHCP Server Error: Failed to receive DHCP packet. err=%d\r\n", err);
             continue;
         }
 
         /* expire any leases that have passed */
         uint32_t now = xTaskGetTickCount();
-        for(int i = 0; i < state->max_leases; i++) {
-            uint32_t expires = state->leases[i].expires;
-            if(expires && expires < now)
-                state->leases[i].expires = 0;
+        for (int i = 0; i < state->max_leases; i++) {
+            if (state->leases[i].active) {
+                uint32_t expires = state->leases[i].expires - now;
+                if (expires >= 0x80000000) {
+                    state->leases[i].active = 0;
+                }
+            }
         }
 
         ip_addr_t received_ip;
         u16_t port;
         netconn_addr(state->nc, &received_ip, &port);
 
-        if(netbuf_len(netbuf) < offsetof(struct dhcp_msg, options)) {
+        if (netbuf_len(netbuf) < offsetof(struct dhcp_msg, options)) {
             /* too short to be a valid DHCP client message */
             netbuf_delete(netbuf);
             continue;
         }
-        if(netbuf_len(netbuf) >= sizeof(struct dhcp_msg)) {
+        if (netbuf_len(netbuf) >= sizeof(struct dhcp_msg)) {
            printf("DHCP Server Warning: Client sent more options than we know how to parse. len=%d\r\n", netbuf_len(netbuf));
         }
 
@@ -152,18 +180,18 @@ static void dhcpserver_task(void *pxParameter)
 
         uint8_t *message_type = find_dhcp_option(&received, DHCP_OPTION_MESSAGE_TYPE,
                                                  DHCP_OPTION_MESSAGE_TYPE_LEN, NULL);
-        if(!message_type) {
+        if (!message_type) {
             printf("DHCP Server Error: No message type field found");
             continue;
         }
 
-
         printf("State dump. Message type %d\n", *message_type);
-        for(int i = 0; i < state->max_leases; i++) {
+        for (int i = 0; i < state->max_leases; i++) {
             dhcp_lease_t *lease = &state->leases[i];
-            printf("lease slot %d expiry %d hwaddr %02x:%02x:%02x:%02x:%02x:%02x\r\n", i, lease->expires, lease->hwaddr[0],
-                   lease->hwaddr[1], lease->hwaddr[2], lease->hwaddr[3], lease->hwaddr[4],
-                   lease->hwaddr[5]);
+            printf("lease slot %d active %d expiry %d hwaddr %02x:%02x:%02x:%02x:%02x:%02x\r\n", i,
+                   lease->active, lease->expires - now,
+                   lease->hwaddr[0], lease->hwaddr[1], lease->hwaddr[2],
+                   lease->hwaddr[3], lease->hwaddr[4], lease->hwaddr[5]);
         }
 
         switch(*message_type) {
@@ -184,13 +212,13 @@ static void dhcpserver_task(void *pxParameter)
 
 static void handle_dhcp_discover(struct dhcp_msg *dhcpmsg)
 {
-    if(dhcpmsg->htype != DHCP_HTYPE_ETH)
+    if (dhcpmsg->htype != LWIP_IANA_HWTYPE_ETHERNET)
         return;
-    if(dhcpmsg->hlen > NETIF_MAX_HWADDR_LEN)
+    if (dhcpmsg->hlen > NETIF_MAX_HWADDR_LEN)
         return;
 
     dhcp_lease_t *freelease = find_lease_slot(dhcpmsg->chaddr);
-    if(!freelease) {
+    if (!freelease) {
         printf("DHCP Server: All leases taken.\r\n");
         return; /* Nothing available, so do nothing */
     }
@@ -199,13 +227,19 @@ static void handle_dhcp_discover(struct dhcp_msg *dhcpmsg)
     dhcpmsg->op = DHCP_BOOTREPLY;
     bzero(dhcpmsg->options, DHCP_OPTIONS_LEN);
 
-    ip_addr_copy(dhcpmsg->yiaddr, state->first_client_addr);
-    ip4_addr4(&(dhcpmsg->yiaddr)) += (freelease - state->leases);
+    dhcpmsg->yiaddr.addr = lwip_htonl(lwip_ntohl(state->first_client_addr.addr) + (freelease - state->leases));
 
     uint8_t *opt = (uint8_t *)&dhcpmsg->options;
     opt = add_dhcp_option_byte(opt, DHCP_OPTION_MESSAGE_TYPE, DHCP_OFFER);
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_SERVER_ID, &state->server_if->ip_addr, 4);
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_SUBNET_MASK, &state->server_if->netmask, 4);
+    if (!ip4_addr_isany_val(state->router)) {
+        opt = add_dhcp_option_bytes(opt, DHCP_OPTION_ROUTER, &state->router, 4);
+    }
+    if (!ip4_addr_isany_val(state->dns)) {
+        opt = add_dhcp_option_bytes(opt, DHCP_OPTION_DNS_SERVER, &state->dns, 4);
+    }
+
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_END, NULL, 0);
 
     struct netbuf *netbuf = netbuf_new();
@@ -218,17 +252,17 @@ static void handle_dhcp_discover(struct dhcp_msg *dhcpmsg)
 static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
 {
     static char ipbuf[16];
-    if(dhcpmsg->htype != DHCP_HTYPE_ETH)
+    if (dhcpmsg->htype != LWIP_IANA_HWTYPE_ETHERNET)
         return;
-    if(dhcpmsg->hlen > NETIF_MAX_HWADDR_LEN)
+    if (dhcpmsg->hlen > NETIF_MAX_HWADDR_LEN)
         return;
 
-    ip_addr_t requested_ip;
+    ip4_addr_t requested_ip;
     uint8_t *requested_ip_opt = find_dhcp_option(dhcpmsg, DHCP_OPTION_REQUESTED_IP, 4, NULL);
-    if(requested_ip_opt) {
-            memcpy(&requested_ip.addr, requested_ip_opt, 4);
-    } else if(ip_addr_cmp(&requested_ip, IP_ADDR_ANY)) {
-        ip_addr_copy(requested_ip, dhcpmsg->ciaddr);
+    if (requested_ip_opt) {
+        memcpy(&requested_ip.addr, requested_ip_opt, 4);
+    } else if (ip4_addr_cmp(&requested_ip, IP4_ADDR_ANY4)) {
+        ip4_addr_copy(requested_ip, dhcpmsg->ciaddr);
     } else {
         printf("DHCP Server Error: No requested IP\r\n");
         send_dhcp_nak(dhcpmsg);
@@ -236,7 +270,7 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
     }
 
     /* Test the first 4 octets match */
-    if(ip4_addr1(&requested_ip) != ip4_addr1(&state->first_client_addr)
+    if (ip4_addr1(&requested_ip) != ip4_addr1(&state->first_client_addr)
        || ip4_addr2(&requested_ip) != ip4_addr2(&state->first_client_addr)
        || ip4_addr3(&requested_ip) != ip4_addr3(&state->first_client_addr)) {
         sprintf_ipaddr(&requested_ip, ipbuf);
@@ -246,14 +280,14 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
     }
     /* Test the last octet is in the MAXCLIENTS range */
     int16_t octet_offs = ip4_addr4(&requested_ip) - ip4_addr4(&state->first_client_addr);
-    if(octet_offs < 0 || octet_offs >= state->max_leases) {
+    if (octet_offs < 0 || octet_offs >= state->max_leases) {
         printf("DHCP Server Error: Address out of range\r\n");
         send_dhcp_nak(dhcpmsg);
         return;
     }
 
     dhcp_lease_t *requested_lease = state->leases + octet_offs;
-    if(requested_lease->expires != 0 && memcmp(requested_lease->hwaddr, dhcpmsg->chaddr,dhcpmsg->hlen))
+    if (requested_lease->active && memcmp(requested_lease->hwaddr, dhcpmsg->chaddr,dhcpmsg->hlen))
     {
         printf("DHCP Server Error: Lease for address already taken\r\n");
         send_dhcp_nak(dhcpmsg);
@@ -265,13 +299,17 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
     printf("DHCP lease addr %s assigned to MAC %02x:%02x:%02x:%02x:%02x:%02x\r\n", ipbuf, requested_lease->hwaddr[0],
            requested_lease->hwaddr[1], requested_lease->hwaddr[2], requested_lease->hwaddr[3], requested_lease->hwaddr[4],
            requested_lease->hwaddr[5]);
-    requested_lease->expires = DHCPSERVER_LEASE_TIME * configTICK_RATE_HZ;
+    uint32_t now = xTaskGetTickCount();
+    requested_lease->expires = now + DHCPSERVER_LEASE_TIME * configTICK_RATE_HZ;
+    requested_lease->active = 1;
+
+    sdk_wifi_softap_set_station_info(requested_lease->hwaddr, &requested_ip);
 
     /* Reuse the REQUEST message as the ACK message */
     dhcpmsg->op = DHCP_BOOTREPLY;
     bzero(dhcpmsg->options, DHCP_OPTIONS_LEN);
 
-    ip_addr_copy(dhcpmsg->yiaddr, requested_ip);
+    ip4_addr_copy(dhcpmsg->yiaddr, requested_ip);
 
     uint8_t *opt = (uint8_t *)&dhcpmsg->options;
     opt = add_dhcp_option_byte(opt, DHCP_OPTION_MESSAGE_TYPE, DHCP_ACK);
@@ -279,6 +317,13 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_LEASE_TIME, &expiry, 4);
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_SERVER_ID, &state->server_if->ip_addr, 4);
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_SUBNET_MASK, &state->server_if->netmask, 4);
+    if (!ip4_addr_isany_val(state->router)) {
+        opt = add_dhcp_option_bytes(opt, DHCP_OPTION_ROUTER, &state->router, 4);
+    }
+    if (!ip4_addr_isany_val(state->dns)) {
+        opt = add_dhcp_option_bytes(opt, DHCP_OPTION_DNS_SERVER, &state->dns, 4);
+    }
+
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_END, NULL, 0);
 
     struct netbuf *netbuf = netbuf_new();
@@ -291,7 +336,8 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
 static void handle_dhcp_release(struct dhcp_msg *dhcpmsg)
 {
     dhcp_lease_t *lease = find_lease_slot(dhcpmsg->chaddr);
-    if(lease) {
+    if (lease) {
+        lease->active = 0;
         lease->expires = 0;
     }
 }
@@ -319,17 +365,17 @@ static uint8_t *find_dhcp_option(struct dhcp_msg *msg, uint8_t option_num, uint8
     uint8_t *start = (uint8_t *)&msg->options;
     uint8_t *msg_end = (uint8_t *)msg + sizeof(struct dhcp_msg);
 
-    for(uint8_t *p = start; p < msg_end-2;) {
+    for (uint8_t *p = start; p < msg_end-2;) {
         uint8_t type = *p++;
         uint8_t len = *p++;
-        if(type == DHCP_OPTION_END)
+        if (type == DHCP_OPTION_END)
             return NULL;
-        if(p+len >= msg_end)
+        if (p+len >= msg_end)
             break; /* We've overrun our valid DHCP message size, or this isn't a valid option */
-        if(type == option_num) {
-            if(len < min_length)
+        if (type == option_num) {
+            if (len < min_length)
                 break;
-            if(length)
+            if (length)
                 *length = len;
             return p; /* start of actual option data */
         }
@@ -349,7 +395,7 @@ static uint8_t *add_dhcp_option_byte(uint8_t *opt, uint8_t type, uint8_t value)
 static uint8_t *add_dhcp_option_bytes(uint8_t *opt, uint8_t type, void *value, uint8_t len)
 {
     *opt++ = type;
-    if(len) {
+    if (len) {
         *opt++ = len;
         memcpy(opt, value, len);
     }
@@ -360,8 +406,8 @@ static uint8_t *add_dhcp_option_bytes(uint8_t *opt, uint8_t type, void *value, u
 static dhcp_lease_t *find_lease_slot(uint8_t *hwaddr)
 {
     dhcp_lease_t *empty_lease = NULL;
-    for(int i = 0; i < state->max_leases; i++) {
-        if(state->leases[i].expires == 0 && !empty_lease)
+    for (int i = 0; i < state->max_leases; i++) {
+        if (!state->leases[i].active && !empty_lease)
             empty_lease = &state->leases[i];
         else if (memcmp(hwaddr, state->leases[i].hwaddr, 6) == 0)
             return &state->leases[i];
