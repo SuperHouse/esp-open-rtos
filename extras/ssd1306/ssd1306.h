@@ -19,6 +19,7 @@
 
 // shifted
 #if (SSD1306_I2C_SUPPORT)
+    #include <i2c/i2c.h>
     #define SSD1306_I2C_ADDR_0    (0x3C)
     #define SSD1306_I2C_ADDR_1    (0x3D)
 #endif
@@ -67,7 +68,7 @@ typedef struct
     ssd1306_screen_t screen ;
     union {
 #if (SSD1306_I2C_SUPPORT)
-        uint8_t addr ;          //!< I2C address, used by SSD1306_PROTO_I2C
+        i2c_dev_t i2c_dev;         //!< I2C devuce descriptor, used by SSD1306_PROTO_I2C
 #endif
         uint8_t cs_pin ;        //!< Chip Select GPIO pin, used by SSD1306_PROTO_SPI3, SSD1306_PROTO_SPI4
     } ;
@@ -183,14 +184,6 @@ int ssd1306_set_display_start_line(const ssd1306_t *dev, uint8_t start);
  * @return Non-zero if error occured
  */
 int ssd1306_set_display_offset(const ssd1306_t *dev, uint8_t offset);
-
-/**
- * Select charge pump voltage. See value in datasheet.
- * @param dev Pointer to device descriptor
- * @param select Select charge pump voltage value
- * @return Non-zero if error occured
- */
-int sh1106_set_charge_pump_voltage(const ssd1306_t *dev, sh1106_voltage_t select);
 
 /**
  * Select charge pump voltage. See value in datasheet.

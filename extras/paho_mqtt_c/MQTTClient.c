@@ -424,6 +424,8 @@ int  mqtt_subscribe(mqtt_client_t* c, const char* topic, enum mqtt_qos qos, mqtt
         if (rc != 0x80)
         {
             int i;
+            
+            rc = MQTT_FAILURE;
             for (i = 0; i < MQTT_MAX_MESSAGE_HANDLERS; ++i)
             {
                 if (c->messageHandlers[i].topicFilter == 0)

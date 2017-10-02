@@ -11,9 +11,6 @@
  */
 #include "ssd1306.h"
 #include <stdio.h>
-#if (SSD1306_I2C_SUPPORT)
-    #include <i2c/i2c.h>
-#endif
 #if (SSD1306_SPI4_SUPPORT) || (SSD1306_SPI3_SUPPORT)
     #include <esp/spi.h>
 #endif
@@ -88,10 +85,18 @@
 #define abs(x) ((x)<0 ? -(x) : (x))
 #define swap(x, y) do { typeof(x) temp##x##y = x; x = y; y = temp##x##y; } while (0)
 
+
+#if (SSD1306_I2C_SUPPORT)
+static int inline i2c_send(const ssd1306_t *dev, uint8_t reg, uint8_t* data, uint8_t len)
+{
+    return i2c_slave_write(dev->i2c_dev.bus, dev->i2c_dev.addr , &reg, data, len);
+}
+#endif
+
 /* Issue a command to SSD1306 device
  * I2C proto format:
  * |S|Slave Address|W|ACK|0x00|Command|Ack|P|
- * 
+ *
  * in case of two-bytes command here will be Data byte
  * right after the command byte.
  */
@@ -101,23 +106,7 @@ int ssd1306_command(const ssd1306_t *dev, uint8_t cmd)
     switch (dev->protocol) {
 #if (SSD1306_I2C_SUPPORT)
         case SSD1306_PROTO_I2C:
-            i2c_start();
-            if (!i2c_write(dev->addr << 1)) {
-                debug("Error while xmitting I2C slave address\n");
-                i2c_stop();
-                return -EIO;
-            }
-            if (!i2c_write(0x00)) {
-                debug("Error while xmitting transmission type\n");
-                i2c_stop();
-                return -EIO;
-            }
-            if (!i2c_write(cmd)) {
-                debug("Error while xmitting command: 0x%02X\n", cmd);
-                i2c_stop();
-                return -EIO;
-            }
-            i2c_stop();
+            return i2c_send(dev, 0x00, &cmd, 1);
             break;
 #endif
 #if (SSD1306_SPI4_SUPPORT)
@@ -247,7 +236,9 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
 {
     uint16_t i;
     uint8_t j;
-
+#if (SSD1306_I2C_SUPPORT)
+    uint8_t tab[16] = { 0 } ;
+#endif
     size_t len = dev->width * dev->height / 8;
     if(dev->screen == SSD1306_SCREEN)
     {
@@ -258,31 +249,11 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
     switch (dev->protocol) {
 #if (SSD1306_I2C_SUPPORT)
         case SSD1306_PROTO_I2C:
-            for (i = 0; i < len; i++) {
+            for (i = 0; i < len; i++)
+            {
                 if(dev->screen == SH1106_SCREEN && i%dev->width == 0) sh1106_go_coordinate(dev,0,i/dev->width);
-                i2c_start();
-                if (!i2c_write(dev->addr << 1)) {
-                    debug("Error while xmitting I2C slave address\n");
-                    i2c_stop();
-                    return -EIO;
-                }
-                if (!i2c_write(0x40)) {
-                    debug("Error while xmitting transmission type\n");
-                    i2c_stop();
-                    return -EIO;
-                }
-
-                for (j = 0; j < 16; j++) {
-                    if (!i2c_write(buf ? buf[i] : 0)) {
-                        debug("Error while writing to GDDRAM\n");
-                        i2c_stop();
-                        return -EIO;
-                    }
-                    i++;
-                }
-                i--;
-                i2c_stop();
-                taskYIELD();
+                i2c_send(dev, 0x40, buf ? &buf[i] : tab, 16);
+                i+=15 ;
             }
             break;
 #endif
@@ -319,9 +290,19 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
             {
                 spi_set_command(SPI_BUS,1,1); // data mode
                 if (buf)
-                    spi_transfer(SPI_BUS, buf, NULL, len, SPI_8BIT);
+                {
+                    for (i = 0; i < len; i++)
+                    {
+                        spi_transfer(SPI_BUS, &buf[i], NULL, 1, SPI_8BIT);
+                    }
+                }
                 else
-                    spi_repeat_send_8(SPI_BUS,0,len);
+                {
+                    for (i = 0; i < len; i++)
+                    {
+                        spi_transfer_8(SPI_BUS, 0);
+                    }
+                }
             }
             else
             {

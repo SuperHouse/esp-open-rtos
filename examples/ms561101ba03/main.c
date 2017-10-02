@@ -13,18 +13,20 @@
 #include <i2c/i2c.h>
 #include <ms561101ba03/ms561101ba03.h>
 
+#define I2C_BUS 0
 #define SCL_PIN 5
 #define SDA_PIN 4
 
 void user_init(void)
 {
-    i2c_init(SCL_PIN, SDA_PIN);
+    i2c_init(I2C_BUS, SCL_PIN, SDA_PIN, I2C_FREQ_100K);
 
     uart_set_baud(0, 115200);
     printf("SDK version:%s\n\n", sdk_system_get_sdk_version());
 
     ms561101ba03_t device = {
-        .addr = MS561101BA03_ADDR_CSB_LOW,
+        .i2c_dev.bus = I2C_BUS,
+        .i2c_dev.addr = MS561101BA03_ADDR_CSB_LOW,
         .osr  = MS561101BA03_OSR_4096,
     };
 

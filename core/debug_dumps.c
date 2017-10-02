@@ -22,6 +22,7 @@
 #include "esp/dport_regs.h"
 #include "espressif/esp_common.h"
 #include "esplibs/libmain.h"
+#include "user_exception.h"
 
 /* Forward declarations */
 static void IRAM fatal_handler_prelude(void);
@@ -32,6 +33,8 @@ static void __attribute__((noreturn)) second_fatal_exception_handler_inner(uint3
 static void __attribute__((noinline)) __attribute__((noreturn)) abort_handler_inner(uint32_t *caller, uint32_t *sp);
 
 static IRAM_DATA fatal_exception_handler_fn fatal_exception_handler_inner = standard_fatal_exception_handler_inner;
+
+static void (*user_exception_handler)(void) = NULL;
 
 /* fatal_exception_handler called from any unhandled user exception
  *
@@ -157,6 +160,10 @@ static void IRAM fatal_handler_prelude(void) {
     }
     Cache_Read_Disable();
     Cache_Read_Enable(0, 0, 1);
+
+    if (user_exception_handler != NULL) {
+      user_exception_handler();
+    }
 }
 
 /* Main part of fatal exception handler, is run from flash to save
@@ -230,3 +237,9 @@ static void abort_handler_inner(uint32_t *caller, uint32_t *sp) {
     dump_heapinfo();
     post_crash_reset();
 }
+
+void set_user_exception_handler(void (*fn)(void))
+{
+  user_exception_handler = fn;
+}
+

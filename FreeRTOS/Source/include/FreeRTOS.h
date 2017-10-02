@@ -1,5 +1,5 @@
 /*
-    FreeRTOS V9.0.0 - Copyright (C) 2016 Real Time Engineers Ltd.
+    FreeRTOS V9.0.1 - Copyright (C) 2017 Real Time Engineers Ltd.
     All rights reserved
 
     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
@@ -126,6 +126,10 @@ extern "C" {
 	#error Missing definition:  configMAX_PRIORITIES must be defined in FreeRTOSConfig.h.  See the Configuration section of the FreeRTOS API documentation for details.
 #endif
 
+#if configMAX_PRIORITIES < 1
+	#error configMAX_PRIORITIES must be defined to be greater than or equal to 1.
+#endif
+
 #ifndef configUSE_PREEMPTION
 	#error Missing definition:  configUSE_PREEMPTION must be defined in FreeRTOSConfig.h as either 1 or 0.  See the Configuration section of the FreeRTOS API documentation for details.
 #endif
@@ -140,10 +144,6 @@ extern "C" {
 
 #ifndef configUSE_16_BIT_TICKS
 	#error Missing definition:  configUSE_16_BIT_TICKS must be defined in FreeRTOSConfig.h as either 1 or 0.  See the Configuration section of the FreeRTOS API documentation for details.
-#endif
-
-#ifndef configMAX_PRIORITIES
-	#error configMAX_PRIORITIES must be defined to be greater than or equal to 1.
 #endif
 
 #ifndef configUSE_CO_ROUTINES
@@ -406,6 +406,14 @@ extern "C" {
 
 #ifndef configCHECK_FOR_STACK_OVERFLOW
 	#define configCHECK_FOR_STACK_OVERFLOW 0
+#endif
+
+#ifndef configRECORD_STACK_HIGH_ADDRESS
+	#define configRECORD_STACK_HIGH_ADDRESS 0
+#endif
+
+#ifndef configINCLUDE_FREERTOS_TASK_C_ADDITIONS_H
+	#define configINCLUDE_FREERTOS_TASK_C_ADDITIONS_H 0
 #endif
 
 /* The following event macros are embedded in the kernel API calls. */
@@ -708,6 +716,10 @@ extern "C" {
 	#define configUSE_TICKLESS_IDLE 0
 #endif
 
+#ifndef configPRE_SUPPRESS_TICKS_AND_SLEEP_PROCESSING
+	#define configPRE_SUPPRESS_TICKS_AND_SLEEP_PROCESSING( x )
+#endif
+
 #ifndef configPRE_SLEEP_PROCESSING
 	#define configPRE_SLEEP_PROCESSING( x )
 #endif
@@ -722,6 +734,10 @@ extern "C" {
 
 #ifndef portTASK_USES_FLOATING_POINT
 	#define portTASK_USES_FLOATING_POINT()
+#endif
+
+#ifndef portTASK_CALLS_SECURE_FUNCTIONS
+	#define portTASK_CALLS_SECURE_FUNCTIONS()
 #endif
 
 #ifndef configUSE_TIME_SLICING
@@ -782,6 +798,12 @@ extern "C" {
 	#define configSUPPORT_DYNAMIC_ALLOCATION 1
 #endif
 
+#ifndef configSTACK_DEPTH_TYPE
+	/* Defaults to uint16_t for backward compatibility, but can be overridden
+	in FreeRTOSConfig.h if uint16_t is too restrictive. */
+	#define configSTACK_DEPTH_TYPE uint16_t
+#endif
+
 /* Sanity check the configuration. */
 #if( configUSE_TICKLESS_IDLE != 0 )
 	#if( INCLUDE_vTaskSuspend != 1 )
@@ -795,6 +817,10 @@ extern "C" {
 
 #if( ( configUSE_RECURSIVE_MUTEXES == 1 ) && ( configUSE_MUTEXES != 1 ) )
 	#error configUSE_MUTEXES must be set to 1 to use recursive mutexes
+#endif
+
+#ifndef configINITIAL_TICK_COUNT
+	#define configINITIAL_TICK_COUNT 0
 #endif
 
 #if( portTICK_TYPE_IS_ATOMIC == 0 )
@@ -917,7 +943,7 @@ typedef struct xSTATIC_TCB
 	UBaseType_t			uxDummy5;
 	void				*pxDummy6;
 	uint8_t				ucDummy7[ configMAX_TASK_NAME_LEN ];
-	#if ( portSTACK_GROWTH > 0 )
+	#if ( ( portSTACK_GROWTH > 0 ) || ( configRECORD_STACK_HIGH_ADDRESS == 1 ) )
 		void			*pxDummy8;
 	#endif
 	#if ( portCRITICAL_NESTING_IN_TCB == 1 )
@@ -945,8 +971,12 @@ typedef struct xSTATIC_TCB
 		uint32_t 		ulDummy18;
 		uint8_t 		ucDummy19;
 	#endif
-	#if( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
+	#if( ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) ) || ( portUSING_MPU_WRAPPERS == 1 ) )
 		uint8_t			uxDummy20;
+	#endif
+
+	#if( INCLUDE_xTaskAbortDelay == 1 )
+		uint8_t ucDummy21;
 	#endif
 
 } StaticTask_t;

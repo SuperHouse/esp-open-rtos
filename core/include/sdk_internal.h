@@ -14,25 +14,25 @@
 // 'info' is declared in app_main.o at .bss+0x4
 
 struct sdk_info_st {
-    ip_addr_t softap_ipaddr;    // 0x00
-    ip_addr_t softap_netmask;   // 0x04
-    ip_addr_t softap_gw;        // 0x08
-    ip_addr_t sta_ipaddr;       // 0x0c
-    ip_addr_t sta_netmask;      // 0x10
-    ip_addr_t sta_gw;           // 0x14
+    ip4_addr_t softap_ipaddr;    // 0x00
+    ip4_addr_t softap_netmask;   // 0x04
+    ip4_addr_t softap_gw;        // 0x08
+    ip4_addr_t sta_ipaddr;       // 0x0c
+    ip4_addr_t sta_netmask;      // 0x10
+    ip4_addr_t sta_gw;           // 0x14
     uint8_t softap_mac_addr[6]; // 0x18
     uint8_t sta_mac_addr[6];    // 0x1e
 };
 
 
-struct _unknown_info1 {
+struct wl_channel {
     uint8_t _unknown00;
     uint8_t _unknown01;
     uint8_t _unknown02;
     uint8_t _unknown03;
     uint8_t _unknown04;
     uint8_t _unknown05;
-    uint8_t channel; // eagle_auth_done
+    uint8_t num; // eagle_auth_done
 };
 
 
@@ -83,7 +83,7 @@ struct _unknown_wpa1 {
 };
 
 
-struct sdk_netif_conninfo {
+struct sdk_cnx_node {
     uint8_t mac_addr[6];
     uint8_t _unknown07[2];
 
@@ -98,17 +98,19 @@ struct sdk_netif_conninfo {
 
     uint32_t _unknown1c[23];
 
-    struct _unknown_info1 *_unknown78; // eagle_auth_done
+    struct wl_channel *channel; // 0x78 eagle_auth_done
 
     uint32_t _unknown7c[8];
 
     uint16_t _unknown9c; // ieee80211_hostap. increases by one one each timer func called.
     uint16_t _unknown9e;
 
-    uint32_t _unknowna0[18];
+    uint32_t _unknowna0[17];
 
-    int8_t _unknowne8; //
-    int8_t _unknowne9; // ppInstallKey
+    void *_unknowne4;
+
+    uint8_t _unknowne8; //
+    uint8_t _unknowne9; // ppInstallKey
     int8_t _unknownea;
     int8_t _unknowneb;
 
@@ -128,9 +130,9 @@ struct sdk_g_ic_netif_info {
     uint32_t _unknown48;     // 0x48
     uint8_t _unknown4c;      // 0x4c
     uint8_t _unknown4d[59];  // 0x4d - 0x88
-    struct sdk_netif_conninfo *_unknown88;  // 0x88
+    struct sdk_cnx_node *_unknown88;  // 0x88
     uint32_t _unknown8c;     // 0x8c
-    struct sdk_netif_conninfo *conninfo[6]; // 0x90 - 0xa8
+    struct sdk_cnx_node *cnx_nodes[6]; // 0x90 - 0xa8
     uint8_t _unknowna8[12];  // 0xa8 - 0xb4
     struct _unknown_softap1 *_unknownb4;
     uint8_t statusb8;        // 0xb8 (arg of sta_status_set)
@@ -206,10 +208,9 @@ struct sdk_g_ic_volatile_st {
 };
 
 
-struct sdk_g_ic_unk0_st {
-    uint16_t _unknown1e4;  // sdk_wpa_config_profile
-    uint16_t _unknown1e6;  // sdk_wpa_config_profile
-    uint8_t sta_ssid[32];  // 0x1e8 Station ssid. Null terminated string.
+struct sdk_g_ic_ssid_with_length {
+    uint32_t ssid_length;  // 0x1e4 sdk_wpa_config_profile
+    uint8_t ssid[32];  // 0x1e8 Station ssid. Null terminated string.
 };
 
 // This is the portion of g_ic which is loaded/saved to the flash ROM, and thus
@@ -224,7 +225,8 @@ struct sdk_g_ic_saved_st {
     uint8_t wifi_led_gpio;
     uint8_t wifi_led_state;  // 0 or 1.
 
-    struct sdk_g_ic_unk0_st _unknown1e4;
+    // Current station ap config ssid and length.
+    struct sdk_g_ic_ssid_with_length sta_ssid; // 0x1e4
 
     uint8_t _unknown208;
     uint8_t _unknown209; // sdk_wpa_config_profile
@@ -260,7 +262,7 @@ struct sdk_g_ic_saved_st {
     uint8_t _unknown30d; // result of ieee80211_chan2ieee
     uint8_t _unknown30e;
     uint8_t _unknown30f;
-    uint8_t _unknown310; // count of entries in the softap conninfo array, less two.
+    uint8_t _unknown310; // count of entries in the softap cnx_node array, less two.
 
     uint8_t _unknown311[3];
 
@@ -320,7 +322,7 @@ struct esf_buf {
 _Static_assert(sizeof(struct sdk_info_st) == 0x24, "info_st is the wrong size!");
 _Static_assert(offsetof(struct sdk_info_st, sta_mac_addr) == 0x1e, "bad struct");
 
-_Static_assert(offsetof(struct _unknown_info1, channel) == 0x06, "bad struct");
+_Static_assert(offsetof(struct wl_channel, num) == 0x06, "bad struct");
 
 _Static_assert(sizeof(struct _unknown_softap2) == 0xcc, "_unknown_softap2 is the wrong size!");
 _Static_assert(offsetof(struct _unknown_softap2, _unknownb8) == 0xb8, "bad struct");
@@ -331,8 +333,8 @@ _Static_assert(offsetof(struct _unknown_softap1, _unknown18) == 0x18, "bad struc
 _Static_assert(sizeof(struct _unknown_wpa1) == 0x4c, "_unknown_wpa1 is the wrong size!");
 _Static_assert(offsetof(struct _unknown_wpa1, _unknown48) == 0x48, "bad struct");
 
-_Static_assert(offsetof(struct sdk_netif_conninfo, _unknown78) == 0x78, "bad struct");
-_Static_assert(offsetof(struct sdk_netif_conninfo, _unknown108) == 0x108, "bad struct");
+_Static_assert(offsetof(struct sdk_cnx_node, channel) == 0x78, "bad struct");
+_Static_assert(offsetof(struct sdk_cnx_node, _unknown108) == 0x108, "bad struct");
 
 _Static_assert(offsetof(struct sdk_g_ic_netif_info, started) == 0xbb, "bad struct");
 
@@ -340,7 +342,7 @@ _Static_assert(sizeof(struct sdk_g_ic_volatile_st) == 0x1d8, "sdk_g_ic_volatile_
 _Static_assert(offsetof(struct sdk_g_ic_volatile_st, _unknown1d5) == 0x1d5, "bad struct");
 
 _Static_assert(sizeof(struct sdk_g_ic_saved_st) == 0x370, "sdk_g_ic_saved_st is the wrong size!");
-_Static_assert(offsetof(struct sdk_g_ic_saved_st, _unknown1e4) == 0x1e4 - 0x1d8, "bad struct");
+_Static_assert(offsetof(struct sdk_g_ic_saved_st, sta_ssid) == 0x1e4 - 0x1d8, "bad struct");
 _Static_assert(offsetof(struct sdk_g_ic_saved_st, _unknown546) == 0x546 - 0x1d8, "bad struct");
 
 _Static_assert(sizeof(struct sdk_g_ic_st) == 0x548, "sdk_g_ic_st is the wrong size!");
@@ -357,21 +359,16 @@ _Static_assert(offsetof(struct esf_buf, length) == 0x16, "bad struct");
 // ieee80211_output_pbuf and perhaps elsewhere. The value is just passed through
 // lwip and and not used by lwip so just ensure this slot is at the expected
 // offset.
-_Static_assert(offsetof(struct netif, state) == 28, "netif->state offset wrong!");
+_Static_assert(offsetof(struct netif, state) == 4, "netif->state offset wrong!");
 
 // Some sdk uses of netif->hwaddr have been converted to source code, but many
 // remain, but the content of this slot should not change in future versions of
-// lwip, so just ensure it is at the expected offset.
-_Static_assert(offsetof(struct netif, hwaddr) == 41, "netif->hwaddr offset wrong!");
+// lwip, so just ensure it is at the expected offset. Note the sdk binary
+// libraries have been patched to move this offset from 41 to 42 to keep it
+// 16-bit aligned to keep lwip v2 happy.
+_Static_assert(offsetof(struct netif, hwaddr) == 8, "netif->hwaddr offset wrong!");
 
-// Most sdk uses of the netif->flags have been converted to source code. One
-// known sdk binary read of the flags remains in wl_cnx.o:sdk_cnx_sta_leave
-// which checks the NETIF_FLAG_DHCP flag. The NETIF_FLAG_DHCP has been removed
-// in lwip v2, so some lwip hacks are needed to handle this for now until
-// wl_cnx.o is converted so source code too.
-_Static_assert(offsetof(struct netif, flags) == 47, "netif->flags offset wrong!");
-
-_Static_assert(offsetof(struct pbuf, eb) == 16, "pbuf->eb offset wrong!");
+_Static_assert(offsetof(struct pbuf, esf_buf) == 16, "pbuf->esf_buf offset wrong!");
 
 
 /// Misc.

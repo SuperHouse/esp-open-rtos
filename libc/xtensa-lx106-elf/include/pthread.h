@@ -1,8 +1,7 @@
-/*  pthread.h
+/*
+ *  Written by Joel Sherrill <joel.sherrill@OARcorp.com>.
  *
- *  Written by Joel Sherrill <joel@OARcorp.com>.
- *
- *  COPYRIGHT (c) 1989-2013.
+ *  COPYRIGHT (c) 1989-2013, 2015.
  *  On-Line Applications Research Corporation (OAR).
  *
  *  Permission to use, copy, modify, and distribute this software for any
@@ -14,8 +13,6 @@
  *  WARRANTY.  IN PARTICULAR,  THE AUTHOR MAKES NO REPRESENTATION
  *  OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY OF THIS
  *  SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
- *
- *  $Id$
  */
 
 #ifndef __PTHREAD_h
@@ -31,7 +28,7 @@ extern "C" {
 
 #include <sys/types.h>
 #include <time.h>
-#include <sys/sched.h>
+#include <sched.h>
 #include <sys/cdefs.h>
 
 struct _pthread_cleanup_context {
@@ -76,7 +73,7 @@ int	_EXFUN(pthread_mutex_destroy, (pthread_mutex_t *__mutex));
     pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
  */
 
-#define PTHREAD_MUTEX_INITIALIZER  ((pthread_mutex_t) 0xFFFFFFFF)
+#define PTHREAD_MUTEX_INITIALIZER _PTHREAD_MUTEX_INITIALIZER
 
 /*  Locking and Unlocking a Mutex, P1003.1c/Draft 10, p. 93
     NOTE: P1003.4b/D8 adds pthread_mutex_timedlock(), p. 29 */
@@ -96,6 +93,13 @@ int	_EXFUN(pthread_mutex_timedlock,
  
 int	_EXFUN(pthread_condattr_init, (pthread_condattr_t *__attr));
 int	_EXFUN(pthread_condattr_destroy, (pthread_condattr_t *__attr));
+
+int	_EXFUN(pthread_condattr_getclock,
+		(const pthread_condattr_t *__restrict __attr,
+              clockid_t *__restrict __clock_id));
+int	_EXFUN(pthread_condattr_setclock,
+		(pthread_condattr_t *__attr, clockid_t __clock_id));
+
 int	_EXFUN(pthread_condattr_getpshared,
 		(_CONST pthread_condattr_t *__attr, int *__pshared));
 int	_EXFUN(pthread_condattr_setpshared,
@@ -112,7 +116,7 @@ int	_EXFUN(pthread_cond_destroy, (pthread_cond_t *__mutex));
     pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
  */
  
-#define PTHREAD_COND_INITIALIZER  ((pthread_cond_t) 0xFFFFFFFF)
+#define PTHREAD_COND_INITIALIZER _PTHREAD_COND_INITIALIZER
  
 /* Broadcasting and Signaling a Condition, P1003.1c/Draft 10, p. 101 */
  
@@ -161,7 +165,16 @@ int	_EXFUN(pthread_getschedparam,
 int	_EXFUN(pthread_setschedparam,
 	(pthread_t __pthread, int __policy, struct sched_param *__param));
 
+/* Set Scheduling Priority of a Thread */
+int	_EXFUN(pthread_setschedprio, (pthread_t thread, int prio));
+
 #endif /* defined(_POSIX_THREAD_PRIORITY_SCHEDULING) */
+
+#if __GNU_VISIBLE
+int	pthread_getname_np(pthread_t, char *, size_t) __nonnull(2);
+
+int	pthread_setname_np(pthread_t, const char *) __nonnull(2);
+#endif
 
 #if defined(_POSIX_THREAD_PRIO_INHERIT) || defined(_POSIX_THREAD_PRIO_PROTECT)
 
@@ -218,7 +231,7 @@ int	_EXFUN(pthread_attr_setguardsize,
  * in GNU/Linux. They may be provided by other OSes for
  * compatibility.
  */
-#if defined(__GNU_VISIBLE)
+#if __GNU_VISIBLE
 #if defined(__rtems__) 
 int	_EXFUN(pthread_attr_setaffinity_np,
 	(pthread_attr_t *__attr, size_t __cpusetsize, 
@@ -235,7 +248,7 @@ int	_EXFUN(pthread_getaffinity_np,
 int	_EXFUN(pthread_getattr_np,
 	(pthread_t __id, pthread_attr_t *__attr));
 #endif /* defined(__rtems__) */
-#endif /* defined(__GNU_VISIBLE) */
+#endif /* __GNU_VISIBLE */
 
 /* Thread Creation, P1003.1c/Draft 10, p. 144 */
 
@@ -253,7 +266,7 @@ int	_EXFUN(pthread_detach, (pthread_t __pthread));
 
 /* Thread Termination, p1003.1c/Draft 10, p. 150 */
 
-void	_EXFUN(pthread_exit, (void *__value_ptr));
+void	_EXFUN(pthread_exit, (void *__value_ptr)) __dead2;
 
 /* Get Calling Thread's ID, p1003.1c/Draft 10, p. XXX */
 
@@ -263,6 +276,18 @@ pthread_t	_EXFUN(pthread_self, (void));
 
 int	_EXFUN(pthread_equal, (pthread_t __t1, pthread_t __t2));
 
+/* Retrieve ID of a Thread's CPU Time Clock */
+int	_EXFUN(pthread_getcpuclockid,
+		(pthread_t thread, clockid_t *clock_id));
+
+/* Get/Set Current Thread's Concurrency Level */
+int	_EXFUN(pthread_setconcurrency, (int new_level));
+int	_EXFUN(pthread_getconcurrency, (void));
+
+#if __BSD_VISIBLE || __GNU_VISIBLE
+void	_EXFUN(pthread_yield, (void));
+#endif
+
 /* Dynamic Package Initialization */
 
 /* This is used to statically initialize a pthread_once_t. Example:
@@ -271,7 +296,7 @@ int	_EXFUN(pthread_equal, (pthread_t __t1, pthread_t __t2));
   
     NOTE:  This is named inconsistently -- it should be INITIALIZER.  */
  
-#define PTHREAD_ONCE_INIT  { 1, 0 }  /* is initialized and not run */
+#define PTHREAD_ONCE_INIT _PTHREAD_ONCE_INIT
  
 int	_EXFUN(pthread_once,
 	(pthread_once_t *__once_control, void (*__init_routine)(void)));
@@ -329,7 +354,7 @@ void	_EXFUN(_pthread_cleanup_pop,
     _pthread_cleanup_pop(&_pthread_clup_ctx, (_execute)); \
   } while (0)
 
-#if defined(_GNU_SOURCE)
+#if __GNU_VISIBLE
 void	_EXFUN(_pthread_cleanup_push_defer,
 	(struct _pthread_cleanup_context *_context,
 	void (*_routine)(void *), void *_arg));
@@ -347,7 +372,7 @@ void	_EXFUN(_pthread_cleanup_pop_restore,
 #define pthread_cleanup_pop_restore_np(_execute) \
     _pthread_cleanup_pop_restore(&_pthread_clup_ctx, (_execute)); \
   } while (0)
-#endif /* defined(_GNU_SOURCE) */
+#endif /* __GNU_VISIBLE */
 
 #if defined(_POSIX_THREAD_CPUTIME)
  
@@ -398,7 +423,7 @@ int	_EXFUN(pthread_spin_unlock, (pthread_spinlock_t *__spinlock));
     pthread_mutex_t mutex = PTHREAD_RWLOCK_INITIALIZER;
  */
 
-#define PTHREAD_RWLOCK_INITIALIZER  ((pthread_rwlock_t) 0xFFFFFFFF)
+#define PTHREAD_RWLOCK_INITIALIZER _PTHREAD_RWLOCK_INITIALIZER
 
 int	_EXFUN(pthread_rwlockattr_init, (pthread_rwlockattr_t *__attr));
 int	_EXFUN(pthread_rwlockattr_destroy, (pthread_rwlockattr_t *__attr));

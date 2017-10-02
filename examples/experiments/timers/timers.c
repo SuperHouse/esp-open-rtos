@@ -97,7 +97,7 @@ void timerRegTask(void *pvParameters)
     }
 }
 
-IRAM void frc1_handler(void)
+IRAM void frc1_handler(void *arg)
 {
     frc1_handler_call_count++;
     frc1_last_count_val = TIMER(0).COUNT;
@@ -106,7 +106,7 @@ IRAM void frc1_handler(void)
     //TIMER_FRC1_MATCH_REG = frc1_last_count_val + 0x100000;
 }
 
-void frc2_handler(void)
+void frc2_handler(void *arg)
 {
     frc2_handler_call_count++;
     frc2_last_count_val = TIMER(1).COUNT;
@@ -127,9 +127,9 @@ void user_init(void)
     TIMER(1).LOAD = VAL2FIELD(TIMER_CTRL_CLKDIV, TIMER_CLKDIV_256);
 
     DPORT.INT_ENABLE |= DPORT_INT_ENABLE_TIMER0 | DPORT_INT_ENABLE_TIMER1;
-    _xt_isr_attach(INUM_TIMER_FRC1, frc1_handler);
+    _xt_isr_attach(INUM_TIMER_FRC1, frc1_handler, NULL);
     _xt_isr_unmask(1<<INUM_TIMER_FRC1);
-    _xt_isr_attach(INUM_TIMER_FRC2, frc2_handler);
+    _xt_isr_attach(INUM_TIMER_FRC2, frc2_handler, NULL);
     _xt_isr_unmask(1<<INUM_TIMER_FRC2);
 
     TIMER(0).CTRL |= TIMER_CTRL_RUN;

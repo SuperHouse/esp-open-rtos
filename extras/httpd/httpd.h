@@ -231,7 +231,7 @@ void httpd_post_data_recved(void *connection, u16_t recved_len);
 
 #endif /* LWIP_HTTPD_SUPPORT_POST */
 
-enum {
+typedef enum {
   WS_TEXT_MODE = 0x01,
   WS_BIN_MODE  = 0x02,
 } WS_MODE;

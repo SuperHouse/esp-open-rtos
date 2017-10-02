@@ -289,6 +289,7 @@ os_timer_disarm sdk_os_timer_disarm
 os_timer_setfn sdk_os_timer_setfn
 os_update_cpu_frequency sdk_os_update_cpu_frequency
 pbkdf2_sha1 sdk_pbkdf2_sha1
+pbuf_alloc sdk_pbuf_alloc
 pbus_set_rxbbgain sdk_pbus_set_rxbbgain
 pend_flag_noise_check sdk_pend_flag_noise_check
 pend_flag_periodic_cal sdk_pend_flag_periodic_cal
@@ -419,6 +420,7 @@ ram_set_txbb_atten sdk_ram_set_txbb_atten
 ram_start_noisefloor sdk_ram_start_noisefloor
 ram_tx_mac_disable sdk_ram_tx_mac_disable
 ram_tx_mac_enable sdk_ram_tx_mac_enable
+rand hwrand
 rc4_skip sdk_rc4_skip
 rcAttach sdk_rcAttach
 rc_cal sdk_rc_cal

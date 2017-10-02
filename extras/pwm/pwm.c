@@ -29,7 +29,7 @@ typedef struct pwmInfoDefinition
     uint8_t running;
 
     uint16_t freq;
-    uint16_t dutyCicle;
+    uint16_t dutyCycle;
 
     /* private */
     uint32_t _maxLoad;
@@ -43,7 +43,7 @@ typedef struct pwmInfoDefinition
 
 static PWMInfo pwmInfo;
 
-static void frc1_interrupt_handler(void)
+static void frc1_interrupt_handler(void *arg)
 {
     uint8_t i = 0;
     bool out = true;
@@ -66,7 +66,7 @@ static void frc1_interrupt_handler(void)
     pwmInfo._step = step;
 }
 
-void pwm_init(uint8_t npins, uint8_t* pins)
+void pwm_init(uint8_t npins, const uint8_t* pins)
 {
     /* Assert number of pins is correct */
     if (npins > MAX_PWM_PINS)
@@ -97,7 +97,7 @@ void pwm_init(uint8_t npins, uint8_t* pins)
     pwm_stop();
 
     /* set up ISRs */
-    _xt_isr_attach(INUM_TIMER_FRC1, frc1_interrupt_handler);
+    _xt_isr_attach(INUM_TIMER_FRC1, frc1_interrupt_handler, NULL);
 
     /* Flag not running */
     pwmInfo.running = 0;
@@ -127,10 +127,10 @@ void pwm_set_duty(uint16_t duty)
 {
     bool output;
 
-    pwmInfo.dutyCicle = duty;
+    pwmInfo.dutyCycle = duty;
     if (duty > 0 && duty < UINT16_MAX) {
         pwm_restart();
-	return;
+        return;
     }
 
     // 0% and 100% duty cycle are special cases: constant output.
@@ -139,7 +139,7 @@ void pwm_set_duty(uint16_t duty)
     output = (duty == UINT16_MAX);
     for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
     {
-	gpio_write(pwmInfo.pins[i].pin, output);
+        gpio_write(pwmInfo.pins[i].pin, output);
     }
 }
 
@@ -154,7 +154,7 @@ void pwm_restart()
 
 void pwm_start()
 {
-    pwmInfo._onLoad = pwmInfo.dutyCicle * pwmInfo._maxLoad / UINT16_MAX;
+    pwmInfo._onLoad = pwmInfo.dutyCycle * pwmInfo._maxLoad / UINT16_MAX;
     pwmInfo._offLoad = pwmInfo._maxLoad - pwmInfo._onLoad;
     pwmInfo._step = PERIOD_ON;
 

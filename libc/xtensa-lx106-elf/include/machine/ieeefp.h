@@ -170,6 +170,10 @@
 #define __IEEE_LITTLE_ENDIAN
 #endif
 
+#ifdef __riscv
+#define __IEEE_LITTLE_ENDIAN
+#endif
+
 #ifdef __i960__
 #define __IEEE_LITTLE_ENDIAN
 #endif
@@ -281,6 +285,10 @@
 
 #ifdef __fr30__
 #define __IEEE_BIG_ENDIAN
+#endif
+
+#ifdef __FT32__
+#define __IEEE_LITTLE_ENDIAN
 #endif
 
 #ifdef __mcore__
@@ -413,6 +421,10 @@
 # else
 #  define __IEEE_LITTLE_ENDIAN
 # endif
+#endif
+
+#ifdef __VISIUM__
+#define __IEEE_BIG_ENDIAN
 #endif
 
 #if (defined(__XTENSA__))

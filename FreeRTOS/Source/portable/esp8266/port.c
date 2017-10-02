@@ -1,5 +1,5 @@
 /*
-    FreeRTOS V7.5.2 - Copyright (C) 2013 Real Time Engineers Ltd.
+    FreeRTOS V9.0.1 - Copyright (C) 2017 Real Time Engineers Ltd.
 
     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
 
@@ -73,10 +73,12 @@
 #include <malloc.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <xtensa_ops.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 #include "xtensa_rtos.h"
 
 unsigned cpu_sr;
@@ -91,6 +93,13 @@ char level1_int_disabled;
 */
 void *xPortSupervisorStackPointer;
 
+void vAssertCalled(const char * pcFile, unsigned long ulLine)
+{
+    printf("rtos assert %s %lu\n", pcFile, ulLine);
+    abort();
+    //for (;;);
+}
+
 /*
  * Stack initialization
  */
@@ -100,7 +109,7 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, TaskFunctio
     portSTACK_TYPE *sp, *tp;
 
     /* Create interrupt stack frame aligned to 16 byte boundary */
-    sp = (portSTACK_TYPE*) (((uint32_t)(pxTopOfStack+1) - XT_CP_SIZE - XT_STK_FRMSZ) & ~0xf);
+    sp = (portSTACK_TYPE*) (((uint32_t)(pxTopOfStack + 1) - XT_CP_SIZE - XT_STK_FRMSZ) & ~0xf);
 
     /* Clear the entire frame (do not use memset() because we don't depend on C library) */
     for (tp = sp; tp <= pxTopOfStack; ++tp)
@@ -121,30 +130,29 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, TaskFunctio
 static int pending_soft_sv;
 static int pending_maclayer_sv;
 
-/* PendSV is called in place of vPortYield() to request a supervisor
-   call.
-
-   The portYIELD macro calls pendSV if it's a software request.
-
-   The libpp and libudhcp libraries also call this function, assuming
-   always with arg==2 (but maybe sometimes with arg==1?)
-
-   In the original esp_iot_rtos_sdk implementation, arg was a char. Using an
-   enum is ABI-compatible, though.
-*/
+/*
+ * The portYIELD macro calls PendSV with SVC_Software to set a pending interrupt
+ * service callback that allows a task switch, and this occur when interrupts
+ * are enabled which might be after exiting the critical region below.
+ *
+ * The wdev NMI calls this function from pp_post() with SVC_MACLayer to set a
+ * pending interrupt service callback which flushs the queue of messages that
+ * the NMI stashes away. This interrupt will be triggered after the return from
+ * the NMI and when interrupts are enabled. The NMI can not touch the FreeRTOS
+ * queues itself. The NMI must not touch the interrupt masks so that path must
+ * not call vPortEnterCritical and vPortExitCritical.
+ */
 void IRAM PendSV(enum SVC_ReqType req)
 {
-	vPortEnterCritical();
-
-	if(req == SVC_Software)
-	{
-		pending_soft_sv = 1;
-	}
-	else if(req == SVC_MACLayer)
-		pending_maclayer_sv= 1;
-
-	WSR(BIT(INUM_SOFT), interrupt);
-	vPortExitCritical();
+    if (req == SVC_Software) {
+        vPortEnterCritical();
+        pending_soft_sv = 1;
+        WSR(BIT(INUM_SOFT), interrupt);
+        vPortExitCritical();
+    } else if (req == SVC_MACLayer) {
+        pending_maclayer_sv= 1;
+        WSR(BIT(INUM_SOFT), interrupt);
+    }
 }
 
 /* This MAC layer ISR handler is defined in libpp.a, and is called
@@ -153,31 +161,24 @@ void IRAM PendSV(enum SVC_ReqType req)
  */
 extern portBASE_TYPE sdk_MacIsrSigPostDefHdl(void);
 
-void IRAM SV_ISR(void)
+void IRAM SV_ISR(void *arg)
 {
-	portBASE_TYPE xHigherPriorityTaskWoken=pdFALSE ;
-	if(pending_maclayer_sv)
-	{
-		xHigherPriorityTaskWoken = sdk_MacIsrSigPostDefHdl();
-		pending_maclayer_sv = 0;
-	}
-	if( xHigherPriorityTaskWoken || pending_soft_sv)
-	{
-	    sdk__xt_timer_int1();
-	    pending_soft_sv = 0;
-	}
+    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE ;
+    if (pending_maclayer_sv) {
+        xHigherPriorityTaskWoken = sdk_MacIsrSigPostDefHdl();
+        pending_maclayer_sv = 0;
+    }
+    if (xHigherPriorityTaskWoken || pending_soft_sv) {
+        sdk__xt_timer_int1();
+        pending_soft_sv = 0;
+    }
 }
 
 void xPortSysTickHandle (void)
 {
-	//CloseNMI();
-	{
-		if(xTaskIncrementTick() !=pdFALSE )
-		{
-			vTaskSwitchContext();
-		}
-	}
-	//OpenNMI();
+    if (xTaskIncrementTick() != pdFALSE) {
+        vTaskSwitchContext();
+    }
 }
 
 /*
@@ -185,11 +186,11 @@ void xPortSysTickHandle (void)
  */
 portBASE_TYPE xPortStartScheduler( void )
 {
-    _xt_isr_attach(INUM_SOFT, SV_ISR);
+    _xt_isr_attach(INUM_SOFT, SV_ISR, NULL);
     _xt_isr_unmask(BIT(INUM_SOFT));
 
     /* Initialize system tick timer interrupt and schedule the first tick. */
-    _xt_isr_attach(INUM_TICK, sdk__xt_timer_int);
+    _xt_isr_attach(INUM_TICK, sdk__xt_timer_int, NULL);
     _xt_isr_unmask(BIT(INUM_TICK));
     sdk__xt_tick_timer_init();
 
@@ -221,8 +222,10 @@ size_t xPortGetFreeHeapSize( void )
     uint32_t brk_val = (uint32_t) sbrk(0);
 
     intptr_t sp = (intptr_t)xPortSupervisorStackPointer;
-    if(sp == 0) /* scheduler not started */
+    if (sp == 0) {
+        /* scheduler not started */
         SP(sp);
+    }
     return sp - brk_val + mi.fordblks;
 }
 
@@ -233,8 +236,6 @@ void vPortEndScheduler( void )
 
 /*-----------------------------------------------------------*/
 
-/* Each task maintains its own interrupt status in the critical nesting
-variable. */
 static unsigned portBASE_TYPE uxCriticalNesting = 0;
 
 /* These nested vPortEnter/ExitCritical macros are called by SDK
@@ -243,26 +244,42 @@ static unsigned portBASE_TYPE uxCriticalNesting = 0;
  * It may be possible to replace the global nesting count variable
  * with a save/restore of interrupt level, although it's difficult as
  * the functions have no return value.
+ *
+ * These should not be called from the NMI in regular operation and
+ * the NMI must not touch the interrupt mask, but that might occur in
+ * exceptional paths such as aborts and debug code.
  */
-void IRAM vPortEnterCritical( void )
-{
+void IRAM vPortEnterCritical(void) {
     portDISABLE_INTERRUPTS();
     uxCriticalNesting++;
 }
+
 /*-----------------------------------------------------------*/
 
-void IRAM vPortExitCritical( void )
-{
+void IRAM vPortExitCritical(void) {
     uxCriticalNesting--;
-    if( uxCriticalNesting == 0 )
-	portENABLE_INTERRUPTS();
+    if (uxCriticalNesting == 0)
+        portENABLE_INTERRUPTS();
 }
 
-/* Backward compatibility with libmain.a and libpp.a and can remove when these are open. */
-signed portBASE_TYPE xTaskGenericCreate( TaskFunction_t pxTaskCode, const signed char * const pcName, unsigned short usStackDepth, void *pvParameters, unsigned portBASE_TYPE uxPriority, TaskHandle_t *pxCreatedTask, portSTACK_TYPE *puxStackBuffer, const MemoryRegion_t * const xRegions )
-{
-    (void)puxStackBuffer; (void)xRegions;
-    return xTaskCreate( pxTaskCode, (const char * const)pcName, usStackDepth, pvParameters, uxPriority, pxCreatedTask);
+/* Backward compatibility, for the sdk library. */
+
+signed portBASE_TYPE xTaskGenericCreate(TaskFunction_t pxTaskCode,
+                                        const signed char * const pcName,
+                                        unsigned short usStackDepth,
+                                        void *pvParameters,
+                                        unsigned portBASE_TYPE uxPriority,
+                                        TaskHandle_t *pxCreatedTask,
+                                        portSTACK_TYPE *puxStackBuffer,
+                                        const MemoryRegion_t * const xRegions) {
+    (void)puxStackBuffer;
+    (void)xRegions;
+    return xTaskCreate(pxTaskCode, (const char * const)pcName, usStackDepth,
+                       pvParameters, uxPriority, pxCreatedTask);
 }
 
-
+BaseType_t xQueueGenericReceive(QueueHandle_t xQueue, void * const pvBuffer,
+                                TickType_t xTicksToWait, const BaseType_t xJustPeeking) {
+    configASSERT(xJustPeeking == 0);
+    return xQueueReceive(xQueue, pvBuffer, xTicksToWait);
+}

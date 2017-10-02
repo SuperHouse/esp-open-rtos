@@ -2,7 +2,7 @@ language: c
 sudo: false
 env:
   # Target commit for https://github.com/pfalcon/esp-open-sdk/
-  OPENSDK_COMMIT=a48b12f
+  OPENSDK_COMMIT=b069537
   CROSS_ROOT="${HOME}/toolchain-${OPENSDK_COMMIT}"
   CROSS_BINDIR="${CROSS_ROOT}/bin"
   CROSS="ccache xtensa-lx106-elf-"
@@ -29,12 +29,14 @@ addons:
     - libncurses5-dev
     - libexpat1-dev
     - python
-    - python-serial
+    - python-pip
     - sed
     - git
+    - help2man
     - vim-common
 
 before_install:
+  - pip install --user pyserial
   - travis_wait 30 utils/travis_build/install_toolchain.sh
 
 script:

@@ -102,7 +102,7 @@ void sntp_update_rtc(time_t t, uint32_t us) {
 	// DEBUG: Compute and print drift
 	int64_t sntp_current = sntp_base + TIMER_COUNT - tim_ref;
 	int64_t sntp_correct = (((uint64_t)us + (uint64_t)t * 1000000U)<<12) / cal;
-	printf("\nRTC Adjust: drift = %ld ticks, cal = %d\n", (time_t)(sntp_correct - sntp_current), cal);
+	printf("\nRTC Adjust: drift = %lld ticks, cal = %d\n", (time_t)(sntp_correct - sntp_current), (uint32_t)cal);
 
 	tim_ref = TIMER_COUNT;
 	cal = sdk_system_rtc_clock_cali_proc();

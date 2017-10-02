@@ -4,7 +4,7 @@
 // this must be ahead of any mbedtls header files so the local mbedtls/config.h can be properly referenced
 #include "mbedtls/config.h"
 
-#include "mbedtls/net.h"
+#include "mbedtls/net_sockets.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"

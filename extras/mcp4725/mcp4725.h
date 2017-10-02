@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <i2c/i2c.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -41,7 +42,7 @@ typedef enum
  * @param addr Device address
  * @return true when EEPROM is busy
  */
-bool mcp4725_eeprom_busy(uint8_t addr);
+bool mcp4725_eeprom_busy(i2c_dev_t* dev);
 
 /**
  * Get power mode
@@ -49,7 +50,7 @@ bool mcp4725_eeprom_busy(uint8_t addr);
  * @param eeprom Read power mode from EEPROM if true
  * @return Power mode
  */
-mcp4725_power_mode_t mcp4725_get_power_mode(uint8_t addr, bool eeprom);
+mcp4725_power_mode_t mcp4725_get_power_mode(i2c_dev_t* dev, bool eeprom);
 
 /**
  * Set power mode
@@ -57,7 +58,7 @@ mcp4725_power_mode_t mcp4725_get_power_mode(uint8_t addr, bool eeprom);
  * @param mode Power mode
  * @param eeprom Store mode to device EEPROM if true
  */
-void mcp4725_set_power_mode(uint8_t addr, mcp4725_power_mode_t mode, bool eeprom);
+void mcp4725_set_power_mode(i2c_dev_t* dev, mcp4725_power_mode_t mode, bool eeprom);
 
 /**
  * Get current DAC value
@@ -65,7 +66,7 @@ void mcp4725_set_power_mode(uint8_t addr, mcp4725_power_mode_t mode, bool eeprom
  * @param eeprom Read value from device EEPROM if true
  * @return Raw output value, 0..4095
  */
-uint16_t mcp4725_get_raw_output(uint8_t addr, bool eeprom);
+uint16_t mcp4725_get_raw_output(i2c_dev_t* dev, bool eeprom);
 
 /**
  * Set DAC output value
@@ -73,7 +74,7 @@ uint16_t mcp4725_get_raw_output(uint8_t addr, bool eeprom);
  * @param value Raw output value, 0..4095
  * @param eeprom Store value to device EEPROM if true
  */
-void mcp4725_set_raw_output(uint8_t addr, uint16_t value, bool eeprom);
+void mcp4725_set_raw_output(i2c_dev_t* dev, uint16_t value, bool eeprom);
 
 /**
  * Get current DAC output voltage
@@ -82,9 +83,9 @@ void mcp4725_set_raw_output(uint8_t addr, uint16_t value, bool eeprom);
  * @param eeprom Read voltage from device EEPROM if true
  * @return Current output voltage, volts
  */
-inline float mcp4725_get_voltage(uint8_t addr, float vdd, bool eeprom)
+inline float mcp4725_get_voltage(i2c_dev_t* dev, float vdd, bool eeprom)
 {
-    return vdd / MCP4725_MAX_VALUE * mcp4725_get_raw_output(addr, eeprom);
+    return vdd / MCP4725_MAX_VALUE * mcp4725_get_raw_output(dev, eeprom);
 }
 
 /**
@@ -94,9 +95,9 @@ inline float mcp4725_get_voltage(uint8_t addr, float vdd, bool eeprom)
  * @param value Output value, volts
  * @param eeprom Store value to device EEPROM if true
  */
-inline void mcp4725_set_voltage(uint8_t addr, float vdd, float value, bool eeprom)
+inline void mcp4725_set_voltage(i2c_dev_t* dev, float vdd, float value, bool eeprom)
 {
-    mcp4725_set_raw_output(addr, MCP4725_MAX_VALUE / vdd * value, eeprom);
+    mcp4725_set_raw_output(dev, MCP4725_MAX_VALUE / vdd * value, eeprom);
 }
 
 #ifdef __cplusplus

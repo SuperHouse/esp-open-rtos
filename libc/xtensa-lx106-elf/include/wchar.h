@@ -11,14 +11,31 @@
 #define __need_NULL
 #include <stddef.h>
 
-#define __need___va_list
-#include <stdarg.h>
-
 /* For _mbstate_t definition. */
 #include <sys/_types.h>
 #include <sys/cdefs.h>
 /* For __STDC_ISO_10646__ */
 #include <sys/features.h>
+
+/* typedef only __gnuc_va_list, used throughout the header */
+#define __need___va_list
+#include <stdarg.h>
+
+/* typedef va_list only when required */
+#if __POSIX_VISIBLE >= 200809 || __XSI_VISIBLE
+#ifdef __GNUC__
+#ifndef _VA_LIST_DEFINED
+typedef __gnuc_va_list va_list;
+#define _VA_LIST_DEFINED
+#endif
+#else /* !__GNUC__ */
+#include <stdarg.h>
+#endif
+#endif /* __POSIX_VISIBLE >= 200809 || __XSI_VISIBLE */
+
+#if __XSI_VISIBLE /* && __XSI_VISIBLE < 800 */ && !__GNU_VISIBLE
+#include <wctype.h>
+#endif
 
 #ifndef WEOF
 # define WEOF ((wint_t)-1)
@@ -46,10 +63,19 @@
 #endif
 #endif
 
+#if __POSIX_VISIBLE >= 200809
+#include <xlocale.h>
+#endif
+
 _BEGIN_STD_C
 
+#if __POSIX_VISIBLE >= 200809 || _XSI_VISIBLE
 /* As in stdio.h, <sys/reent.h> defines __FILE. */
+#if !defined(__FILE_defined)
 typedef __FILE FILE;
+# define __FILE_defined
+#endif
+#endif
 
 /* As required by POSIX.1-2008, declare tm as incomplete type.
    The actual definition is in time.h. */
@@ -68,8 +94,10 @@ size_t	_EXFUN(mbrtowc, (wchar_t *__restrict, const char *__restrict, size_t,
 size_t	_EXFUN(_mbrtowc_r, (struct _reent *, wchar_t * , const char * , 
 			size_t, mbstate_t *));
 int	_EXFUN(mbsinit, (const mbstate_t *));
+#if __POSIX_VISIBLE >= 200809
 size_t	_EXFUN(mbsnrtowcs, (wchar_t *__restrict, const char **__restrict,
 				size_t, size_t, mbstate_t *__restrict));
+#endif
 size_t	_EXFUN(_mbsnrtowcs_r, (struct _reent *, wchar_t * , const char ** ,
 			size_t, size_t, mbstate_t *));
 size_t	_EXFUN(mbsrtowcs, (wchar_t *__restrict, const char **__restrict, size_t,
@@ -77,39 +105,53 @@ size_t	_EXFUN(mbsrtowcs, (wchar_t *__restrict, const char **__restrict, size_t,
 size_t	_EXFUN(_mbsrtowcs_r, (struct _reent *, wchar_t * , const char ** , size_t, mbstate_t *));
 size_t	_EXFUN(wcrtomb, (char *__restrict, wchar_t, mbstate_t *__restrict));
 size_t	_EXFUN(_wcrtomb_r, (struct _reent *, char * , wchar_t, mbstate_t *));
+#if __POSIX_VISIBLE >= 200809
 size_t	_EXFUN(wcsnrtombs, (char *__restrict, const wchar_t **__restrict,
 				size_t, size_t, mbstate_t *__restrict));
+#endif
 size_t	_EXFUN(_wcsnrtombs_r, (struct _reent *, char * , const wchar_t ** , 
 			size_t, size_t, mbstate_t *));
 size_t	_EXFUN(wcsrtombs, (char *__restrict, const wchar_t **__restrict,
 				size_t, mbstate_t *__restrict));
 size_t	_EXFUN(_wcsrtombs_r, (struct _reent *, char * , const wchar_t ** , 
 			size_t, mbstate_t *));
+#if __POSIX_VISIBLE >= 200809
 int	_EXFUN(wcscasecmp, (const wchar_t *, const wchar_t *));
+#endif
 wchar_t	*_EXFUN(wcscat, (wchar_t *__restrict, const wchar_t *__restrict));
 wchar_t	*_EXFUN(wcschr, (const wchar_t *, wchar_t));
 int	_EXFUN(wcscmp, (const wchar_t *, const wchar_t *));
 int	_EXFUN(wcscoll, (const wchar_t *, const wchar_t *));
 wchar_t	*_EXFUN(wcscpy, (wchar_t *__restrict, const wchar_t *__restrict));
+#if __POSIX_VISIBLE >= 200809
 wchar_t	*_EXFUN(wcpcpy, (wchar_t *__restrict,
 				 const wchar_t *__restrict));
 wchar_t	*_EXFUN(wcsdup, (const wchar_t *));
+#endif
 wchar_t	*_EXFUN(_wcsdup_r, (struct _reent *, const wchar_t * ));
 size_t	_EXFUN(wcscspn, (const wchar_t *, const wchar_t *));
 size_t  _EXFUN(wcsftime, (wchar_t *__restrict, size_t,
 				const wchar_t *__restrict, const struct tm *__restrict));
+#if __GNU_VISIBLE
+size_t  wcsftime_l (wchar_t *__restrict, size_t, const wchar_t *__restrict,
+		    const struct tm *__restrict, locale_t);
+#endif
 size_t	_EXFUN(wcslcat, (wchar_t *, const wchar_t *, size_t));
 size_t	_EXFUN(wcslcpy, (wchar_t *, const wchar_t *, size_t));
 size_t	_EXFUN(wcslen, (const wchar_t *));
+#if __POSIX_VISIBLE >= 200809
 int	_EXFUN(wcsncasecmp, (const wchar_t *, const wchar_t *, size_t));
+#endif
 wchar_t	*_EXFUN(wcsncat, (wchar_t *__restrict,
 				 const wchar_t *__restrict, size_t));
 int	_EXFUN(wcsncmp, (const wchar_t *, const wchar_t *, size_t));
 wchar_t	*_EXFUN(wcsncpy, (wchar_t *__restrict,
 				 const wchar_t *__restrict, size_t));
+#if __POSIX_VISIBLE >= 200809
 wchar_t	*_EXFUN(wcpncpy, (wchar_t *__restrict,
 				 const wchar_t *__restrict, size_t));
 size_t	_EXFUN(wcsnlen, (const wchar_t *, size_t));
+#endif
 wchar_t	*_EXFUN(wcspbrk, (const wchar_t *, const wchar_t *));
 wchar_t	*_EXFUN(wcsrchr, (const wchar_t *, wchar_t));
 size_t	_EXFUN(wcsspn, (const wchar_t *, const wchar_t *));
@@ -119,15 +161,29 @@ wchar_t	*_EXFUN(wcstok, (wchar_t *__restrict, const wchar_t *__restrict,
 				 wchar_t **__restrict));
 double _EXFUN(wcstod, (const wchar_t *__restrict, wchar_t **__restrict));
 double _EXFUN(_wcstod_r, (struct _reent *, const wchar_t *, wchar_t **));
+#if __ISO_C_VISIBLE >= 1999
 float _EXFUN(wcstof, (const wchar_t *__restrict, wchar_t **__restrict));
+#endif
 float _EXFUN(_wcstof_r, (struct _reent *, const wchar_t *, wchar_t **));
 #ifdef _LDBL_EQ_DBL
 long double _EXFUN(wcstold, (const wchar_t *, wchar_t **));
 #endif /* _LDBL_EQ_DBL */
+#if __XSI_VISIBLE
 int	_EXFUN(wcswidth, (const wchar_t *, size_t));
+#endif
 size_t	_EXFUN(wcsxfrm, (wchar_t *__restrict, const wchar_t *__restrict,
 				size_t));
+#if __POSIX_VISIBLE >= 200809
+extern int wcscasecmp_l (const wchar_t *, const wchar_t *, locale_t);
+extern int wcsncasecmp_l (const wchar_t *, const wchar_t *, size_t, locale_t);
+extern int wcscoll_l (const wchar_t *, const wchar_t *, locale_t);
+extern size_t wcsxfrm_l (wchar_t *__restrict, const wchar_t *__restrict, size_t,
+			 locale_t);
+#endif
+
+#if __XSI_VISIBLE
 int	_EXFUN(wcwidth, (const wchar_t));
+#endif
 wchar_t	*_EXFUN(wmemchr, (const wchar_t *, wchar_t, size_t));
 int	_EXFUN(wmemcmp, (const wchar_t *, const wchar_t *, size_t));
 wchar_t	*_EXFUN(wmemcpy, (wchar_t *__restrict, const wchar_t *__restrict,
@@ -136,26 +192,44 @@ wchar_t	*_EXFUN(wmemmove, (wchar_t *, const wchar_t *, size_t));
 wchar_t	*_EXFUN(wmemset, (wchar_t *, wchar_t, size_t));
 
 long    _EXFUN(wcstol, (const wchar_t *__restrict, wchar_t **__restrict, int));
+#if __ISO_C_VISIBLE >= 1999
 long long _EXFUN(wcstoll, (const wchar_t *__restrict, wchar_t **__restrict,
 				  int));
+#endif
 unsigned long _EXFUN(wcstoul, (const wchar_t *__restrict, wchar_t **__restrict,
 					  int));
+#if __ISO_C_VISIBLE >= 1999
 unsigned long long _EXFUN(wcstoull, (const wchar_t *__restrict,
 						   wchar_t **__restrict, int));
+#endif
 long    _EXFUN(_wcstol_r, (struct _reent *, const wchar_t *, wchar_t **, int));
 long long _EXFUN(_wcstoll_r, (struct _reent *, const wchar_t *, wchar_t **, int));
 unsigned long _EXFUN(_wcstoul_r, (struct _reent *, const wchar_t *, wchar_t **, int));
 unsigned long long _EXFUN(_wcstoull_r, (struct _reent *, const wchar_t *, wchar_t **, int));
-/* On platforms where long double equals double.  */
-#ifdef _LDBL_EQ_DBL
+#if __ISO_C_VISIBLE >= 1999
 long double _EXFUN(wcstold, (const wchar_t *, wchar_t **));
-#endif /* _LDBL_EQ_DBL */
+#endif
+
+#if __GNU_VISIBLE
+long wcstol_l (const wchar_t *__restrict, wchar_t **__restrict, int, locale_t);
+long long wcstoll_l (const wchar_t *__restrict, wchar_t **__restrict, int,
+		     locale_t);
+unsigned long wcstoul_l (const wchar_t *__restrict, wchar_t **__restrict, int,
+			 locale_t);
+unsigned long long wcstoull_l (const wchar_t *__restrict, wchar_t **__restrict,
+			       int, locale_t);
+double wcstod_l (const wchar_t *, wchar_t **, locale_t);
+float wcstof_l (const wchar_t *, wchar_t **, locale_t);
+long double wcstold_l (const wchar_t *, wchar_t **, locale_t);
+#endif
 
 wint_t _EXFUN(fgetwc, (__FILE *));
 wchar_t *_EXFUN(fgetws, (wchar_t *__restrict, int, __FILE *__restrict));
 wint_t _EXFUN(fputwc, (wchar_t, __FILE *));
 int _EXFUN(fputws, (const wchar_t *__restrict, __FILE *__restrict));
+#if __ISO_C_VISIBLE >= 1999 || __XSI_VISIBLE >= 500
 int _EXFUN (fwide, (__FILE *, int));
+#endif
 wint_t _EXFUN (getwc, (__FILE *));
 wint_t _EXFUN (getwchar, (void));
 wint_t _EXFUN(putwc, (wchar_t, __FILE *));
@@ -192,7 +266,9 @@ wint_t _EXFUN(putwc_unlocked, (wchar_t, __FILE *));
 wint_t _EXFUN(putwchar_unlocked, (wchar_t));
 #endif
 
+#if __POSIX_VISIBLE >= 200809
 __FILE *_EXFUN (open_wmemstream, (wchar_t **, size_t *));
+#endif
 __FILE *_EXFUN (_open_wmemstream_r, (struct _reent *, wchar_t **, size_t *));
 
 #ifndef __VALIST
@@ -203,6 +279,7 @@ __FILE *_EXFUN (_open_wmemstream_r, (struct _reent *, wchar_t **, size_t *));
 #endif
 #endif
 
+#if __ISO_C_VISIBLE >= 1999 || __XSI_VISIBLE >= 500
 int	_EXFUN(fwprintf, (__FILE *__restrict, const wchar_t *__restrict, ...));
 int	_EXFUN(swprintf, (wchar_t *__restrict, size_t,
 			const wchar_t *__restrict, ...));
@@ -212,6 +289,7 @@ int	_EXFUN(vswprintf, (wchar_t *__restrict, size_t,
 			const wchar_t *__restrict, __VALIST));
 int	_EXFUN(vwprintf, (const wchar_t *__restrict, __VALIST));
 int	_EXFUN(wprintf, (const wchar_t *__restrict, ...));
+#endif
 
 int	_EXFUN(_fwprintf_r, (struct _reent *, __FILE *, const wchar_t *, ...));
 int	_EXFUN(_swprintf_r, (struct _reent *, wchar_t *, size_t, const wchar_t *, ...));
@@ -220,6 +298,7 @@ int	_EXFUN(_vswprintf_r, (struct _reent *, wchar_t *, size_t, const wchar_t *, _
 int	_EXFUN(_vwprintf_r, (struct _reent *, const wchar_t *, __VALIST));
 int	_EXFUN(_wprintf_r, (struct _reent *, const wchar_t *, ...));
 
+#if __ISO_C_VISIBLE >= 1999 || __XSI_VISIBLE >= 500
 int	_EXFUN(fwscanf, (__FILE *__restrict, const wchar_t *__restrict, ...));
 int	_EXFUN(swscanf, (const wchar_t *__restrict,
 			const wchar_t *__restrict, ...));
@@ -229,6 +308,7 @@ int	_EXFUN(vswscanf, (const wchar_t *__restrict, const wchar_t *__restrict,
 			__VALIST));
 int	_EXFUN(vwscanf, (const wchar_t *__restrict, __VALIST));
 int	_EXFUN(wscanf, (const wchar_t *__restrict, ...));
+#endif
 
 int	_EXFUN(_fwscanf_r, (struct _reent *, __FILE *, const wchar_t *, ...));
 int	_EXFUN(_swscanf_r, (struct _reent *, const wchar_t *, const wchar_t *, ...));

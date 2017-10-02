@@ -141,6 +141,8 @@ static uint16_t crc_ccitt(const uint8_t *data, size_t n)
 #define spi_skip_word()   do { spi_read_byte(); spi_read_byte(); } while(0)
 #define spi_skip_dword()  do { spi_read_byte(); spi_read_byte(); spi_read_byte(); spi_read_byte(); } while(0)
 
+#define timeout_expired(start, len) ((uint32_t)(sdk_system_get_time() - (start)) >= (len))
+
 inline static uint16_t spi_write_word(uint16_t word)
 {
     return (spi_transfer_8(BUS, word >> 8) << 8) | spi_transfer_8(BUS, word);
@@ -154,9 +156,10 @@ inline static void spi_read_bytes(uint8_t *dst, size_t size)
 
 static bool wait()
 {
-    uint32_t stop = sdk_system_get_time() + IO_TIMEOUT_US;
+
+    uint32_t start = sdk_system_get_time();
     while (spi_read_byte() != 0xff)
-        if (sdk_system_get_time() >= stop)
+        if (timeout_expired(start, IO_TIMEOUT_US))
             return false;
     return true;
 }
@@ -208,11 +211,11 @@ inline static sdio_error_t set_error(sdio_card_t *card, sdio_error_t err)
 
 static sdio_error_t read_data(sdio_card_t *card, uint8_t *dst, size_t size)
 {
-    uint32_t timeout = sdk_system_get_time() + IO_TIMEOUT_US;
+    uint32_t start = sdk_system_get_time();
 
     while (true)
     {
-        if (sdk_system_get_time() >= timeout)
+        if (timeout_expired(start, IO_TIMEOUT_US))
             return set_error(card, SDIO_ERR_TIMEOUT);
 
         uint8_t b = spi_read_byte();
@@ -269,7 +272,7 @@ sdio_error_t sdio_init(sdio_card_t *card, uint8_t cs_pin, uint32_t high_freq_div
     spi_set_settings(BUS, &s);
     gpio_enable(card->cs_pin, GPIO_OUTPUT);
 
-    uint32_t timeout = sdk_system_get_time() + INIT_TIMEOUT_US;
+    uint32_t start = sdk_system_get_time();
 
     spi_cs_low(card);
     spi_cs_high(card);
@@ -279,7 +282,7 @@ sdio_error_t sdio_init(sdio_card_t *card, uint8_t cs_pin, uint32_t high_freq_div
     // Set card to the SPI idle mode
     while (command(card, CMD0, 0) != BV(R1_IDLE_STATE))
     {
-        if (sdk_system_get_time() >= timeout)
+        if (timeout_expired(start, INIT_TIMEOUT_US))
             return set_error(card, SDIO_ERR_TIMEOUT);
     }
 
@@ -300,7 +303,7 @@ sdio_error_t sdio_init(sdio_card_t *card, uint8_t cs_pin, uint32_t high_freq_div
             break;
         }
 
-        if (sdk_system_get_time() >= timeout)
+        if (timeout_expired(start, INIT_TIMEOUT_US))
             return set_error(card, SDIO_ERR_TIMEOUT);
     }
 
@@ -311,13 +314,13 @@ sdio_error_t sdio_init(sdio_card_t *card, uint8_t cs_pin, uint32_t high_freq_div
         {
             card->type = SDIO_TYPE_MMC;
             while (command(card, CMD1, 0))
-                if (sdk_system_get_time() >= timeout)
+                if (timeout_expired(start, INIT_TIMEOUT_US))
                     return set_error(card, SDIO_ERR_TIMEOUT);
         }
         else
         {
             while (app_command(card, ACMD41, 0))
-                if (sdk_system_get_time() >= timeout)
+                if (timeout_expired(start, INIT_TIMEOUT_US))
                     return set_error(card, SDIO_ERR_TIMEOUT);
         }
 
@@ -328,7 +331,7 @@ sdio_error_t sdio_init(sdio_card_t *card, uint8_t cs_pin, uint32_t high_freq_div
     {
         // SD2 or SDHC
         while (app_command(card, ACMD41, BV(30)) != 0)
-            if (sdk_system_get_time() >= timeout)
+            if (timeout_expired(start, INIT_TIMEOUT_US))
                 return set_error(card, SDIO_ERR_TIMEOUT);
     }
     // read OCR

@@ -10,11 +10,14 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <i2c/i2c.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+#define HMC5883L_ADDR 0x1e
 
 #define HMC5883L_ID 0x00333448  // "H43"
 
@@ -101,82 +104,82 @@ typedef struct
  * \brief Init device
  * \return false if error occured
  */
-bool hmc5883l_init();
+bool hmc5883l_init(i2c_dev_t* dev);
 
 /**
  * \brief Get device ID
  * Always returns 0x00333448 if IC functioning properly.
  * \return Device ID
  */
-uint32_t hmc5883l_get_id();
+uint32_t hmc5883l_get_id(i2c_dev_t* dev);
 
 /**
  * \brief Get operating mode
  * \return Measurement mode
  */
-hmc5883l_operating_mode_t hmc5883l_get_operating_mode();
+hmc5883l_operating_mode_t hmc5883l_get_operating_mode(i2c_dev_t* dev);
 
 /**
  * \brief Set operating mode
  * \param mode Measurement mode
  */
-void hmc5883l_set_operating_mode(hmc5883l_operating_mode_t mode);
+void hmc5883l_set_operating_mode(i2c_dev_t* dev, hmc5883l_operating_mode_t mode);
 
 /**
  * \brief Get number of samples averaged per measurement output
  * \return Number of samples
  */
-hmc5883l_samples_averaged_t hmc5883l_get_samples_averaged();
+hmc5883l_samples_averaged_t hmc5883l_get_samples_averaged(i2c_dev_t* dev);
 
 /**
  * \brief Set number of samples averaged per measurement output
  * \param samples Number of samples
  */
-void hmc5883l_set_samples_averaged(hmc5883l_samples_averaged_t samples);
+void hmc5883l_set_samples_averaged(i2c_dev_t* dev, hmc5883l_samples_averaged_t samples);
 
 /**
  * \brief Get data output rate in continuous measurement mode
  * \return Data output rate
  */
-hmc5883l_data_rate_t hmc5883l_get_data_rate();
+hmc5883l_data_rate_t hmc5883l_get_data_rate(i2c_dev_t* dev);
 
 /**
  * \brief Set data output rate in continuous measurement mode
  * \param rate Data output rate
  */
-void hmc5883l_set_data_rate(hmc5883l_data_rate_t rate);
+void hmc5883l_set_data_rate(i2c_dev_t* dev, hmc5883l_data_rate_t rate);
 
 /**
  * \brief Get measurement mode (bias of the axes)
  * See datasheet for self test description
  * \return Bias
  */
-hmc5883l_bias_t hmc5883l_get_bias();
+hmc5883l_bias_t hmc5883l_get_bias(i2c_dev_t* dev);
 
 /**
  * \brief Set measurement mode (bias of the axes)
  * See datasheet for self test description
  * \param bias Bias
  */
-void hmc5883l_set_bias(hmc5883l_bias_t bias);
+void hmc5883l_set_bias(i2c_dev_t* dev, hmc5883l_bias_t bias);
 
 /**
  * \brief Get device gain
  * \return Current gain
  */
-hmc5883l_gain_t hmc5883l_get_gain();
+hmc5883l_gain_t hmc5883l_get_gain(i2c_dev_t* dev);
 
 /**
  * \brief Set device gain
  * \param gain Gain
  */
-void hmc5883l_set_gain(hmc5883l_gain_t gain);
+void hmc5883l_set_gain(i2c_dev_t* dev, hmc5883l_gain_t gain);
 
 /**
  * \brief Get data state
  * \return true when data is written to all six data registers
  */
-bool hmc5883l_data_is_ready();
+bool hmc5883l_data_is_ready(i2c_dev_t* dev);
 
 /**
  * \brief Get lock state.
@@ -188,14 +191,14 @@ bool hmc5883l_data_is_ready();
  * 4. power is reset.
  * \return true when data registers is locked
  */
-bool hmc5883l_data_is_locked();
+bool hmc5883l_data_is_locked(i2c_dev_t* dev);
 
 /**
  * \brief Get raw magnetic data
  * \param data Pointer to the struct to write raw data
  * \return false if error occured in single measurement mode, always true in continuous mode
  */
-bool hmc5883l_get_raw_data(hmc5883l_raw_data_t *data);
+bool hmc5883l_get_raw_data(i2c_dev_t* dev, hmc5883l_raw_data_t *data);
 
 /**
  * \brief Convert raw magnetic data to milligausses
@@ -209,7 +212,7 @@ void hmc5883l_raw_to_mg(const hmc5883l_raw_data_t *raw, hmc5883l_data_t *mg);
  * \param data Pointer to the struct to write data
  * \return false if error occured in single measurement mode, always true in continuous mode
  */
-bool hmc5883l_get_data(hmc5883l_data_t *data);
+bool hmc5883l_get_data(i2c_dev_t* dev, hmc5883l_data_t *data);
 
 #ifdef __cplusplus
 }

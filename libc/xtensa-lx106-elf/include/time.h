@@ -8,6 +8,7 @@
 #define _TIME_H_
 
 #include "_ansi.h"
+#include <sys/cdefs.h>
 #include <sys/reent.h>
 
 #define __need_size_t
@@ -25,6 +26,11 @@
 #define CLK_TCK CLOCKS_PER_SEC
 
 #include <sys/types.h>
+#include <sys/timespec.h>
+
+#if __POSIX_VISIBLE >= 200809
+#include <xlocale.h>
+#endif
 
 _BEGIN_STD_C
 
@@ -61,6 +67,12 @@ size_t	   _EXFUN(strftime, (char *__restrict _s,
 			     size_t _maxsize, const char *__restrict _fmt,
 			     const struct tm *__restrict _t));
 
+#if __POSIX_VISIBLE >= 200809
+extern size_t strftime_l (char *__restrict _s, size_t _maxsize,
+			  const char *__restrict _fmt,
+			  const struct tm *__restrict _t, locale_t _l);
+#endif
+
 char	  *_EXFUN(asctime_r,	(const struct tm *__restrict,
 				 char *__restrict));
 char	  *_EXFUN(ctime_r,	(const time_t *, char *));
@@ -75,11 +87,19 @@ _END_STD_C
 extern "C" {
 #endif
 
-#ifndef __STRICT_ANSI__
+#if __XSI_VISIBLE
 char      *_EXFUN(strptime,     (const char *__restrict,
 				 const char *__restrict,
 				 struct tm *__restrict));
+#endif
+#if __GNU_VISIBLE
+char *strptime_l (const char *__restrict, const char *__restrict,
+		  struct tm *__restrict, locale_t);
+#endif
+
+#if __POSIX_VISIBLE
 _VOID      _EXFUN(tzset,	(_VOID));
+#endif
 _VOID      _EXFUN(_tzset_r,	(struct _reent *));
 
 typedef struct __tzrule_struct
@@ -105,6 +125,7 @@ __tzinfo_type *_EXFUN (__gettzinfo, (_VOID));
 /* getdate functions */
 
 #ifdef HAVE_GETDATE
+#if __XSI_VISIBLE >= 4
 #ifndef _REENT_ONLY
 #define getdate_err (*__getdate_err())
 int *_EXFUN(__getdate_err,(_VOID));
@@ -120,21 +141,27 @@ struct tm *	_EXFUN(getdate, (const char *));
      7  there is no line in the template that matches the input,
      8  invalid input specification  */
 #endif /* !_REENT_ONLY */
+#endif /* __XSI_VISIBLE >= 4 */
 
+#if __GNU_VISIBLE
 /* getdate_r returns the error code as above */
 int		_EXFUN(getdate_r, (const char *, struct tm *));
+#endif /* __GNU_VISIBLE */
 #endif /* HAVE_GETDATE */
 
 /* defines for the opengroup specifications Derived from Issue 1 of the SVID.  */
+#if __SVID_VISIBLE || __XSI_VISIBLE
 extern __IMPORT long _timezone;
 extern __IMPORT int _daylight;
+#endif
+#if __POSIX_VISIBLE
 extern __IMPORT char *_tzname[2];
 
 /* POSIX defines the external tzname being defined in time.h */
 #ifndef tzname
 #define tzname _tzname
 #endif
-#endif /* !__STRICT_ANSI__ */
+#endif /* __POSIX_VISIBLE */
 
 #ifdef __cplusplus
 }
