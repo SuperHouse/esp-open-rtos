@@ -101,6 +101,8 @@ typedef int sys_prot_t;
 #define LWIP_PLATFORM_HTONS(_n)  ((u16_t)((((_n) & 0xff) << 8) | (((_n) >> 8) & 0xff)))
 #define LWIP_PLATFORM_HTONL(_n)  ((u32_t)( (((_n) & 0xff) << 24) | (((_n) & 0xff00) << 8) | (((_n) >> 8)  & 0xff00) | (((_n) >> 24) & 0xff) ))
 
+#ifndef LWIP_RAND
 #define LWIP_RAND()                         hwrand()
+#endif
 
 #endif /* __ARCH_CC_H__ */
