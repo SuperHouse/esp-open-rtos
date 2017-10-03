@@ -106,6 +106,29 @@ void dhcpserver_start(const ip4_addr_t *first_client_addr, uint8_t max_leases)
     xTaskCreate(dhcpserver_task, "DHCP Server", 448, NULL, 2, &dhcpserver_task_handle);
 }
 
+int dhcpserver_get_leases(dhcpserver_lease_t *leases, uint32_t capacity) {
+	int i=0, count=0;
+	
+	taskENTER_CRITICAL();
+
+	for(i=0;i<state->max_leases;i++) {
+		if(count>=capacity) {
+			count=capacity;
+			break;
+		}
+		
+		if(state->leases[i].active) {
+			leases[count].hwaddr=state->leases[i].hwaddr;
+			leases[count].ipaddr=*state->first_client_addr;
+			leases[count].ipaddr.addr+=count;
+			count++;
+		}
+	}
+
+	taskLEAVE_CRITICAL();
+	return count;
+}
+
 void dhcpserver_stop(void)
 {
     if (dhcpserver_task_handle) {
@@ -150,6 +173,8 @@ static void dhcpserver_task(void *pxParameter)
             printf("DHCP Server Error: Failed to receive DHCP packet. err=%d\r\n", err);
             continue;
         }
+		
+		taskENTER_CRITICAL();
 
         /* expire any leases that have passed */
         uint32_t now = xTaskGetTickCount();
@@ -169,6 +194,7 @@ static void dhcpserver_task(void *pxParameter)
         if (netbuf_len(netbuf) < offsetof(struct dhcp_msg, options)) {
             /* too short to be a valid DHCP client message */
             netbuf_delete(netbuf);
+			taskLEAVE_CRITICAL();
             continue;
         }
         if (netbuf_len(netbuf) >= sizeof(struct dhcp_msg)) {
@@ -182,6 +208,7 @@ static void dhcpserver_task(void *pxParameter)
                                                  DHCP_OPTION_MESSAGE_TYPE_LEN, NULL);
         if (!message_type) {
             printf("DHCP Server Error: No message type field found");
+			taskLEAVE_CRITICAL();
             continue;
         }
 
@@ -207,6 +234,8 @@ static void dhcpserver_task(void *pxParameter)
             printf("DHCP Server Error: Unsupported message type %d\r\n", *message_type);
             break;
         }
+		
+		taskLEAVE_CRITICAL();
     }
 }
 
