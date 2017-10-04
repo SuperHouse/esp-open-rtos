@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 typedef struct {
-    uint8_t hwaddr[NETIF_MAX_HWADDR_LEN];
+    uint8_t hwaddr[6];
 	ip4_addr_t ipaddr;
 } dhcpserver_lease_t;
 

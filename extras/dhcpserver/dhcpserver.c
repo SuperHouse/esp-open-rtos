@@ -118,14 +118,14 @@ int dhcpserver_get_leases(dhcpserver_lease_t *leases, uint32_t capacity) {
 		}
 		
 		if(state->leases[i].active) {
-			leases[count].hwaddr=state->leases[i].hwaddr;
-			leases[count].ipaddr=*state->first_client_addr;
+			memcpy(&leases[count].hwaddr, &state->leases[i].hwaddr, sizeof(uint8_t)*6);
+			ip4_addr_copy(leases[count].ipaddr, state->first_client_addr);
 			leases[count].ipaddr.addr+=count;
 			count++;
 		}
 	}
 
-	taskLEAVE_CRITICAL();
+	taskEXIT_CRITICAL();
 	return count;
 }
 
@@ -194,7 +194,7 @@ static void dhcpserver_task(void *pxParameter)
         if (netbuf_len(netbuf) < offsetof(struct dhcp_msg, options)) {
             /* too short to be a valid DHCP client message */
             netbuf_delete(netbuf);
-			taskLEAVE_CRITICAL();
+			taskEXIT_CRITICAL();
             continue;
         }
         if (netbuf_len(netbuf) >= sizeof(struct dhcp_msg)) {
@@ -208,7 +208,7 @@ static void dhcpserver_task(void *pxParameter)
                                                  DHCP_OPTION_MESSAGE_TYPE_LEN, NULL);
         if (!message_type) {
             printf("DHCP Server Error: No message type field found");
-			taskLEAVE_CRITICAL();
+			taskEXIT_CRITICAL();
             continue;
         }
 
@@ -235,7 +235,7 @@ static void dhcpserver_task(void *pxParameter)
             break;
         }
 		
-		taskLEAVE_CRITICAL();
+		taskEXIT_CRITICAL();
     }
 }
 
