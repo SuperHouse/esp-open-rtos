@@ -33,7 +33,7 @@ typedef struct {
 */
 void dhcpserver_start(const ip4_addr_t *first_client_addr, uint8_t max_leases);
 
-int dhcpserver_get_leases(dhcpserver_lease_t *leases, uint32_t capacity);
+uint32_t dhcpserver_get_leases(dhcpserver_lease_t *leases, uint32_t capacity);
 
 /* Stop DHCP server.
  */

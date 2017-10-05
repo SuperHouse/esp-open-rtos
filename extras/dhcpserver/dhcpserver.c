@@ -106,8 +106,8 @@ void dhcpserver_start(const ip4_addr_t *first_client_addr, uint8_t max_leases)
     xTaskCreate(dhcpserver_task, "DHCP Server", 448, NULL, 2, &dhcpserver_task_handle);
 }
 
-int dhcpserver_get_leases(dhcpserver_lease_t *leases, uint32_t capacity) {
-	int i=0, count=0;
+uint32_t dhcpserver_get_leases(dhcpserver_lease_t *leases, uint32_t capacity) {
+	uint32_t i=0, count=0;
 	
 	taskENTER_CRITICAL();
 
