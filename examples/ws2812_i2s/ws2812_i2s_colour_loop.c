@@ -26,7 +26,6 @@ static void fade_pixel(ws2812_pixel_t *pixel, uint32_t factor)
     pixel->red = pixel->red / factor;
     pixel->green = pixel->green / factor;
     pixel->blue = pixel->blue / factor;
-    pixel->white = pixel->white / factor;
 }
 
 static int fix_index(int index)
@@ -46,7 +45,6 @@ static ws2812_pixel_t next_colour()
     colour.red = rand() % 256;
     colour.green = rand() % 256;
     colour.blue = rand() % 256;
-    colour.white = rand() % 256; 
 
     return colour;
 }
@@ -56,7 +54,7 @@ static void demo(void *pvParameters)
     ws2812_pixel_t pixels[led_number];
     int head_index = 0;
 
-    ws2812_i2s_init(led_number, PIXEL_RGBW);
+    ws2812_i2s_init(led_number, PIXEL_RGB);
 
     memset(pixels, 0, sizeof(ws2812_pixel_t) * led_number);    
 
@@ -71,7 +69,7 @@ static void demo(void *pvParameters)
             memset(&pixels[fix_index(head_index - tail_length)], 0, 
                     sizeof(ws2812_pixel_t));
 
-            ws2812_i2s_update(pixels, PIXEL_RGBW);
+            ws2812_i2s_update(pixels, PIXEL_RGB);
             vTaskDelay(50 / portTICK_PERIOD_MS);
         }
     }
