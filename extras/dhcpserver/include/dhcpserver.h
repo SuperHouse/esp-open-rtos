@@ -18,6 +18,11 @@
 extern "C" {
 #endif
 
+typedef struct {
+    uint8_t hwaddr[6];
+	ip4_addr_t ipaddr;
+} dhcpserver_lease_t;
+
 /* Start DHCP server.
 
    Static IP of server should already be set and network interface enabled.
@@ -28,7 +33,7 @@ extern "C" {
 */
 void dhcpserver_start(const ip4_addr_t *first_client_addr, uint8_t max_leases);
 
-void dhcpserver_get_lease(const ip4_addr_t *first_client_addr, uint8_t max_leases);
+uint32_t dhcpserver_get_leases(dhcpserver_lease_t *leases, uint32_t capacity);
 
 /* Stop DHCP server.
  */
