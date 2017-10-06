@@ -49,7 +49,7 @@ static void netCallback(struct netconn *conn, enum netconn_evt evt, uint16_t len
     netconn_events events ;
 
     //If netconn got error, it is close or deleted, dont do treatments on it.
-    if (conn->last_err)
+    if (conn->pending_err)
     {
         return;
     }
@@ -95,7 +95,7 @@ static void set_tcp_server_netconn(struct netconn **nc, uint16_t port, netconn_c
  */
 static void close_tcp_netconn(struct netconn *nc)
 {
-    nc->last_err=ERR_CLSD; //It is hacky way to be sure than callback will don't do treatment on a netconn closed and deleted
+    nc->pending_err=ERR_CLSD; //It is hacky way to be sure than callback will don't do treatment on a netconn closed and deleted
     netconn_close(nc);
     netconn_delete(nc);
 }
