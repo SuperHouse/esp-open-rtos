@@ -35,7 +35,13 @@ typedef struct {
     uint8_t red;
     uint8_t green;
     uint8_t blue;
+    uint8_t white;
 } ws2812_pixel_t;
+
+typedef enum {
+  PIXEL_RGB = 12,
+  PIXEL_RGBW = 16
+} pixeltype_t;
 
 /**
  * Initialize i2s and dma subsystems to work with ws2812 led strip.
@@ -44,7 +50,7 @@ typedef struct {
  *
  * @param pixels_number Number of pixels in the strip.
  */
-void ws2812_i2s_init(uint32_t pixels_number);
+void ws2812_i2s_init(uint32_t pixels_number, pixeltype_t type);
 
 /**
  * Update ws2812 pixels.
@@ -52,7 +58,7 @@ void ws2812_i2s_init(uint32_t pixels_number);
  * @param pixels Array of 'pixels_number' pixels. The array must contain all
  * the pixels.
  */
-void ws2812_i2s_update(ws2812_pixel_t *pixels);
+void ws2812_i2s_update(ws2812_pixel_t *pixels, pixeltype_t type);
 
 #ifdef	__cplusplus
 }
