@@ -144,6 +144,15 @@
    ------------------------------------------------
 */
 
+/**
+ * MEMP_NUM_NETCONN: the number of struct netconns.
+ * (only needed if you use the sequential API, like api_lib.c)
+ * This also sets the number of lwip socket descriptors.
+ */
+#ifndef MEMP_NUM_NETCONN
+#define MEMP_NUM_NETCONN                12
+#endif
+
 /*
    --------------------------------
    ---------- ARP options -------
@@ -549,6 +558,25 @@
    ---------- Socket options ----------
    ------------------------------------
 */
+
+/**
+ * LWIP_POSIX_SOCKETS_IO_NAMES==1: Enable POSIX-style sockets functions names.
+ * Disable this option if you use a POSIX operating system that uses the same
+ * names (read, write & close). (only used if you use sockets.c)
+ */
+#define LWIP_POSIX_SOCKETS_IO_NAMES     0
+
+/**
+ * LWIP_SOCKET_OFFSET==n: Increases the file descriptor number created by LwIP with n.
+ * This can be useful when there are multiple APIs which create file descriptors.
+ * When they all start with a different offset and you won't make them overlap you can
+ * re implement read/write/close/ioctl/fnctl to send the requested action to the right
+ * library (sharing select will need more work though).
+ */
+#ifndef LWIP_SOCKET_OFFSET
+#define LWIP_SOCKET_OFFSET              3
+#endif
+
 /**
  * LWIP_SO_SNDTIMEO==1: Enable send timeout for sockets/netconns and
  * SO_SNDTIMEO processing.

@@ -149,7 +149,8 @@ int _open_r(struct _reent *r, const char *pathname, int flags, int mode)
     return SPIFFS_open(&fs, pathname, spiffs_flags, mode);
 }
 
-int _close_r(struct _reent *r, int fd)
+// This implementation replaces implementation in core/newlib_syscals.c
+int _close_filesystem_r(struct _reent *r, int fd)
 {
     return SPIFFS_close(&fs, (spiffs_file)fd);
 }

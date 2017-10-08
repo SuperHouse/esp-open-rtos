@@ -198,7 +198,15 @@ typedef unsigned char u8_t;
 // NB: This adds config field fh_ix_offset in the configuration struct when
 // mounting, which must be defined.
 #ifndef SPIFFS_FILEHDL_OFFSET
-#define SPIFFS_FILEHDL_OFFSET                 1
+#define SPIFFS_FILEHDL_OFFSET                 17
+// Not ideal having to use a literal above, which is necessary because this file
+// is also included by tools that run on the host, but at least do some checks
+// when building the target code.
+#ifdef LWIP_SOCKET_OFFSET
+#if SPIFFS_FILEHDL_OFFSET < (LWIP_SOCKET_OFFSET + MEMP_NUM_NETCONN)
+#error SPIFFS_FILEHDL_OFFSET clashes with lwip sockets range.
+#endif
+#endif
 #endif
 
 // Enable this to compile a read only version of spiffs.

@@ -14,6 +14,21 @@
 #include <stdlib.h>
 #include <stdout_redirect.h>
 #include <sys/time.h>
+#include <lwip/sockets.h>
+
+/*
+ * The file descriptor index space is allocated in blocks. The first block of 3
+ * is for newlib I/O the stdin stdout and stderr. The next block of
+ * MEMP_NUM_NETCONN is allocated for lwip sockets, and the remainer to file
+ * system descriptors. The newlib default FD_SETSIZE is 64.
+ */
+#if LWIP_SOCKET_OFFSET < 3
+#error Expecting a LWIP_SOCKET_OFFSET >= 3, to allow room for the standard I/O descriptors.
+#endif
+#define FILE_DESCRIPTOR_OFFSET (LWIP_SOCKET_OFFSET + MEMP_NUM_NETCONN)
+#if FILE_DESCRIPTOR_OFFSET > FD_SETSIZE
+#error Too many lwip sockets for the FD_SETSIZE.
+#endif
 
 extern void *xPortSupervisorStackPointer;
 
@@ -81,10 +96,17 @@ __attribute__((weak)) long _write_filesystem_r(struct _reent *r, int fd, const c
 
 __attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, int len )
 {
-    if(fd != r->_stdout->_file) {
+    if (fd >= FILE_DESCRIPTOR_OFFSET) {
         return _write_filesystem_r(r, fd, ptr, len);
     }
-    return current_stdout_write_r(r, fd, ptr, len);
+    if (fd >= LWIP_SOCKET_OFFSET) {
+        return lwip_write(fd, ptr, len);
+    }
+    if (fd == r->_stdout->_file) {
+        current_stdout_write_r(r, fd, ptr, len);
+    }
+    r->_errno = EBADF;
+    return -1;
 }
 
 /* syscall implementation for stdio read from UART */
@@ -109,10 +131,36 @@ __attribute__((weak)) long _read_filesystem_r( struct _reent *r, int fd, char *p
 
 __attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len )
 {
-    if(fd != r->_stdin->_file) {
+    if (fd >= FILE_DESCRIPTOR_OFFSET) {
         return _read_filesystem_r(r, fd, ptr, len);
     }
-    return _read_stdin_r(r, fd, ptr, len);
+    if (fd >= LWIP_SOCKET_OFFSET) {
+        return lwip_read(fd, ptr, len);
+    }
+    if (fd == r->_stdin->_file) {
+        _read_stdin_r(r, fd, ptr, len);
+    }
+    r->_errno = EBADF;
+    return -1;
+}
+
+/* default implementation, replace in a filesystem */
+__attribute__((weak)) int _close_filesystem_r(struct _reent *r, int fd)
+{
+    r->_errno = EBADF;
+    return -1;
+}
+
+__attribute__((weak)) int _close_r(struct _reent *r, int fd)
+{
+    if (fd >= FILE_DESCRIPTOR_OFFSET) {
+        return _close_filesystem_r(r, fd);
+    }
+    if (fd >= LWIP_SOCKET_OFFSET) {
+        return lwip_close(fd);
+    }
+    r->_errno = EBADF;
+    return -1;
 }
 
 /* Stub syscall implementations follow, to allow compiling newlib functions that
@@ -120,9 +168,6 @@ __attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len
 */
 __attribute__((weak, alias("syscall_returns_enosys"))) 
 int _open_r(struct _reent *r, const char *pathname, int flags, int mode);
-
-__attribute__((weak, alias("syscall_returns_enosys"))) 
-int _close_r(struct _reent *r, int fd);
 
 __attribute__((weak, alias("syscall_returns_enosys"))) 
 int _unlink_r(struct _reent *r, const char *path);
