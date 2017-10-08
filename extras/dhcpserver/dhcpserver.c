@@ -22,6 +22,18 @@
 #include <lwip/api.h>
 #include "esplibs/libmain.h"
 
+#if (DHCP_DEBUG == LWIP_DBG_ON)
+#define debug(s, ...) printf("%s: " s "\n", "DHCP", ## __VA_ARGS__)
+#else
+#define debug(s, ...)
+#endif
+
+#if (DHCP_DEBUG == LWIP_DBG_ON)
+#define debug(s, ...) printf("%s: " s "\n", "DHCP", ## __VA_ARGS__)
+#else
+#define debug(s, ...)
+#endif
+
 /* Grow the size of the lwip dhcp_msg struct's options field, as LWIP
    defaults to a 68 octet options field for its DHCP client, and most
    full-sized clients send us more than this. */
@@ -131,8 +143,8 @@ static void dhcpserver_task(void *pxParameter)
     state->server_if = netif_list; /* TODO: Make this configurable */
 
     state->nc = netconn_new (NETCONN_UDP);
-    if (!state->nc) {
-        printf("DHCP Server Error: Failed to allocate socket.\r\n");
+    if(!state->nc) {
+        debug("DHCP Server Error: Failed to allocate socket.");
         return;
     }
 
@@ -146,8 +158,8 @@ static void dhcpserver_task(void *pxParameter)
 
         /* Receive a DHCP packet */
         err_t err = netconn_recv(state->nc, &netbuf);
-        if (err != ERR_OK) {
-            printf("DHCP Server Error: Failed to receive DHCP packet. err=%d\r\n", err);
+        if(err != ERR_OK) {
+            debug("DHCP Server Error: Failed to receive DHCP packet. err=%d", err);
             continue;
         }
 
@@ -171,8 +183,8 @@ static void dhcpserver_task(void *pxParameter)
             netbuf_delete(netbuf);
             continue;
         }
-        if (netbuf_len(netbuf) >= sizeof(struct dhcp_msg)) {
-           printf("DHCP Server Warning: Client sent more options than we know how to parse. len=%d\r\n", netbuf_len(netbuf));
+        if(netbuf_len(netbuf) >= sizeof(struct dhcp_msg)) {
+           debug("DHCP Server Warning: Client sent more options than we know how to parse. len=%d", netbuf_len(netbuf));
         }
 
         netbuf_copy(netbuf, &received, sizeof(struct dhcp_msg));
@@ -180,19 +192,20 @@ static void dhcpserver_task(void *pxParameter)
 
         uint8_t *message_type = find_dhcp_option(&received, DHCP_OPTION_MESSAGE_TYPE,
                                                  DHCP_OPTION_MESSAGE_TYPE_LEN, NULL);
-        if (!message_type) {
-            printf("DHCP Server Error: No message type field found");
+        if(!message_type) {
+            debug("DHCP Server Error: No message type field found");
             continue;
         }
 
-        printf("State dump. Message type %d\n", *message_type);
-        for (int i = 0; i < state->max_leases; i++) {
+#if (DHCP_DEBUG == LWIP_DBG_ON)
+        debug("State dump. Message type %d", *message_type);
+        for(int i = 0; i < state->max_leases; i++) {
             dhcp_lease_t *lease = &state->leases[i];
-            printf("lease slot %d active %d expiry %d hwaddr %02x:%02x:%02x:%02x:%02x:%02x\r\n", i,
-                   lease->active, lease->expires - now,
-                   lease->hwaddr[0], lease->hwaddr[1], lease->hwaddr[2],
-                   lease->hwaddr[3], lease->hwaddr[4], lease->hwaddr[5]);
+            debug("lease slot %d expiry %d hwaddr %02x:%02x:%02x:%02x:%02x:%02x", i, lease->expires, lease->hwaddr[0],
+                   lease->hwaddr[1], lease->hwaddr[2], lease->hwaddr[3], lease->hwaddr[4],
+                   lease->hwaddr[5]);
         }
+#endif
 
         switch(*message_type) {
         case DHCP_DISCOVER:
@@ -204,7 +217,7 @@ static void dhcpserver_task(void *pxParameter)
         case DHCP_RELEASE:
             handle_dhcp_release(&received);
         default:
-            printf("DHCP Server Error: Unsupported message type %d\r\n", *message_type);
+            debug("DHCP Server Error: Unsupported message type %d", *message_type);
             break;
         }
     }
@@ -218,8 +231,8 @@ static void handle_dhcp_discover(struct dhcp_msg *dhcpmsg)
         return;
 
     dhcp_lease_t *freelease = find_lease_slot(dhcpmsg->chaddr);
-    if (!freelease) {
-        printf("DHCP Server: All leases taken.\r\n");
+    if(!freelease) {
+        debug("DHCP Server: All leases taken.");
         return; /* Nothing available, so do nothing */
     }
 
@@ -264,7 +277,7 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
     } else if (ip4_addr_cmp(&requested_ip, IP4_ADDR_ANY4)) {
         ip4_addr_copy(requested_ip, dhcpmsg->ciaddr);
     } else {
-        printf("DHCP Server Error: No requested IP\r\n");
+        debug("DHCP Server Error: No requested IP");
         send_dhcp_nak(dhcpmsg);
         return;
     }
@@ -274,14 +287,14 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
        || ip4_addr2(&requested_ip) != ip4_addr2(&state->first_client_addr)
        || ip4_addr3(&requested_ip) != ip4_addr3(&state->first_client_addr)) {
         sprintf_ipaddr(&requested_ip, ipbuf);
-        printf("DHCP Server Error: %s not an allowed IP\r\n", ipbuf);
+        debug("DHCP Server Error: %s not an allowed IP", ipbuf);
         send_dhcp_nak(dhcpmsg);
         return;
     }
     /* Test the last octet is in the MAXCLIENTS range */
     int16_t octet_offs = ip4_addr4(&requested_ip) - ip4_addr4(&state->first_client_addr);
-    if (octet_offs < 0 || octet_offs >= state->max_leases) {
-        printf("DHCP Server Error: Address out of range\r\n");
+    if(octet_offs < 0 || octet_offs >= state->max_leases) {
+        debug("DHCP Server Error: Address out of range");
         send_dhcp_nak(dhcpmsg);
         return;
     }
@@ -289,14 +302,14 @@ static void handle_dhcp_request(struct dhcp_msg *dhcpmsg)
     dhcp_lease_t *requested_lease = state->leases + octet_offs;
     if (requested_lease->active && memcmp(requested_lease->hwaddr, dhcpmsg->chaddr,dhcpmsg->hlen))
     {
-        printf("DHCP Server Error: Lease for address already taken\r\n");
+        debug("DHCP Server Error: Lease for address already taken");
         send_dhcp_nak(dhcpmsg);
         return;
     }
 
     memcpy(requested_lease->hwaddr, dhcpmsg->chaddr, dhcpmsg->hlen);
     sprintf_ipaddr(&requested_ip, ipbuf);
-    printf("DHCP lease addr %s assigned to MAC %02x:%02x:%02x:%02x:%02x:%02x\r\n", ipbuf, requested_lease->hwaddr[0],
+    debug("DHCP lease addr %s assigned to MAC %02x:%02x:%02x:%02x:%02x:%02x", ipbuf, requested_lease->hwaddr[0],
            requested_lease->hwaddr[1], requested_lease->hwaddr[2], requested_lease->hwaddr[3], requested_lease->hwaddr[4],
            requested_lease->hwaddr[5]);
     uint32_t now = xTaskGetTickCount();
