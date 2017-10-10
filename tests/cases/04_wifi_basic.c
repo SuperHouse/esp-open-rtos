@@ -40,6 +40,11 @@ DEFINE_TESTCASE(04_wifi_basic, DUAL)
 
 static void server_task(void *pvParameters)
 {
+
+    ip_addr_t first_client_ip;
+    IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
+    dhcpserver_start(sdk_system_get_netif(SOFTAP_IF), &first_client_ip, 4);
+
     char buf[BUF_SIZE];
     struct netconn *nc = netconn_new(NETCONN_TCP);
     TEST_ASSERT_TRUE_MESSAGE(nc != 0, "Failed to allocate socket");
@@ -102,10 +107,6 @@ static void a_04_wifi_basic(void)
         .beacon_interval = 100,
     };
     sdk_wifi_softap_set_config(&ap_config);
-
-    ip_addr_t first_client_ip;
-    IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
-    dhcpserver_start(&first_client_ip, 4);
 
     xTaskCreate(server_task, "setver_task", 1024, NULL, 2, NULL);
 }
