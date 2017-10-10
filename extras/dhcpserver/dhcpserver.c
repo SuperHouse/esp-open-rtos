@@ -28,12 +28,6 @@
 #define debug(s, ...)
 #endif
 
-#if (DHCP_DEBUG == LWIP_DBG_ON)
-#define debug(s, ...) printf("%s: " s "\n", "DHCP", ## __VA_ARGS__)
-#else
-#define debug(s, ...)
-#endif
-
 /* Grow the size of the lwip dhcp_msg struct's options field, as LWIP
    defaults to a 68 octet options field for its DHCP client, and most
    full-sized clients send us more than this. */
@@ -216,6 +210,7 @@ static void dhcpserver_task(void *pxParameter)
             break;
         case DHCP_RELEASE:
             handle_dhcp_release(&received);
+            break;
         default:
             debug("DHCP Server Error: Unsupported message type %d", *message_type);
             break;
