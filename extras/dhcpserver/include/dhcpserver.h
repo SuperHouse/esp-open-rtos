@@ -25,8 +25,10 @@ extern "C" {
    first_client_addr is the IP address of the first lease to be handed
    to a client.  Subsequent lease addresses are calculated by
    incrementing the final octet of the IPv4 address, up to max_leases.
+
+   The server will wait for requests on server_if interface.
 */
-void dhcpserver_start(const ip4_addr_t *first_client_addr, uint8_t max_leases);
+void dhcpserver_start(struct netif *server_if, const ip_addr_t *first_client_addr, uint8_t max_leases);
 
 void dhcpserver_get_lease(const ip4_addr_t *first_client_addr, uint8_t max_leases);
 
