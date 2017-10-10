@@ -32,13 +32,14 @@ CROSS_OUTPUT_TARGET ?= elf32-xtensa-le
 
 LIBESPHTTPD_HTML_TINY ?= no
 
+CURL = curl
 LIBESPHTTPD_CURL_OPTS = --connect-timeout 3 --max-time 60 -s
 
 $(LIBESPHTTPD_MKESPFSIMAGE_DIR):
 	$(Q)mkdir -p $(LIBESPHTTPD_MKESPFSIMAGE_DIR)
 
 $(PROGRAM_REAL_ROOT)/$(LIBESPHTTPD_MKESPFS): $(LIBESPHTTPD_MKESPFSIMAGE_DIR)
-	make -C $(libesphttpd_ROOT)/libesphttpd/espfs/mkespfsimage GZIP_COMPRESSION=yes USE_HEATSHRINK=yes BUILD_DIR=$(PROGRAM_REAL_ROOT)/$(BUILD_DIR)
+	make -C $(libesphttpd_ROOT)/libesphttpd/espfs/mkespfsimage CC=gcc GZIP_COMPRESSION=yes USE_HEATSHRINK=yes BUILD_DIR=$(PROGRAM_REAL_ROOT)/$(BUILD_DIR)
 
 $(LIBESPHTTPD_HTML_ESPFS): $(PROGRAM_REAL_ROOT)/$(LIBESPHTTPD_MKESPFS) $(LIBESPHTTPD_HTML_FILES)
 	cd $(LIBESPHTTPD_HTML_DIR) && find . | $< > $(LIBESPHTTPD_HTML_ESPFS_PATH) || rm -f $(LIBESPHTTPD_HTML_ESPFS_PATH)
@@ -51,7 +52,7 @@ $(BUILD_DIR)libesphttpd.a: $(LIBESPHTTPD_HTML_ESPFS_OBJ)
 htmlfs: $(LIBESPHTTPD_HTML_ESPFS_OBJ)
 
 $(libesphttpd_ROOT)/libesphttpd/mkupgimg/mkupgimg:
-	make -C $(libesphttpd_ROOT)/libesphttpd/mkupgimg RBOOT_OTA=$(RBOOT_OTA)
+	make -C $(libesphttpd_ROOT)/libesphttpd/mkupgimg CC=gcc RBOOT_OTA=$(RBOOT_OTA)
 
 $(FIRMWARE_DIR)ota_$(PROGRAM).bin: $(FW_FILE) $(libesphttpd_ROOT)/libesphttpd/mkupgimg/mkupgimg
 	$(libesphttpd_ROOT)/libesphttpd/mkupgimg/mkupgimg $(FW_FILE) "$(LIBESPHTTPD_OTA_TAGNAME)" $(FIRMWARE_DIR)ota_$(PROGRAM).bin
@@ -59,5 +60,5 @@ $(FIRMWARE_DIR)ota_$(PROGRAM).bin: $(FW_FILE) $(libesphttpd_ROOT)/libesphttpd/mk
 ota: $(FIRMWARE_DIR)ota_$(PROGRAM).bin $(libesphttpd_ROOT)/libesphttpd/mkupgimg/mkupgimg
 
 webflash: $(FIRMWARE_DIR)ota_$(PROGRAM).bin
-	curl $(LIBESPHTTPD_CURL_OPTS) --data-binary "@$(FIRMWARE_DIR)ota_$(PROGRAM).bin" http://$(ESP_IP)/flash/upload && curl $(LIBESPHTTPD_CURL_OPTS) http://$(ESP_IP)/flash/reboot
+	$(CURL) $(LIBESPHTTPD_CURL_OPTS) --data-binary "@$(FIRMWARE_DIR)ota_$(PROGRAM).bin" http://$(ESP_IP)/flash/upload && $(CURL) $(LIBESPHTTPD_CURL_OPTS) http://$(ESP_IP)/flash/reboot
 
