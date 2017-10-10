@@ -1776,33 +1776,33 @@ static void dns_task(void *pvParameters)
 }
 
 /**
- * @brief      Sanetize SSID. If configuring an AP containing the characters in
+ * @brief      Sanitize SSID. If configuring an AP containing the characters in
  *             'illegals', the ESP will start an insecure AP named ESP_<macaddr>
  *             Any illegal characters will be replaced by _
  *
  * @param      ssid   the SSID
  *
- * @return     true if name got sanetized.
+ * @return     true if name got sanitized.
  */
-static bool sanetize_ssid(char *ssid)
+static bool sanitize_ssid(char *ssid)
 {
-    bool sanetized = false;
+    bool sanitized = false;
     char *illegals = "+-<> "; // There might me more characters that are illegal
     uint8_t num_illegals = strlen(illegals);
     if (!ssid) {
-        return sanetized;
+        return sanitized;
     }
     while(*ssid) {
         for (uint32_t i = 0; i < num_illegals; i++) {
             if (*ssid == illegals[i]) {
                 *ssid = '_';
-                sanetized = true;
+                sanitized = true;
                 break;
             }
         }
         ssid++;
     }
-    return sanetized;
+    return sanitized;
 }
 
 bool wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
@@ -1821,12 +1821,12 @@ bool wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
     }
 
     sysparam_get_string("wifi_ap_ssid", &wifi_ap_ssid);
-    if (sanetize_ssid(wifi_ap_ssid)) {
+    if (sanitize_ssid(wifi_ap_ssid)) {
         sysparam_set_string("wifi_ap_ssid", wifi_ap_ssid);
     }
     sysparam_get_string("wifi_ap_password", &wifi_ap_password);
     sysparam_get_string("wifi_sta_ssid", &wifi_sta_ssid);
-    if (sanetize_ssid(wifi_sta_ssid)) {
+    if (sanitize_ssid(wifi_sta_ssid)) {
         sysparam_set_string("wifi_sta_ssid", wifi_sta_ssid);
     }
     sysparam_get_string("wifi_sta_password", &wifi_sta_password);
