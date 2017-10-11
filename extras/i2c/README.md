@@ -15,7 +15,7 @@ uint8_t slave_addr = 0x20;
 uint8_t reg_addr = 0x1f;
 uint8_t reg_data;
 
-i2c_init(BUS, SCL_PIN, SDA_PIN);
+i2c_init(BUS, SCL_PIN, SDA_PIN, I2C_FREQ_400K);
 
 // Write 1 byte to slave register
 int err = i2c_slave_write(BUS, slave_addr, &reg_addr, &data, 1);

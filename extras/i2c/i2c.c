@@ -50,6 +50,18 @@ const static uint8_t i2c_freq_array[][2] = {
 };
 
 static uint8_t freq; // Store CPU frequency for optimisation speed in delay function (Warning: Don't change CPU frequency during a transaction)
+
+// Bus settings
+typedef struct i2c_bus_description
+{
+  uint8_t g_scl_pin;  // SCL pin
+  uint8_t g_sda_pin;  // SDA pin
+  i2c_freq_t frequency;  // Frequency
+  bool started;
+  bool flag;
+  bool force;
+} i2c_bus_description_t;
+
 static i2c_bus_description_t i2c_bus[MAX_I2C_BUS];
 
 inline bool i2c_status(uint8_t bus)

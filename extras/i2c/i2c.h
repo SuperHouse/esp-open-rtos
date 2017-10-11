@@ -21,6 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+/**
+ * I2C driver for ESP8266 written for use with esp-open-rtos
+ * Based on https://en.wikipedia.org/wiki/I²C#Example_of_bit-banging_the_I.C2.B2C_Master_protocol
+ */
 
 #ifndef __I2C_H__
 #define __I2C_H__
@@ -42,10 +46,10 @@ extern "C" {
 
 typedef enum
 {
- 	I2C_FREQ_80K = 0,
- 	I2C_FREQ_100K,
- 	I2C_FREQ_400K,
- 	I2C_FREQ_500K,
+ 	I2C_FREQ_80K = 0,//!< I2C_FREQ_80K
+ 	I2C_FREQ_100K,   //!< I2C_FREQ_100K
+ 	I2C_FREQ_400K,   //!< I2C_FREQ_400K
+ 	I2C_FREQ_500K,   //!< I2C_FREQ_500K
 } i2c_freq_t;
 
 /**
@@ -56,24 +60,6 @@ typedef struct i2c_dev
   uint8_t bus;
   uint8_t addr;
 } i2c_dev_t;
-
-/**
- * Bus settings
- */
-typedef struct i2c_bus_description
-{
-  uint8_t g_scl_pin;  ///< SCL pin
-  uint8_t g_sda_pin;  ///< SDA pin
-  uint8_t frequency;  ///< Frequency
-  bool started;
-  bool flag;
-  bool force;
-} i2c_bus_description_t;
-
-
-// I2C driver for ESP8266 written for use with esp-open-rtos
-// Based on https://en.wikipedia.org/wiki/I²C#Example_of_bit-banging_the_I.C2.B2C_Master_protocol
-// With calling overhead, we end up at ~320kbit/s
 
 /// Level 0 API
 
