@@ -3,7 +3,11 @@
  * Based on RFC2131 http://www.ietf.org/rfc/rfc2131.txt
  * ... although not fully RFC compliant yet.
  *
- * Probably allocates more memory than it should, it should be possible to reuse netbufs in most cases.
+ * TODO
+ * * Allow binding on a single interface only (for mixed AP/client mode), lwip seems to make it hard to
+ *   listen for or send broadcasts on a specific interface only.
+ *
+ * * Probably allocates more memory than it should, it should be possible to reuse netbufs in most cases.
  *
  * Part of esp-open-rtos
  * Copyright (C) 2015 Superhouse Automation Pty Ltd
@@ -88,12 +92,8 @@ inline static void sprintf_ipaddr(const ip4_addr_t *addr, char *dest)
                 ip4_addr2(addr), ip4_addr3(addr), ip4_addr4(addr));
 }
 
-void dhcpserver_start(struct netif *server_if, const ip_addr_t *first_client_addr, uint8_t max_leases)
+void dhcpserver_start(const ip4_addr_t *first_client_addr, uint8_t max_leases)
 {
-    if(!server_if){
-        printf("DHCP Server Error: server_if is NULL.\r\n");
-        return;
-    }
     /* Stop any existing running dhcpserver */
     if (dhcpserver_task_handle)
         dhcpserver_stop();
@@ -109,7 +109,7 @@ void dhcpserver_start(struct netif *server_if, const ip_addr_t *first_client_add
     ip4_addr_set_zero(&state->router);
     ip4_addr_set_zero(&state->dns);
 
-    xTaskCreate(dhcpserver_task, "DHCPServer", 768, server_if, 8, &dhcpserver_task_handle);
+    xTaskCreate(dhcpserver_task, "DHCP Server", 448, NULL, 2, &dhcpserver_task_handle);
 }
 
 void dhcpserver_stop(void)
@@ -134,7 +134,7 @@ void dhcpserver_set_dns(const ip4_addr_t *dns)
 static void dhcpserver_task(void *pxParameter)
 {
     /* netif_list isn't assigned until after user_init completes, which is why we do it inside the task */
-    state->server_if = pxParameter;
+    state->server_if = netif_list; /* TODO: Make this configurable */
 
     state->nc = netconn_new (NETCONN_UDP);
     if(!state->nc) {
@@ -143,7 +143,7 @@ static void dhcpserver_task(void *pxParameter)
     }
 
     netconn_bind(state->nc, IP4_ADDR_ANY, LWIP_IANA_PORT_DHCP_SERVER);
-    netconn_bind_if(state->nc, netif_get_index(state->server_if));
+    netconn_bind_if (state->nc, netif_get_index(state->server_if));
 
     while(1)
     {
