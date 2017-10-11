@@ -1995,7 +1995,7 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
                 if (wifi_ap_dns < 0 || wifi_ap_dns > 1)
                     wifi_ap_dns = 1;
 
-                dhcpserver_start(sdk_system_get_netif(SOFTAP_IF), &first_client_ip, wifi_ap_dhcp_leases);
+                dhcpserver_start(&first_client_ip, wifi_ap_dhcp_leases);
                 dhcpserver_set_router(&ap_ip.ip);
                 if (wifi_ap_dns) {
                     dhcpserver_set_dns(&ap_ip.ip);

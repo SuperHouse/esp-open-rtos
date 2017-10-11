@@ -43,7 +43,7 @@ static void server_task(void *pvParameters)
 
     ip_addr_t first_client_ip;
     IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
-    dhcpserver_start(sdk_system_get_netif(SOFTAP_IF), &first_client_ip, 4);
+    dhcpserver_start(&first_client_ip, 4);
 
     char buf[BUF_SIZE];
     struct netconn *nc = netconn_new(NETCONN_TCP);
