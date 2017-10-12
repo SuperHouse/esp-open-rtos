@@ -64,7 +64,7 @@ Once new measurement results are available, either function **_sht3x_get_raw_dat
 Function **__sht3x_get_raw_data_** fetches only the raw sensor data in 16-decimal format, checks the CRC checksums and stores them in an byte array of type **_sht3x_raw_data_t_**. The user task then can use them directly or to call function **_sht3x_compute_values_** to compute floating point sensor values from them. 
 
 Function **_sht3x_get_results_** combines function *sht3x_read_raw_data* and function 
- *sht3x_compute_valus_* to get the latest sensor values. This is the preferred approach to get sensor values by the user task.
+ *sht3x_compute_values_* to get the latest sensor values. This is the preferred approach to get sensor values by the user task.
 
 In the **periodic mode**, the function *sht3x get_results* can be executed repeatedly without a new call of function *sht3_start_measurement* and without a new waiting time. However, the rate of the repeated call should be less than the half of the periodic measuring rate of the sensor.
 

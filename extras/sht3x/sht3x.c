@@ -50,6 +50,7 @@
 #include "sht3x.h"
 
 #include "FreeRTOS.h"
+#include "task.h"
 
 #include "espressif/esp_common.h"
 #include "espressif/sdk_private.h"
