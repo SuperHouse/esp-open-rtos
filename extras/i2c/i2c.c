@@ -22,10 +22,13 @@
  * THE SOFTWARE.
  */
 
+#include "i2c.h"
+
 #include <esp8266.h>
 #include <espressif/esp_misc.h> // sdk_os_delay_us
 #include <espressif/esp_system.h>
-#include "i2c.h"
+#include <FreeRTOS.h>
+#include <task.h>
 
 //#define I2C_DEBUG true
 
@@ -37,7 +40,28 @@
 
 #define CLK_STRETCH  (10)
 
-static uint8_t freq ; // Store CPU frequency for optimisation speed in delay function ( Warning: Don't change CPU frequency during a transaction)
+// Following array contain delay values for different frequencies
+// Warning: 1 is minimal, that mean at 80MHz clock, frequency max is 320kHz
+const static uint8_t i2c_freq_array[][2] = {
+    [I2C_FREQ_80K]  = {255, 35},
+    [I2C_FREQ_100K] = {100, 20},
+    [I2C_FREQ_400K] = {10, 1},
+    [I2C_FREQ_500K] = {6, 1}
+};
+
+static uint8_t freq; // Store CPU frequency for optimisation speed in delay function (Warning: Don't change CPU frequency during a transaction)
+
+// Bus settings
+typedef struct i2c_bus_description
+{
+  uint8_t g_scl_pin;  // SCL pin
+  uint8_t g_sda_pin;  // SDA pin
+  i2c_freq_t frequency;  // Frequency
+  bool started;
+  bool flag;
+  bool force;
+} i2c_bus_description_t;
+
 static i2c_bus_description_t i2c_bus[MAX_I2C_BUS];
 
 inline bool i2c_status(uint8_t bus)
@@ -48,10 +72,10 @@ inline bool i2c_status(uint8_t bus)
 void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
 {
     i2c_bus[bus].started = false;
-    i2c_bus[bus].flag = false ;
+    i2c_bus[bus].flag = false;
     i2c_bus[bus].g_scl_pin = scl_pin;
     i2c_bus[bus].g_sda_pin = sda_pin;
-    i2c_bus[bus].frequency = freq ;
+    i2c_bus[bus].frequency = freq;
 
     // Just to prevent these pins floating too much if not connected.
     gpio_set_pullup(i2c_bus[bus].g_scl_pin, 1, 1);
@@ -73,7 +97,7 @@ void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
 
 void i2c_frequency(uint8_t bus, i2c_freq_t freq)
 {
-    i2c_bus[bus].frequency = freq ;
+    i2c_bus[bus].frequency = freq;
 }
 
 static inline void i2c_delay(uint8_t bus)
@@ -136,13 +160,14 @@ void i2c_start(uint8_t bus)
         (void) read_sda(bus);
         i2c_delay(bus);
         uint32_t clk_stretch = CLK_STRETCH;
-        while (read_scl(bus) == 0 && clk_stretch--) ;
+        while (read_scl(bus) == 0 && clk_stretch--)
+            ;
         // Repeated start setup time, minimum 4.7us
         i2c_delay(bus);
     }
     i2c_bus[bus].started = true;
     if (read_sda(bus) == 0) {
-        debug("arbitration lost in i2c_start from bus %u",bus);
+        debug("arbitration lost in i2c_start from bus %u", bus);
     }
     // SCL is high, set SDA from 1 to 0.
     clear_sda(bus);
@@ -158,17 +183,18 @@ bool i2c_stop(uint8_t bus)
     clear_sda(bus);
     i2c_delay(bus);
     // Clock stretching
-    while (read_scl(bus) == 0 && clk_stretch--) ;
+    while (read_scl(bus) == 0 && clk_stretch--)
+        ;
     // Stop bit setup time, minimum 4us
     i2c_delay(bus);
     // SCL is high, set SDA from 0 to 1
     if (read_sda(bus) == 0) {
-        debug("arbitration lost in i2c_stop from bus %u",bus);
+        debug("arbitration lost in i2c_stop from bus %u", bus);
     }
     i2c_delay(bus);
     if (!i2c_bus[bus].started) {
-        debug("bus %u link was break!",bus);
-        return false ; //If bus was stop in other way, the current transmission Failed
+        debug("bus %u link was break!", bus);
+        return false; // If bus was stop in other way, the current transmission Failed
     }
     i2c_bus[bus].started = false;
     return true;
@@ -185,11 +211,12 @@ static void i2c_write_bit(uint8_t bus, bool bit)
     }
     i2c_delay(bus);
     // Clock stretching
-    while (read_scl(bus) == 0 && clk_stretch--) ;
+    while (read_scl(bus) == 0 && clk_stretch--)
+        ;
     // SCL is high, now data is valid
     // If SDA is high, check that nobody else is driving SDA
     if (bit && read_sda(bus) == 0) {
-        debug("arbitration lost in i2c_write_bit from bus %u",bus);
+        debug("arbitration lost in i2c_write_bit from bus %u", bus);
     }
     i2c_delay(bus);
     clear_scl(bus);
@@ -204,7 +231,8 @@ static bool i2c_read_bit(uint8_t bus)
     (void) read_sda(bus);
     i2c_delay(bus);
     // Clock stretching
-    while (read_scl(bus) == 0 && clk_stretch--) ;
+    while (read_scl(bus) == 0 && clk_stretch--)
+        ;
     // SCL is high, now data is valid
     bit = read_sda(bus);
     i2c_delay(bus);
@@ -217,7 +245,7 @@ bool i2c_write(uint8_t bus, uint8_t byte)
     bool nack;
     uint8_t bit;
     for (bit = 0; bit < 8; bit++) {
-        i2c_write_bit(bus,(byte & 0x80) != 0);
+        i2c_write_bit(bus, (byte & 0x80) != 0);
         byte <<= 1;
     }
     nack = i2c_read_bit(bus);
@@ -231,22 +259,22 @@ uint8_t i2c_read(uint8_t bus, bool ack)
     for (bit = 0; bit < 8; bit++) {
         byte = ((byte << 1)) | (i2c_read_bit(bus));
     }
-    i2c_write_bit(bus,ack);
+    i2c_write_bit(bus, ack);
     return byte;
 }
 
 void i2c_force_bus(uint8_t bus, bool state)
 {
-    i2c_bus[bus].force = state ;
+    i2c_bus[bus].force = state;
 }
 
 static int i2c_bus_test(uint8_t bus)
 {
     taskENTER_CRITICAL(); // To prevent task swaping after checking flag and before set it!
-    bool status = i2c_bus[bus].flag ; // get current status
+    bool status = i2c_bus[bus].flag; // get current status
     if(i2c_bus[bus].force)
     {
-        i2c_bus[bus].flag = true ; // force bus on
+        i2c_bus[bus].flag = true; // force bus on
         taskEXIT_CRITICAL();
         if(status)
            i2c_stop(bus); //Bus was busy, stop it.
@@ -258,72 +286,72 @@ static int i2c_bus_test(uint8_t bus)
             taskEXIT_CRITICAL();
             debug("busy");
             taskYIELD(); // If bus busy, change task to try finish last com.
-            return -EBUSY ;  // If bus busy, inform user
+            return -EBUSY;  // If bus busy, inform user
         }
         else
         {
-            i2c_bus[bus].flag = true ; // Set Bus busy
+            i2c_bus[bus].flag = true; // Set Bus busy
             taskEXIT_CRITICAL();
         }
     }
-    return 0 ;
+    return 0;
 }
 
 int i2c_slave_write(uint8_t bus, uint8_t slave_addr, const uint8_t *data, const uint8_t *buf, uint32_t len)
 {
     if(i2c_bus_test(bus))
-        return -EBUSY ;
+        return -EBUSY;
     i2c_start(bus);
     if (!i2c_write(bus, slave_addr << 1))
         goto error;
     if(data != NULL)
-        if (!i2c_write(bus,*data))
+        if (!i2c_write(bus, *data))
             goto error;
     while (len--) {
-        if (!i2c_write(bus,*buf++))
+        if (!i2c_write(bus, *buf++))
             goto error;
     }
     if (!i2c_stop(bus))
         goto error;
-    i2c_bus[bus].flag = false ; // Bus free
+    i2c_bus[bus].flag = false; // Bus free
     return 0;
 
-    error:
-    debug("Bus %u Write Error",bus);
+error:
+    debug("Bus %u Write Error", bus);
     i2c_stop(bus);
-    i2c_bus[bus].flag = false ; // Bus free
+    i2c_bus[bus].flag = false; // Bus free
     return -EIO;
 }
 
 int i2c_slave_read(uint8_t bus, uint8_t slave_addr, const uint8_t *data, uint8_t *buf, uint32_t len)
 {
     if(i2c_bus_test(bus))
-        return -EBUSY ;
+        return -EBUSY;
     if(data != NULL) {
         i2c_start(bus);
-        if (!i2c_write(bus,slave_addr << 1))
+        if (!i2c_write(bus, slave_addr << 1))
             goto error;
-        if (!i2c_write(bus,*data))
+        if (!i2c_write(bus, *data))
             goto error;
         if (!i2c_stop(bus))
             goto error;
     }
     i2c_start(bus);
-    if (!i2c_write(bus,slave_addr << 1 | 1)) // Slave address + read
+    if (!i2c_write(bus, slave_addr << 1 | 1)) // Slave address + read
         goto error;
     while(len) {
-        *buf = i2c_read(bus,len == 1);
+        *buf = i2c_read(bus, len == 1);
         buf++;
         len--;
     }
     if (!i2c_stop(bus))
         goto error;
-    i2c_bus[bus].flag = false ; // Bus free
+    i2c_bus[bus].flag = false; // Bus free
     return 0;
 
-    error:
+error:
     debug("Read Error");
     i2c_stop(bus);
-    i2c_bus[bus].flag = false ; // Bus free
+    i2c_bus[bus].flag = false; // Bus free
     return -EIO;
 }
