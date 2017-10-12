@@ -51,7 +51,7 @@ const float ads111x_gain_values[] = {
     [ADS111X_GAIN_0V256_3] = 0.256
 };
 
-static uint16_t read_reg(i2c_dev_t* dev, uint8_t reg)
+static uint16_t read_reg(i2c_dev_t *dev, uint8_t reg)
 {
     uint16_t res = 0;
     if (i2c_slave_read(dev->bus, dev->addr, &reg, (uint8_t *)&res, 2))
@@ -60,7 +60,7 @@ static uint16_t read_reg(i2c_dev_t* dev, uint8_t reg)
     return res;
 }
 
-static void write_reg(i2c_dev_t* dev, uint8_t reg, uint16_t val)
+static void write_reg(i2c_dev_t *dev, uint8_t reg, uint16_t val)
 {
     //debug("Write %d: 0x%04x", reg, val);
     uint8_t buf[2] = { val >> 8, val};
@@ -68,127 +68,127 @@ static void write_reg(i2c_dev_t* dev, uint8_t reg, uint16_t val)
         debug("Could not write 0x%04x to register %d", val, reg);
 }
 
-static uint16_t read_conf_bits(i2c_dev_t* dev, uint8_t offs, uint16_t mask)
+static uint16_t read_conf_bits(i2c_dev_t *dev, uint8_t offs, uint16_t mask)
 {
     return (read_reg(dev, REG_CONFIG) >> offs) & mask;
 }
 
-static void write_conf_bits(i2c_dev_t* dev, uint16_t val, uint8_t offs, uint16_t mask)
+static void write_conf_bits(i2c_dev_t *dev, uint16_t val, uint8_t offs, uint16_t mask)
 {
     write_reg(dev, REG_CONFIG, (read_reg(dev, REG_CONFIG) & ~(mask << offs)) | (val << offs));
 }
 
-bool ads111x_busy(i2c_dev_t* dev)
+bool ads111x_busy(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, OS_OFFSET, OS_MASK);
 }
 
-void ads111x_start_conversion(i2c_dev_t* dev)
+void ads111x_start_conversion(i2c_dev_t *dev)
 {
     write_conf_bits(dev, 1, OS_OFFSET, OS_MASK);
 }
 
-int16_t ads111x_get_value(i2c_dev_t* dev)
+int16_t ads111x_get_value(i2c_dev_t *dev)
 {
     return read_reg(dev, REG_CONVERSION);
 }
 
-ads111x_gain_t ads111x_get_gain(i2c_dev_t* dev)
+ads111x_gain_t ads111x_get_gain(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, PGA_OFFSET, PGA_MASK);
 }
 
-void ads111x_set_gain(i2c_dev_t* dev, ads111x_gain_t gain)
+void ads111x_set_gain(i2c_dev_t *dev, ads111x_gain_t gain)
 {
     write_conf_bits(dev, gain, PGA_OFFSET, PGA_MASK);
 }
 
-ads111x_mux_t ads111x_get_input_mux(i2c_dev_t* dev)
+ads111x_mux_t ads111x_get_input_mux(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, MUX_OFFSET, MUX_MASK);
 }
 
-void ads111x_set_input_mux(i2c_dev_t* dev, ads111x_mux_t mux)
+void ads111x_set_input_mux(i2c_dev_t *dev, ads111x_mux_t mux)
 {
     write_conf_bits(dev, mux, MUX_OFFSET, MUX_MASK);
 }
 
-ads111x_mode_t ads111x_get_mode(i2c_dev_t* dev)
+ads111x_mode_t ads111x_get_mode(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, MODE_OFFSET, MODE_MASK);
 }
 
-void ads111x_set_mode(i2c_dev_t* dev, ads111x_mode_t mode)
+void ads111x_set_mode(i2c_dev_t *dev, ads111x_mode_t mode)
 {
     write_conf_bits(dev, mode, MODE_OFFSET, MODE_MASK);
 }
 
-ads111x_data_rate_t ads111x_get_data_rate(i2c_dev_t* dev)
+ads111x_data_rate_t ads111x_get_data_rate(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, DR_OFFSET, DR_MASK);
 }
 
-void ads111x_set_data_rate(i2c_dev_t* dev, ads111x_data_rate_t rate)
+void ads111x_set_data_rate(i2c_dev_t *dev, ads111x_data_rate_t rate)
 {
     write_conf_bits(dev, rate, DR_OFFSET, DR_MASK);
 }
 
-ads111x_comp_mode_t ads111x_get_comp_mode(i2c_dev_t* dev)
+ads111x_comp_mode_t ads111x_get_comp_mode(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, COMP_MODE_OFFSET, COMP_MODE_MASK);
 }
 
-void ads111x_set_comp_mode(i2c_dev_t* dev, ads111x_comp_mode_t mode)
+void ads111x_set_comp_mode(i2c_dev_t *dev, ads111x_comp_mode_t mode)
 {
     write_conf_bits(dev, mode, COMP_MODE_OFFSET, COMP_MODE_MASK);
 }
 
-ads111x_comp_polarity_t ads111x_get_comp_polarity(i2c_dev_t* dev)
+ads111x_comp_polarity_t ads111x_get_comp_polarity(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, COMP_POL_OFFSET, COMP_POL_MASK);
 }
 
-void ads111x_set_comp_polarity(i2c_dev_t* dev, ads111x_comp_polarity_t polarity)
+void ads111x_set_comp_polarity(i2c_dev_t *dev, ads111x_comp_polarity_t polarity)
 {
     write_conf_bits(dev, polarity, COMP_POL_OFFSET, COMP_POL_MASK);
 }
 
-ads111x_comp_latch_t ads111x_get_comp_latch(i2c_dev_t* dev)
+ads111x_comp_latch_t ads111x_get_comp_latch(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, COMP_LAT_OFFSET, COMP_LAT_MASK);
 }
 
-void ads111x_set_comp_latch(i2c_dev_t* dev, ads111x_comp_latch_t latch)
+void ads111x_set_comp_latch(i2c_dev_t *dev, ads111x_comp_latch_t latch)
 {
     write_conf_bits(dev, latch, COMP_LAT_OFFSET, COMP_LAT_MASK);
 }
 
-ads111x_comp_queue_t ads111x_get_comp_queue(i2c_dev_t* dev)
+ads111x_comp_queue_t ads111x_get_comp_queue(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, COMP_QUE_OFFSET, COMP_QUE_MASK);
 }
 
-void ads111x_set_comp_queue(i2c_dev_t* dev, ads111x_comp_queue_t queue)
+void ads111x_set_comp_queue(i2c_dev_t *dev, ads111x_comp_queue_t queue)
 {
     write_conf_bits(dev, queue, COMP_QUE_OFFSET, COMP_QUE_MASK);
 }
 
-int16_t ads111x_get_comp_low_thresh(i2c_dev_t* dev)
+int16_t ads111x_get_comp_low_thresh(i2c_dev_t *dev)
 {
     return read_reg(dev, REG_THRESH_L);
 }
 
-void ads111x_set_comp_low_thresh(i2c_dev_t* dev, int16_t thresh)
+void ads111x_set_comp_low_thresh(i2c_dev_t *dev, int16_t thresh)
 {
     write_reg(dev, REG_THRESH_L, thresh);
 }
 
-int16_t ads111x_get_comp_high_thresh(i2c_dev_t* dev)
+int16_t ads111x_get_comp_high_thresh(i2c_dev_t *dev)
 {
     return read_reg(dev, REG_THRESH_H);
 }
 
-void ads111x_set_comp_high_thresh(i2c_dev_t* dev, int16_t thresh)
+void ads111x_set_comp_high_thresh(i2c_dev_t *dev, int16_t thresh)
 {
     write_reg(dev, REG_THRESH_H, thresh);
 }
