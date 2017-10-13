@@ -44,7 +44,7 @@ static SemaphoreHandle_t uart0_sem = NULL;
 static bool inited = false;
 static void uart0_rx_init(void);
 
-IRAM void uart0_rx_handler(void)
+IRAM void uart0_rx_handler(void *arg)
 {
     // TODO: Handle UART1, see reg 0x3ff20020, bit2, bit0 represents uart1 and uart0 respectively
     if (!UART(UART0).INT_STATUS & UART_INT_STATUS_RXFIFO_FULL) {
@@ -97,7 +97,7 @@ static void uart0_rx_init(void)
     int trig_lvl = 1;
     uart0_sem = xSemaphoreCreateCounting(UART0_RX_SIZE, 0);
 
-    _xt_isr_attach(INUM_UART, uart0_rx_handler);
+    _xt_isr_attach(INUM_UART, uart0_rx_handler, NULL);
     _xt_isr_unmask(1 << INUM_UART);
 
     // reset the rx fifo

@@ -44,9 +44,9 @@ enum {
 };
 
 struct ip_info {
-    struct ip_addr ip;
-    struct ip_addr netmask;
-    struct ip_addr gw;
+    struct ip4_addr ip;
+    struct ip4_addr netmask;
+    struct ip4_addr gw;
 };
 
 bool sdk_wifi_get_ip_info(uint8_t if_index, struct ip_info *info);

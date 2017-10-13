@@ -15,13 +15,13 @@
 /* Convert normal decimal to binary coded decimal */
 static inline uint8_t  decToBcd(uint8_t dec)
 {
-    return(((dec / 10) * 16) + (dec % 10));
+    return (dec / 10) * 16 + dec % 10;
 }
 
 /* Convert binary coded decimal to normal decimal */
 static inline uint8_t  bcdToDec(uint8_t bcd)
 {
-    return(((bcd / 16) * 10) + (bcd % 16));
+    return (bcd / 16) * 10 + bcd % 16;
 }
 
 /* Send a number of bytes to the rtc over i2c
@@ -48,6 +48,8 @@ int ds3231_setTime(i2c_dev_t *dev, struct tm *time)
     data[0] = decToBcd(time->tm_sec);
     data[1] = decToBcd(time->tm_min);
     data[2] = decToBcd(time->tm_hour);
+    /* The week data must be in the range 1 to 7, and to keep the start on the
+     * same day as for tm_wday have it start at 1 on Sunday. */
     data[3] = decToBcd(time->tm_wday + 1);
     data[4] = decToBcd(time->tm_mday);
     data[5] = decToBcd(time->tm_mon + 1);

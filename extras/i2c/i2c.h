@@ -21,6 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+/**
+ * I2C driver for ESP8266 written for use with esp-open-rtos
+ * Based on https://en.wikipedia.org/wiki/I²C#Example_of_bit-banging_the_I.C2.B2C_Master_protocol
+ */
 
 #ifndef __I2C_H__
 #define __I2C_H__
@@ -28,62 +32,36 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <errno.h>
-#include <FreeRTOS.h>
-#include <task.h>
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-
-/*
- *  Define i2c bus max number
+/**
+ * Define i2c bus max number
  */
-#define MAX_I2C_BUS 2
+#ifndef MAX_I2C_BUS
+    #define MAX_I2C_BUS 2
+#endif
 
-
-/*
- *  following array contain value for different frequency
- *  Warning : 1 is minimal, that mean at 80MHz clock, frequency max is 320kHz
- *  Array format is  { {160MHz, 80MHz} ,  {160MHz, 80MHz} , ... }
- */
-#define NB_FREQ_AVAILABLE 4
-
- typedef enum {
- 	I2C_FREQ_80K = 0,
- 	I2C_FREQ_100K,
- 	I2C_FREQ_400K,
- 	I2C_FREQ_500K,
+typedef enum
+{
+ 	I2C_FREQ_80K = 0,//!< I2C_FREQ_80K
+ 	I2C_FREQ_100K,   //!< I2C_FREQ_100K
+ 	I2C_FREQ_400K,   //!< I2C_FREQ_400K
+ 	I2C_FREQ_500K,   //!< I2C_FREQ_500K
 } i2c_freq_t;
-
-const static uint8_t i2c_freq_array[NB_FREQ_AVAILABLE][2] = { {255,35}, {100,20}, {10,1}, {6,1} } ;
 
 /**
  * Device descriptor
  */
-typedef struct i2c_dev {
-  uint8_t bus ;
-  uint8_t addr ;
-} i2c_dev_t ;
+typedef struct i2c_dev
+{
+  uint8_t bus;
+  uint8_t addr;
+} i2c_dev_t;
 
-/**
- * Bus settings
- */
-typedef struct i2c_bus_description {
-  uint8_t g_scl_pin;  // Scl pin
-  uint8_t g_sda_pin;  // Sda pin
-  uint8_t frequency;  // frequency selection
-  bool started;
-  bool flag;
-  bool force;
-} i2c_bus_description_t ;
-
-
-// I2C driver for ESP8266 written for use with esp-open-rtos
-// Based on https://en.wikipedia.org/wiki/I²C#Example_of_bit-banging_the_I.C2.B2C_Master_protocol
-// With calling overhead, we end up at ~320kbit/s
-
-//Level 0 API
+/// Level 0 API
 
 /**
  * Init bitbanging I2C driver on given pins
@@ -137,7 +115,7 @@ bool i2c_stop(uint8_t bus);
  */
 bool i2c_status(uint8_t bus);
 
-//Level 1 API (Don't need functions above)
+/// Level 1 API (Don't need functions above)
 
 /**
  * This function will allow you to force a transmission I2C, cancel current transmission.

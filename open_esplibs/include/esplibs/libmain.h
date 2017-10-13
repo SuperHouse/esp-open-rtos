@@ -56,6 +56,7 @@ uint32_t sdk_system_relative_time(uint32_t reltime);
 uint32_t sdk_system_get_checksum(uint8_t *, uint32_t);
 void sdk_wifi_softap_cacl_mac(uint8_t *, uint8_t *);
 void sdk_wifi_softap_set_default_ssid(void);
+bool sdk_wifi_softap_set_station_info(const uint8_t *hwaddr, ip4_addr_t *);
 
 // xtensa_context.o
 

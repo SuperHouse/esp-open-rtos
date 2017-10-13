@@ -214,8 +214,8 @@ void IRAM sdk_user_start(void) {
     memcpy(&sdk_g_ic.s, buf32, sizeof(struct sdk_g_ic_saved_st));
 
     // By default, put the sysparam region just below the config sectors at the
-    // top of the flash space
-    sysparam_addr = flash_size - (4 + DEFAULT_SYSPARAM_SECTORS) * sdk_flashchip.sector_size;
+    // top of the flash space, and allowing one extra sector spare.
+    sysparam_addr = flash_size - (5 + DEFAULT_SYSPARAM_SECTORS) * sdk_flashchip.sector_size;
     status = sysparam_init(sysparam_addr, flash_size);
     if (status == SYSPARAM_NOTFOUND) {
         status = sysparam_create_area(sysparam_addr, DEFAULT_SYSPARAM_SECTORS, false);
@@ -311,8 +311,8 @@ static void init_g_ic(void) {
     if (sdk_g_ic.s._unknown310 > 4) {
         sdk_g_ic.s._unknown310 = 4;
     }
-    if (sdk_g_ic.s._unknown1e4._unknown1e4 == 0xffffffff) {
-        bzero(&sdk_g_ic.s._unknown1e4, sizeof(sdk_g_ic.s._unknown1e4));
+    if (sdk_g_ic.s.sta_ssid.ssid_length == 0xffffffff) {
+        bzero(&sdk_g_ic.s.sta_ssid, sizeof(sdk_g_ic.s.sta_ssid));
         bzero(&sdk_g_ic.s.sta_password, sizeof(sdk_g_ic.s.sta_password));
     }
     sdk_g_ic.s.wifi_led_enable = 0;

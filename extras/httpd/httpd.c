@@ -139,7 +139,7 @@
 
 /** Set this to 1 on platforms where strnstr is not available */
 #ifndef LWIP_HTTPD_STRNSTR_PRIVATE
-#define LWIP_HTTPD_STRNSTR_PRIVATE          1
+#define LWIP_HTTPD_STRNSTR_PRIVATE          0
 #endif
 
 /** Set this to one to show error pages when parsing a request fails instead
@@ -2675,7 +2675,7 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
  * Initialize the httpd with the specified local address.
  */
 static void
-httpd_init_addr(ip_addr_t *local_addr)
+httpd_init_addr(const ip_addr_t *local_addr)
 {
   struct tcp_pcb *pcb;
   err_t err;

@@ -133,7 +133,7 @@ static bool IRAM spi_write(uint32_t addr, uint8_t *dst, uint32_t size)
 
         uint32_t offset = write_bytes_to_page;
         uint32_t pages_to_write = (size - offset) / sdk_flashchip.page_size;
-        for (uint8_t i = 0; i != pages_to_write; i++) {
+        for (uint32_t i = 0; i < pages_to_write; i++) {
             if (!spi_write_page(&sdk_flashchip, addr + offset,
                         dst + offset, sdk_flashchip.page_size)) {
                 return false;

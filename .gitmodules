@@ -1,6 +1,6 @@
 [submodule "lwip/lwip"]
 	path = lwip/lwip
-	url = https://github.com/SuperHouse/esp-lwip.git
+	url = https://github.com/ourairquality/lwip.git
 [submodule "extras/mbedtls/mbedtls"]
 	path = extras/mbedtls/mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
