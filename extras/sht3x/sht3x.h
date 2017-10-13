@@ -185,7 +185,7 @@ sht3x_sensor_t* sht3x_init_sensor (uint8_t bus, uint8_t addr);
  *
  * @param   dev   pointer to sensor device data structure
  * @param   mode  measurement mode, see type *sht3x_mode_t*
- * @return        measurement duration in RTOS ticks or -1 on error
+ * @return        measurement duration given in RTOS ticks or -1 on error
  */
 int32_t sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode);
 
