@@ -86,6 +86,7 @@ int32_t SHT3x_MEASURE_DURATION[3] = {30,20,20};  // [High, Medium, Low]
 static bool sht3x_send_command  (sht3x_sensor_t*, uint16_t);
 static bool sht3x_read_data     (sht3x_sensor_t*, uint8_t*,  uint32_t);
 static bool sht3x_get_status    (sht3x_sensor_t*, uint16_t*);
+// static bool sht3x_reset         (sht3x_sensor_t*);
 
 static uint8_t crc8 (uint8_t data[], int len);
 
@@ -116,27 +117,10 @@ sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
 
     uint16_t status;
 
-    // soft-reset including status check leads to i2c problems.
-    // if (!sht3x_reset (dev))
-    if (!sht3x_get_status (dev, & status))
-    {
-	    error_dev ("could not reset or check the status of the sensor", __FUNCTION__, dev);
-        free(dev);
-        return NULL;       
-    }
-
-    // clear sensor status register
-    if (!sht3x_send_command(dev, SHT3x_CLEAR_STATUS_CMD))
-    {
-	    error_dev ("could not clear sensor status", __FUNCTION__, dev);
-        free(dev);
-        return NULL;       
-    }
-
     // check the again the status after clear status command
     if (!sht3x_get_status(dev, &status))
     {
-	    error_dev ("could not get sensor status", __FUNCTION__, dev);
+        error_dev ("could not get sensor status", __FUNCTION__, dev);
         free(dev);
         return NULL;       
     }
@@ -195,16 +179,9 @@ int32_t sht3x_is_measuring (sht3x_sensor_t* dev)
     if (!dev->meas_first)
         return 0;
         
-    uint32_t start_time  = dev->meas_start_time ;     // in us
-	uint32_t system_time = sdk_system_get_time();   // in us
-	uint32_t elapsed_time;
+    uint32_t elapsed_time;
 
-    if (system_time < start_time)
-        // in case of timer overflow
-        elapsed_time = (UINT32_MAX - start_time + system_time) / 1000;  // in ms
-    else
-        // normal case
-        elapsed_time = (system_time - start_time) / 1000;  // in ms
+    elapsed_time = (sdk_system_get_time() - dev->meas_start_time) / 1000;  // in ms
 
     if (elapsed_time >= SHT3x_MEASURE_DURATION[dev->repeatability])
         return 0;
@@ -395,7 +372,7 @@ static bool sht3x_get_status (sht3x_sensor_t* dev, uint16_t* status)
 
 
 
-static uint8_t* crc8_table;             // lookup table with precomputed crc values
+static uint8_t crc8_table[256];         // lookup table with precomputed crc values
 static bool crc8_first_time = true;     // indicator whether table has still to be created
 
 static void generate_crc8_table()
@@ -422,7 +399,6 @@ static uint8_t crc8 (uint8_t data[], int len)
     if (crc8_first_time)
     {
         crc8_first_time = false;
-        crc8_table = malloc(256);
         generate_crc8_table ();
     }
 
