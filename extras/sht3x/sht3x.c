@@ -61,14 +61,14 @@
 #define SHT3x_FETCH_DATA_CMD           0xE000
 #define SHT3x_HEATER_OFF_CMD           0x3066
 
-uint16_t SHT3x_MEASURE_CMD[6][3] = { {0x2c06,0x2c0d,0x2c10},    // [SINGLE_SHOT][H,M,L]
-                                     {0x2032,0x2024,0x202f},    // [PERIODIC_05][H,M,L]
-                                     {0x2130,0x2126,0x212d},    // [PERIODIC_05][H,M,L]
-                                     {0x2236,0x2220,0x222b},    // [PERIODIC_05][H,M,L]
-                                     {0x2234,0x2322,0x2329},    // [PERIODIC_05][H,M,L]
-                                     {0x2737,0x2721,0x272a} };  // [PERIODIC_05][H,M,L]
+const uint16_t SHT3x_MEASURE_CMD[6][3] = { {0x2c06,0x2c0d,0x2c10},    // [SINGLE_SHOT][H,M,L]
+                                           {0x2032,0x2024,0x202f},    // [PERIODIC_05][H,M,L]
+                                           {0x2130,0x2126,0x212d},    // [PERIODIC_05][H,M,L]
+                                           {0x2236,0x2220,0x222b},    // [PERIODIC_05][H,M,L]
+                                           {0x2234,0x2322,0x2329},    // [PERIODIC_05][H,M,L]
+                                           {0x2737,0x2721,0x272a} };  // [PERIODIC_05][H,M,L]
                                      
-int32_t SHT3x_MEASURE_DURATION[3] = {30,20,20};  // [High, Medium, Low]
+const int32_t SHT3x_MEASURE_DURATION[3] = {3,2,2};  // tick counts [High, Medium, Low]
 
 #ifdef SHT3x_DEBUG
 #define debug(s, f, ...) printf("%s %s: " s "\n", "SHT3x", f, ## __VA_ARGS__)
@@ -111,7 +111,7 @@ sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
     dev->mode = single_shot;
     dev->repeatability = high;
     dev->meas_started = false;
-    dev->meas_start_time = 0;
+    dev->meas_start_tick = 0;
     
     dev->active = true;
 
@@ -149,10 +149,10 @@ int32_t sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode)
     // start measurement according to selected mode and return an duration estimate
     if (sht3x_send_command(dev, SHT3x_MEASURE_CMD[dev->mode][dev->repeatability]))
     {
-        dev->meas_start_time = sdk_system_get_time ();
+        dev->meas_start_tick = xTaskGetTickCount ();
         dev->meas_started = true;
         dev->meas_first = true;
-        return SHT3x_MEASURE_DURATION[dev->repeatability];   // in ms
+        return SHT3x_MEASURE_DURATION[dev->repeatability];   // in RTOS ticks
     }
 
     dev->error_code |= SHT3x_SEND_MEAS_CMD_FAILED;
@@ -181,7 +181,7 @@ int32_t sht3x_is_measuring (sht3x_sensor_t* dev)
         
     uint32_t elapsed_time;
 
-    elapsed_time = (sdk_system_get_time() - dev->meas_start_time) / 1000;  // in ms
+    elapsed_time = (xTaskGetTickCount() - dev->meas_start_tick);  // in RTOS ticks
 
     if (elapsed_time >= SHT3x_MEASURE_DURATION[dev->repeatability])
         return 0;
@@ -371,46 +371,24 @@ static bool sht3x_get_status (sht3x_sensor_t* dev, uint16_t* status)
 }
 
 
-
-static uint8_t crc8_table[256];         // lookup table with precomputed crc values
-static bool crc8_first_time = true;     // indicator whether table has still to be created
-
-static void generate_crc8_table()
-{
-    const uint8_t g_polynom = 0x31;
-
-    for (int i=0; i < 256; i++)
-    {
-        uint8_t value = (uint8_t)i;
-        for (uint8_t bit = 0; bit < 8; bit++)
-        {
-            bool xor = value & 0x80;
-            value = value << 1;
-            value = xor ? value ^ g_polynom : value;
-        }
-        crc8_table[i] = value;
-    }
-} 
-
+const uint8_t g_polynom = 0x31;
 
 static uint8_t crc8 (uint8_t data[], int len)
 {
-    // generate crc lookup table first time it is called
-    if (crc8_first_time)
-    {
-        crc8_first_time = false;
-        generate_crc8_table ();
-    }
-
     // initialization value
     uint8_t crc = 0xff;
     
     // iterate over all bytes
     for (int i=0; i < len; i++)
     {
-        uint8_t b = data[i];
-        uint8_t data = (uint8_t)(b ^ crc);
-        crc = (uint8_t)(crc8_table[data]);
+        crc ^= data[i];  
+    
+        for (int i = 0; i < 8; i++)
+        {
+            bool xor = crc & 0x80;
+            crc = crc << 1;
+            crc = xor ? crc ^ g_polynom : crc;
+        }
     }
 
     return crc;

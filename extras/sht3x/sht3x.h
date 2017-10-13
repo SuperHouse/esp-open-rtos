@@ -137,7 +137,7 @@ typedef struct {
     sht3x_repeat_t  repeatability;   // used repeatability
  
     bool            meas_started;    // indicates whether measurement started
-    uint32_t        meas_start_time; // measurement start time in microseconds
+    TickType_t      meas_start_tick; // measurement start time in RTOS ticks
     bool            meas_first;      // first measurement in periodic mode
     
 } sht3x_sensor_t;    
@@ -161,28 +161,31 @@ sht3x_sensor_t* sht3x_init_sensor (uint8_t bus, uint8_t addr);
  * @brief	Start single shot or periodic measurements
  *
  * The function starts the measurement either in *single shot mode* 
- * (exactly one measurement) or *periodic mode* (periodic measurements). 
+ * (exactly one measurement) or *periodic mode* (periodic measurements) and
+ * returns an estimated measurement duration given in RTOS ticks. 
  *
  * In the *single shot mode*, this function has to be called for each
  * measurement. The measurement duration returned by the function has to be
  * waited every time before the results can be fetched. 
  *
- * In the *periodic mode*, this function has to be called only once. Also the
- * measurement duration must be waited only once until the first results are
- * available. After this first measurement, the sensor then automatically 
- * performs all subsequent measurements. The rate of periodic measurements can
- * be 10, 4, 2, 1 or 0.5 measurements per second (mps). The user task can 
- * fetch the results with the half or less rate. The rate of the periodic 
- * measurements is defined by the parameter *mode*.
+ * In the *periodic mode*, this function has to be called only once. Also 
+ * the measurement duration must be waited only once until the first
+ * results are available. After this first measurement, the sensor then
+ * automatically performs all subsequent measurements. The rate of periodic
+ * measurements can be 10, 4, 2, 1 or 0.5 measurements per second (mps). Due
+ * to inaccuracies in timing of the sensor, the user task should fetch the
+ * results at a lower rate. The rate of the periodic measurements is defined
+ * by the parameter *mode*.
  *
- * On success, the function returns an estimated measurement duration. This 
- * defines the duration needed by the sensor before first results become 
- * available. The user task has to wait this time before it can fetch the 
- * results using function *sht3x_get_results* or *sht3x_get_raw_data*.
+ * On success, the function returns an estimated measurement duration given
+ * in RTOS ticks. This defines the duration needed by the sensor before
+ * first results become available. The user task has to wait this time
+ * before it can fetch the results using function *sht3x_get_results* or
+ * *sht3x_get_raw_data*.
  *
- * @param   dev       pointer to sensor device data structure
- * @param   mode      measurement mode, see type *sht3x_mode_t*
- * @return            true on success, false on error
+ * @param   dev   pointer to sensor device data structure
+ * @param   mode  measurement mode, see type *sht3x_mode_t*
+ * @return        measurement duration in RTOS ticks or -1 on error
  */
 int32_t sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode);
 
@@ -190,9 +193,9 @@ int32_t sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode);
 /**
  * @brief	Check whether measurement is still running
  *
- * The function can be used to test whether a measurement has been started
- * at all and how long it still takes before measurement results become
- * available. The return value can be
+ * The function can be used to test whether a measurement has been
+ * started and how long it still takes before measurement results
+ * become available. The return value is given in RTOS ticks and can be
  *
  *   >0  in case the measurement is is still running,
  *    0  in case the measurement has been already finished, or
@@ -201,8 +204,8 @@ int32_t sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode);
  * That is, a return value greater than 0 indicates that the measurement
  * results are still not available and the user task has to wait that time.
  * 
- * @param   dev       pointer to sensor device data structure
- * @return            remaining measurement duration or -1 on error
+ * @param   dev   pointer to sensor device data structure
+ * @return        remaining measurement duration in RTOS ticks or -1 on error
  */
 int32_t sht3x_is_measuring (sht3x_sensor_t* dev);
 

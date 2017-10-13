@@ -119,7 +119,7 @@ void user_task (void *pvParameters)
 
     // passive waiting until first measurement results are available
     if (duration > 0)
-        vTaskDelay (duration/portTICK_PERIOD_MS);
+        vTaskDelay (duration);
 
     // busy waiting until first measurement results are available
     // while (sht3x_is_measuring (sensor) > 0) ;
@@ -140,7 +140,7 @@ void user_task (void *pvParameters)
 }
 ```
 
-At the beginning of the task, the periodic measurement is started by function **_sht3x_start_measurement_** with a rate of 1 measurement per second. Using the measurement duration returned from this function, the task is delayed using **_vTaskDelay_** to wait for first measurement results. The busy waiting alternative using function **_sht3x_is_measuring_** is shown in comments. Inside the task loop, the measurement results are fetched periodically using function **_sht3x_get_results_** with a rate of once per second.
+At the beginning of the task, the periodic measurement is started by function **_sht3x_start_measurement_** with a rate of 1 measurement per second. Using the measurement duration in RTOS ticks returned from this function, the task is delayed using **_vTaskDelay_** to wait for first measurement results. The busy waiting alternative using function **_sht3x_is_measuring_** is shown in comments. Inside the task loop, the measurement results are fetched periodically using function **_sht3x_get_results_** with a rate of once per second.
 
 In the **single shot mode**, the measurement has to be triggered 
 in each cycle. Waiting for measurement results is also required in each cylce, before the results can be fetched.
@@ -162,7 +162,7 @@ void user_task (void *pvParameters)
         
         // passive waiting until measurement results are available
         if (duration > 0)
-            vTaskDelay (duration/portTICK_PERIOD_MS);
+            vTaskDelay (duration);
         
         // busy waiting until first measurement results are available
         // while (sht3x_is_measuring (sensor) > 0) ;
@@ -233,7 +233,7 @@ static sht3x_sensor_t* sensor;    // sensor device data structure
 /*
  * User task that fetches latest measurement results of sensor every 2
  * seconds. It starts the SHT3x in periodic mode with 1 measurements per
- * second (*periodic_1mps*). It uses busy waiting for first measurement
+ * second (*periodic_1mps*). It uses passive waiting for first measurement
  * results.
  */
 void user_task (void *pvParameters)
@@ -242,9 +242,10 @@ void user_task (void *pvParameters)
 
     // start periodic measurements with 1 measurement per second
     sht3x_start_measurement (sensor, periodic_1mps);
-
+    
+    // passive waiting until measurement results are available
     if (duration > 0)
-        vTaskDelay (duration/portTICK_PERIOD_MS);
+        vTaskDelay (duration);
 
     TickType_t last_wakeup = xTaskGetTickCount();
     

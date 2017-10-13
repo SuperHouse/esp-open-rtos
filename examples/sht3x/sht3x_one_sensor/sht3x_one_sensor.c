@@ -17,7 +17,7 @@
  *   +------------------------+     +----------+
  */
 
-// #define SINGLE_SHOT_MODE
+#define SINGLE_SHOT_MODE
  
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
@@ -55,7 +55,7 @@ void user_task (void *pvParameters)
         
         // passive waiting until measurement results are available
         if (duration > 0)
-            vTaskDelay (duration/portTICK_PERIOD_MS);
+            vTaskDelay (duration);
         
         // retrieve the values and do something with them
         if (sht3x_get_results (sensor, &values))
