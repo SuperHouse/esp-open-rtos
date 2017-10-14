@@ -106,8 +106,6 @@ bool sht3x_init_driver()
 
 sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
 {
-    printf("%d %d %d\n", SHT3x_MEASURE_DURATION[0], SHT3x_MEASURE_DURATION[1], SHT3x_MEASURE_DURATION[2]);
-    
     sht3x_sensor_t* dev;
     
     if ((dev = malloc (sizeof(sht3x_sensor_t))) == NULL)
