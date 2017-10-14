@@ -67,8 +67,14 @@ const uint16_t SHT3x_MEASURE_CMD[6][3] = { {0x2c06,0x2c0d,0x2c10},    // [SINGLE
                                            {0x2236,0x2220,0x222b},    // [PERIODIC_05][H,M,L]
                                            {0x2234,0x2322,0x2329},    // [PERIODIC_05][H,M,L]
                                            {0x2737,0x2721,0x272a} };  // [PERIODIC_05][H,M,L]
-                                     
-const int32_t SHT3x_MEASURE_DURATION[3] = {3,2,2};  // tick counts [High, Medium, Low]
+
+#define max(a,b)    (a) > (b) ? a : b
+
+// tick counts [High, Medium, Low]
+// minimum is one tick if portTICK_PERIOD_MS is greater than 20 or 30 ms
+const int32_t SHT3x_MEASURE_DURATION[3] = { max(30/portTICK_PERIOD_MS,1),
+                                            max(20/portTICK_PERIOD_MS,1),
+                                            max(20/portTICK_PERIOD_MS,1) };
 
 #ifdef SHT3x_DEBUG
 #define debug(s, f, ...) printf("%s %s: " s "\n", "SHT3x", f, ## __VA_ARGS__)
@@ -100,6 +106,8 @@ bool sht3x_init_driver()
 
 sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
 {
+    printf("%d %d %d\n", SHT3x_MEASURE_DURATION[0], SHT3x_MEASURE_DURATION[1], SHT3x_MEASURE_DURATION[2]);
+    
     sht3x_sensor_t* dev;
     
     if ((dev = malloc (sizeof(sht3x_sensor_t))) == NULL)
