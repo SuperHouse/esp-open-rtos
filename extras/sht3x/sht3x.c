@@ -68,11 +68,11 @@ const uint16_t SHT3x_MEASURE_CMD[6][3] = { {0x2c06,0x2c0d,0x2c10},    // [SINGLE
                                            {0x2234,0x2322,0x2329},    // [PERIODIC_4 ][H,M,L]
                                            {0x2737,0x2721,0x272a} };  // [PERIODIC_10][H,M,L]
 
-// tick counts [High, Medium, Low]
-// minimum is one tick if portTICK_PERIOD_MS is greater than 20 or 30 ms
-const int32_t SHT3x_MEASURE_DURATION[3] = { (30 + portTICK_PERIOD_MS-1)/portTICK_PERIOD_MS,
-                                            (20 + portTICK_PERIOD_MS-1)/portTICK_PERIOD_MS,
-                                            (20 + portTICK_PERIOD_MS-1)/portTICK_PERIOD_MS };
+// 
+#define TIME_TO_TICKS(ms) (((ms) + portTICK_PERIOD_MS + portTICK_PERIOD_MS / 2) / portTICK_PERIOD_MS)
+const int32_t SHT3x_MEASURE_DURATION[3] = { TIME_TO_TICKS(15), 
+                                            TIME_TO_TICKS(6), 
+                                            TIME_TO_TICKS(4) };
 
 #ifdef SHT3x_DEBUG
 #define debug(s, f, ...) printf("%s %s: " s "\n", "SHT3x", f, ## __VA_ARGS__)
