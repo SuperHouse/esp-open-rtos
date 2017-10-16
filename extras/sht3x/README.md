@@ -20,7 +20,7 @@ Due to the measurement duration of up to 30 ms, the measurement process is separ
 
 2. Wait the measurement duration until the results are available using passive waiting with function **_vTaskDelay_** or busy waiting with function **_sht3x_is_measuring_**.
 
-3. Fetch the results as floating point sensor values with function **sht3x_get_results_** or as raw data with function **sht3x_get_raw_data_**.
+3. Fetch the results as floating point sensor values with function **_sht3x_get_results_** or as raw data with function **_sht3x_get_raw_data_**.
 
 In the *single shot mode*, the user task has to perform all steps every time new sensor values ​​are needed. When using the *single image mode*, however, a delay of up to 30 ms is generated for each measurement.
 
@@ -32,11 +32,11 @@ In this mode, one issued measurement command yields a stream of data pairs. Each
 
 As in *single shot mode*, the measurement process is separated into the following steps:
 
-1. Trigger the sensor with function **sht3x_start_measurement_** and the rate of periodic measurements to start periodic measurements.
+1. Trigger the sensor with function **_sht3x_start_measurement_** and the rate of periodic measurements to start periodic measurements.
 
 2. Wait the measurement duration until the results are available using passive waiting with function **_vTaskDelay_** or busy waiting with function **_sht3x_is_measuring_**.
 
-3. Fetch the results as floating point sensor values with function **sht3x_get_results_** or as raw data with function **sht3x_get_raw_data_**.
+3. Fetch the results as floating point sensor values with function **_sht3x_get_results_** or as raw data with function **_sht3x_get_raw_data_**.
 
 However, in contrast to the *single shot mode*, steps 1 and 2 have to be executed only once. Once the measurement is started, the user task hast can simply fetch data periodically. 
 
@@ -181,7 +181,7 @@ void user_task (void *pvParameters)
 
 In contrast to the *periodic mode*, the function **_sht3x_start_measurement_** is called inside the task loop to start exactly one measurement in each cycle. The task is then also delayed every time using function **_vTaskDelay_** before the results are fetched with function **_sht3x_get_results_** in each cycle.
 
-The code could be extended by an error handling. In the event of an error, most driver functions use the **_error_code_** element of the data structure of the sensor device. This indicates which error has occurred. Error codes are a combination of I2C communication error codes and SHT3x sensor error codes. To test a particular error, the *error code* can be AND with one of the error masks **_SHT3x_I2C_ERROR_MASK_** or **_SHT3x_DRV_ERROR_MASK_**.
+The code could be extended by an error handling. In the event of an error, most driver functions set member **_error_code_** of the data structure of the sensor device. This indicates which error has occurred. Error codes are a combination of I2C communication error codes and SHT3x sensor error codes. To test a particular error, the *error code* can be AND with one of the error masks **_SHT3x_I2C_ERROR_MASK_** or **_SHT3x_DRV_ERROR_MASK_**.
 
 For example, error handling for **_sht3x_get_results_** could look like:
 ```
