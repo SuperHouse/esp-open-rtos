@@ -25,6 +25,9 @@
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 // include communication interface driver
 #include "esp/spi.h"
 #include "i2c/i2c.h"
