@@ -21,6 +21,7 @@
  *  This file is part of mbed TLS (https://tls.mbed.org)
  */
 
+#include <fcntl.h>
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include "mbedtls/config.h"
 #else

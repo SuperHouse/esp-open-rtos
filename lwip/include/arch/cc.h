@@ -39,6 +39,7 @@
 #include <sys/time.h>
 #include <sys/errno.h>
 #include <esp/hwrand.h>
+#include <fcntl.h>
 
 struct ip4_addr;
 struct esf_buf;

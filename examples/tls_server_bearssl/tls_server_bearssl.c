@@ -19,6 +19,7 @@
 #include "esp/uart.h"
 #include "esp/hwrand.h"
 
+#include <unistd.h>
 #include <string.h>
 
 #include "FreeRTOS.h"

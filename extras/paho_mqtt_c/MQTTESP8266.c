@@ -20,6 +20,7 @@
   */
 
 #include <espressif/esp_common.h>
+#include <unistd.h>
 #include <lwip/sockets.h>
 #include <lwip/inet.h>
 #include <lwip/netdb.h>

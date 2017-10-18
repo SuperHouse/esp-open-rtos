@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include <espressif/esp_common.h>
 #include <espressif/user_interface.h>
@@ -1722,9 +1723,9 @@ static void dns_task(void *pvParameters)
 
     const struct ifreq ifreq0 = { "en0" };
     const struct ifreq ifreq1 = { "en1" };
-    lwip_setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE,
-                    sdk_wifi_get_opmode() == STATIONAP_MODE ? &ifreq1 : &ifreq0,
-                    sizeof(ifreq0));
+    setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE,
+               sdk_wifi_get_opmode() == STATIONAP_MODE ? &ifreq1 : &ifreq0,
+               sizeof(ifreq0));
 
     for (;;) {
         char buffer[96];

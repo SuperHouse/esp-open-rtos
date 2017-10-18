@@ -7,6 +7,7 @@
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 
+#include <unistd.h>
 #include <string.h>
 
 #include "FreeRTOS.h"
