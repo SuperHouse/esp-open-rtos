@@ -85,11 +85,10 @@
 #define abs(x) ((x)<0 ? -(x) : (x))
 #define swap(x, y) do { typeof(x) temp##x##y = x; x = y; y = temp##x##y; } while (0)
 
-
 #if (SSD1306_I2C_SUPPORT)
 static int inline i2c_send(const ssd1306_t *dev, uint8_t reg, uint8_t* data, uint8_t len)
 {
-    return i2c_slave_write(dev->i2c_dev.bus, dev->i2c_dev.addr , &reg, data, len);
+    return i2c_slave_write(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, data, len);
 }
 #endif
 
@@ -120,7 +119,7 @@ int ssd1306_command(const ssd1306_t *dev, uint8_t cmd)
 #if (SSD1306_SPI3_SUPPORT)
         case SSD1306_PROTO_SPI3:
             gpio_write(dev->cs_pin, false);
-            spi_set_command(SPI_BUS,1,0); // command mode
+            spi_set_command(SPI_BUS, 1, 0); // command mode
             spi_transfer_8(SPI_BUS, cmd);
             spi_clear_command(SPI_BUS);
             gpio_write(dev->cs_pin, true);
@@ -135,7 +134,7 @@ int ssd1306_command(const ssd1306_t *dev, uint8_t cmd)
 }
 
 /* Perform default init routine according
-* to SSD1306 datasheet from adafruit.com */
+ * to SSD1306 datasheet from adafruit.com */
 int ssd1306_init(const ssd1306_t *dev)
 {
     uint8_t pin_cfg;
@@ -221,10 +220,12 @@ int ssd1306_init(const ssd1306_t *dev)
     return -EIO;
 }
 
-static int sh1106_go_coordinate(const ssd1306_t *dev, uint8_t x, uint8_t y) {
-    if (x >= dev->width || y >= (dev->height/8)) return -EINVAL;
+static int sh1106_go_coordinate(const ssd1306_t *dev, uint8_t x, uint8_t y)
+{
+    if (x >= dev->width || y >= (dev->height / 8))
+        return -EINVAL;
     int err = 0;
-    x+=2 ; //offset : panel is 128 ; RAM is 132 for sh1106
+    x += 2; //offset : panel is 128 ; RAM is 132 for sh1106
     if ((err = ssd1306_command(dev, SH1106_SET_PAGE_ADDRESS + y))) // Set row
         return err;
     if ((err = ssd1306_command(dev, SH1106_SET_LOW_COL_ADDR | (x & 0xf))))  // Set lower column address
@@ -237,11 +238,10 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
     uint16_t i;
     uint8_t j;
 #if (SSD1306_I2C_SUPPORT)
-    uint8_t tab[16] = { 0 } ;
+    uint8_t tab[16] = { 0 };
 #endif
     size_t len = dev->width * dev->height / 8;
-    if(dev->screen == SSD1306_SCREEN)
-    {
+    if (dev->screen == SSD1306_SCREEN) {
         ssd1306_set_column_addr(dev, 0, dev->width - 1);
         ssd1306_set_page_addr(dev, 0, dev->height / 8 - 1);
     }
@@ -249,35 +249,33 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
     switch (dev->protocol) {
 #if (SSD1306_I2C_SUPPORT)
         case SSD1306_PROTO_I2C:
-            for (i = 0; i < len; i++)
-            {
-                if(dev->screen == SH1106_SCREEN && i%dev->width == 0) sh1106_go_coordinate(dev,0,i/dev->width);
+            for (i = 0; i < len; i++) {
+                if (dev->screen == SH1106_SCREEN && i % dev->width == 0)
+                    sh1106_go_coordinate(dev, 0, i / dev->width);
                 i2c_send(dev, 0x40, buf ? &buf[i] : tab, 16);
-                i+=15 ;
+                i += 15;
             }
             break;
 #endif
 #if (SSD1306_SPI4_SUPPORT)
         case SSD1306_PROTO_SPI4:
             gpio_write(dev->cs_pin, false);
-            if(dev->screen == SSD1306_SCREEN)
-            {
+            if (dev->screen == SSD1306_SCREEN) {
                 gpio_write(dev->dc_pin, true); // data mode
                 if (buf)
                     spi_transfer(SPI_BUS, buf, NULL, len, SPI_8BIT);
                 else
-                    spi_repeat_send_8(SPI_BUS,0,len);
+                    spi_repeat_send_8(SPI_BUS, 0, len);
             }
-            else
-            {
-                for (i = 0 ; i < (dev->height/8) ; i++) {
-                    sh1106_go_coordinate(dev,0,i);
+            else {
+                for (i = 0; i < (dev->height / 8); i++) {
+                    sh1106_go_coordinate(dev, 0, i);
                     gpio_write(dev->dc_pin, true); // data mode
                     gpio_write(dev->cs_pin, false);
                     if (buf)
-                        spi_transfer(SPI_BUS, &buf[dev->width*i], NULL, dev->width, SPI_8BIT);
+                        spi_transfer(SPI_BUS, &buf[dev->width * i], NULL, dev->width, SPI_8BIT);
                     else
-                        spi_repeat_send_8(SPI_BUS,0,dev->width);
+                        spi_repeat_send_8(SPI_BUS, 0, dev->width);
                 }
             }
             gpio_write(dev->cs_pin, true);
@@ -286,36 +284,30 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
 #if (SSD1306_SPI3_SUPPORT)
         case SSD1306_PROTO_SPI3:
             gpio_write(dev->cs_pin, false);
-            if(dev->screen == SSD1306_SCREEN)
-            {
-                spi_set_command(SPI_BUS,1,1); // data mode
-                if (buf)
-                {
-                    for (i = 0; i < len; i++)
-                    {
+            if (dev->screen == SSD1306_SCREEN) {
+                spi_set_command(SPI_BUS, 1, 1); // data mode
+                if (buf) {
+                    for (i = 0; i < len; i++) {
                         spi_transfer(SPI_BUS, &buf[i], NULL, 1, SPI_8BIT);
                     }
                 }
-                else
-                {
-                    for (i = 0; i < len; i++)
-                    {
+                else {
+                    for (i = 0; i < len; i++) {
                         spi_transfer_8(SPI_BUS, 0);
                     }
                 }
             }
-            else
-            {
-                for (i = 0 ; i < (dev->height/8) ; i++) {
-                    sh1106_go_coordinate(dev,0,i);
-                    spi_set_command(SPI_BUS,1,1); // data mode
+            else {
+                for (i = 0; i < (dev->height / 8); i++) {
+                    sh1106_go_coordinate(dev, 0, i);
+                    spi_set_command(SPI_BUS, 1, 1); // data mode
                     gpio_write(dev->cs_pin, false);
                     if (buf)
-                        for (j = 0 ; j < dev->width ; j++)
-                            spi_transfer_8(SPI_BUS, buf[dev->width*i+j]);
+                        for (j = 0; j < dev->width; j++)
+                            spi_transfer_8(SPI_BUS, buf[dev->width * i + j]);
                     else
-                        for (j = 0 ; j < dev->width ; j++)
-                            spi_transfer_8(SPI_BUS, buf[dev->width*i+j]);
+                        for (j = 0; j < dev->width; j++)
+                            spi_transfer_8(SPI_BUS, buf[dev->width * i + j]);
                 }
             }
             spi_clear_command(SPI_BUS);
@@ -357,41 +349,38 @@ int ssd1306_set_display_offset(const ssd1306_t *dev, uint8_t offset)
 
 int sh1106_set_charge_pump_voltage(const ssd1306_t *dev, sh1106_voltage_t select)
 {
-    if (dev->screen == SSD1306_SCREEN)
-    {
+    if (dev->screen == SSD1306_SCREEN) {
         debug("Unsupported screen type");
-        return -ENOTSUP ;
+        return -ENOTSUP;
     }
     return ssd1306_command(dev, select | SH1106_CHARGE_PUMP_VALUE);
 }
-
 
 int ssd1306_set_charge_pump_enabled(const ssd1306_t *dev, bool enabled)
 {
     int err = 0;
     switch (dev->screen) {
-    case SH1106_SCREEN:
-        if ((err = ssd1306_command(dev, SH1106_SET_CHARGE_PUMP)))
-            return err;
-        return ssd1306_command(dev, enabled ? SH1106_CHARGE_PUMP_EN : SH1106_CHARGE_PUMP_DIS);
-        break;
-    case SSD1306_SCREEN:
-        if ((err = ssd1306_command(dev, SSD1306_SET_CHARGE_PUMP)))
-            return err;
-        return ssd1306_command(dev, enabled ? SSD1306_CHARGE_PUMP_EN : SSD1306_CHARGE_PUMP_DIS);
-        break;
-    default:
-        debug("Unsupported screen type");
-        return -ENOTSUP;
+        case SH1106_SCREEN:
+            if ((err = ssd1306_command(dev, SH1106_SET_CHARGE_PUMP)))
+                return err;
+            return ssd1306_command(dev, enabled ? SH1106_CHARGE_PUMP_EN : SH1106_CHARGE_PUMP_DIS);
+            break;
+        case SSD1306_SCREEN:
+            if ((err = ssd1306_command(dev, SSD1306_SET_CHARGE_PUMP)))
+                return err;
+            return ssd1306_command(dev, enabled ? SSD1306_CHARGE_PUMP_EN : SSD1306_CHARGE_PUMP_DIS);
+            break;
+        default:
+            debug("Unsupported screen type");
+            return -ENOTSUP;
     }
 }
 
 int ssd1306_set_mem_addr_mode(const ssd1306_t *dev, ssd1306_mem_addr_mode_t mode)
 {
-    if (dev->screen == SH1106_SCREEN)
-    {
+    if (dev->screen == SH1106_SCREEN) {
         debug("Unsupported screen type");
-        return -ENOTSUP ;
+        return -ENOTSUP;
     }
     int err = 0;
     if ((err = ssd1306_command(dev, SSD1306_SET_MEM_ADDR_MODE)))
@@ -498,7 +487,7 @@ int ssd1306_set_deseltct_lvl(const ssd1306_t *dev, uint8_t lvl)
 
 int ssd1306_set_whole_display_lighting(const ssd1306_t *dev, bool light)
 {
-    return ssd1306_command(dev, light ? SSD1306_SET_ENTIRE_DISP_ON :  SSD1306_SET_ENTIRE_DISP_OFF);
+    return ssd1306_command(dev, light ? SSD1306_SET_ENTIRE_DISP_ON : SSD1306_SET_ENTIRE_DISP_OFF);
 }
 
 /* one byte of xbm - 8 dots in line of picture source
@@ -510,9 +499,9 @@ int ssd1306_load_xbm(const ssd1306_t *dev, uint8_t *xbm, uint8_t *fb)
 
     int row = 0;
     int column = 0;
-    for (row = 0; row < dev->height; row ++) {
+    for (row = 0; row < dev->height; row++) {
         for (column = 0; column < dev->width / 8; column++) {
-            uint16_t xbm_offset = row * 16  + column;
+            uint16_t xbm_offset = row * 16 + column;
             for (bit = 0; bit < 8; bit++) {
                 if (*(xbm + xbm_offset) & 1 << bit) {
                     *(fb + dev->width * (row / 8) + column * 8 + bit) |= 1 << row % 8;
@@ -532,19 +521,18 @@ int ssd1306_draw_pixel(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ss
         return -EINVAL;
 
     index = x + (y / 8) * dev->width;
-    switch (color)
-    {
-    case OLED_COLOR_WHITE:
-        fb[index] |= (1 << (y & 7));
-        break;
-    case OLED_COLOR_BLACK:
-        fb[index] &= ~(1 << (y & 7));
-        break;
-    case OLED_COLOR_INVERT:
-        fb[index] ^= (1 << (y & 7));
-        break;
-    default:
-        break;
+    switch (color) {
+        case OLED_COLOR_WHITE:
+            fb[index] |= (1 << (y & 7));
+            break;
+        case OLED_COLOR_BLACK:
+            fb[index] &= ~(1 << (y & 7));
+            break;
+        case OLED_COLOR_INVERT:
+            fb[index] ^= (1 << (y & 7));
+            break;
+        default:
+            break;
     }
     return 0;
 }
@@ -565,32 +553,28 @@ int ssd1306_draw_hline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
     t = w;
     index = x + (y / 8) * dev->width;
     mask = 1 << (y & 7);
-    switch (color)
-    {
-    case OLED_COLOR_WHITE:
-        while (t--)
-        {
-            fb[index] |= mask;
-            ++index;
-        }
-        break;
-    case OLED_COLOR_BLACK:
-        mask = ~mask;
-        while (t--)
-        {
-            fb[index] &= mask;
-            ++index;
-        }
-        break;
-    case OLED_COLOR_INVERT:
-        while (t--)
-        {
-            fb[index] ^= mask;
-            ++index;
-        }
-        break;
-    default:
-        break;
+    switch (color) {
+        case OLED_COLOR_WHITE:
+            while (t--) {
+                fb[index] |= mask;
+                ++index;
+            }
+            break;
+        case OLED_COLOR_BLACK:
+            mask = ~mask;
+            while (t--) {
+                fb[index] &= mask;
+                ++index;
+            }
+            break;
+        case OLED_COLOR_INVERT:
+            while (t--) {
+                fb[index] ^= mask;
+                ++index;
+            }
+            break;
+        default:
+            break;
     }
     return 0;
 }
@@ -619,19 +603,18 @@ int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
         mask = premask[mod];
         if (t < mod)
             mask &= (0xFF >> (mod - t));
-        switch (color)
-        {
-        case OLED_COLOR_WHITE:
-            fb[index] |= mask;
-            break;
-        case OLED_COLOR_BLACK:
-            fb[index] &= ~mask;
-            break;
-        case OLED_COLOR_INVERT:
-            fb[index] ^= mask;
-            break;
-        default:
-            break;
+        switch (color) {
+            case OLED_COLOR_WHITE:
+                fb[index] |= mask;
+                break;
+            case OLED_COLOR_BLACK:
+                fb[index] &= ~mask;
+                break;
+            case OLED_COLOR_INVERT:
+                fb[index] ^= mask;
+                break;
+            default:
+                break;
         }
 
         if (t < mod)
@@ -640,35 +623,31 @@ int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
         index += dev->width;
     }
     if (t >= 8) // byte aligned line at middle
-    {
-        switch (color)
-        {
-        case OLED_COLOR_WHITE:
-            do
             {
-               fb[index] = 0xff;
-               index += dev->width;
-               t -= 8;
-            } while (t >= 8);
-            break;
-        case OLED_COLOR_BLACK:
-            do
-            {
-               fb[index] = 0x00;
-               index += dev->width;
-               t -= 8;
-            } while (t >= 8);
-            break;
-        case OLED_COLOR_INVERT:
-            do
-            {
-                fb[index] = ~fb[index];
-                index += dev->width;
-                t -= 8;
-            } while (t >= 8);
-            break;
-        default:
-            break;
+        switch (color) {
+            case OLED_COLOR_WHITE:
+                do {
+                    fb[index] = 0xff;
+                    index += dev->width;
+                    t -= 8;
+                } while (t >= 8);
+                break;
+            case OLED_COLOR_BLACK:
+                do {
+                    fb[index] = 0x00;
+                    index += dev->width;
+                    t -= 8;
+                } while (t >= 8);
+                break;
+            case OLED_COLOR_INVERT:
+                do {
+                    fb[index] = ~fb[index];
+                    index += dev->width;
+                    t -= 8;
+                } while (t >= 8);
+                break;
+            default:
+                break;
         }
     }
     if (t) // partial line at bottom
@@ -676,19 +655,18 @@ int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
         mod = t & 7;
         static const uint8_t postmask[8] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
         mask = postmask[mod];
-        switch (color)
-        {
-        case OLED_COLOR_WHITE:
-            fb[index] |= mask;
-            break;
-        case OLED_COLOR_BLACK:
-            fb[index] &= ~mask;
-            break;
-        case OLED_COLOR_INVERT:
-            fb[index] ^= mask;
-            break;
-        default:
-            break;
+        switch (color) {
+            case OLED_COLOR_WHITE:
+                fb[index] |= mask;
+                break;
+            case OLED_COLOR_BLACK:
+                fb[index] &= ~mask;
+                break;
+            case OLED_COLOR_INVERT:
+                fb[index] ^= mask;
+                break;
+            default:
+                break;
         }
     }
     return 0;
@@ -705,7 +683,6 @@ int ssd1306_draw_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y
         return err;
     return ssd1306_draw_vline(dev, fb, x + w - 1, y, h, color);
 }
-
 
 int ssd1306_fill_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t w, uint8_t h, ssd1306_color_t color)
 {
@@ -738,8 +715,7 @@ int ssd1306_draw_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
     if ((err = ssd1306_draw_pixel(dev, fb, x0,     y0 + r, color)))
         return err;
 
-    while (x >= y)
-    {
+    while (x >= y) {
         if ((err = ssd1306_draw_pixel(dev, fb, x0 + x, y0 + y, color)))
             return err;
         if ((err = ssd1306_draw_pixel(dev, fb, x0 - x, y0 + y, color)))
@@ -748,8 +724,7 @@ int ssd1306_draw_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
             return err;
         if ((err = ssd1306_draw_pixel(dev, fb, x0 - x, y0 - y, color)))
             return err;
-        if (x != y)
-        {
+        if (x != y) {
             /* Otherwise the 4 drawings below are the same as above, causing
              * problem when color is INVERT
              */
@@ -788,14 +763,12 @@ int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
 
     if ((err = ssd1306_draw_vline(dev, fb, x0, y0 - r, 2 * r + 1, color))) // Center vertical line
         return err;
-    while (y >= x)
-    {
+    while (y >= x) {
         if ((err = ssd1306_draw_vline(dev, fb, x0 - x, y0 - y, 2 * y + 1, color)))
             return err;
         if ((err = ssd1306_draw_vline(dev, fb, x0 + x, y0 - y, 2 * y + 1, color)))
             return err;
-        if (color != OLED_COLOR_INVERT)
-        {
+        if (color != OLED_COLOR_INVERT) {
             if ((err = ssd1306_draw_vline(dev, fb, x0 - y, y0 - x, 2 * x + 1, color)))
                 return err;
             if ((err = ssd1306_draw_vline(dev, fb, x0 + y, y0 - x, 2 * x + 1, color)))
@@ -811,8 +784,7 @@ int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
         }
     }
 
-    if (color == OLED_COLOR_INVERT)
-    {
+    if (color == OLED_COLOR_INVERT) {
         x1 = x; // Save where we stopped
 
         y = 1;
@@ -822,15 +794,14 @@ int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
             return err;
         if ((err = ssd1306_draw_hline(dev, fb, x0 - r, y0, r - x1 + 1, color)))
             return err;
-        while (x >= y)
-        {
+        while (x >= y) {
             if ((err = ssd1306_draw_hline(dev, fb, x0 + x1, y0 - y, x - x1 + 1, color)))
                 return err;
             if ((err = ssd1306_draw_hline(dev, fb, x0 + x1, y0 + y, x - x1 + 1, color)))
                 return err;
-            if ((err = ssd1306_draw_hline(dev, fb, x0 - x,  y0 - y, x - x1 + 1, color)))
+            if ((err = ssd1306_draw_hline(dev, fb, x0 - x, y0 - y, x - x1 + 1, color)))
                 return err;
-            if ((err = ssd1306_draw_hline(dev, fb, x0 - x,  y0 + y, x - x1 + 1, color)))
+            if ((err = ssd1306_draw_hline(dev, fb, x0 - x, y0 + y, x - x1 + 1, color)))
                 return err;
             ++y;
             if (radius_err < 0) {
@@ -845,59 +816,59 @@ int ssd1306_fill_circle(const ssd1306_t *dev, uint8_t *fb, int8_t x0, int8_t y0,
     return 0;
 }
 
-int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0,
-    int16_t x1, int16_t y1, ssd1306_color_t color)
+int ssd1306_draw_line(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, ssd1306_color_t color)
 {
     if ((x0 >= dev->width) || (x0 < 0) || (y0 >= dev->height) || (y0 < 0))
         return -EINVAL;
     if ((x1 >= dev->width) || (x1 < 0) || (y1 >= dev->height) || (y1 < 0))
         return -EINVAL;
 
-   int err;
-   bool steep = abs(y1 - y0) > abs(x1 - x0);
-   if (steep) {
-       swap(x0, y0);
-       swap(x1, y1);
-   }
+    int err;
+    bool steep = abs(y1 - y0) > abs(x1 - x0);
+    if (steep) {
+        swap(x0, y0);
+        swap(x1, y1);
+    }
 
-   if (x0 > x1) {
-       swap(x0, x1);
-       swap(y0, y1);
-   }
+    if (x0 > x1) {
+        swap(x0, x1);
+        swap(y0, y1);
+    }
 
-   int16_t dx, dy;
-   dx = x1 - x0;
-   dy = abs(y1 - y0);
+    int16_t dx, dy;
+    dx = x1 - x0;
+    dy = abs(y1 - y0);
 
-   int16_t errx = dx / 2;
-   int16_t ystep;
+    int16_t errx = dx / 2;
+    int16_t ystep;
 
-   if (y0 < y1) {
-       ystep = 1;
-   } else {
-       ystep = -1;
-   }
+    if (y0 < y1) {
+        ystep = 1;
+    }
+    else {
+        ystep = -1;
+    }
 
     for (; x0 <= x1; x0++) {
-       if (steep) {
-           if ((err = ssd1306_draw_pixel(dev, fb, y0, x0, color)))
-               return err;
-       } else {
-           if ((err = ssd1306_draw_pixel(dev, fb, x0, y0, color)))
-               return err;
-       }
-       errx -= dy;
-       if (errx < 0) {
-           y0 += ystep;
-           errx += dx;
-       }
-   }
-   return 0;
+        if (steep) {
+            if ((err = ssd1306_draw_pixel(dev, fb, y0, x0, color)))
+                return err;
+        }
+        else {
+            if ((err = ssd1306_draw_pixel(dev, fb, x0, y0, color)))
+                return err;
+        }
+        errx -= dy;
+        if (errx < 0) {
+            y0 += ystep;
+            errx += dx;
+        }
+    }
+    return 0;
 }
 
-int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0,
-    int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
-    ssd1306_color_t color)
+int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+        ssd1306_color_t color)
 {
     int err;
     if ((err = ssd1306_draw_line(dev, fb, x0, y0, x1, y1, color)))
@@ -907,25 +878,24 @@ int ssd1306_draw_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0,
     return ssd1306_draw_line(dev, fb, x2, y2, x0, y0, color);
 }
 
-int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0,
-    int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
-    ssd1306_color_t color)
+int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+        ssd1306_color_t color)
 {
     int16_t a, b, y, last;
     int err;
 
     // Sort coordinates by Y order (y2 >= y1 >= y0)
     if (y0 > y1) {
-        swap(y0, y1); swap(x0, x1);
+        swap(y0, y1);swap(x0, x1);
     }
     if (y1 > y2) {
-        swap(y2, y1); swap(x2, x1);
+        swap(y2, y1);swap(x2, x1);
     }
     if (y0 > y1) {
-        swap(y0, y1); swap(x0, x1);
+        swap(y0, y1);swap(x0, x1);
     }
 
-    if(y0 == y2) { // Handle awkward all-on-same-line case as its own thing
+    if (y0 == y2) { // Handle awkward all-on-same-line case as its own thing
         a = b = x0;
         if (x1 < a)      a = x1;
         else if (x1 > b) b = x1;
@@ -984,14 +954,13 @@ int ssd1306_fill_triangle(const ssd1306_t *dev, uint8_t *fb, int16_t x0,
         */
         if (a > b) swap(a, b);
         if ((err = ssd1306_draw_hline(dev, fb, a, y, b - a + 1, color)))
-           return err;
+            return err;
     }
     return 0;
 }
 
-int ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb,
-    const font_info_t *font, uint8_t x, uint8_t y, char c,
-    ssd1306_color_t foreground, ssd1306_color_t background)
+int ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char c, ssd1306_color_t foreground,
+        ssd1306_color_t background)
 {
     uint8_t i, j;
     const uint8_t *bitmap;
@@ -1015,30 +984,29 @@ int ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb,
                 err = ssd1306_draw_pixel(dev, fb, x + i, y + j, foreground);
             }
             else {
-                switch (background)
-                {
-                case OLED_COLOR_TRANSPARENT:
-                    // Not drawing for transparent background
-                    break;
-                case OLED_COLOR_WHITE:
-                case OLED_COLOR_BLACK:
-                    err = ssd1306_draw_pixel(dev, fb, x + i, y + j, background);
-                    break;
-                case OLED_COLOR_INVERT:
-                    // I don't know why I need invert background
-                    break;
+                switch (background) {
+                    case OLED_COLOR_TRANSPARENT:
+                        // Not drawing for transparent background
+                        break;
+                    case OLED_COLOR_WHITE:
+                    case OLED_COLOR_BLACK:
+                        err = ssd1306_draw_pixel(dev, fb, x + i, y + j, background);
+                        break;
+                    case OLED_COLOR_INVERT:
+                        // I don't know why I need invert background
+                        break;
                 }
             }
-            if (err) return -ERANGE ;
+            if (err)
+                return -ERANGE;
             line = line << 1;
         }
     }
     return d->width;
 }
 
-int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb,
-    const font_info_t *font, uint8_t x, uint8_t y, char *str,
-    ssd1306_color_t foreground, ssd1306_color_t background)
+int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str,
+        ssd1306_color_t foreground, ssd1306_color_t background)
 {
     uint8_t t = x;
     int err;
@@ -1046,11 +1014,10 @@ int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb,
     if (font == NULL || str == NULL)
         return 0;
 
-    while (*str)
-    {
-        if ((err = ssd1306_draw_char(dev, fb, font, x, y, *str, foreground, background)) < 0 )
+    while (*str) {
+        if ((err = ssd1306_draw_char(dev, fb, font, x, y, *str, foreground, background)) < 0)
             return err;
-        x +=  err;
+        x += err;
         ++str;
         if (*str)
             x += font->c;
@@ -1067,13 +1034,11 @@ int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uin
 {
     int err;
 
-    if (way)
-    {
+    if (way) {
         if ((err = ssd1306_command(dev, SSD1306_SCROLL_HOR_LEFT)))
             return err;
     }
-    else
-    {
+    else {
         if ((err = ssd1306_command(dev, SSD1306_SCROLL_HOR_RIGHT)))
             return err;
     }
@@ -1089,7 +1054,7 @@ int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uin
     return -EIO;
 }
 
-int ssd1306_start_scroll_hori_vert(const ssd1306_t *dev, bool way,  uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame)
+int ssd1306_start_scroll_hori_vert(const ssd1306_t *dev, bool way, uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame)
 {
     //this function dont work well if no vertical setting.
     if ((!dy) || (dy > 63))
@@ -1104,13 +1069,11 @@ int ssd1306_start_scroll_hori_vert(const ssd1306_t *dev, bool way,  uint8_t star
     if ((err = ssd1306_command(dev, dev->height)))
         return err;
 
-    if (way)
-    {
+    if (way) {
         if ((err = ssd1306_command(dev, SSD1306_SCROLL_HOR_VER_LEFT)))
             return err;
     }
-    else
-    {
+    else {
         if ((err = ssd1306_command(dev, SSD1306_SCROLL_HOR_VER_RIGHT)))
             return err;
     }

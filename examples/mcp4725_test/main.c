@@ -20,7 +20,7 @@
 #define ADDR MCP4725A0_ADDR0
 #define VDD 3.3
 
-inline static void wait_for_eeprom(i2c_dev_t* dev)
+inline static void wait_for_eeprom(i2c_dev_t *dev)
 {
     while (mcp4725_eeprom_busy(dev))
     {

@@ -38,7 +38,7 @@
 static int bmp180_readRegister16(i2c_dev_t *dev, uint8_t reg, int16_t *r)
 {
     uint8_t d[] = { 0, 0 };
-    int error ;
+    int error;
 
     if ((error = i2c_slave_read(dev->bus, dev->addr, &reg, d, 2)))
         return error;
@@ -49,7 +49,7 @@ static int bmp180_readRegister16(i2c_dev_t *dev, uint8_t reg, int16_t *r)
 
 static int bmp180_start_Messurement(i2c_dev_t *dev, uint8_t cmd)
 {
-    uint8_t reg = BMP180_CONTROL_REG ;
+    uint8_t reg = BMP180_CONTROL_REG;
 
     return i2c_slave_write(dev->bus, dev->addr, &reg, &cmd, 1);
 }

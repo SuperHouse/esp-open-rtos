@@ -26,13 +26,13 @@
 #define TSL4531_INTEGRATION_TIME_200MS 240
 #define TSL4531_INTEGRATION_TIME_400MS 480 // Default
 
-static int write_register(i2c_dev_t* i2c_dev, uint8_t reg, uint8_t value)
+static int write_register(i2c_dev_t *i2c_dev, uint8_t reg, uint8_t value)
 {
     reg = TSL4531_REG_COMMAND | reg;
     return i2c_slave_write(i2c_dev->bus, i2c_dev->addr, &reg, &value, 1);
 }
 
-static uint8_t read_register(i2c_dev_t* i2c_dev, uint8_t reg)
+static uint8_t read_register(i2c_dev_t *i2c_dev, uint8_t reg)
 {
     uint8_t data[1];
     reg = TSL4531_REG_COMMAND | reg;
@@ -45,7 +45,7 @@ static uint8_t read_register(i2c_dev_t* i2c_dev, uint8_t reg)
     return data[0];
 }
 
-static uint16_t read_register_16(i2c_dev_t* i2c_dev, uint8_t low_register_addr)
+static uint16_t read_register_16(i2c_dev_t *i2c_dev, uint8_t low_register_addr)
 {
     uint16_t value = 0;
     uint8_t data[2];

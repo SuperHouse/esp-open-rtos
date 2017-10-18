@@ -108,7 +108,7 @@ bool onewire_write(int pin, uint8_t v) {
 bool onewire_write_bytes(int pin, const uint8_t *buf, size_t count) {
     size_t i;
 
-    for (i = 0 ; i < count ; i++) {
+    for (i = 0; i < count; i++) {
         if (!onewire_write(pin, buf[i])) {
             return false;
         }
@@ -138,7 +138,7 @@ bool onewire_read_bytes(int pin, uint8_t *buf, size_t count) {
     size_t i;
     int b;
 
-    for (i = 0 ; i < count ; i++) {
+    for (i = 0; i < count; i++) {
         b = onewire_read(pin);
         if (b < 0) return false;
         buf[i] = b;
@@ -434,7 +434,7 @@ uint16_t onewire_crc16(const uint8_t* input, size_t len, uint16_t crc_iv) {
         { 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0 };
 
     uint16_t i;
-    for (i = 0 ; i < len ; i++) {
+    for (i = 0; i < len; i++) {
       // Even though we're just copying a byte from the input,
       // we'll be doing 16-bit computation with it.
       uint16_t cdata = input[i];

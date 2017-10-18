@@ -58,13 +58,13 @@ inline static uint32_t round_div(uint32_t x, uint32_t y)
     return (x + y / 2) / y;
 }
 
-inline static void write_reg(i2c_dev_t* dev, uint8_t reg, uint8_t val)
+inline static void write_reg(i2c_dev_t *dev, uint8_t reg, uint8_t val)
 {
     if (i2c_slave_write(dev->bus, dev->addr, &reg, &val, 1))
         debug("Could not write 0x%02x to 0x%02x, bus %u, addr = 0x%02x", reg, val, dev->bus, dev->addr);
 }
 
-inline static uint8_t read_reg(i2c_dev_t* dev, uint8_t reg)
+inline static uint8_t read_reg(i2c_dev_t *dev, uint8_t reg)
 {
     uint8_t res = 0;
     if (i2c_slave_read(dev->bus, dev->addr, &reg, &res, 1))
@@ -72,18 +72,18 @@ inline static uint8_t read_reg(i2c_dev_t* dev, uint8_t reg)
     return res;
 }
 
-inline static void update_reg(i2c_dev_t* dev, uint8_t reg, uint8_t mask, uint8_t val)
+inline static void update_reg(i2c_dev_t *dev, uint8_t reg, uint8_t mask, uint8_t val)
 {
     write_reg(dev, reg, (read_reg(dev, reg) & ~mask) | val);
 }
 
-void pca9685_init(i2c_dev_t* dev)
+void pca9685_init(i2c_dev_t *dev)
 {
     // Enable autoincrement
     update_reg(dev, REG_MODE1, MODE1_AI, MODE1_AI);
 }
 
-bool pca9685_set_subaddr(i2c_dev_t* dev, uint8_t num, uint8_t subaddr, bool enable)
+bool pca9685_set_subaddr(i2c_dev_t *dev, uint8_t num, uint8_t subaddr, bool enable)
 {
     if (num > MAX_SUBADDR)
     {
@@ -99,19 +99,19 @@ bool pca9685_set_subaddr(i2c_dev_t* dev, uint8_t num, uint8_t subaddr, bool enab
     return true;
 }
 
-bool pca9685_is_sleeping(i2c_dev_t* dev)
+bool pca9685_is_sleeping(i2c_dev_t *dev)
 {
     return (read_reg(dev, REG_MODE1) & MODE1_SLEEP) != 0;
 }
 
-void pca9685_sleep(i2c_dev_t* dev, bool sleep)
+void pca9685_sleep(i2c_dev_t *dev, bool sleep)
 {
     update_reg(dev, REG_MODE1, MODE1_SLEEP, sleep ? MODE1_SLEEP : 0);
     if (!sleep)
         sdk_os_delay_us(WAKEUP_DELAY_US);
 }
 
-void pca9685_restart(i2c_dev_t* dev)
+void pca9685_restart(i2c_dev_t *dev)
 {
     uint8_t mode = read_reg(dev, REG_MODE1);
     if (mode & MODE1_RESTART)
@@ -122,32 +122,32 @@ void pca9685_restart(i2c_dev_t* dev)
     write_reg(dev, REG_MODE1, (mode & ~MODE1_SLEEP) | MODE1_RESTART);
 }
 
-bool pca9685_is_output_inverted(i2c_dev_t* dev)
+bool pca9685_is_output_inverted(i2c_dev_t *dev)
 {
     return (read_reg(dev, REG_MODE2) & MODE2_INVRT) != 0;
 }
 
-void pca9685_set_output_inverted(i2c_dev_t* dev, bool inverted)
+void pca9685_set_output_inverted(i2c_dev_t *dev, bool inverted)
 {
     update_reg(dev, REG_MODE2, MODE2_INVRT, inverted ? MODE2_INVRT : 0);
 }
 
-bool pca9685_get_output_open_drain(i2c_dev_t* dev)
+bool pca9685_get_output_open_drain(i2c_dev_t *dev)
 {
     return (read_reg(dev, REG_MODE2) & MODE2_OUTDRV) == 0;
 }
 
-void pca9685_set_output_open_drain(i2c_dev_t* dev, bool open_drain)
+void pca9685_set_output_open_drain(i2c_dev_t *dev, bool open_drain)
 {
     update_reg(dev, REG_MODE2, MODE2_OUTDRV, open_drain ? 0 : MODE2_OUTDRV);
 }
 
-uint8_t pca9685_get_prescaler(i2c_dev_t* dev)
+uint8_t pca9685_get_prescaler(i2c_dev_t *dev)
 {
     return read_reg(dev, REG_PRE_SCALE);
 }
 
-bool pca9685_set_prescaler(i2c_dev_t* dev, uint8_t prescaler)
+bool pca9685_set_prescaler(i2c_dev_t *dev, uint8_t prescaler)
 {
     if (prescaler < MIN_PRESCALER)
     {
@@ -161,12 +161,12 @@ bool pca9685_set_prescaler(i2c_dev_t* dev, uint8_t prescaler)
     return true;
 }
 
-uint16_t pca9685_get_pwm_frequency(i2c_dev_t* dev)
+uint16_t pca9685_get_pwm_frequency(i2c_dev_t *dev)
 {
     return INTERNAL_FREQ / ((uint32_t)4096 * (read_reg(dev, REG_PRE_SCALE) + 1));
 }
 
-bool pca9685_set_pwm_frequency(i2c_dev_t* dev, uint16_t freq)
+bool pca9685_set_pwm_frequency(i2c_dev_t *dev, uint16_t freq)
 {
     uint16_t prescaler = round_div(INTERNAL_FREQ, (uint32_t)4096 * freq) - 1;
     if (prescaler < MIN_PRESCALER || prescaler > MAX_PRESCALER)
@@ -178,7 +178,7 @@ bool pca9685_set_pwm_frequency(i2c_dev_t* dev, uint16_t freq)
     return pca9685_set_prescaler(dev, prescaler);
 }
 
-void pca9685_set_pwm_value(i2c_dev_t* dev, uint8_t channel, uint16_t val)
+void pca9685_set_pwm_value(i2c_dev_t *dev, uint8_t channel, uint16_t val)
 {
     uint8_t reg = channel > MAX_CHANNEL ? REG_ALL_LED : REG_LED_N(channel);
 
@@ -200,7 +200,7 @@ void pca9685_set_pwm_value(i2c_dev_t* dev, uint8_t channel, uint16_t val)
     }
 }
 
-bool pca9685_set_pwm_values(i2c_dev_t* dev, uint8_t first_ch, uint8_t channels, const uint16_t *values)
+bool pca9685_set_pwm_values(i2c_dev_t *dev, uint8_t first_ch, uint8_t channels, const uint16_t *values)
 {
     if (channels == 0 || first_ch + channels - 1 > MAX_CHANNEL)
     {

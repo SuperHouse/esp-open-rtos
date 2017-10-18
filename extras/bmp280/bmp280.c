@@ -60,12 +60,12 @@ void bmp280_init_default_params(bmp280_params_t *params)
     params->mode = BMP280_MODE_NORMAL;
     params->filter = BMP280_FILTER_OFF;
     params->oversampling_pressure = BMP280_STANDARD;
-    params->oversampling_temperature = BMP280_STANDARD ;
+    params->oversampling_temperature = BMP280_STANDARD;
     params->oversampling_humidity = BMP280_STANDARD;
     params->standby = BMP280_STANDBY_250;
 }
 
-static bool read_register16(i2c_dev_t* dev, uint8_t addr, uint16_t *value)
+static bool read_register16(i2c_dev_t *dev, uint8_t addr, uint16_t *value)
 {
     uint8_t d[] = {0, 0};
     if (!i2c_slave_read(dev->bus, dev->addr, &addr, d, sizeof(d))) {
@@ -75,7 +75,7 @@ static bool read_register16(i2c_dev_t* dev, uint8_t addr, uint16_t *value)
     return false;
 }
 
-static inline int read_data(i2c_dev_t* dev, uint8_t addr, uint8_t *value, uint8_t len)
+static inline int read_data(i2c_dev_t *dev, uint8_t addr, uint8_t *value, uint8_t len)
 {
     return i2c_slave_read(dev->bus, dev->addr, &addr, value, len);
 }
@@ -141,7 +141,7 @@ static bool read_hum_calibration_data(bmp280_t *dev)
     return false;
 }
 
-static int write_register8(i2c_dev_t* dev, uint8_t addr, uint8_t value)
+static int write_register8(i2c_dev_t *dev, uint8_t addr, uint8_t value)
 {
     return i2c_slave_write(dev->bus, dev->addr, &addr, &value, 1);
 }
