@@ -1847,7 +1847,7 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
 
         /* If the ssid and password are not valid then disable the AP interface. */
         if (!wifi_ap_ssid || strlen(wifi_ap_ssid) < 1 || strlen(wifi_ap_ssid) >= 32 ||
-            !wifi_ap_password || strlen(wifi_ap_ssid) < 8 || strlen(wifi_ap_password) >= 64) {
+            !wifi_ap_password || strlen(wifi_ap_password) < 8 || strlen(wifi_ap_password) >= 64) {
             wifi_ap_enable = 0;
         }
     }
@@ -1857,7 +1857,7 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
         wifi_mode = STATIONAP_MODE;
     else if (wifi_sta_enable)
         wifi_mode = STATION_MODE;
-    else
+    else if (wifi_ap_enable)
         wifi_mode = SOFTAP_MODE;
     sdk_wifi_set_opmode(wifi_mode);
 
@@ -2014,10 +2014,12 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
     if (wifi_ap_ssid) free(wifi_ap_ssid);
     if (wifi_ap_password) free(wifi_ap_password);
 
-    server_params *params = malloc(sizeof(server_params));
-    params->port = port;
-    params->wificfg_dispatch = wificfg_dispatch_list;
-    params->dispatch = dispatch;
+    if (wifi_mode != NULL_MODE) {
+        server_params *params = malloc(sizeof(server_params));
+        params->port = port;
+        params->wificfg_dispatch = wificfg_dispatch_list;
+        params->dispatch = dispatch;
 
-    xTaskCreate(server_task, "WiFi Cfg HTTP", 464, params, 2, NULL);
+        xTaskCreate(server_task, "WiFi Cfg HTTP", 464, params, 2, NULL);
+    }
 }
