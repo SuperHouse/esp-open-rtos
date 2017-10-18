@@ -88,9 +88,10 @@ typedef struct {
 /*
  * Start the Wifi Configuration http server task. The IP port number
  * and a path dispatch list are needed. The dispatch list can not be
- * stack allocated as it is passed to another task.
+ * stack allocated as it is passed to another task. Returns true if the
+ * selected AP was successfully started.
  */
-void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch);
+bool wificfg_init(uint32_t port, const wificfg_dispatch *dispatch);
 
 /*
  * Support for reading a form name or value from the socket. The name or value

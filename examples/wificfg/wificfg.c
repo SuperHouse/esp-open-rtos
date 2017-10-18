@@ -89,6 +89,7 @@ void user_init(void)
     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
     sdk_wifi_set_sleep_type(WIFI_SLEEP_MODEM);
-
-    wificfg_init(80, dispatch_list);
+    if (!wificfg_init(80, dispatch_list)) {
+        printf("Failed to start AP\n");
+    }
 }

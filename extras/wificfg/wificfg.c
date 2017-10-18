@@ -1776,24 +1776,60 @@ static void dns_task(void *pvParameters)
     }
 }
 
+/**
+ * @brief      Sanitize SSID. If configuring an AP containing the characters in
+ *             'illegals', the ESP will start an insecure AP named ESP_<macaddr>
+ *             Any illegal characters will be replaced by _
+ *
+ * @param      ssid   the SSID
+ *
+ * @return     true if name got sanitized.
+ */
+static bool sanitize_ssid(char *ssid)
+{
+    bool sanitized = false;
+    char *illegals = "+-<> "; // There might me more characters that are illegal
+    uint8_t num_illegals = strlen(illegals);
+    if (!ssid) {
+        return sanitized;
+    }
+    while(*ssid) {
+        for (uint32_t i = 0; i < num_illegals; i++) {
+            if (*ssid == illegals[i]) {
+                *ssid = '_';
+                sanitized = true;
+                break;
+            }
+        }
+        ssid++;
+    }
+    return sanitized;
+}
 
-void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
+bool wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
 {
     char *wifi_sta_ssid = NULL;
     char *wifi_sta_password = NULL;
     char *wifi_ap_ssid = NULL;
     char *wifi_ap_password = NULL;
+    bool ap_started = false;
 
     uint32_t base_addr;
     uint32_t num_sectors;
     if (sysparam_get_info(&base_addr, &num_sectors) != SYSPARAM_OK) {
         printf("Warning: WiFi config, sysparam not initialized\n");
-        return;
+        return false;
     }
 
     sysparam_get_string("wifi_ap_ssid", &wifi_ap_ssid);
+    if (sanitize_ssid(wifi_ap_ssid)) {
+        sysparam_set_string("wifi_ap_ssid", wifi_ap_ssid);
+    }
     sysparam_get_string("wifi_ap_password", &wifi_ap_password);
     sysparam_get_string("wifi_sta_ssid", &wifi_sta_ssid);
+    if (sanitize_ssid(wifi_sta_ssid)) {
+        sysparam_set_string("wifi_sta_ssid", wifi_sta_ssid);
+    }
     sysparam_get_string("wifi_sta_password", &wifi_sta_password);
 
     int8_t wifi_sta_enable = 1;
@@ -1820,7 +1856,7 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
     /* Validate the configuration. */
 
     if (wifi_sta_enable && (!wifi_sta_ssid || !wifi_sta_password ||
-                            strlen(wifi_sta_ssid) < 1 ||
+                            strlen(wifi_sta_ssid) < 8 ||
                             strlen(wifi_sta_ssid) > 32 ||
                             !wifi_sta_password ||
                             strlen(wifi_sta_password) < 8 ||
@@ -1845,9 +1881,11 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
             }
         }
 
-        /* If the ssid and password are not valid then disable the AP interface. */
-        if (!wifi_ap_ssid || strlen(wifi_ap_ssid) < 1 || strlen(wifi_ap_ssid) >= 32 ||
-            !wifi_ap_password || strlen(wifi_ap_ssid) < 8 || strlen(wifi_ap_password) >= 64) {
+        /* If the ssid and password are not valid then disable the AP interface.
+           The SSID must be at least 8 characters, if not we will get an
+           insecure AP named ESP_<macaddr> */
+        if (!wifi_ap_ssid || strlen(wifi_ap_ssid) < 8 || strlen(wifi_ap_ssid) >= 32 ||
+            !wifi_ap_password || strlen(wifi_ap_password) < 8 || strlen(wifi_ap_password) >= 64) {
             wifi_ap_enable = 0;
         }
     }
@@ -1857,8 +1895,10 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
         wifi_mode = STATIONAP_MODE;
     else if (wifi_sta_enable)
         wifi_mode = STATION_MODE;
-    else
+    else if (wifi_ap_enable)
         wifi_mode = SOFTAP_MODE;
+    else
+        printf("Warning: No AP/STA enabled by wificfg.\n");
     sdk_wifi_set_opmode(wifi_mode);
 
     if (wifi_sta_enable) {
@@ -2014,10 +2054,13 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
     if (wifi_ap_ssid) free(wifi_ap_ssid);
     if (wifi_ap_password) free(wifi_ap_password);
 
-    server_params *params = malloc(sizeof(server_params));
-    params->port = port;
-    params->wificfg_dispatch = wificfg_dispatch_list;
-    params->dispatch = dispatch;
-
-    xTaskCreate(server_task, "WiFi Cfg HTTP", 464, params, 2, NULL);
+    if (wifi_mode != NULL_MODE) {
+        server_params *params = malloc(sizeof(server_params));
+        params->port = port;
+        params->wificfg_dispatch = wificfg_dispatch_list;
+        params->dispatch = dispatch;
+        xTaskCreate(server_task, "WiFi Cfg HTTP", 464, params, 2, NULL);
+        ap_started = true;
+    }
+    return ap_started;
 }
