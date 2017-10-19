@@ -1,8 +1,6 @@
 # BME680 Driver Examples
 
-These examples references two addtional drivers **i2c** and **bme680**, which are provided in the `../../extras` folder.
-
-If you plan to use one or both of this drivers in your own projects, please check the main development pages for updated versions or reported issues.
+These examples demonstrate the usage of the BME680 driver with only one and multiple BME680 sensors.
 
 ## Hardware setup
 
