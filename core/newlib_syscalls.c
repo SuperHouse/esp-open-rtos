@@ -138,7 +138,7 @@ __attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len
         return lwip_read(fd, ptr, len);
     }
     if (fd == r->_stdin->_file) {
-        _read_stdin_r(r, fd, ptr, len);
+        return _read_stdin_r(r, fd, ptr, len);
     }
     r->_errno = EBADF;
     return -1;
