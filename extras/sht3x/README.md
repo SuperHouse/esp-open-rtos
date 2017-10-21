@@ -60,13 +60,13 @@ There are two different error levels that are ORed into one single ```error_code
 
 ## Repeatability
 
-The SHT3x sensor supports **three levels of repeatability** (low, medium and high). Repeatability is the variation in measurement results taken by the sensor under the same conditions, and in a short period of time. It is a measure for the noise on the physical sensor output. The higher the repeatability the smaller are changes in the output subsequent measurements.
+The SHT3x sensor supports **three levels of repeatability** (low, medium and high). Repeatability is the variation in measurement results taken by the sensor under the same conditions, and in a short period of time. It is a measure for the noise on the physical sensor output. The higher the repeatability the smaller are changes in the output of subsequent measurements.
 
 The repeatability settings influences the measurement duration as well as the power consumption of the sensor. The measurement takes 3 ms with low repeatability, 5 ms with medium repeatability and 13.5 ms with high repeatability. That is, the measurement produces a noticeable delay in execution.
 
 While the sensor measures at the lowest repeatability, the average current consumption is 800 μA. That is, the higher the repeatability level, the longer the measurement takes and the higher the power consumption. The sensor consumes only 0.2 μA in standby mode.
 
-The driver uses high repeatability by default. The user task can change this by setting member ```repeatability``` of the sensor device data structure before function ```sht3x_start_measurement``` is called.
+The repeatability used for a measurement is specified as parameter of ```sht3x_start_measurement```.
 
 
 ## Usage
@@ -111,24 +111,24 @@ Thus, in this mode the user task could look like the following:
 ```
 void user_task (void *pvParameters)
 {
-    sht3x_values_t values;
+    float temperature;
+    float humidity;
 
     // Start periodic measurements with 1 measurement per second.
-    sht3x_start_measurement (sensor, periodic_1mps);
+    sht3x_start_measurement (sensor, sht3x_periodic_1mps, sht3x_high);
 
     // Wait until first measurement is ready (constant time of at least 30 ms
     // or the duration returned from *sht3x_get_measurement_duration*).
-    vTaskDelay (sht3x_get_measurement_duration(sensor));
+    vTaskDelay (sht3x_get_measurement_duration(sht3x_high));
 
     TickType_t last_wakeup = xTaskGetTickCount();
     
     while (1) 
     {
         // Get the values and do something with them.
-        if (sht3x_get_results (sensor, &values))
+        if (sht3x_get_results (sensor, &temperature, &humidity))
             printf("%.3f SHT3x Sensor: %.2f °C, %.2f %%\n", 
-                   (double)sdk_system_get_time()*1e-3,  
-                   values.temperature, values.humidity);
+                   (double)sdk_system_get_time()*1e-3, temperature, humidity);
                    
         // Wait until 2 seconds (cycle time) are over.
         vTaskDelayUntil(&last_wakeup, 2000 / portTICK_PERIOD_MS);
@@ -137,7 +137,7 @@ void user_task (void *pvParameters)
 
 ```
 
-At the beginning of the task, the periodic measurement is started with function ```sht3x_start_measurement``` and a rate of 1 measurement per second. The task is then delayed with function ```vTaskDelay``` to wait for first measurement results. The duration can be either a constant time of at least 30 ms or the duration returned by ```sht3x_get_measurement_duration```, as in the example. Inside the task loop, simply the measurement results are fetched periodically using function ```sht3x_get_results``` every 2 seconds.
+At the beginning of the task, the periodic measurement is started with function ```sht3x_start_measurement``` at high repeatability level and a rate of 1 measurement per second. The task is then delayed with function ```vTaskDelay``` to wait for first measurement results. The duration can be either a constant time of at least 30 ms or the duration returned by ```sht3x_get_measurement_duration```, as in the example. Inside the task loop, simply the measurement results are fetched periodically using function ```sht3x_get_results``` every 2 seconds.
 
 **Please note:** The rate of fetching the measurement results must be not greater than the rate of periodic measurements of the sensor, however, it *should be less* to avoid conflicts caused by the timing tolerance of the sensor.
 
@@ -149,24 +149,24 @@ Thus the user task could look like the following:
 ```
 void user_task (void *pvParameters)
 {
-    sht3x_values_t values;
+    float temperature;
+    float humidity;
 
     TickType_t last_wakeup = xTaskGetTickCount();
 
     while (1) 
     {
-        // Trigger one measurement in single shot mode.
-        sht3x_start_measurement (sensor, single_shot);
+        // Trigger one measurement in single shot mode with high repeatability.
+        sht3x_start_measurement (sensor, sht3x_single_shot, sht3x_high);
         
         // Wait until measurement is ready (constant time of at least 30 ms
         // or the duration returned from *sht3x_get_measurement_duration*).
-        vTaskDelay (sht3x_get_measurement_duration(sensor));
+        vTaskDelay (sht3x_get_measurement_duration(sht3x_high));
         
         // retrieve the values and do something with them
-        if (sht3x_get_results (sensor, &values))
+        if (sht3x_get_results (sensor, &temperature, &humidity))
             printf("%.3f SHT3x Sensor: %.2f °C, %.2f %%\n", 
-                   (double)sdk_system_get_time()*1e-3,  
-                   values.temperature, values.humidity);
+                   (double)sdk_system_get_time()*1e-3, temperature, humidity);
 
         // wait until 5 seconds are over
         vTaskDelayUntil(&last_wakeup, 5000 / portTICK_PERIOD_MS);
@@ -222,34 +222,33 @@ static sht3x_sensor_t* sensor;    // sensor device data structure
 
 /*
  * User task that triggers a measurement every 5 seconds. Due to
- * power efficiency reasons, it uses the SHT3x *single_shot*.
+ * power efficiency reasons, it uses the SHT3x *sht3x_single_shot*.
  */
 void user_task (void *pvParameters)
 {
-    sht3x_values_t values;
+    float temperature;
+    float humidity;
 
     TickType_t last_wakeup = xTaskGetTickCount();
 
     while (1) 
     {
-        // Trigger one measurement in single shot mode.
-        sht3x_start_measurement (sensor, single_shot);
+        // Trigger one measurement in single shot mode with high repeatability.
+        sht3x_start_measurement (sensor, sht3x_single_shot, sht3x_high);
         
         // Wait until measurement is ready (constant time of at least 30 ms
         // or the duration returned from *sht3x_get_measurement_duration*).
-        vTaskDelay (sht3x_get_measurement_duration(sensor));
+        vTaskDelay (sht3x_get_measurement_duration(sht3x_high));
         
         // retrieve the values and do something with them
-        if (sht3x_get_results (sensor, &values))
+        if (sht3x_get_results (sensor, &temperature, &humidity))
             printf("%.3f SHT3x Sensor: %.2f °C, %.2f %%\n", 
-                   (double)sdk_system_get_time()*1e-3,  
-                   values.temperature, values.humidity);
+                   (double)sdk_system_get_time()*1e-3, temperature, humidity);
 
         // wait until 5 seconds are over
         vTaskDelayUntil(&last_wakeup, 5000 / portTICK_PERIOD_MS);
     }
 }
-
 
 void user_init(void)
 {

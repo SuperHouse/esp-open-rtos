@@ -15,7 +15,7 @@
  *   +------------------------+     +----------+
  */
 
-// #define SINGLE_SHOT_MODE
+#define SINGLE_SHOT_MODE
  
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
@@ -36,28 +36,28 @@ static sht3x_sensor_t* sensor;    // sensor device data structure
 #ifdef SINGLE_SHOT_MODE
 /*
  * User task that triggers a measurement every 5 seconds. Due to
- * power efficiency reasons, it uses the SHT3x *single_shot*.
+ * power efficiency reasons, it uses the SHT3x *sht3x_single_shot*.
  */
 void user_task (void *pvParameters)
 {
-    sht3x_values_t values;
+    float temperature;
+    float humidity;
 
     TickType_t last_wakeup = xTaskGetTickCount();
 
     while (1) 
     {
-        // Trigger one measurement in single shot mode.
-        sht3x_start_measurement (sensor, single_shot);
+        // Trigger one measurement in single shot mode with high repeatability.
+        sht3x_start_measurement (sensor, sht3x_single_shot, sht3x_high);
         
         // Wait until measurement is ready (constant time of at least 30 ms
         // or the duration returned from *sht3x_get_measurement_duration*).
-        vTaskDelay (sht3x_get_measurement_duration(sensor));
+        vTaskDelay (sht3x_get_measurement_duration(sht3x_high));
         
         // retrieve the values and do something with them
-        if (sht3x_get_results (sensor, &values))
+        if (sht3x_get_results (sensor, &temperature, &humidity))
             printf("%.3f SHT3x Sensor: %.2f °C, %.2f %%\n", 
-                   (double)sdk_system_get_time()*1e-3,  
-                   values.temperature, values.humidity);
+                   (double)sdk_system_get_time()*1e-3, temperature, humidity);
 
         // wait until 5 seconds are over
         vTaskDelayUntil(&last_wakeup, 5000 / portTICK_PERIOD_MS);
@@ -67,28 +67,28 @@ void user_task (void *pvParameters)
 /*
  * User task that fetches latest measurement results of sensor every 2
  * seconds. It starts the SHT3x in periodic mode with 1 measurements per
- * second (*periodic_1mps*).
+ * second (*sht3x_periodic_1mps*).
  */
 void user_task (void *pvParameters)
 {
-    sht3x_values_t values;
+    float temperature;
+    float humidity;
 
     // Start periodic measurements with 1 measurement per second.
-    sht3x_start_measurement (sensor, periodic_1mps);
+    sht3x_start_measurement (sensor, sht3x_periodic_1mps, sht3x_high);
 
     // Wait until first measurement is ready (constant time of at least 30 ms
     // or the duration returned from *sht3x_get_measurement_duration*).
-    vTaskDelay (sht3x_get_measurement_duration(sensor));
+    vTaskDelay (sht3x_get_measurement_duration(sht3x_high));
 
     TickType_t last_wakeup = xTaskGetTickCount();
     
     while (1) 
     {
         // Get the values and do something with them.
-        if (sht3x_get_results (sensor, &values))
+        if (sht3x_get_results (sensor, &temperature, &humidity))
             printf("%.3f SHT3x Sensor: %.2f °C, %.2f %%\n", 
-                   (double)sdk_system_get_time()*1e-3,  
-                   values.temperature, values.humidity);
+                   (double)sdk_system_get_time()*1e-3, temperature, humidity);
                    
         // Wait until 2 seconds (cycle time) are over.
         vTaskDelayUntil(&last_wakeup, 2000 / portTICK_PERIOD_MS);

@@ -93,25 +93,17 @@ extern "C" {
  */
 typedef uint8_t sht3x_raw_data_t [SHT3x_RAW_DATA_SIZE];
 
-/**
- * @brief	sensor values type
- */
-typedef struct {
-    float   temperature;    // temperature in degree Celcius
-    float   humidity;       // humidity in percent
-} sht3x_values_t;
-
 
 /**
  * @brief   possible measurement modes
  */
 typedef enum {
-    single_shot = 0,    // one single measurement
-    periodic_05mps,     // periodic with 0.5 measurements per second (mps)
-    periodic_1mps,      // periodic with   1 measurements per second (mps)
-    periodic_2mps,      // periodic with   2 measurements per second (mps)
-    periodic_4mps,      // periodic with   4 measurements per second (mps)
-    periodic_10mps      // periodic with  10 measurements per second (mps)
+    sht3x_single_shot = 0,  // one single measurement
+    sht3x_periodic_05mps,   // periodic with 0.5 measurements per second (mps)
+    sht3x_periodic_1mps,    // periodic with   1 measurements per second (mps)
+    sht3x_periodic_2mps,    // periodic with   2 measurements per second (mps)
+    sht3x_periodic_4mps,    // periodic with   4 measurements per second (mps)
+    sht3x_periodic_10mps    // periodic with  10 measurements per second (mps)
 } sht3x_mode_t;
     
     
@@ -119,9 +111,9 @@ typedef enum {
  * @brief   possible repeatability modes
  */
 typedef enum {
-    high = 0,
-    medium,
-    low
+    sht3x_high = 0,
+    sht3x_medium,
+    sht3x_low
 } sht3x_repeat_t;
 
 /**
@@ -129,7 +121,7 @@ typedef enum {
  */
 typedef struct {
 
-    uint32_t        error_code;       // 
+    uint32_t        error_code;      // combined error codes
     
     uint8_t         bus;             // I2C bus at which sensor is connected
     uint8_t         addr;            // I2C slave address of the sensor
@@ -161,7 +153,8 @@ sht3x_sensor_t* sht3x_init_sensor (uint8_t bus, uint8_t addr);
  * @brief	Start single shot or periodic measurements
  *
  * The function starts the measurement either in *single shot mode* 
- * (exactly one measurement) or *periodic mode* (periodic measurements). 
+ * (exactly one measurement) or *periodic mode* (periodic measurements)
+ * with given repeatabilty.
  *
  * In the *single shot mode*, this function has to be called for each
  * measurement. The measurement duration has to be waited every time
@@ -176,25 +169,27 @@ sht3x_sensor_t* sht3x_init_sensor (uint8_t bus, uint8_t addr);
  * results at a lower rate. The rate of the periodic measurements is defined
  * by the parameter *mode*.
  *
- * @param   dev   pointer to sensor device data structure
- * @param   mode  measurement mode, see type *sht3x_mode_t*
- * @return        measurement duration given in RTOS ticks or -1 on error
+ * @param   dev         pointer to sensor device data structure
+ * @param   mode        measurement mode, see type *sht3x_mode_t*
+ * @param   repeat      repeatability, see type *sht3x_repeat_t*
+ * @return              true on success, false on error
  */
-bool sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode);
+bool sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode,
+                              sht3x_repeat_t repeat);
 
 /**
  * @brief   Get the duration of a measurement in RTOS ticks.
  *
  * The function returns the duration in RTOS ticks required by the sensor to
- * perform a measurement with configured repeatability. Once a measurement is
+ * perform a measurement for the given repeatability. Once a measurement is
  * started with function *sht3x_start_measurement* the user task can use this
  * duration in RTOS ticks directly to wait with function *vTaskDelay* until
  * the measurement results can be fetched.
  *
- * @param   dev   pointer to sensor device data structure
- * @return        measurement duration given in RTOS ticks
+ * @param   repeat      repeatability, see type *sht3x_repeat_t*
+ * @return              measurement duration given in RTOS ticks
  */
-uint8_t sht3x_get_measurement_duration (sht3x_sensor_t* dev);
+uint8_t sht3x_get_measurement_duration (sht3x_repeat_t repeat);
 
 
 /**
@@ -212,21 +207,22 @@ uint8_t sht3x_get_measurement_duration (sht3x_sensor_t* dev);
  *
  * In case that there are no new data that can be read, the function fails.
  * 
- * @param   dev       pointer to sensor device data structure
- * @param   raw_data  byte array in which raw data are stored 
- * @return            true on success, false on error
+ * @param   dev         pointer to sensor device data structure
+ * @param   raw_data    byte array in which raw data are stored 
+ * @return              true on success, false on error
  */
 bool sht3x_get_raw_data(sht3x_sensor_t* dev, sht3x_raw_data_t raw_data);
 
 /**
  * @brief	Computes sensor values from raw data
  *
- * @param   raw_data  byte array that contains raw data  
- * @param   values    pointer to data structure in which results are stored
- * @return            true on success, false on error
+ * @param   raw_data    byte array that contains raw data  
+ * @param   temperature returns temperature in degree Celsius   
+ * @param   humidity    returns humidity in percent
+ * @return              true on success, false on error
  */
 bool sht3x_compute_values (sht3x_raw_data_t raw_data, 
-                           sht3x_values_t* values);
+                           float* temperature, float* humidity);
 
 /**
  * @brief	Get measurement results in form of sensor values
@@ -236,11 +232,13 @@ bool sht3x_compute_values (sht3x_raw_data_t raw_data,
  * 
  * In case that there are no results that can be read, the function fails.
  *
- * @param   dev       pointer to sensor device data structure
- * @param   values    pointer to data structure in which results are stored
- * @return            true on success, false on error
+ * @param   dev         pointer to sensor device data structure
+ * @param   temperature returns temperature in degree Celsius   
+ * @param   humidity    returns humidity in percent
+ * @return              true on success, false on error
  */
-bool sht3x_get_results (sht3x_sensor_t* dev, sht3x_values_t* values);
+bool sht3x_get_results (sht3x_sensor_t* dev, 
+                        float* temperature, float* humidity);
 
 
 #ifdef __cplusplus

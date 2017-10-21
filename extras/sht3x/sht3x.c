@@ -55,8 +55,6 @@
 #include "espressif/esp_common.h"
 #include "espressif/sdk_private.h"
 
-// #define SHT3X_CLOCK_STRETCHING
-
 #define SHT3x_STATUS_CMD               0xF32D
 #define SHT3x_CLEAR_STATUS_CMD         0x3041
 #define SHT3x_RESET_CMD                0x30A2
@@ -134,8 +132,7 @@ sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
     // inititalize sensor data structure
     dev->bus  = bus;
     dev->addr = addr;
-    dev->mode = single_shot;
-    dev->repeatability = high;
+    dev->mode = sht3x_single_shot;
     dev->meas_start_time = 0;
     dev->meas_started = false;
     dev->meas_first = false;
@@ -163,15 +160,16 @@ sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
 }
 
 
-bool sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode)
+bool sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode, sht3x_repeat_t repeat)
 {
     if (!dev) return false;
     
     dev->error_code = SHT3x_OK;
     dev->mode = mode;
+    dev->repeatability = repeat;
     
     // start measurement according to selected mode and return an duration estimate
-    if (!sht3x_send_command(dev, SHT3x_MEASURE_CMD[dev->mode][dev->repeatability]))
+    if (!sht3x_send_command(dev, SHT3x_MEASURE_CMD[mode][repeat]))
     {
         error_dev ("could not send start measurment command", __FUNCTION__, dev);
         dev->error_code |= SHT3x_SEND_MEAS_CMD_FAILED;
@@ -186,11 +184,9 @@ bool sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode)
 }
 
 
-uint8_t sht3x_get_measurement_duration (sht3x_sensor_t* dev)
+uint8_t sht3x_get_measurement_duration (sht3x_repeat_t repeat)
 {
-    if (!dev) return 0;
-    
-    return SHT3x_MEAS_DURATION_TICKS[dev->repeatability];  // in RTOS ticks
+    return SHT3x_MEAS_DURATION_TICKS[repeat];  // in RTOS ticks
 }
 
 
@@ -234,7 +230,7 @@ bool sht3x_get_raw_data(sht3x_sensor_t* dev, sht3x_raw_data_t raw_data)
     dev->meas_first = false;
     
     // reset measurement started flag in single shot mode
-    if (dev->mode == single_shot)
+    if (dev->mode == sht3x_single_shot)
         dev->meas_started = false;
     
     // check temperature crc
@@ -257,27 +253,30 @@ bool sht3x_get_raw_data(sht3x_sensor_t* dev, sht3x_raw_data_t raw_data)
 }
 
 
-bool sht3x_compute_values (sht3x_raw_data_t raw_data, sht3x_values_t* values)
+bool sht3x_compute_values (sht3x_raw_data_t raw_data, float* temperature, float* humidity)
 {
-    if (!raw_data || !values) return false;
+    if (!raw_data) return false;
 
-    values->temperature = ((((raw_data[0] * 256.0) + raw_data[1]) * 175) / 65535.0) - 45;
-    values->humidity    = ((((raw_data[3] * 256.0) + raw_data[4]) * 100) / 65535.0);
+    if (temperature) 
+        *temperature = ((((raw_data[0] * 256.0) + raw_data[1]) * 175) / 65535.0) - 45;
+
+    if (humidity)
+        *humidity = ((((raw_data[3] * 256.0) + raw_data[4]) * 100) / 65535.0);
   
     return true;    
 }
 
 
-bool sht3x_get_results (sht3x_sensor_t* dev, sht3x_values_t* values)
+bool sht3x_get_results (sht3x_sensor_t* dev, float* temperature, float* humidity)
 {
-    if (!dev || !values) return false;
+    if (!dev || (!temperature && !humidity)) return false;
 
     sht3x_raw_data_t raw_data;
     
     if (!sht3x_get_raw_data (dev, raw_data))
         return false;
         
-    return sht3x_compute_values (raw_data, values);
+    return sht3x_compute_values (raw_data, temperature, humidity);
 }
 
 /* Functions for internal use only */
