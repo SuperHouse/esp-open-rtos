@@ -103,7 +103,7 @@ __attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, i
         return lwip_write(fd, ptr, len);
     }
     if (fd == r->_stdout->_file) {
-        current_stdout_write_r(r, fd, ptr, len);
+        return current_stdout_write_r(r, fd, ptr, len);
     }
     r->_errno = EBADF;
     return -1;
