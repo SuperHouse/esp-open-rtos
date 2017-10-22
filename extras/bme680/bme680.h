@@ -145,9 +145,9 @@ bme680_sensor_t* bme680_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs_pin);
  * @brief	Force one single TPHG measurement
  *
  * The function triggers the sensor to start one THPG measurement cycle in
- * forced mode, the only measurement mode supported by the BME680. Measurement
- * parameters for the measurement like oversampling rates, IIR filter sizes
- * and heater profile can be configured before.
+ * forced mode, the only measurement mode supported by the BME680. Parameters
+ * for the measurement like oversampling rates, IIR filter sizes and heater 
+ * profile can be configured before.
  *
  * On success, the function returns an estimated measurement duration given
  * in RTOS ticks. This is the time in ticks needed by the sensor before

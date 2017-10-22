@@ -36,6 +36,13 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * The information provided is believed to be accurate and reliable. The
+ * copyright holder assumes no responsibility for the consequences of use
+ * of such information nor for any infringement of patents or other rights
+ * of third parties which may result from its use. No license is granted by
+ * implication or otherwise under any patent or patent rights of the copyright
+ * holder.
  */
 
 #include <string.h>
@@ -340,11 +347,13 @@ bme680_sensor_t* bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs)
         dev->calib_data.par_gh2 = lsb_msb_to_type ( int16_t, buf, BME680_CDM_GH2);
         dev->calib_data.par_gh3 = lsb_to_type     (  int8_t, buf, BME680_CDM_GH3);
 
-        dev->calib_data.res_heat_range = (lsb_to_type (uint8_t, buf ,BME680_CDM_RHR) & BME680_RHR_BITS) >>
+        dev->calib_data.res_heat_range = (lsb_to_type (uint8_t, buf ,BME680_CDM_RHR) & 
+                                                       BME680_RHR_BITS) >>
                                                        BME680_RHR_SHIFT;
         dev->calib_data.res_heat_val   = (lsb_to_type ( int8_t, buf, BME680_CDM_RHV));
-        dev->calib_data.range_sw_err   = (lsb_to_type ( int8_t, buf, BME680_CDM_RSWE) & BME680_RSWE_BITS) >>
-                                                       BME680_RSWE_SHIFT;
+        dev->calib_data.range_sw_err   = (lsb_to_type ( int8_t, buf, BME680_CDM_RSWE) & 
+                                                        BME680_RSWE_BITS) >>
+                                                        BME680_RSWE_SHIFT;
     }
     else
     {
@@ -830,9 +839,15 @@ static int16_t bme680_convert_temperature (bme680_sensor_t *dev, uint32_t raw_te
 
 
 /**
- * @brief   Calculate pressure from raw pressure value
- * @ref     [https://github.com/BoschSensortec/BME680_driver]
- * @ref     BME280 datasheet, page 50
+ * @brief       Calculate pressure from raw pressure value
+ * @copyright   Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
+ *
+ * The algorithm was extracted from the original Bosch Sensortec BME680 driver
+ * published as open source. Divisions and multiplications by potences of 2
+ * were replaced by shift operations for effeciency reasons.
+ *
+ * @ref         [BME680_diver](https://github.com/BoschSensortec/BME680_driver)
+ * @ref         BME280 datasheet, page 50
  */
 static uint32_t bme680_convert_pressure (bme680_sensor_t *dev, uint32_t raw_pressure)
 {
@@ -843,33 +858,42 @@ static uint32_t bme680_convert_pressure (bme680_sensor_t *dev, uint32_t raw_pres
     int32_t var1;
     int32_t var2;
     int32_t var3;
+    int32_t var4;
     int32_t pressure;
     
-    var1 = (((int32_t) cd->t_fine) / 2) - 64000;
-    var2 = ((var1 / 4) * (var1 / 4)) / 2048;
-    var2 = ((var2) * (int32_t) cd->par_p6) / 4;
-    var2 = var2 + ((var1 * (int32_t) cd->par_p5) * 2);
-    var2 = (var2 / 4) + ((int32_t) cd->par_p4 * 65536);
-    var1 = ((var1 / 4) * (var1 / 4)) / 8192;
-    var1 = (((var1) * ((int32_t) cd->par_p3 * 32)) / 8) + (((int32_t) cd->par_p2 * var1) / 2);
-    var1 = var1 / 262144;
-
-    var1 = ((32768 + var1) * (int32_t) cd->par_p1) / 32768;
-    pressure = (int32_t) (1048576 - raw_pressure);
-    pressure = (int32_t) ((pressure - (var2 / 4096)) * (3125));
-    pressure = ((pressure / var1) * 2);
-    var1 = ((int32_t) cd->par_p9 * (int32_t) (((pressure / 8) * (pressure / 8)) / 8192)) / 4096;
-    var2 = ((int32_t) (pressure / 4) * (int32_t) cd->par_p8) / 8192;
-    var3 = ((int32_t) (pressure / 256) * (int32_t) (pressure / 256) * (int32_t) (pressure / 256)
-                                       * (int32_t) cd->par_p10) / 131072;
-    pressure = (int32_t) (pressure) + ((var1 + var2 + var3 + ((int32_t) cd->par_p7 * 128)) / 16);
+    var1 = (((int32_t) cd->t_fine) >> 1) - 64000;
+    var2 = ((((var1 >> 2) * (var1 >> 2)) >> 11) * (int32_t) cd->par_p6) >> 2;
+    var2 = ((var2) * (int32_t) cd->par_p6) >> 2;
+    var2 = var2 + ((var1 * (int32_t)cd->par_p5) << 1);
+    var2 = (var2 >> 2) + ((int32_t) cd->par_p4 << 16);
+    var1 = (((var1 >> 2) * (var1 >> 2)) >> 13);  
+    var1 = (((var1) * ((int32_t) cd->par_p3 << 5)) >> 3) + (((int32_t) cd->par_p2 * var1) >> 1);
+    var1 = var1 >> 18;
+    var1 = ((32768 + var1) * (int32_t) cd->par_p1) >> 15;
+    pressure = 1048576 - raw_pressure;
+    pressure = (int32_t)((pressure - (var2 >> 12)) * ((uint32_t)3125));
+    var4 = (1 << 31);
+    pressure = (pressure >= var4) ? (( pressure / (uint32_t) var1) << 1)
+                                  : ((pressure << 1) / (uint32_t) var1);
+    var1 = ((int32_t) cd->par_p9 * (int32_t) (((pressure >> 3) * (pressure >> 3)) >> 13)) >> 12;
+    var2 = ((int32_t)(pressure >> 2) * (int32_t) cd->par_p8) >> 13;
+    var3 = ((int32_t)(pressure >> 8) * (int32_t)(pressure >> 8) 
+                                     * (int32_t)(pressure >> 8) 
+                                     * (int32_t)cd->par_p10) >> 17;
+    pressure = (int32_t)(pressure) + ((var1 + var2 + var3 + ((int32_t)cd->par_p7 << 7)) >> 4);
 
     return (uint32_t) pressure;
 }
 
 /**
- * @brief   Calculate humidty from raw humidity data
- * @ref     [https://github.com/BoschSensortec/BME680_driver]
+ * @brief       Calculate humidty from raw humidity data
+ * @copyright   Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
+ *
+ * The algorithm was extracted from the original Bosch Sensortec BME680 driver
+ * published as open source. Divisions and multiplications by potences of 2
+ * were replaced by shift operations for effeciency reasons.
+ *
+ * @ref         [BME680_diver](https://github.com/BoschSensortec/BME680_driver)
  */
 static uint32_t bme680_convert_humidity (bme680_sensor_t *dev, uint16_t raw_humidity)
 {
@@ -887,12 +911,12 @@ static uint32_t bme680_convert_humidity (bme680_sensor_t *dev, uint16_t raw_humi
     int32_t humidity;
 
     temp_scaled = (((int32_t) cd->t_fine * 5) + 128) >> 8;
-    var1 = (int32_t) (raw_humidity - ((int32_t) ((int32_t) cd->par_h1 << 4)))
-            - (((temp_scaled * (int32_t) cd->par_h3) / ((int32_t) 100)) >> 1);
-    var2 = ((int32_t) cd->par_h2
-            * (((temp_scaled * (int32_t) cd->par_h4) / ((int32_t) 100))
-                    + (((temp_scaled * ((temp_scaled * (int32_t) cd->par_h5) / ((int32_t) 100))) >> 6)
-                            / ((int32_t) 100)) + (int32_t) (1 << 14))) >> 10;
+    var1 = (int32_t) (raw_humidity - ((int32_t) ((int32_t) cd->par_h1 << 4))) - 
+                     (((temp_scaled * (int32_t) cd->par_h3) / ((int32_t) 100)) >> 1);
+    var2 = ((int32_t) cd->par_h2 * 
+            (((temp_scaled * (int32_t) cd->par_h4) / ((int32_t) 100)) +
+             (((temp_scaled * ((temp_scaled * (int32_t) cd->par_h5) / ((int32_t) 100))) >> 6) /
+              ((int32_t) 100)) + (int32_t) (1 << 14))) >> 10;
     var3 = var1 * var2;
     var4 = (int32_t) cd->par_h6 << 7;
     var4 = ((var4) + ((temp_scaled * (int32_t) cd->par_h7) / ((int32_t) 100))) >> 4;
