@@ -33,14 +33,4 @@ If you want to run examples with **two sensors**, you could do this with only on
 
 ## Example description
 
-Examples show how to use the driver in single shot as well as in periodic mode.
-
-
-### _sht3x_one_sensor_
-  
-The simple example show how to use the driver with one SHT3x sensor. It demonstrates two different user task implementations, one in *single shot mode* and one in *periodic mode*. 
-
-### _sht3x_two_sensors_
-
-This simple example shows how to use the driver for two sensors. As with the example _sht3x_one_sensor_, it uses two different user task implementations.
-
+It shows different user task implementations in *single shot mode* and *periodic mode*. In *single shot* mode either low level or high level functions are used. Constants SINGLE_SHOT_LOW_LEVEL and SINGLE_SHOT_HIGH_LEVEL controls which task implementation is used.

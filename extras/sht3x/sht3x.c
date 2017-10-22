@@ -160,6 +160,24 @@ sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
 }
 
 
+bool sht3x_measure (sht3x_sensor_t* dev, float* temperature, float* humidity)
+{
+    if (!dev || (!temperature && !humidity)) return false;
+
+    if (!sht3x_start_measurement (dev, sht3x_single_shot, sht3x_high))
+        return false;
+
+    vTaskDelay (SHT3x_MEAS_DURATION_TICKS[sht3x_high]);
+
+    sht3x_raw_data_t raw_data;
+    
+    if (!sht3x_get_raw_data (dev, raw_data))
+        return false;
+        
+    return sht3x_compute_values (raw_data, temperature, humidity);
+}
+
+
 bool sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode, sht3x_repeat_t repeat)
 {
     if (!dev) return false;

@@ -150,7 +150,32 @@ sht3x_sensor_t* sht3x_init_sensor (uint8_t bus, uint8_t addr);
 
 
 /**
- * @brief	Start single shot or periodic measurements
+ * @brief   High level measurement function
+ *
+ * For convenience this function comprises all three steps to perform
+ * one measurement in only one function:
+ *
+ * 1. Starts a measurement in single shot mode with high reliability
+ * 2. Waits using *vTaskDelay* until measurement results are available 
+ * 3. Returns the results in kind of floating point sensor values 
+ *
+ * This function is the easiest way to use the sensor. It is most suitable
+ * for users that don't want to have the control on sensor details.
+ *
+ * Please note: The function delays the calling task up to 30 ms to wait for
+ * the  the measurement results. This might lead to problems when the function
+ * is called from a software timer callback function.
+ *
+ * @param   dev         pointer to sensor device data structure
+ * @param   temperature returns temperature in degree Celsius   
+ * @param   humidity    returns humidity in percent
+ * @return              true on success, false on error
+ */
+bool sht3x_measure (sht3x_sensor_t* dev, float* temperature, float* humidity);
+
+
+/**
+ * @brief	Start the measurement in single shot or periodic mode
  *
  * The function starts the measurement either in *single shot mode* 
  * (exactly one measurement) or *periodic mode* (periodic measurements)
@@ -164,10 +189,11 @@ sht3x_sensor_t* sht3x_init_sensor (uint8_t bus, uint8_t addr);
  * the measurement duration has to be waited only once until the first
  * results are available. After this first measurement, the sensor then
  * automatically performs all subsequent measurements. The rate of periodic
- * measurements can be 10, 4, 2, 1 or 0.5 measurements per second (mps). Due
- * to inaccuracies in timing of the sensor, the user task should fetch the
- * results at a lower rate. The rate of the periodic measurements is defined
- * by the parameter *mode*.
+ * measurements can be 10, 4, 2, 1 or 0.5 measurements per second (mps).
+ * 
+ * Please note: Due to inaccuracies in timing of the sensor, the user task
+ * should fetch the results at a lower rate. The rate of the periodic
+ * measurements is defined by the parameter *mode*.
  *
  * @param   dev         pointer to sensor device data structure
  * @param   mode        measurement mode, see type *sht3x_mode_t*
@@ -185,6 +211,9 @@ bool sht3x_start_measurement (sht3x_sensor_t* dev, sht3x_mode_t mode,
  * started with function *sht3x_start_measurement* the user task can use this
  * duration in RTOS ticks directly to wait with function *vTaskDelay* until
  * the measurement results can be fetched.
+ *
+ * Please note: The duration only depends on repeatability level. Therefore,
+ * it can be considered as constant for a repeatibility.
  *
  * @param   repeat      repeatability, see type *sht3x_repeat_t*
  * @return              measurement duration given in RTOS ticks
@@ -213,6 +242,7 @@ uint8_t sht3x_get_measurement_duration (sht3x_repeat_t repeat);
  */
 bool sht3x_get_raw_data(sht3x_sensor_t* dev, sht3x_raw_data_t raw_data);
 
+
 /**
  * @brief	Computes sensor values from raw data
  *
@@ -223,6 +253,7 @@ bool sht3x_get_raw_data(sht3x_sensor_t* dev, sht3x_raw_data_t raw_data);
  */
 bool sht3x_compute_values (sht3x_raw_data_t raw_data, 
                            float* temperature, float* humidity);
+
 
 /**
  * @brief	Get measurement results in form of sensor values

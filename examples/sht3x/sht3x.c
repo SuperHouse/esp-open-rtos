@@ -1,10 +1,12 @@
 /**
- * Simple example with one SHT3x sensor. 
+ * Simple example with SHT3x sensor. 
  *
- * It shows two different user task implementations, one in *single shot mode*
- * and one in *periodic mode*.
+ * It shows different user task implementations in *single shot mode* and
+ * *periodic mode*. In *single shot* mode either low level or high level
+ * functions are used.
  * 
- * Which implementation is used is defined by constant SINGLE_SHOT_MODE.
+ * Constants SINGLE_SHOT_LOW_LEVEL and SINGLE_SHOT_HIGH_LEVEL controls which
+ * task implementation is used.
  *
  * Harware configuration:
  *
@@ -15,7 +17,8 @@
  *   +------------------------+     +----------+
  */
 
-#define SINGLE_SHOT_MODE
+// #define SINGLE_SHOT_LOW_LEVEL
+// #define SINGLE_SHOT_HIGH_LEVEL
  
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
@@ -33,10 +36,11 @@
 
 static sht3x_sensor_t* sensor;    // sensor device data structure
 
-#ifdef SINGLE_SHOT_MODE
+#if defined(SINGLE_SHOT_HIGH_LEVEL)
 /*
- * User task that triggers a measurement every 5 seconds. Due to
- * power efficiency reasons, it uses the SHT3x *sht3x_single_shot*.
+ * User task that triggers a measurement every 5 seconds. Due to power
+ * efficiency reasons it uses *single shot* mode. In this example it uses the
+ * high level function *sht3x_measure* to perform one measurement in each cycle.
  */
 void user_task (void *pvParameters)
 {
@@ -47,12 +51,41 @@ void user_task (void *pvParameters)
 
     while (1) 
     {
+        // perform one measurement and do something with the results
+        if (sht3x_measure (sensor, &temperature, &humidity))
+            printf("%.3f SHT3x Sensor: %.2f °C, %.2f %%\n", 
+                   (double)sdk_system_get_time()*1e-3, temperature, humidity);
+
+        // wait until 5 seconds are over
+        vTaskDelayUntil(&last_wakeup, 5000 / portTICK_PERIOD_MS);
+    }
+}
+
+#elif defined(SINGLE_SHOT_LOW_LEVEL)
+/*
+ * User task that triggers a measurement every 5 seconds. Due to power
+ * efficiency reasons it uses *single shot* mode. In this example it starts the
+ * measurement, waits for the results and fetches the results using separate
+ * functions
+ */
+void user_task (void *pvParameters)
+{
+    float temperature;
+    float humidity;
+
+    TickType_t last_wakeup = xTaskGetTickCount();
+
+    // get the measurement duration for high repeatability;
+    uint8_t duration = sht3x_get_measurement_duration(sht3x_high);
+    
+    while (1) 
+    {
         // Trigger one measurement in single shot mode with high repeatability.
         sht3x_start_measurement (sensor, sht3x_single_shot, sht3x_high);
         
         // Wait until measurement is ready (constant time of at least 30 ms
         // or the duration returned from *sht3x_get_measurement_duration*).
-        vTaskDelay (sht3x_get_measurement_duration(sht3x_high));
+        vTaskDelay (duration);
         
         // retrieve the values and do something with them
         if (sht3x_get_results (sensor, &temperature, &humidity))
@@ -63,6 +96,7 @@ void user_task (void *pvParameters)
         vTaskDelayUntil(&last_wakeup, 5000 / portTICK_PERIOD_MS);
     }
 }
+
 #else  // PERIODIC MODE
 /*
  * User task that fetches latest measurement results of sensor every 2
@@ -108,7 +142,7 @@ void user_init(void)
     // (different busses are possible).
     i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K);
     
-    // Create the sensors.
+    // Create the sensors, multiple sensors are possible.
     if ((sensor = sht3x_init_sensor (I2C_BUS, SHT3x_ADDR_2)))
     {
         // Create a user task that uses the sensors.

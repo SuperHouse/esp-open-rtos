@@ -24,6 +24,8 @@ Due to the measurement duration of up to 15 ms, the measurement process is separ
 
 In the *single shot mode*, the user task has to perform all steps every time new sensor values ​​are needed. 
 
+For convenience a high level function ```sht3x_measure``` that comprises all three steps above in only one function to perform a measurement. This function is the easiest way to use the sensor. It is most suitable for users that don't want to have the control on sensor details.
+
 The advantage of this mode is that the sensor can switch between successive measurements into the sleep mode, which is more energy-efficient. This is particularly useful when the measurement rate is less than 1 measurement per second.
 
 ### Periodic mode
@@ -40,7 +42,7 @@ As in *single shot mode*, the measurement process is separated into the followin
 
 However, in contrast to the *single shot mode*, steps 1 and 2 have to be executed only once. Once the measurement is started, the user task hast can simply fetch data periodically.
 
-**Please note:** The rate of fetching the measurement results must be not greater than the rate of periodic measurements of the sensor, however, it *should be less* to avoid conflicts caused by the timing tolerance of the sensor.
+**Please note:** The rate of fetching the measurement results must not be greater than the rate of periodic measurements of the sensor. Even more, it *should be less* to avoid conflicts caused by the timing tolerance of the sensor.
 
 ## Measurement results
 
@@ -66,7 +68,7 @@ The repeatability settings influences the measurement duration as well as the po
 
 While the sensor measures at the lowest repeatability, the average current consumption is 800 μA. That is, the higher the repeatability level, the longer the measurement takes and the higher the power consumption. The sensor consumes only 0.2 μA in standby mode.
 
-The repeatability used for a measurement is specified as parameter of ```sht3x_start_measurement```.
+The repeatability used for a measurement is specified as parameter of function ```sht3x_start_measurement```.
 
 
 ## Usage
@@ -154,6 +156,8 @@ void user_task (void *pvParameters)
 
     TickType_t last_wakeup = xTaskGetTickCount();
 
+    uint8_t duration = sht3x_get_measurement_duration(sht3x_high);
+    
     while (1) 
     {
         // Trigger one measurement in single shot mode with high repeatability.
@@ -161,7 +165,7 @@ void user_task (void *pvParameters)
         
         // Wait until measurement is ready (constant time of at least 30 ms
         // or the duration returned from *sht3x_get_measurement_duration*).
-        vTaskDelay (sht3x_get_measurement_duration(sht3x_high));
+        vTaskDelay (duration);
         
         // retrieve the values and do something with them
         if (sht3x_get_results (sensor, &temperature, &humidity))
@@ -176,7 +180,31 @@ void user_task (void *pvParameters)
 
 In contrast to the *periodic mode*, the function ```sht3x_start_measurement``` is called inside the task loop to start exactly one measurement in each cycle. The task is then also delayed every time using function ```vTaskDelay``` before the results are fetched with function ```sht3x_get_results```.
 
-The code could be extended by an error handling. In the event of an error, most driver functions set the ```error_code``` element of the sensor device data structure. This indicates which error has occurred. Error codes are a combination of I2C communication error codes and SHT3x sensor error codes. To test for a particular error, the *error code* can be AND with one of the error masks ```SHT3x_I2C_ERROR_MASK``` or ```SHT3x_DRV_ERROR_MASK```.
+Alternatively, user task can use the high level function ```sht3x_measure``` that comprises these steps in only one function. This would simplify the user task that would then look like the following:
+
+```
+void user_task (void *pvParameters)
+{
+    float temperature;
+    float humidity;
+
+    TickType_t last_wakeup = xTaskGetTickCount();
+
+    while (1) 
+    {
+        // perform one measurement and do something with the results
+        if (sht3x_measure (sensor, &temperature, &humidity))
+            printf("%.3f SHT3x Sensor: %.2f °C, %.2f %%\n", 
+                   (double)sdk_system_get_time()*1e-3, temperature, humidity);
+
+        // wait until 5 seconds are over
+        vTaskDelayUntil(&last_wakeup, 5000 / portTICK_PERIOD_MS);
+    }
+}
+```
+
+
+The code could be extended by an error handling. In the event of an error, most driver functions set the ```error_code``` element of the sensor device data structure. This indicates which error has occurred. Error codes are a combination of I2C communication error codes and SHT3x sensor error codes. To test for a particular error, the *error code* has to be ANDed with one of the error masks ```SHT3x_I2C_ERROR_MASK``` or ```SHT3x_DRV_ERROR_MASK``` and then tested for a certain value.
 
 For example, error handling for ```sht3x_get_results``` could look like:
 ```
@@ -230,6 +258,9 @@ void user_task (void *pvParameters)
     float humidity;
 
     TickType_t last_wakeup = xTaskGetTickCount();
+    
+    // get the measurement duration for high repeatability;
+    uint8_t duration = sht3x_get_measurement_duration(sht3x_high);
 
     while (1) 
     {
@@ -238,7 +269,7 @@ void user_task (void *pvParameters)
         
         // Wait until measurement is ready (constant time of at least 30 ms
         // or the duration returned from *sht3x_get_measurement_duration*).
-        vTaskDelay (sht3x_get_measurement_duration(sht3x_high));
+        vTaskDelay (duration);
         
         // retrieve the values and do something with them
         if (sht3x_get_results (sensor, &temperature, &humidity))
