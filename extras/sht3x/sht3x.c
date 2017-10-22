@@ -328,10 +328,10 @@ static bool sht3x_send_command(sht3x_sensor_t* dev, uint16_t cmd)
     int err;
     int count = 10;
 
-    // in case i2c is busy, try to write up to ten times and 100 ms
+    // in case i2c is busy, try to write up to ten ticks (normally 100 ms)
     // tested with a task that is disturbing by using i2c bus almost all the time
     while ((err=i2c_slave_write(dev->bus, dev->addr, 0, data, 2)) == -EBUSY && count--)
-       vTaskDelay (10 / portTICK_PERIOD_MS);
+       vTaskDelay (1);
   
     if (err)
     {
@@ -351,9 +351,9 @@ static bool sht3x_read_data(sht3x_sensor_t* dev, uint8_t *data,  uint32_t len)
     int err;
     int count = 10;
 
-    // in case i2c is busy, try to read up to ten times and 100 ms
+    // in case i2c is busy, try to read up to ten ticks (normally 100 ms)
     while ((err=i2c_slave_read(dev->bus, dev->addr, 0, data, len)) == -EBUSY && count--)
-        vTaskDelay (10 / portTICK_PERIOD_MS);
+        vTaskDelay (1);
         
     if (err)
     {
