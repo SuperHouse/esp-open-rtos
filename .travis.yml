@@ -34,6 +34,7 @@ addons:
     - git
     - help2man
     - vim-common
+    - zlib1g-dev
 
 before_install:
   - pip install --user pyserial

@@ -28,3 +28,9 @@
 [submodule "extras/crc_generic/crc_lib"]
 	path = extras/crc_generic/crc_lib
 	url = https://github.com/Zaltora/crc_generic_lib.git
+[submodule "extras/libesphttpd/libesphttpd"]
+	path = extras/libesphttpd/libesphttpd
+	url = https://github.com/nochkin/libesphttpd
+[submodule "extras/libesphttpd/libesphttpd/lib/heatshrink"]
+	path = extras/libesphttpd/libesphttpd/lib/heatshrink
+	url = https://github.com/atomicobject/heatshrink
