@@ -216,8 +216,8 @@ typedef struct
 } bmp180_command_t;
 
 // Just works due to the fact that QueueHandle_t is a "void *"
-static QueueHandle_t bmp180_rx_queue[MAX_I2C_BUS] =  { NULL };
-static TaskHandle_t bmp180_task_handle[MAX_I2C_BUS] = { NULL };
+static QueueHandle_t bmp180_rx_queue[I2C_MAX_BUS] =  { NULL };
+static TaskHandle_t bmp180_task_handle[I2C_MAX_BUS] = { NULL };
 
 //
 // Forward declarations

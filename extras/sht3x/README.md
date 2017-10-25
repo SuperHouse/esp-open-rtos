@@ -83,7 +83,7 @@ Before using the SHT3x driver, function ```i2c_init``` needs to be called for ea
 #define I2C_SDA_PIN   GPIO_ID_PIN((4))
 
 ...
-i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K))
+i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K)
 ...
 ```
 
