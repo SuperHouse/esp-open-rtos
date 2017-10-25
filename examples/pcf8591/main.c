@@ -23,7 +23,7 @@ static void measure(void *pvParameters)
     while (1)
     {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        printf("Value: %d\n", pcf8591_read(&dev, 0x03));
+        printf("Value: %d\n", pcf8591_read(&dev, PCF8591_IC_4_SINGLES, 3));
     }
 }
 
