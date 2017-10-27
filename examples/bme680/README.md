@@ -19,6 +19,7 @@ For examples using BME680 sensor as I2C slave, just use GPIO5 (SCL) and GPIO4 (S
 
 For examples that are using SPI, BME680 sensor has to be connected to SPI bus 1.  Since GPIO15 used as default CS signal of SPI bus 1 does not work correctly together with BME680, you have to connect CS to another GPIO pin, e.g., GPIO2.
 
+```
  +-------------------------+     +----------+
  | ESP8266  Bus 1          |     | BME680   |
  |          GPIO 12 (MISO) <-----< SDO      |
@@ -26,6 +27,7 @@ For examples that are using SPI, BME680 sensor has to be connected to SPI bus 1.
  |          GPIO 14 (SCK)  >-----> SCK      |
  |          GPIO 2  (CS)   >-----> CS       |
  +-------------------------+     +----------+
+```
 
 The example with two sensors use the combination of I2C and SPI.
 
@@ -33,8 +35,12 @@ The example with two sensors use the combination of I2C and SPI.
 
 __*bme680_one_sensor*__
 
-In this simple example, only **one sensor** connected either to **I2C** or to **SPI** is used. Constant **SPI_USED** defines which interface is used.
+This simple example uses only **one sensor** connected either to **I2C** or to **SPI**. Which of these interfaces is used is defined by constant **SPI_USED**. The user task triggers a measurement every second and uses function ```vTaskDelay``` to wait for the measurement results.
 
 __*bme680_two_sensors*__
 
-Simple example with two sensors, one sensor connected to **I2C** bus 0 and one sensor connected to **SPI**. It defines two different user tasks that use the sensors as well as different approaches for the implementation of waiting for measurement results, one as busy waiting using **_bme680_is_measuring_** and one as passive waiting using *vTaskDelay*.
+This example uses **two sensors**. One sensor is connected to **I2C** bus 0 and one sensor is connected to **SPI**. It defines two different user tasks, one for each sensor. It demonstrate the possible approaches to wait for measurement results, active busy waiting using ```bme680_is_measuring``` and passive waiting using *vTaskDelay*.
+
+__*bme680_heating_profiles*__
+
+This simple example uses one **only sensor** connected to **I2C** bus 0 and a sequence of heating profiles. The heating profile is changed with each cycle.

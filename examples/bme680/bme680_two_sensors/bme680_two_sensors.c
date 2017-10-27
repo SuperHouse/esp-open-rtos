@@ -1,8 +1,9 @@
 /**
  * Simple example with two sensors, one sensor connected to I2C bus 0 and
- * one sensor connected to SPI. It also shows both approaches for the
- * implementation of waiting for measurement results, one as busy waiting
- * and one as passive waiting using *vTaskDelay*.
+ * one sensor connected to SPI. It defines two different user tasks, one for
+ * each sensor. It demonstrate the possible approaches to wait for measurement
+ * results, active busy waiting using ```bme680_is_measuring``` and passive
+ * waiting using *vTaskDelay*.
  *
  * Harware configuration:
  *
@@ -44,30 +45,33 @@ static bme680_sensor_t* sensor1;
 static bme680_sensor_t* sensor2;
 
 /*
- * User task that triggers measurements of sensor1 every 5 seconds. It 
+ * User task that triggers measurements of sensor1 every 5 seconds and 
  * uses *vTaskDelay* to wait for measurement results.
  */
 void user_task_sensor1(void *pvParameters)
 {
     bme680_values_float_t values;
-    int32_t duration;
 
     TickType_t last_wakeup = xTaskGetTickCount();
+    
+    uint32_t duration = bme680_get_measurement_duration (sensor1);
     
     while (1) 
     {    
         // trigger the sensor to start one TPHG measurement cycle 
-        duration = bme680_force_measurement (sensor1);
+        if (bme680_force_measurement (sensor1))
+        {
         
-        // passive waiting until measurement results are available
-        if (duration > 0) vTaskDelay (duration);
+            // passive waiting until measurement results are available
+            vTaskDelay (duration);
         
-        // get the results and so something with them
-        if (bme680_get_results_float (sensor1, &values))
-            printf("%.3f BME680 Sensor1: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n",
-                   (double)sdk_system_get_time()*1e-3,
-                   values.temperature, values.humidity, 
-                   values.pressure, values.gas_resistance);
+            // get the results and so something with them
+            if (bme680_get_results_float (sensor1, &values))
+                printf("%.3f BME680 Sensor1: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n",
+                       (double)sdk_system_get_time()*1e-3,
+                       values.temperature, values.humidity, 
+                       values.pressure, values.gas_resistance);
+        }
  
         // passive waiting until 5 seconds are over
         vTaskDelayUntil(&last_wakeup, 5000 / portTICK_PERIOD_MS);
@@ -75,8 +79,8 @@ void user_task_sensor1(void *pvParameters)
 }
 
 /*
- * User task that triggers measurements of sensor1 every 2 seconds. It 
- * uses *vTaskDelay* to wait for measurement results.
+ * User task that triggers measurements of sensor1 every 2 seconds and
+ * uses *bme680_is_measuring* to wait for measurement results.
  */
 void user_task_sensor2(void *pvParameters)
 {
@@ -87,17 +91,18 @@ void user_task_sensor2(void *pvParameters)
     while (1) 
     {    
         // trigger the sensor to start one TPHG measurement cycle 
-        bme680_force_measurement (sensor2);
-        
-        // busy waiting until measurement results are available
-        while (bme680_is_measuring (sensor2) > 0) ;
+        if (bme680_force_measurement (sensor2))
+        {
+            // busy waiting until measurement results are available
+            while (bme680_is_measuring (sensor2)) ;
 
-        // get the results and so something with them
-        if (bme680_get_results_float (sensor2, &values))
-            printf("%.3f BME680 Sensor2: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n",
-                   (double)sdk_system_get_time()*1e-3,
-                   values.temperature, values.humidity, 
-                   values.pressure, values.gas_resistance);
+            // get the results and so something with them
+            if (bme680_get_results_float (sensor2, &values))
+                printf("%.3f BME680 Sensor2: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n",
+                       (double)sdk_system_get_time()*1e-3,
+                       values.temperature, values.humidity, 
+                       values.pressure, values.gas_resistance);
+        }
  
         // passive waiting until 2 seconds are over
         vTaskDelayUntil(&last_wakeup, 2000 / portTICK_PERIOD_MS);
@@ -132,18 +137,20 @@ void user_init(void)
         /** -- OPTIONAL PART -- */
     
         // Changes the oversampling rates for both sensor to different values
-        bme680_set_oversampling_rates(sensor1, osr_1x, osr_1x, osr_1x);
-        bme680_set_oversampling_rates(sensor2, osr_16x, osr_16x, osr_16x);
+        bme680_set_oversampling_rates(sensor1, osr_4x, osr_2x, osr_1x);
+        bme680_set_oversampling_rates(sensor2, osr_8x, osr_8x, osr_8x);
     
-        // Change the IIR filter size (default iir_size_3) for temperature and 
-        // and pressure to 7.
+        // Change the IIR filter size for temperature and and pressure to 7.
         bme680_set_filter_size(sensor1, iir_size_7);
         bme680_set_filter_size(sensor2, iir_size_7);
 
-        // Change the heaeter profile (default 20 degree Celcius for 150 ms) to
-        // 200 degree Celcius for 100 ms.
-        bme680_set_heater_profile (sensor1, 200, 100);
-        bme680_set_heater_profile (sensor2, 200, 100);
+        // Change the heater profile 0 to 200 degree Celcius for 150 ms.
+        bme680_set_heater_profile (sensor1, 0, 200, 150);
+        bme680_set_heater_profile (sensor2, 0, 200, 150);
+        
+        // Activate the heater profile 0
+        bme680_use_heater_profile (sensor1, 0);
+        bme680_use_heater_profile (sensor2, 0);
     }
 }
 

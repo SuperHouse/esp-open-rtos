@@ -1,6 +1,6 @@
 /**
- * Simple example with one sensor connected either to I2C bus 0 or
- * SPI bus 1.
+ * Simple example with one sensor connected to I2C bus 0 and a sequence of
+ * heating profiles. The heating profile is changed with each cycle.
  *
  * Harware configuration:
  *
@@ -9,18 +9,7 @@
  *         |          GPIO 5 (SCL)   ------> SCL      |
  *         |          GPIO 4 (SDA)   ------- SDA      |
  *         +-------------------------+     +----------+
- *   
- *   SPI   +-------------------------+     +----------+
- *         | ESP8266  Bus 1          |     | BME680   |
- *         |          GPIO 12 (MISO) <-----< SDO      |
- *         |          GPIO 13 (MOSI) >-----> SDI      |
- *         |          GPIO 14 (SCK)  >-----> SCK      |
- *         |          GPIO 2  (CS)   >-----> CS       |
- *         +-------------------------+     +----------+
  */
- 
-// Uncomment to use SPI
-// #define SPI_USED
  
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
@@ -29,29 +18,22 @@
 #include "task.h"
 
 // include communication interface driver
-#include "esp/spi.h"
 #include "i2c/i2c.h"
 
 // include BME680 driver
 #include "bme680/bme680.h"
 
-#ifdef SPI_USED
-// define SPI interface for BME680 sensors
-#define SPI_BUS         1
-#define SPI_CS_GPIO     2   // GPIO 15, the default CS of SPI bus 1, can't be used
-#else
 // define I2C interface for BME680 sensors
 #define I2C_BUS         0
 #define I2C_SCL_PIN     GPIO_ID_PIN((5))
 #define I2C_SDA_PIN     GPIO_ID_PIN((4))
-#endif
 
 static bme680_sensor_t* sensor;
 
 /*
  * User task that triggers measurements of sensor every seconds. It uses 
- * function *vTaskDelay* to wait for measurement results. Busy wating
- * alternative is shown in comments
+ * function *vTaskDelay* to wait for measurement results and changes the
+ * heating profile in each cycle.
  */
 void user_task(void *pvParameters)
 {
@@ -59,19 +41,32 @@ void user_task(void *pvParameters)
 
     TickType_t last_wakeup = xTaskGetTickCount();
     
-    // as long as sensor configuration isn't changed, duration is constant
-    uint32_t duration = bme680_get_measurement_duration(sensor);
-
+    uint32_t count = 0;
+    
     while (1) 
     {
+        if (count++ < 60)
+            // disable gas measurement for cycle counter < 60
+            bme680_use_heater_profile (sensor, BME680_HEATER_NOT_USED);
+        else
+            // change heating profile in each cycle
+            switch (count % 5)
+            {
+                case 0: bme680_use_heater_profile (sensor, 0); break;
+                case 1: bme680_use_heater_profile (sensor, 1); break;
+                case 2: bme680_use_heater_profile (sensor, 2); break;
+                case 3: bme680_use_heater_profile (sensor, 3); break;
+                case 4: bme680_use_heater_profile (sensor, 4); break;
+            }
+
+        // measurement duration changes in each cycle
+        uint32_t duration = bme680_get_measurement_duration(sensor);
+
         // trigger the sensor to start one TPHG measurement cycle 
         if (bme680_force_measurement (sensor))
         {
             // passive waiting until measurement results are available
             vTaskDelay (duration);
-        
-            // alternatively: busy waiting until measurement results are available
-            // while (bme680_is_measuring (sensor)) ;
 
             // get the results and do something with them
             if (bme680_get_results_float (sensor, &values))
@@ -120,12 +115,12 @@ void user_init(void)
         // Change the IIR filter size for temperature and pressure to 7.
         bme680_set_filter_size(sensor, iir_size_7);
 
-        // Change the heater profile 0 to 200 degree Celcius for 100 ms.
+        // Define a number of different heating profiles
         bme680_set_heater_profile (sensor, 0, 200, 100);
-        bme680_use_heater_profile (sensor, 0);
-
-        // Set ambient temperature to 10 degree Celsius
-        bme680_set_ambient_temperature (sensor, 10);
+        bme680_set_heater_profile (sensor, 1, 250, 120);
+        bme680_set_heater_profile (sensor, 2, 300, 140);
+        bme680_set_heater_profile (sensor, 3, 350, 160);
+        bme680_set_heater_profile (sensor, 4, 400, 180);
     }
 }
 

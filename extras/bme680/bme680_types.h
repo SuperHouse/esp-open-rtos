@@ -108,16 +108,17 @@ typedef enum {
  */
 typedef struct {
 
-	uint8_t osr_temperature; 	   // T oversampling rate (default osr_1x)
-	uint8_t osr_pressure;	       // P oversampling rate (default osr_1x)
-	uint8_t osr_humidity;	       // H oversampling rate (default osr_1x)
-	uint8_t filter_size;           // IIR filter size (default iir_size_3)
+	uint8_t  osr_temperature; 	     // T oversampling rate (default osr_1x)
+	uint8_t  osr_pressure;	         // P oversampling rate (default osr_1x)
+	uint8_t  osr_humidity;	         // H oversampling rate (default osr_1x)
+	uint8_t  filter_size;            // IIR filter size (default iir_size_3)
 
-	uint16_t heater_temperature;   // Heater temperature for G (default 320)
-	uint16_t heater_duration;      // Heater duration for G (default 150)
+    int8_t   heater_profile;         // Heater profile used (default 0)
+	uint16_t heater_temperature[10]; // Heater temperature for G (default 320)
+	uint16_t heater_duration[10];    // Heater duration for G (default 150)
 	
-    int8_t   ambient_temperature;  // Ambient temperature for G (default 25);
-
+    int8_t   ambient_temperature;    // Ambient temperature for G (default 25)
+    
 } bme680_settings_t;
 
 /**
@@ -168,7 +169,6 @@ typedef struct {
  */
 typedef struct {
 
-    bool      active;          // indicates whether sensor is active
     int       error_code;      // contains the error code of last operation
     
     uint8_t   bus;             // I2C = x, SPI = 1
@@ -177,8 +177,8 @@ typedef struct {
 
     bool      meas_started;    // indicates whether measurement started
     uint32_t  meas_start_tick; // measurement start time in RTOS ticks
-    uint32_t  meas_duration;   // measurement duration in RTOS ticks
-    
+    uint8_t   meas_status;     // last sensor status (for internal use only)
+        
     bme680_settings_t    settings;    // sensor settings
     bme680_calib_data_t  calib_data;  // calibration data of the sensor
     
