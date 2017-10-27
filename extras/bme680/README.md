@@ -326,8 +326,8 @@ Dependent on the hardware configuration, the communication interface settings ha
 
 // define I2C interface for BME680 sensors
 #define I2C_BUS         0
-#define I2C_SCL_PIN     GPIO_ID_PIN((5))
-#define I2C_SDA_PIN     GPIO_ID_PIN((4))
+#define I2C_SCL_PIN     5
+#define I2C_SDA_PIN     4
 #endif
 
 ```
@@ -469,8 +469,8 @@ Once the measurement results are available, they can be fetched as fixed point o
 #else
 // define I2C interface for BME680 sensors
 #define I2C_BUS         0
-#define I2C_SCL_PIN     GPIO_ID_PIN((5))
-#define I2C_SDA_PIN     GPIO_ID_PIN((4))
+#define I2C_SCL_PIN     5
+#define I2C_SDA_PIN     4
 #endif
 
 static bme680_sensor_t* sensor;

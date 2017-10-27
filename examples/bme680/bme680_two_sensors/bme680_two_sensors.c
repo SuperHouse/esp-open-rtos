@@ -38,8 +38,8 @@
 #define SPI_CS_GPIO     2   // GPIO 15, the default CS of SPI bus 1, can't be used
 // define SPI interface for BME680 sensor 2 
 #define I2C_BUS         0
-#define I2C_SCL_PIN     GPIO_ID_PIN((5))
-#define I2C_SDA_PIN     GPIO_ID_PIN((4))
+#define I2C_SCL_PIN     5
+#define I2C_SDA_PIN     4
 
 static bme680_sensor_t* sensor1;
 static bme680_sensor_t* sensor2;
