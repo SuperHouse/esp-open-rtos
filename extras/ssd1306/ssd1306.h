@@ -526,7 +526,6 @@ int ssd1306_start_scroll_hori(const ssd1306_t *dev, bool way, uint8_t start, uin
 int ssd1306_start_scroll_hori_vert(const ssd1306_t *dev, bool way, uint8_t start, uint8_t stop, uint8_t dy, ssd1306_scroll_t frame);
 
 #ifdef __cplusplus
-extern "C"
 }
 #endif
 
