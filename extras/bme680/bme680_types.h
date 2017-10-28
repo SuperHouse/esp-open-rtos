@@ -13,7 +13,7 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
  *
@@ -21,7 +21,7 @@
  * notice, this list of conditions and the following disclaimer in the
  * documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of the copyright holder nor the names of its 
+ * 3. Neither the name of the copyright holder nor the names of its
  * contributors may be used to endorse or promote products derived from this
  * software without specific prior written permission.
  *
@@ -29,7 +29,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -84,7 +84,7 @@ typedef enum {
 
 
 /**
- * @brief 	Filter sizes 
+ * @brief 	Filter sizes
  */
 typedef enum {
     iir_size_0   = 0,   // filter is not used
@@ -108,17 +108,17 @@ typedef enum {
  */
 typedef struct {
 
-	uint8_t  osr_temperature; 	     // T oversampling rate (default osr_1x)
-	uint8_t  osr_pressure;	         // P oversampling rate (default osr_1x)
-	uint8_t  osr_humidity;	         // H oversampling rate (default osr_1x)
-	uint8_t  filter_size;            // IIR filter size (default iir_size_3)
+    uint8_t  osr_temperature;        // T oversampling rate (default osr_1x)
+    uint8_t  osr_pressure;           // P oversampling rate (default osr_1x)
+    uint8_t  osr_humidity;           // H oversampling rate (default osr_1x)
+    uint8_t  filter_size;            // IIR filter size (default iir_size_3)
 
     int8_t   heater_profile;         // Heater profile used (default 0)
-	uint16_t heater_temperature[10]; // Heater temperature for G (default 320)
-	uint16_t heater_duration[10];    // Heater duration for G (default 150)
-	
+    uint16_t heater_temperature[10]; // Heater temperature for G (default 320)
+    uint16_t heater_duration[10];    // Heater duration for G (default 150)
+
     int8_t   ambient_temperature;    // Ambient temperature for G (default 25)
-    
+
 } bme680_settings_t;
 
 /**
@@ -129,37 +129,37 @@ typedef struct {
  */
 typedef struct {
 
-	uint16_t par_t1;         // calibration data for temperature compensation
-	int16_t  par_t2;
-	int8_t   par_t3;
+    uint16_t par_t1;         // calibration data for temperature compensation
+    uit16_t  par_t2;
+    int8_t   par_t3;
 
-	uint16_t par_p1;         // calibration data for pressure compensation
-	int16_t  par_p2;
-	int8_t   par_p3;
-	int16_t  par_p4;
-	int16_t  par_p5;
-	int8_t   par_p7;
-	int8_t   par_p6;
-	int16_t  par_p8;
-	int16_t  par_p9;
-	uint8_t  par_p10;
+    uint16_t par_p1;         // calibration data for pressure compensation
+    int16_t  par_p2;
+    int8_t   par_p3;
+    int16_t  par_p4;
+    int16_t  par_p5;
+    int8_t   par_p7;
+    int8_t   par_p6;
+    int16_t  par_p8;
+    int16_t  par_p9;
+    uint8_t  par_p10;
 
-	uint16_t par_h1;         // calibration data for humidity compensation
-	uint16_t par_h2;
-	int8_t   par_h3;
-	int8_t   par_h4;
-	int8_t   par_h5;
-	uint8_t  par_h6;
-	int8_t   par_h7;
+    uint16_t par_h1;         // calibration data for humidity compensation
+    uint16_t par_h2;
+    int8_t   par_h3;
+    int8_t   par_h4;
+    int8_t   par_h5;
+    uint8_t  par_h6;
+    int8_t   par_h7;
 
-	int8_t   par_gh1;        // calibration data for gas compensation
-	int16_t  par_gh2;
-	int8_t   par_gh3;
+    int8_t   par_gh1;        // calibration data for gas compensation
+    int16_t  par_gh2;
+    int8_t   par_gh3;
 
-	int32_t  t_fine;         // temperatur correction factor for P and G
-	uint8_t  res_heat_range;
-	int8_t   res_heat_val;
-	int8_t   range_sw_err;
+    int32_t  t_fine;         // temperatur correction factor for P and G
+    uint8_t  res_heat_range;
+    int8_t   res_heat_val;
+    int8_t   range_sw_err;
 
 } bme680_calib_data_t;
 
@@ -170,7 +170,7 @@ typedef struct {
 typedef struct {
 
     int       error_code;      // contains the error code of last operation
-    
+
     uint8_t   bus;             // I2C = x, SPI = 1
     uint8_t   addr;            // I2C = slave address, SPI = 0
     uint8_t   spi_cs_pin;      // GPIO used as SPI CS
@@ -178,10 +178,10 @@ typedef struct {
     bool      meas_started;    // indicates whether measurement started
     uint32_t  meas_start_tick; // measurement start time in RTOS ticks
     uint8_t   meas_status;     // last sensor status (for internal use only)
-        
+
     bme680_settings_t    settings;    // sensor settings
     bme680_calib_data_t  calib_data;  // calibration data of the sensor
-    
+
 } bme680_sensor_t;
 
 
@@ -190,4 +190,3 @@ typedef struct {
 #endif /* End of CPP guard */
 
 #endif /* __BME680_TYPES_H__ */
-

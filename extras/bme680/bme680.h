@@ -13,7 +13,7 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
  *
@@ -21,7 +21,7 @@
  * notice, this list of conditions and the following disclaimer in the
  * documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of the copyright holder nor the names of its 
+ * 3. Neither the name of the copyright holder nor the names of its
  * contributors may be used to endorse or promote products derived from this
  * software without specific prior written permission.
  *
@@ -29,7 +29,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -71,7 +71,7 @@
 #define BME680_SPI_SET_PAGE_FAILED     7
 
 // BME680 driver error codes ORed with error codes for I2C and SPI interfaces
-#define BME680_RESET_CMD_FAILED        ( 1 << 8)   
+#define BME680_RESET_CMD_FAILED        ( 1 << 8)
 #define BME680_WRONG_CHIP_ID           ( 2 << 8)
 #define BME680_READ_CALIB_DATA_FAILED  ( 3 << 8)
 #define BME680_MEAS_ALREADY_RUNNING    ( 4 << 8)
@@ -118,11 +118,11 @@ extern "C"
 
 /**
  * @brief	Initialize a BME680 sensor
- * 
- * The function initializes the sensor device data structure, probes the 
- * sensor, soft resets the sensor, and configures the sensor with the 
- * the following default settings: 
- *    
+ *
+ * The function initializes the sensor device data structure, probes the
+ * sensor, soft resets the sensor, and configures the sensor with the
+ * the following default settings:
+ *
  * - Oversampling rate for temperature, pressure, humidity is osr_1x
  * - Filter size for pressure and temperature is iir_size 3
  * - Heater profile 0 with 320 degree C and 150 ms duration
@@ -137,7 +137,7 @@ extern "C"
  * ignored.
  *
  * If parameter *addr* is 0, the sensor is connected to a SPI bus. In that
- * case, parameter *cs* defines the GPIO used as CS signal 
+ * case, parameter *cs* defines the GPIO used as CS signal
  *
  * @param   bus     I2C or SPI bus at which BME680 sensor is connected
  * @param   addr    I2C addr of the BME680 sensor, 0 for SPI
@@ -189,7 +189,7 @@ uint32_t bme680_get_measurement_duration (const bme680_sensor_t *dev);
  *
  * The function can be used to test whether a measurement that was started
  * before is still running.
- * 
+ *
  * @param   dev   pointer to the sensor device data structure
  * @return        true if measurement is still running or false otherwise
  */
@@ -202,12 +202,12 @@ bool bme680_is_measuring (bme680_sensor_t* dev);
  * The function returns the results of a TPHG measurement that has been
  * started before. If the measurement is still running, the function fails
  * and returns invalid values (see type declaration).
- * 
+ *
  * @param   dev     pointer to the sensor device data structure
  * @param   results pointer to a data structure that is filled with results
  * @return          true on success, false on error
  */
-bool bme680_get_results_fixed (bme680_sensor_t* dev, 
+bool bme680_get_results_fixed (bme680_sensor_t* dev,
                                bme680_values_fixed_t* results);
 
 /**
@@ -221,7 +221,7 @@ bool bme680_get_results_fixed (bme680_sensor_t* dev,
  * @param   results pointer to a data structure that is filled with results
  * @return          true on success, false on error
  */
-bool bme680_get_results_float (bme680_sensor_t* dev, 
+bool bme680_get_results_float (bme680_sensor_t* dev,
                                bme680_values_float_t* results);
 
 /**
@@ -235,12 +235,12 @@ bool bme680_get_results_float (bme680_sensor_t* dev,
  * Note: Since the calling task is delayed using function *vTaskDelay*, this
  * function must not be used when it is called from a software timer callback
  * function.
- * 
+ *
  * @param   dev     pointer to the sensor device data structure
  * @param   results pointer to a data structure that is filled with results
  * @return          true on success, false on error
  */
-bool bme680_measure_fixed (bme680_sensor_t* dev, 
+bool bme680_measure_fixed (bme680_sensor_t* dev,
                            bme680_values_fixed_t* results);
 
 
@@ -255,17 +255,17 @@ bool bme680_measure_fixed (bme680_sensor_t* dev,
  * Note: Since the calling task is delayed using function *vTaskDelay*, this
  * function must not be used when it is called from a software timer callback
  * function.
- * 
+ *
  * @param   dev     pointer to the sensor device data structure
  * @param   results pointer to a data structure that is filled with results
  * @return          true on success, false on error
  */
-bool bme680_measure_float (bme680_sensor_t* dev, 
+bool bme680_measure_float (bme680_sensor_t* dev,
                            bme680_values_float_t* results);
 
 /**
  * @brief   Set the oversampling rates for measurements
- * 
+ *
  * The BME680 sensor allows to define individual oversampling rates for
  * the measurements of temperature, pressure and humidity. Using an
  * oversampling rate of *osr*, the resolution of raw sensor data can be
@@ -282,7 +282,7 @@ bool bme680_measure_float (bme680_sensor_t* dev,
  * @param   osh     oversampling rate for humidity measurements
  * @return          true on success, false on error
  */
-bool bme680_set_oversampling_rates (bme680_sensor_t* dev, 
+bool bme680_set_oversampling_rates (bme680_sensor_t* dev,
                                     bme680_oversampling_rate_t osr_t,
                                     bme680_oversampling_rate_t osr_p,
                                     bme680_oversampling_rate_t osr_h);
@@ -300,9 +300,9 @@ bool bme680_set_oversampling_rates (bme680_sensor_t* dev,
  * resolution of pressure and temperature data to 20 bit. Humidity and gas
  * inside the sensor does not fluctuate rapidly and does not require such a
  * low pass filtering.
- * 
+ *
  * The default filter size is 3 (*iir_size_3*).
- * 
+ *
  * Please note: If the size of the filter is 0, the filter is not used.
  *
  * @param   dev     pointer to the sensor device data structure
@@ -311,14 +311,14 @@ bool bme680_set_oversampling_rates (bme680_sensor_t* dev,
  */
 bool bme680_set_filter_size(bme680_sensor_t* dev, bme680_filter_size_t size);
 
-                                    
+
 /**
  * @brief   Set a heater profile for gas measurements
  *
  * The sensor integrates a heater for the gas measurement. Parameters for this
  * heater are defined by so called heater profiles. The sensor supports up to
  * 10 heater profiles, which are numbered from 0 to 9. Each profile consists of
- * a temperature set-point (the target temperature) and a heating duration. 
+ * a temperature set-point (the target temperature) and a heating duration.
  *
  * This function sets the parameters for one of the heater profiles 0 ... 9.
  * To activate the gas measurement with this profile, use function
@@ -336,7 +336,7 @@ bool bme680_set_filter_size(bme680_sensor_t* dev, bme680_filter_size_t size);
  */
 bool bme680_set_heater_profile (bme680_sensor_t* dev,
                                 uint8_t  profile,
-                                uint16_t temperature, 
+                                uint16_t temperature,
                                 uint16_t duration);
 
 /**
@@ -349,12 +349,12 @@ bool bme680_set_heater_profile (bme680_sensor_t* dev,
  * Parameters of the activated heater profile have to be set before with
  * function *bme680_set_heater_profile* otherwise the function fails.
  *
- * If several heater profiles have been defined with function 
+ * If several heater profiles have been defined with function
  * *bme680_set_heater_profile*, a sequence of gas measurements with different
  * heater parameters can be realized by a sequence of activations of different
  * heater profiles for successive TPHG measurements using this function.
  *
- * @param   dev       pointer to the sensor device data structure0 * 
+ * @param   dev       pointer to the sensor device data structure0 *
  * @param   profile   0 ... 9 to activate or -1 to deactivate gas measure
  * @return            true on success, false on error
  */
@@ -372,8 +372,8 @@ bool bme680_use_heater_profile (bme680_sensor_t* dev, int8_t profile);
  * @param   dev           pointer to the sensor device data structure
  * @param   temperature   ambient temperature in degree Celsius
  * @return                true on success, false on error
- */ 
-bool bme680_set_ambient_temperature (bme680_sensor_t* dev, 
+ */
+bool bme680_set_ambient_temperature (bme680_sensor_t* dev,
                                      int16_t temperature);
 
 

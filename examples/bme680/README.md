@@ -6,7 +6,7 @@ These examples demonstrate the usage of the BME680 driver with only one and mult
 
 There are examples that are using either I2C or SPI with one or two sensors.
 
-For examples using BME680 sensor as I2C slave, just use GPIO5 (SCL) and GPIO4 (SDA) to connect to the BME680 sensor's I2C interface. 
+For examples using BME680 sensor as I2C slave, just use GPIO5 (SCL) and GPIO4 (SDA) to connect to the BME680 sensor's I2C interface.
 
 ```
  +-------------------------+     +--------+

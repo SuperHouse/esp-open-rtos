@@ -10,7 +10,7 @@
  *         |          GPIO 4 (SDA)   ------- SDA      |
  *         +-------------------------+     +----------+
  */
- 
+
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 
@@ -31,7 +31,7 @@
 static bme680_sensor_t* sensor;
 
 /*
- * User task that triggers measurements of sensor every seconds. It uses 
+ * User task that triggers measurements of sensor every seconds. It uses
  * function *vTaskDelay* to wait for measurement results and changes the
  * heating profile in each cycle.
  */
@@ -40,10 +40,10 @@ void user_task(void *pvParameters)
     bme680_values_float_t values;
 
     TickType_t last_wakeup = xTaskGetTickCount();
-    
+
     uint32_t count = 0;
-    
-    while (1) 
+
+    while (1)
     {
         if (count++ < 60)
             // disable gas measurement for cycle counter < 60
@@ -62,7 +62,7 @@ void user_task(void *pvParameters)
         // measurement duration changes in each cycle
         uint32_t duration = bme680_get_measurement_duration(sensor);
 
-        // trigger the sensor to start one TPHG measurement cycle 
+        // trigger the sensor to start one TPHG measurement cycle
         if (bme680_force_measurement (sensor))
         {
             // passive waiting until measurement results are available
@@ -70,9 +70,9 @@ void user_task(void *pvParameters)
 
             // get the results and do something with them
             if (bme680_get_results_float (sensor, &values))
-                printf("%.3f BME680 Sensor: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n", 
+                printf("%.3f BME680 Sensor: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n",
                        (double)sdk_system_get_time()*1e-3,
-                       values.temperature, values.humidity, 
+                       values.temperature, values.humidity,
                        values.pressure, values.gas_resistance);
         }
         // passive waiting until 1 second is over
@@ -87,9 +87,9 @@ void user_init(void)
     uart_set_baud(0, 115200);
     // Give the UART some time to settle
     sdk_os_delay_us(500);
-    
+
     /** -- MANDATORY PART -- */
-    
+
     #ifdef SPI_USED
     // Init the sensor connected either to SPI.
     sensor = bme680_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
@@ -107,11 +107,11 @@ void user_init(void)
         xTaskCreate(user_task, "user_task", 256, NULL, 2, NULL);
 
         /** -- OPTIONAL PART -- */
-            
+
         // Changes the oversampling rates to 4x oversampling for temperature
         // and 2x oversampling for humidity. Pressure measurement is skipped.
         bme680_set_oversampling_rates(sensor, osr_4x, osr_none, osr_2x);
-    
+
         // Change the IIR filter size for temperature and pressure to 7.
         bme680_set_filter_size(sensor, iir_size_7);
 
@@ -123,4 +123,3 @@ void user_init(void)
         bme680_set_heater_profile (sensor, 4, 400, 180);
     }
 }
-

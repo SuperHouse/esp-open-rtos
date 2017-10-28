@@ -19,7 +19,7 @@
  *   |          GPIO 2  (CS)   >-----> CS       |
  *   +-------------------------+     +----------+
  */
- 
+
 #include "espressif/esp_common.h"
 #include "esp/uart.h"
 
@@ -36,7 +36,7 @@
 // define I2C interface for BME680 sensor 1
 #define SPI_BUS         1
 #define SPI_CS_GPIO     2   // GPIO 15, the default CS of SPI bus 1, can't be used
-// define SPI interface for BME680 sensor 2 
+// define SPI interface for BME680 sensor 2
 #define I2C_BUS         0
 #define I2C_SCL_PIN     5
 #define I2C_SDA_PIN     4
@@ -45,7 +45,7 @@ static bme680_sensor_t* sensor1;
 static bme680_sensor_t* sensor2;
 
 /*
- * User task that triggers measurements of sensor1 every 5 seconds and 
+ * User task that triggers measurements of sensor1 every 5 seconds and
  * uses *vTaskDelay* to wait for measurement results.
  */
 void user_task_sensor1(void *pvParameters)
@@ -53,26 +53,26 @@ void user_task_sensor1(void *pvParameters)
     bme680_values_float_t values;
 
     TickType_t last_wakeup = xTaskGetTickCount();
-    
+
     uint32_t duration = bme680_get_measurement_duration (sensor1);
-    
-    while (1) 
-    {    
-        // trigger the sensor to start one TPHG measurement cycle 
+
+    while (1)
+    {
+        // trigger the sensor to start one TPHG measurement cycle
         if (bme680_force_measurement (sensor1))
         {
-        
+
             // passive waiting until measurement results are available
             vTaskDelay (duration);
-        
+
             // get the results and so something with them
             if (bme680_get_results_float (sensor1, &values))
                 printf("%.3f BME680 Sensor1: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n",
                        (double)sdk_system_get_time()*1e-3,
-                       values.temperature, values.humidity, 
+                       values.temperature, values.humidity,
                        values.pressure, values.gas_resistance);
         }
- 
+
         // passive waiting until 5 seconds are over
         vTaskDelayUntil(&last_wakeup, 5000 / portTICK_PERIOD_MS);
     }
@@ -87,10 +87,10 @@ void user_task_sensor2(void *pvParameters)
     bme680_values_float_t values;
 
     TickType_t last_wakeup = xTaskGetTickCount();
-    
-    while (1) 
-    {    
-        // trigger the sensor to start one TPHG measurement cycle 
+
+    while (1)
+    {
+        // trigger the sensor to start one TPHG measurement cycle
         if (bme680_force_measurement (sensor2))
         {
             // busy waiting until measurement results are available
@@ -100,10 +100,10 @@ void user_task_sensor2(void *pvParameters)
             if (bme680_get_results_float (sensor2, &values))
                 printf("%.3f BME680 Sensor2: %.2f °C, %.2f %%, %.2f hPa, %.2f Ohm\n",
                        (double)sdk_system_get_time()*1e-3,
-                       values.temperature, values.humidity, 
+                       values.temperature, values.humidity,
                        values.pressure, values.gas_resistance);
         }
- 
+
         // passive waiting until 2 seconds are over
         vTaskDelayUntil(&last_wakeup, 2000 / portTICK_PERIOD_MS);
     }
@@ -116,9 +116,9 @@ void user_init(void)
     uart_set_baud(0, 115200);
     // Give the UART some time to settle
     sdk_os_delay_us(500);
-    
+
     /** -- MANDATORY PART -- */
-    
+
     // Init all I2C bus interfaces at which BME680 sensors are connected
     i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K);
 
@@ -131,15 +131,15 @@ void user_init(void)
         // Create the tasks that use the sensors
         xTaskCreate(user_task_sensor1, "user_task_sensor1", 256, NULL, 2, 0);
         xTaskCreate(user_task_sensor2, "user_task_sensor2", 256, NULL, 2, 0);
- 
+
         // That's it.
 
         /** -- OPTIONAL PART -- */
-    
+
         // Changes the oversampling rates for both sensor to different values
         bme680_set_oversampling_rates(sensor1, osr_4x, osr_2x, osr_1x);
         bme680_set_oversampling_rates(sensor2, osr_8x, osr_8x, osr_8x);
-    
+
         // Change the IIR filter size for temperature and and pressure to 7.
         bme680_set_filter_size(sensor1, iir_size_7);
         bme680_set_filter_size(sensor2, iir_size_7);
@@ -147,10 +147,9 @@ void user_init(void)
         // Change the heater profile 0 to 200 degree Celcius for 150 ms.
         bme680_set_heater_profile (sensor1, 0, 200, 150);
         bme680_set_heater_profile (sensor2, 0, 200, 150);
-        
+
         // Activate the heater profile 0
         bme680_use_heater_profile (sensor1, 0);
         bme680_use_heater_profile (sensor2, 0);
     }
 }
-
