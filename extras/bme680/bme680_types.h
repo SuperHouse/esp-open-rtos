@@ -130,7 +130,7 @@ typedef struct {
 typedef struct {
 
     uint16_t par_t1;         // calibration data for temperature compensation
-    uit16_t  par_t2;
+    int16_t  par_t2;
     int8_t   par_t3;
 
     uint16_t par_p1;         // calibration data for pressure compensation
