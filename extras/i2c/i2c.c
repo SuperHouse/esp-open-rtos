@@ -38,7 +38,7 @@
 #define debug(fmt, ...)
 #endif
 
-#define CLK_STRETCH  (10)
+//#define CLK_STRETCH  (10)
 
 // Following array contain delay values for different frequencies
 // Warning: 1 is minimal, that mean at 80MHz clock, frequency max is 320kHz
@@ -60,22 +60,29 @@ typedef struct i2c_bus_description
   bool started;
   bool flag;
   bool force;
+  uint32_t clk_stretch;
 } i2c_bus_description_t;
 
-static i2c_bus_description_t i2c_bus[MAX_I2C_BUS];
+static i2c_bus_description_t i2c_bus[I2C_MAX_BUS];
 
 inline bool i2c_status(uint8_t bus)
 {
     return i2c_bus[bus].started;
 }
 
-void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
+int i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
 {
+    if (bus >= I2C_MAX_BUS) {
+        debug("Invalid bus");
+        return -EINVAL;
+    }
+
     i2c_bus[bus].started = false;
     i2c_bus[bus].flag = false;
     i2c_bus[bus].g_scl_pin = scl_pin;
     i2c_bus[bus].g_sda_pin = sda_pin;
     i2c_bus[bus].frequency = freq;
+    i2c_bus[bus].clk_stretch = I2C_DEFAULT_CLK_STRETCH;
 
     // Just to prevent these pins floating too much if not connected.
     gpio_set_pullup(i2c_bus[bus].g_scl_pin, 1, 1);
@@ -90,14 +97,22 @@ void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
 
     // Prevent user, if frequency is high
     if (sdk_system_get_cpu_freq() == SYS_CPU_80MHZ)
-        if (i2c_freq_array[i2c_bus[bus].frequency][1] == 1)
+        if (i2c_freq_array[i2c_bus[bus].frequency][1] == 1) {
             debug("Max frequency is 320Khz at 80MHz");
+            return -ENOTSUP;
+        }
 
+    return 0;
 }
 
-void i2c_frequency(uint8_t bus, i2c_freq_t freq)
+void i2c_set_frequency(uint8_t bus, i2c_freq_t freq)
 {
     i2c_bus[bus].frequency = freq;
+}
+
+void i2c_set_clock_stretch(uint8_t bus, uint32_t clk_stretch)
+{
+    i2c_bus[bus].clk_stretch = clk_stretch;
 }
 
 static inline void i2c_delay(uint8_t bus)
@@ -159,7 +174,7 @@ void i2c_start(uint8_t bus)
         // Set SDA to 1
         (void) read_sda(bus);
         i2c_delay(bus);
-        uint32_t clk_stretch = CLK_STRETCH;
+        uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
         while (read_scl(bus) == 0 && clk_stretch--)
             ;
         // Repeated start setup time, minimum 4.7us
@@ -178,7 +193,7 @@ void i2c_start(uint8_t bus)
 // Output stop condition
 bool i2c_stop(uint8_t bus)
 {
-    uint32_t clk_stretch = CLK_STRETCH;
+    uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
     // Set SDA to 0
     clear_sda(bus);
     i2c_delay(bus);
@@ -203,7 +218,7 @@ bool i2c_stop(uint8_t bus)
 // Write a bit to I2C bus
 static void i2c_write_bit(uint8_t bus, bool bit)
 {
-    uint32_t clk_stretch = CLK_STRETCH;
+    uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
     if (bit) {
         (void) read_sda(bus);
     } else {
@@ -225,7 +240,7 @@ static void i2c_write_bit(uint8_t bus, bool bit)
 // Read a bit from I2C bus
 static bool i2c_read_bit(uint8_t bus)
 {
-    uint32_t clk_stretch = CLK_STRETCH;
+    uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
     bool bit;
     // Let the slave drive data
     (void) read_sda(bus);
@@ -272,24 +287,20 @@ static int i2c_bus_test(uint8_t bus)
 {
     taskENTER_CRITICAL(); // To prevent task swaping after checking flag and before set it!
     bool status = i2c_bus[bus].flag; // get current status
-    if(i2c_bus[bus].force)
-    {
+    if (i2c_bus[bus].force) {
         i2c_bus[bus].flag = true; // force bus on
         taskEXIT_CRITICAL();
-        if(status)
+        if (status)
            i2c_stop(bus); //Bus was busy, stop it.
     }
-    else
-    {
-        if (status)
-        {
+    else {
+        if (status) {
             taskEXIT_CRITICAL();
             debug("busy");
             taskYIELD(); // If bus busy, change task to try finish last com.
             return -EBUSY;  // If bus busy, inform user
         }
-        else
-        {
+        else {
             i2c_bus[bus].flag = true; // Set Bus busy
             taskEXIT_CRITICAL();
         }
@@ -299,12 +310,12 @@ static int i2c_bus_test(uint8_t bus)
 
 int i2c_slave_write(uint8_t bus, uint8_t slave_addr, const uint8_t *data, const uint8_t *buf, uint32_t len)
 {
-    if(i2c_bus_test(bus))
+    if (i2c_bus_test(bus))
         return -EBUSY;
     i2c_start(bus);
     if (!i2c_write(bus, slave_addr << 1))
         goto error;
-    if(data != NULL)
+    if (data != NULL)
         if (!i2c_write(bus, *data))
             goto error;
     while (len--) {
@@ -325,9 +336,9 @@ error:
 
 int i2c_slave_read(uint8_t bus, uint8_t slave_addr, const uint8_t *data, uint8_t *buf, uint32_t len)
 {
-    if(i2c_bus_test(bus))
+    if (i2c_bus_test(bus))
         return -EBUSY;
-    if(data != NULL) {
+    if (data != NULL) {
         i2c_start(bus);
         if (!i2c_write(bus, slave_addr << 1))
             goto error;

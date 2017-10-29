@@ -21,9 +21,10 @@ from it.
 Connect BMP280 or BME280 module to you ESP8266 module and initialize the I2C SCL and SDA pins:
 
 ```
+const uint8_t bus = 0;
 const uint8_t scl_pin = 0;
 const uint8_t sda_pin = 2;
-i2c_init(scl_pin, sda_pin);
+i2c_init(bus, scl_pin, sda_pin, I2C_FREQ_100K);
 
 ```
 

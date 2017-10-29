@@ -40,9 +40,11 @@ extern "C" {
 /**
  * Define i2c bus max number
  */
-#ifndef MAX_I2C_BUS
-    #define MAX_I2C_BUS 2
+#ifndef I2C_MAX_BUS
+    #define I2C_MAX_BUS 2
 #endif
+
+#define I2C_DEFAULT_CLK_STRETCH (10)
 
 typedef enum
 {
@@ -69,15 +71,24 @@ typedef struct i2c_dev
  * @param scl_pin SCL pin for I2C
  * @param sda_pin SDA pin for I2C
  * @param freq frequency of bus (ex : I2C_FREQ_400K)
+ * @param clk_stretch I2C clock stretch. I2C_DEFAULT_CLK_STRETCH would be good in most cases
+ * @return Non-zero if error occured
  */
-void i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq);
+int i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq);
 
 /**
  * Change bus frequency
  * @param bus Bus i2c selection
  * @param freq frequency of bus (ex : I2C_FREQ_400K)
  */
-void i2c_frequency(uint8_t bus, i2c_freq_t freq);
+void i2c_set_frequency(uint8_t bus, i2c_freq_t freq);
+
+/**
+ * Change clock stretch
+ * @param bus I2C bus
+ * @param clk_stretch I2C clock stretch. I2C_DEFAULT_CLK_STRETCH by default
+ */
+void i2c_set_clock_stretch(uint8_t bus, uint32_t clk_stretch);
 
 /**
  * Write a byte to I2C bus.
