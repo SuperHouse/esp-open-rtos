@@ -1,6 +1,8 @@
 #ifndef __MDNSRESPONDER_H__
 #define __MDNSRESPONDER_H__
 
+#include <lwip/ip_addr.h>
+
 /*
  * Basic multicast DNS responder
  * 
@@ -40,7 +42,7 @@ void mdns_add_facility( const char* instanceName,   // Short user-friendly insta
 void mdns_add_PTR(const char* rKey, u32_t ttl, const char* nameStr);
 void mdns_add_SRV(const char* rKey, u32_t ttl, u16_t rPort, const char* targname);
 void mdns_add_TXT(const char* rKey, u32_t ttl, const char* txtStr);
-void mdns_add_A  (const char* rKey, u32_t ttl, struct ip_addr addr);
+void mdns_add_A  (const char* rKey, u32_t ttl, ip_addr_t addr);
 
 /* Sample usage, advertising a secure web service
 

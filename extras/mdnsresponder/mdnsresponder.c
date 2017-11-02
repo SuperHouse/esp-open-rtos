@@ -25,6 +25,7 @@
 #include <lwip/sys.h>
 #include <lwip/netdb.h>
 #include <lwip/dns.h>
+#include <lwip/prot/dns.h>
 #include <lwip/udp.h>
 #include <lwip/igmp.h>
 #include <lwip/netif.h>
@@ -39,6 +40,7 @@
 
 #define DNS_MULTICAST_ADDRESS   "224.0.0.251"   // RFC 6762
 #define DNS_MDNS_PORT           5353            // RFC 6762
+#define DNS_MSG_SIZE            512
 
 //-------------------------------------------------------------------
 
@@ -480,7 +482,7 @@ void mdns_add_TXT(const char* rKey, u32_t ttl, const char* txStr)
     }
 }
 
-void mdns_add_A(const char* rKey, u32_t ttl, struct ip_addr addr)
+void mdns_add_A(const char* rKey, u32_t ttl, ip_addr_t addr)
 {
     mdns_add_response(rKey, DNS_RRTYPE_A, ttl, &addr, sizeof(addr));
 }
@@ -666,7 +668,7 @@ static void mdns_reply(struct mdns_hdr* hdrP)
     free(mdns_response);
 }
 
-static void mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port) 
+static void mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t port)
 // Callback from udp_recv
 {
     UNUSED_ARG(pcb);
