@@ -1425,11 +1425,7 @@ static bool bme680_i2c_read(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, ui
 
     debug_dev ("Read %d byte from i2c slave register %02x.", __FUNCTION__, dev, len, reg);
 
-    int result;
-    int count = 10;
-
-    while (count-- && (result = i2c_slave_read(dev->bus, dev->addr, &reg, data, len)) == -EBUSY)
-        bme680_delay_ms (10);
+    int result = i2c_slave_read(dev->bus, dev->addr, &reg, data, len);
 
     if (result)
     {
@@ -1457,11 +1453,7 @@ static bool bme680_i2c_write(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, u
 
     debug_dev ("Write %d byte to i2c slave register %02x.", __FUNCTION__, dev, len, reg);
 
-    int result;
-    int count = 10;
-
-    while (count-- && (result = i2c_slave_write(dev->bus, dev->addr, &reg, data, len)) == -EBUSY)
-        bme680_delay_ms (10);
+    int result = i2c_slave_write(dev->bus, dev->addr, &reg, data, len);
 
     if (result)
     {
