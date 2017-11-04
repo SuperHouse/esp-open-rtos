@@ -488,11 +488,7 @@ static bool ccs811_reg_read(ccs811_sensor_t* dev, uint8_t reg, uint8_t *data, ui
 
     debug_dev ("Read %d byte from i2c slave starting at reg addr %02x.", __FUNCTION__, dev, len, reg);
 
-    int result = 0;
-    int count  = 10;
-
-    while (count-- && (result = i2c_slave_read(dev->bus, dev->addr, &reg, data, len)) == -EBUSY)
-        vTaskDelay (1);
+    int result = i2c_slave_read(dev->bus, dev->addr, &reg, data, len);
 
     if (result)
     {
@@ -531,11 +527,7 @@ static bool ccs811_reg_write(ccs811_sensor_t* dev, uint8_t reg, uint8_t *data, u
 #   endif
 
 
-    int result;
-    int count = 10;
-
-    while (count-- && (result = i2c_slave_write(dev->bus, dev->addr, &reg, data, len)) == -EBUSY)
-        vTaskDelay (1);
+    int result = i2c_slave_write(dev->bus, dev->addr, &reg, data, len);
 
     if (result)
     {
