@@ -43,8 +43,8 @@
 // Following array contain delay values for different frequencies
 // Warning: 1 is minimal, that mean at 80MHz clock, frequency max is 320kHz
 const static uint8_t i2c_freq_array[][2] = {
-    [I2C_FREQ_80K]  = {255, 35},
-    [I2C_FREQ_100K] = {100, 20},
+    [I2C_FREQ_80K]  = {255, 80},
+    [I2C_FREQ_100K] = {100, 55},
     [I2C_FREQ_400K] = {10, 1},
     [I2C_FREQ_500K] = {6, 1}
 };
@@ -150,7 +150,7 @@ static inline bool read_sda(uint8_t bus)
 {
     gpio_write(i2c_bus[bus].g_sda_pin, 1);
     // TODO: Without this delay we get arbitration lost in i2c_stop
-    i2c_delay(bus);
+    // i2c_delay(bus); 
     return gpio_read(i2c_bus[bus].g_sda_pin); // Clock high, valid ACK
 }
 
@@ -203,6 +203,9 @@ bool i2c_stop(uint8_t bus)
     // Stop bit setup time, minimum 4us
     i2c_delay(bus);
     // SCL is high, set SDA from 0 to 1
+    read_sda(bus); 
+    // additional delay before testing SDA value to avoid wrong state
+    i2c_delay(bus); 
     if (read_sda(bus) == 0) {
         debug("arbitration lost in i2c_stop from bus %u", bus);
     }
