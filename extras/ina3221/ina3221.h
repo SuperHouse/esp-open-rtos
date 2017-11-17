@@ -26,7 +26,7 @@ extern "C" {
 #define INA3221_ADDR_2  (0x42)      ///< A0 to SDA
 #define INA3221_ADDR_3  (0x43)      ///< A0 to SCL
 
-#define BUS_NUMBER 3  ///< Number of shunt available
+#define INA3221_BUS_NUMBER 3  ///< Number of shunt available
 
 #define INA3221_REG_CONFIG                      (0x00)
 #define INA3221_REG_SHUNTVOLTAGE_1              (0x01)
@@ -133,10 +133,10 @@ typedef union
  *  Device description
  */
 typedef struct {
-    const i2c_dev_t i2c_dev;          ///< ina3221 I2C address
-    const uint16_t shunt[BUS_NUMBER]; ///< Memory of shunt value (mOhm)
-    ina3221_config_t config;          ///< Memory of ina3221 config
-    ina3221_mask_t mask;              ///< Memory of mask_config
+    const i2c_dev_t i2c_dev;                  ///< ina3221 I2C address
+    const uint16_t shunt[INA3221_BUS_NUMBER]; ///< Memory of shunt value (mOhm)
+    ina3221_config_t config;                  ///< Memory of ina3221 config
+    ina3221_mask_t mask;                      ///< Memory of mask_config
 } ina3221_t;
 
 /**

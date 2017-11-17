@@ -132,7 +132,8 @@ int ina3221_getBusVoltage(ina3221_t *dev, ina3221_channel_t channel, float *volt
     int err = 0;
     if ((err = _wireReadRegister(&dev->i2c_dev, INA3221_REG_BUSVOLTAGE_1 + channel * 2, (uint16_t*)&raw_value)))
         return err;
-    *voltage = raw_value * 0.001; //V    8mV step
+    if (voltage)
+        *voltage = raw_value * 0.001; //V    8mV step
     return 0;
 }
 
@@ -140,15 +141,18 @@ int ina3221_getShuntValue(ina3221_t *dev, ina3221_channel_t channel, float *volt
 {
     int16_t raw_value;
     int err = 0;
-    if ((err = _wireReadRegister(&dev->i2c_dev, INA3221_REG_SHUNTVOLTAGE_1 + channel * 2, (uint16_t*)&raw_value)))
+    if ((err = _wireReadRegister(&dev->i2c_dev,INA3221_REG_SHUNTVOLTAGE_1+channel*2, (uint16_t*)&raw_value)))
         return err;
-    *voltage = raw_value * 0.005; //mV   40uV step
-    if (!dev->shunt[channel])
+    float compute = raw_value*0.005; //mV   40uV step
+    if (voltage)
+        *voltage = compute;
+    if(!dev->shunt[channel])
     {
         debug("No shunt configured for channel %u. Dev:%u:%X\n", channel+1, dev->bus, dev->addr);
         return -EINVAL;
     }
-    *current = (*voltage * 1000.0) / dev->shunt[channel];  //mA
+    if (current)
+        *current = (compute*1000.0)/dev->shunt[channel];  //mA
     return 0;
 }
 
