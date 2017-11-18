@@ -12,6 +12,12 @@
 #include <FreeRTOS.h>
 #include <esp8266.h>
 
+#ifdef PWM_DEBUG
+#define debug(fmt, ...) printf("%s: " fmt "\n", "PWM", ## __VA_ARGS__)
+#else
+#define debug(fmt, ...)
+#endif
+
 typedef struct PWMPinDefinition
 {
     uint8_t pin;
@@ -43,7 +49,7 @@ typedef struct pwmInfoDefinition
 
 static PWMInfo pwmInfo;
 
-static void frc1_interrupt_handler(void *arg)
+static void IRAM frc1_interrupt_handler(void *arg)
 {
     uint8_t i = 0;
     bool out = true;
@@ -71,7 +77,7 @@ void pwm_init(uint8_t npins, const uint8_t* pins)
     /* Assert number of pins is correct */
     if (npins > MAX_PWM_PINS)
     {
-        printf("Incorrect number of PWM pins (%d)\n", npins);
+        debug("Incorrect number of PWM pins (%d)\n", npins);
         return;
     }
 
@@ -117,9 +123,12 @@ void pwm_set_freq(uint16_t freq)
     timer_set_frequency(FRC1, freq);
     pwmInfo._maxLoad = timer_get_load(FRC1);
 
-    if (pwmInfo.running)
+    if (pwmInfo.dutyCycle > 0 && pwmInfo.dutyCycle < UINT16_MAX)
     {
-        pwm_start();
+        if (pwmInfo.running)
+        {
+            pwm_start();
+        }
     }
 }
 
