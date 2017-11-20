@@ -83,6 +83,11 @@ int timer_set_frequency(const timer_frc_t frc, uint32_t freq)
     uint32_t counts = 0;
     timer_clkdiv_t div = timer_freq_to_div(freq);
 
+    if(freq == 0) //can't divide by 0
+    {
+        return -EINVAL;
+    }
+
     counts = timer_freq_to_count(frc, freq, div);
     if(counts == 0)
     {
