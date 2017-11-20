@@ -123,12 +123,9 @@ void pwm_set_freq(uint16_t freq)
     timer_set_frequency(FRC1, freq);
     pwmInfo._maxLoad = timer_get_load(FRC1);
 
-    if (pwmInfo.dutyCycle > 0 && pwmInfo.dutyCycle < UINT16_MAX)
+    if (pwmInfo.running)
     {
-        if (pwmInfo.running)
-        {
-            pwm_start();
-        }
+        pwm_start();
     }
 }
 
@@ -174,10 +171,13 @@ void pwm_start()
         gpio_write(pwmInfo.pins[i].pin, true);
     }
 
-    timer_set_load(FRC1, pwmInfo._onLoad);
-    timer_set_reload(FRC1, false);
-    timer_set_interrupts(FRC1, true);
-    timer_set_run(FRC1, true);
+    if (pwmInfo.dutyCycle > 0 && pwmInfo.dutyCycle < UINT16_MAX)
+    {
+        timer_set_load(FRC1, pwmInfo._onLoad);
+        timer_set_reload(FRC1, false);
+        timer_set_interrupts(FRC1, true);
+        timer_set_run(FRC1, true);
+    }
 
     pwmInfo.running = 1;
 }
