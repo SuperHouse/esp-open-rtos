@@ -46,3 +46,6 @@
 [submodule "lvgl/lv_examples"]
 	path = lvgl/lv_examples
 	url = https://github.com/littlevgl/lv_examples.git
+[submodule "extras/cryptoauthlib/cryptoauthlib"]
+	path = extras/cryptoauthlib/cryptoauthlib
+	url = https://github.com/MicrochipTech/cryptoauthlib.git
