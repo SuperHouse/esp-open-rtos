@@ -33,6 +33,7 @@ typedef enum {
 typedef struct pwmInfoDefinition
 {
     uint8_t running;
+    bool output;
 
     uint16_t freq;
     uint16_t dutyCycle;
@@ -131,21 +132,21 @@ void pwm_set_freq(uint16_t freq)
 
 void pwm_set_duty(uint16_t duty)
 {
-    bool output;
-
     pwmInfo.dutyCycle = duty;
     if (duty > 0 && duty < UINT16_MAX) {
         pwm_restart();
         return;
     }
-
     // 0% and 100% duty cycle are special cases: constant output.
-    pwm_stop();
-    pwmInfo.running = 1;
-    output = (duty == UINT16_MAX);
-    for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
+    pwmInfo.output = (duty == UINT16_MAX);
+    if (pwmInfo.running)
     {
-        gpio_write(pwmInfo.pins[i].pin, output);
+         pwm_stop();
+         pwmInfo.running = 1;
+         for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
+         {
+            gpio_write(pwmInfo.pins[i].pin, pwmInfo.output);
+         }
     }
 }
 
@@ -178,7 +179,13 @@ void pwm_start()
         timer_set_interrupts(FRC1, true);
         timer_set_run(FRC1, true);
     }
-
+    else
+    {
+      for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
+      {
+        gpio_write(pwmInfo.pins[i].pin, pwmInfo.output);
+      }
+    }
     pwmInfo.running = 1;
 }
 
