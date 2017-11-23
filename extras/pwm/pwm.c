@@ -34,6 +34,7 @@ typedef struct pwmInfoDefinition
 {
     uint8_t running;
     bool output;
+    bool reverse;
 
     uint16_t freq;
     uint16_t dutyCycle;
@@ -66,7 +67,7 @@ static void IRAM frc1_interrupt_handler(void *arg)
 
     for (; i < pwmInfo.usedPins; ++i)
     {
-        gpio_write(pwmInfo.pins[i].pin, out);
+         gpio_write(pwmInfo.pins[i].pin, pwmInfo.reverse ? !out : out);
     }
 
     timer_set_load(FRC1, load);
@@ -87,6 +88,7 @@ void pwm_init(uint8_t npins, const uint8_t* pins)
     pwmInfo._onLoad = 0;
     pwmInfo._offLoad = 0;
     pwmInfo._step = PERIOD_ON;
+    pwmInfo.reverse = reverse;
 
     /* Save pins information */
     pwmInfo.usedPins = npins;
@@ -108,12 +110,11 @@ void pwm_init(uint8_t npins, const uint8_t* pins)
 
     /* Flag not running */
     pwmInfo.running = 0;
+    debug("PWM Init");
 }
 
 void pwm_set_freq(uint16_t freq)
 {
-    pwmInfo.freq = freq;
-
     /* Stop now to avoid load being used */
     if (pwmInfo.running)
     {
@@ -121,8 +122,12 @@ void pwm_set_freq(uint16_t freq)
         pwmInfo.running = 1;
     }
 
-    timer_set_frequency(FRC1, freq);
-    pwmInfo._maxLoad = timer_get_load(FRC1);
+    if (!timer_set_frequency(FRC1, freq))
+    {
+        pwmInfo._maxLoad = timer_get_load(FRC1);
+        pwmInfo.freq = freq;
+        debug("Frequency set at %u",pwmInfo.freq);
+    }
 
     if (pwmInfo.running)
     {
@@ -133,21 +138,12 @@ void pwm_set_freq(uint16_t freq)
 void pwm_set_duty(uint16_t duty)
 {
     pwmInfo.dutyCycle = duty;
-    if (duty > 0 && duty < UINT16_MAX) {
-        pwm_restart();
-        return;
-    }
-    // 0% and 100% duty cycle are special cases: constant output.
-    pwmInfo.output = (duty == UINT16_MAX);
-    if (pwmInfo.running)
+    if (duty == 0 || duty == UINT16_MAX)
     {
-         pwm_stop();
-         pwmInfo.running = 1;
-         for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
-         {
-            gpio_write(pwmInfo.pins[i].pin, pwmInfo.output);
-         }
+      pwmInfo.output = (duty == UINT16_MAX);
     }
+    debug("Duty set at %u",pwmInfo.dutyCycle);
+    pwm_restart();
 }
 
 void pwm_restart()
@@ -165,15 +161,14 @@ void pwm_start()
     pwmInfo._offLoad = pwmInfo._maxLoad - pwmInfo._onLoad;
     pwmInfo._step = PERIOD_ON;
 
-    // Trigger ON
-    uint8_t i = 0;
-    for (; i < pwmInfo.usedPins; ++i)
-    {
-        gpio_write(pwmInfo.pins[i].pin, true);
-    }
-
     if (pwmInfo.dutyCycle > 0 && pwmInfo.dutyCycle < UINT16_MAX)
     {
+        // Trigger ON
+        uint8_t i = 0;
+        for (; i < pwmInfo.usedPins; ++i)
+        {
+            gpio_write(pwmInfo.pins[i].pin, pwmInfo.reverse ? false : true);
+        }
         timer_set_load(FRC1, pwmInfo._onLoad);
         timer_set_reload(FRC1, false);
         timer_set_interrupts(FRC1, true);
@@ -183,9 +178,10 @@ void pwm_start()
     {
       for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
       {
-        gpio_write(pwmInfo.pins[i].pin, pwmInfo.output);
-      }
+        gpio_write(pwmInfo.pins[i].pin, pwmInfo.reverse ? !pwmInfo.output : pwmInfo.output );
+      }       
     }
+    debug("PWM started");
     pwmInfo.running = 1;
 }
 
@@ -193,5 +189,13 @@ void pwm_stop()
 {
     timer_set_interrupts(FRC1, false);
     timer_set_run(FRC1, false);
+    if (pwmInfo.dutyCycle == 0 || pwmInfo.dutyCycle == UINT16_MAX)
+    {
+      for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
+      {
+        gpio_write(pwmInfo.pins[i].pin, pwmInfo.reverse ? true : false);
+      }       
+    }
+    debug("PWM stopped");
     pwmInfo.running = 0;
 }
