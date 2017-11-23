@@ -74,7 +74,7 @@ static void IRAM frc1_interrupt_handler(void *arg)
     pwmInfo._step = step;
 }
 
-void pwm_init(uint8_t npins, const uint8_t* pins)
+void pwm_init(uint8_t npins, const uint8_t* pins, uint8_t reverse)
 {
     /* Assert number of pins is correct */
     if (npins > MAX_PWM_PINS)
