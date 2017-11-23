@@ -140,7 +140,7 @@ void pwm_set_duty(uint16_t duty)
     pwmInfo.dutyCycle = duty;
     if (duty == 0 || duty == UINT16_MAX)
     {
-      pwmInfo.output = (duty == UINT16_MAX);
+        pwmInfo.output = (duty == UINT16_MAX);
     }
     debug("Duty set at %u",pwmInfo.dutyCycle);
     pwm_restart();
@@ -176,10 +176,10 @@ void pwm_start()
     }
     else
     {
-      for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
-      {
-        gpio_write(pwmInfo.pins[i].pin, pwmInfo.reverse ? !pwmInfo.output : pwmInfo.output );
-      }       
+        for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
+        {
+            gpio_write(pwmInfo.pins[i].pin, pwmInfo.reverse ? !pwmInfo.output : pwmInfo.output );
+        }       
     }
     debug("PWM started");
     pwmInfo.running = 1;
@@ -189,13 +189,10 @@ void pwm_stop()
 {
     timer_set_interrupts(FRC1, false);
     timer_set_run(FRC1, false);
-    if (pwmInfo.dutyCycle == 0 || pwmInfo.dutyCycle == UINT16_MAX)
+    for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
     {
-      for (uint8_t i = 0; i < pwmInfo.usedPins; ++i)
-      {
         gpio_write(pwmInfo.pins[i].pin, pwmInfo.reverse ? true : false);
-      }       
-    }
+    }       
     debug("PWM stopped");
     pwmInfo.running = 0;
 }
