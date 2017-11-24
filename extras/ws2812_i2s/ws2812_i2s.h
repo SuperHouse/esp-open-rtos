@@ -31,11 +31,14 @@
 extern "C" {
 #endif
 
-typedef struct {
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-    uint8_t white;
+typedef union {
+    struct {
+        uint8_t blue; //LSB
+        uint8_t green;
+        uint8_t red;
+        uint8_t white;
+    };
+    uint32_t color; // 0xWWRRGGBB
 } ws2812_pixel_t;
 
 typedef enum {
