@@ -16,6 +16,8 @@
 extern "C" {
 #endif
 
+//Warning: Printf disturb pwm, use uart_putc instead.
+
 void pwm_init(uint8_t npins, const uint8_t* pins, uint8_t reverse);
 void pwm_set_freq(uint16_t freq);
 void pwm_set_duty(uint16_t duty);

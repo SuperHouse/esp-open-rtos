@@ -127,6 +127,7 @@ void pwm_set_freq(uint16_t freq)
         pwmInfo._maxLoad = timer_get_load(FRC1);
         pwmInfo.freq = freq;
         debug("Frequency set at %u",pwmInfo.freq);
+        debug("MaxLoad is %u",pwmInfo._maxLoad);
     }
 
     if (pwmInfo.running)
@@ -161,6 +162,13 @@ void pwm_start()
     pwmInfo._offLoad = pwmInfo._maxLoad - pwmInfo._onLoad;
     pwmInfo._step = PERIOD_ON;
 
+    if(!pwmInfo._onLoad)
+    {
+        debug("Can't set timer with low duty and frequency settings, put duty at 0");
+        pwmInfo.dutyCycle = 0;
+    }
+
+    // 0% and 100% duty cycle are special cases: constant output.
     if (pwmInfo.dutyCycle > 0 && pwmInfo.dutyCycle < UINT16_MAX)
     {
         // Trigger ON
