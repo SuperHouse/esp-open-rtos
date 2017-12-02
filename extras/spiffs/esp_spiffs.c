@@ -90,7 +90,7 @@ void esp_spiffs_init(uint32_t addr, uint32_t size)
     config.hal_write_f = esp_spiffs_write;
     config.hal_erase_f = esp_spiffs_erase;
 
-    config.fh_ix_offset = 3;
+    config.fh_ix_offset = SPIFFS_FILEHDL_OFFSET;
 
 }
 
