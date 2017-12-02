@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sysparam.h>
+#include <unistd.h>
 
 #include <espressif/spi_flash.h>
 #include "espressif/esp_common.h"
@@ -41,12 +42,12 @@ void usage(void) {
 
 size_t tty_readline(char *buffer, size_t buf_size, bool echo) {
     size_t i = 0;
-    int c;
+    char c;
 
     while (true) {
-        c = getchar();
+        read(0, (void *)&c, 1);
         if (c == '\r' || c == '\n') {
-            if (echo) putchar('\n');
+            if (echo) printf("\n");
             break;
         } else if (c == '\b' || c == 0x7f) {
             if (i) {
@@ -56,13 +57,15 @@ size_t tty_readline(char *buffer, size_t buf_size, bool echo) {
         } else if (c < 0x20) {
             /* Ignore other control characters */
         } else if (i >= buf_size - 1) {
-            if (echo) putchar('\a');
+            if (echo) printf("\a");
         } else {
             buffer[i++] = c;
-            if (echo) putchar(c);
+            if (echo) printf("%c", c);
         }
+        fflush(stdout);
     }
 
+    fflush(stdout);
     buffer[i] = 0;
     return i;
 }
@@ -175,8 +178,10 @@ void sysparam_editor_task(void *pvParameters) {
         num_sectors = DEFAULT_SYSPARAM_SECTORS;
         base_addr = sdk_flashchip.chip_size - (5 + num_sectors) * sdk_flashchip.sector_size;
     }
+    fflush(stdout);
     while (true) {
         printf("==> ");
+        fflush(stdout);
         len = tty_readline(cmd_buffer, CMD_BUF_SIZE, echo);
         status = 0;
         if (!len) continue;
@@ -239,6 +244,7 @@ void sysparam_editor_task(void *pvParameters) {
         if (status != SYSPARAM_OK) {
             printf("! Operation returned status: %d (%s)\n", status, status_messages[status - status_base]);
         }
+        fflush(stdout);
     }
 }
 
