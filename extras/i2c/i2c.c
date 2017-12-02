@@ -344,8 +344,6 @@ int i2c_slave_read(uint8_t bus, uint8_t slave_addr, const uint8_t *data, uint8_t
             goto error;
         if (!i2c_write(bus, *data))
             goto error;
-        if (!i2c_stop(bus))
-            goto error;
     }
     i2c_start(bus);
     if (!i2c_write(bus, slave_addr << 1 | 1)) // Slave address + read
