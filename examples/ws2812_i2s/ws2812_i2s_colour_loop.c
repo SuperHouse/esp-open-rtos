@@ -41,7 +41,7 @@ static int fix_index(int index)
 
 static ws2812_pixel_t next_colour()
 {
-    ws2812_pixel_t colour = {0, 0, 0, 0};
+    ws2812_pixel_t colour = { {0, 0, 0, 0} };
     colour.red = rand() % 256;
     colour.green = rand() % 256;
     colour.blue = rand() % 256;
