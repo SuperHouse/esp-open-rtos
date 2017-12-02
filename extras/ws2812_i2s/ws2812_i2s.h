@@ -60,8 +60,9 @@ void ws2812_i2s_init(uint32_t pixels_number, pixeltype_t type);
  *
  * @param pixels Array of 'pixels_number' pixels. The array must contain all
  * the pixels.
+ * @return Non-zero if busy
  */
-void ws2812_i2s_update(ws2812_pixel_t *pixels, pixeltype_t type);
+int ws2812_i2s_update(ws2812_pixel_t *pixels, pixeltype_t type);
 
 #ifdef	__cplusplus
 }
