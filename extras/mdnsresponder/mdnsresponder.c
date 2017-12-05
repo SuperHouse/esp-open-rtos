@@ -25,6 +25,7 @@
 #include <lwip/sys.h>
 #include <lwip/netdb.h>
 #include <lwip/dns.h>
+#include <lwip/prot/dns.h>
 #include <lwip/udp.h>
 #include <lwip/igmp.h>
 #include <lwip/netif.h>
@@ -39,6 +40,7 @@
 
 #define DNS_MULTICAST_ADDRESS   "224.0.0.251"   // RFC 6762
 #define DNS_MDNS_PORT           5353            // RFC 6762
+#define DNS_MSG_SIZE            512
 
 //-------------------------------------------------------------------
 
@@ -100,7 +102,7 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
-  
+
 #define vTaskDelayMs(ms)    vTaskDelay((ms)/portTICK_PERIOD_MS)
 #define UNUSED_ARG(x)       (void)x
 #define kDummyDataSize      8           // arbitrary, dynamically resized
@@ -145,7 +147,7 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
     #define DNS_FLAG2_RESMASK         0x0F
 
     static char qstr[12];
-    
+
     static char* mdns_qrtype(uint16_t typ)
     {
         switch(typ) {
@@ -161,9 +163,9 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
         sprintf(qstr,"type %d",typ);
         return qstr;
     }
-    
+
     #ifdef qLogAllTraffic
-    
+
         static void mdns_printhex(u8_t* p, int n)
         {
             int i;
@@ -178,14 +180,14 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
         {
             int i, n;
             char* cp;
-    
+
             n = *p++;
             cp = (char*)p;
             for (i=0; i<n; i++) putchar(*cp++);
         }
 
         static char cstr[16];
-        
+
         static char* mdns_qclass(uint16_t cls)
         {
             switch(cls) {
@@ -202,7 +204,7 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
         {
             char* cp = (char*)p;
             int i, n;
-    
+
             do {
                 n = *cp++;
                 if ((n & 0xC0) == 0xC0) {
@@ -222,7 +224,7 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
             return (u8_t*)cp;
         }
 
-    
+
         static u8_t* mdns_print_header(struct mdns_hdr* hdr)
         {
             if (hdr->flags1 & DNS_FLAG1_RESP) {
@@ -235,7 +237,7 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
             }
             if (hdr->flags1 & DNS_FLAG1_RD) printf("RD ");
             if (hdr->flags1 & DNS_FLAG1_TRUNC) printf("[TRUNC] ");
-    
+
             printf(": %d questions", htons(hdr->numquestions) );
             if (hdr->numanswers != 0)
                 printf(", %d answers",htons(hdr->numanswers));
@@ -252,7 +254,7 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
         {
             struct mdns_query q;
             uint16_t c;
-    
+
             memcpy(&q,p,SIZEOF_DNS_QUERY);
             c = htons(q.class);
             printf(" %s %s", mdns_qrtype(htons(q.type)), mdns_qclass(c & 0x7FFF) );
@@ -266,7 +268,7 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
         {
             struct mdns_answer ans;
             u16_t rrlen, atype, rrClass;;
-    
+
             memcpy(&ans,p,SIZEOF_DNS_ANSWER);
             atype = htons(ans.type);
             rrlen = htons(ans.len);
@@ -305,7 +307,7 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
             u8_t*    tp;
             u8_t*     limP = msgP + msgLen;
             struct mdns_hdr* hdr;
-    
+
             hdr = (struct mdns_hdr*) msgP;
             tp = mdns_print_header(hdr);
             for (i=0; i<htons(hdr->numquestions); i++) {
@@ -314,21 +316,21 @@ static mdns_rsrc*      gDictP = NULL;       // RR database, linked list
                 tp = mdns_print_query(tp);
                 if (tp > limP) return 0;
             }
-    
+
             for (i=0; i<htons(hdr->numanswers); i++) {
                 printf(" A%d: ",i+1);
                 tp = mdns_print_name(tp,hdr);
                 tp = mdns_print_answer(tp,hdr);
                 if (tp > limP) return 0;
             }
-    
+
             for (i=0; i<htons(hdr->numauthrr); i++) {
                 printf(" AuRR%d: ",i+1);
                 tp = mdns_print_name(tp,hdr);
                 tp = mdns_print_answer(tp,hdr);
                 if (tp > limP) return 0;
             }
-    
+
             for (i=0; i<htons(hdr->numextrarr); i++) {
                 printf(" ExRR%d: ",i+1);
                 tp = mdns_print_name(tp,hdr);
@@ -348,7 +350,7 @@ static u8_t* mdns_labels2str(u8_t* hdrP, u8_t* p, char* qStr)
 // Handles compression
 {
     int i, n;
-    
+
     do {
         n = *p++;
         if ((n & 0xC0) == 0xC0) {
@@ -374,7 +376,7 @@ static int mdns_str2labels(const char* name, u8_t* lseq, int max)
 {
     int i,n,sdx,idx = 0;
     int lc = 0;
-    
+
     do {
         sdx = idx;
         while (name[idx] != '.' && name[idx] != 0) idx++;
@@ -399,7 +401,7 @@ static u8_t* mdns_get_question(u8_t* hdrP, u8_t* qp, char* qStr, uint16_t* qClas
 {
     struct mdns_query qr;
     uint16_t cls;
-    
+
     qp = mdns_labels2str(hdrP, qp, qStr);
     memcpy(&qr,qp,SIZEOF_DNS_QUERY);
     *qType = htons(qr.type);
@@ -417,7 +419,7 @@ static void mdns_add_response(const char* vKey, u16_t vType, u32_t ttl, const vo
 {
     mdns_rsrc* rsrcP;
     int keyLen, recSize;
-    
+
     keyLen = strlen(vKey) + 1;
     recSize = sizeof(mdns_rsrc) - kDummyDataSize + keyLen + vDataSize;
     rsrcP = (mdns_rsrc*)malloc(recSize);
@@ -442,7 +444,7 @@ void mdns_add_PTR(const char* rKey, u32_t ttl, const char* nmStr)
 {
     int nl;
     u8_t lBuff[kMaxNameSize];
-    
+
     nl = mdns_str2labels(nmStr,lBuff,sizeof(lBuff));
     if (nl>0)
         mdns_add_response(rKey, DNS_RRTYPE_PTR, ttl, lBuff, nl);
@@ -454,10 +456,10 @@ void mdns_add_SRV(const char* rKey, u32_t ttl, u16_t rPort, const char* targName
         struct mdns_rr_srv srvRR;
         u8_t lBuff[kMaxNameSize];
     } __attribute__((packed)) SrvRec;
-    
+
     int     nl;
     SrvRec     temp;
-    
+
     temp.srvRR.prio = 0;
     temp.srvRR.weight = 0;
     temp.srvRR.port = htons(rPort);
@@ -480,46 +482,45 @@ void mdns_add_TXT(const char* rKey, u32_t ttl, const char* txStr)
     }
 }
 
-void mdns_add_A(const char* rKey, u32_t ttl, struct ip_addr addr)
+void mdns_add_A(const char* rKey, u32_t ttl, ip_addr_t addr)
 {
     mdns_add_response(rKey, DNS_RRTYPE_A, ttl, &addr, sizeof(addr));
 }
 
 void mdns_add_facility( const char* instanceName,   // Friendly name, need not be unique
-                        const char* serviceName,         // Must be _name
+                        const char* serviceName,    // Must be "name", e.g. "hap" or "http"
                         const char* addText,        // Must be <key>=<value>
-                        mdns_flags  flags,                 // TCP or UDP
-                        u16_t onPort,                 // port number
-                        u32_t ttl                    // seconds
+                        mdns_flags  flags,          // TCP or UDP
+                        u16_t onPort,               // port number
+                        u32_t ttl                   // seconds
                       )
 {
     char key[64];
     char fullName[128];
     char devName[96];
     struct ip_info ipInfo;
-    
+
     #ifdef qDebugLog
         printf("\nmDNS advertising instance %s protocol %s text %s on port %d %s TTL %d secs\n",
-                instanceName,serviceName,addText,onPort,(flags & mdns_UDP) ? "UDP" : "TCP", ttl);
+                instanceName, serviceName, addText, onPort, (flags & mdns_UDP) ? "UDP" : "TCP", ttl);
     #endif
-            
-    snprintf(key,sizeof(key),"%s.%s.local.",serviceName,(flags & mdns_UDP) ? "_udp" :"_tcp");
-    snprintf(fullName,sizeof(fullName),"%s.%s",instanceName,key);
-    snprintf(devName,sizeof(devName),"%s.local.",instanceName);
-    
+
+    snprintf(key, sizeof(key), "%s.%s.local.", serviceName, (flags & mdns_UDP) ? "_udp" :"_tcp");
+    snprintf(fullName, sizeof(fullName), "%s.%s", instanceName, key);
+    snprintf(devName, sizeof(devName), "%s.local.", instanceName);
+
     if (!sdk_wifi_get_ip_info(STATION_IF,&ipInfo))
         ipInfo.ip.addr = IPADDR_NONE;
-    
+
     // Order has significance for extraRR feature
-    mdns_add_TXT(fullName,ttl,addText);
-    mdns_add_A(devName,ttl,ipInfo.ip);
-    mdns_add_SRV(fullName,ttl,onPort,devName);
-    mdns_add_PTR(key,ttl,fullName);
-    
+    mdns_add_TXT(fullName, ttl, addText);
+    mdns_add_A(devName, ttl, ipInfo.ip);
+    mdns_add_SRV(fullName, ttl, onPort, devName);
+    mdns_add_PTR(key, ttl, fullName);
+
     // Optional, makes us browsable
     if (flags & mdns_Browsable)
         mdns_add_PTR("_services._dns-sd._udp.local.",ttl,key);
-        
 }
 
 static void mdns_update_ipaddr(struct ip_info* ipInfo)
@@ -573,7 +574,7 @@ static int mdns_add_to_answer(mdns_rsrc* rsrcP, u8_t* resp, int respLen)
     // Data for this key
     memcpy(&resp[respLen], &rsrcP->rData[rsrcP->rKeySize], rsrcP->rDataSize);
     respLen += rsrcP->rDataSize;
-    
+
     return respLen;
 }
 
@@ -599,7 +600,7 @@ static void mdns_send_mcast(u8_t* msgP, int nBytes)
     } else
         printf(">>> mdns_send: alloc failed[%d]\n",nBytes);
 }
-    
+
 static void mdns_reply(struct mdns_hdr* hdrP)
 // Message has passed tests, may want to send an answer
 {
@@ -609,13 +610,13 @@ static void mdns_reply(struct mdns_hdr* hdrP)
     u8_t* qBase = (u8_t*)hdrP;
     u8_t* qp;
     u8_t* mdns_response;
-    
+
     mdns_response = malloc(DNS_MSG_SIZE);
     if (mdns_response==NULL) {
         printf(">>> mdns_reply could not alloc %d\n",DNS_MSG_SIZE);
         return;
     }
-    
+
     // Build response header
     rHdr = (struct mdns_hdr*) mdns_response;
     rHdr->id = hdrP->id;
@@ -630,28 +631,28 @@ static void mdns_reply(struct mdns_hdr* hdrP)
     extra = NULL;
     qp = qBase + SIZEOF_DNS_HDR;
     nquestions = htons(hdrP->numquestions);
-    
+
     for (i=0; i<nquestions; i++) {
         char  qStr[kMaxQStr];
         u16_t qClass, qType;
         u8_t  qUnicast;
         mdns_rsrc* rsrcP;
-    
+
         qp = mdns_get_question(qBase, qp, qStr, &qClass, &qType, &qUnicast);
         if (qClass==DNS_RRCLASS_IN || qClass==DNS_RRCLASS_ANY) {
-            rsrcP = mdns_match(qStr,qType);
+            rsrcP = mdns_match(qStr, qType);
             if (rsrcP) {
                 respLen = mdns_add_to_answer(rsrcP, mdns_response, respLen);
                 rHdr->numanswers = htons( htons(rHdr->numanswers) + 1 );
                 // Extra RR logic: if SRV follows PTR, or A follows SRV, volunteer it in extraRR
                 // Not required, but could do more here, see RFC6763 s12
                 if (qType==DNS_RRTYPE_PTR) {
-                    if (rsrcP->rNext && rsrcP->rNext->rType==DNS_RRTYPE_SRV) 
+                    if (rsrcP->rNext && rsrcP->rNext->rType==DNS_RRTYPE_SRV)
                         extra = rsrcP->rNext;
                 } else if (qType==DNS_RRTYPE_SRV) {
-                    if (rsrcP->rNext && rsrcP->rNext->rType==DNS_RRTYPE_A) 
+                    if (rsrcP->rNext && rsrcP->rNext->rType==DNS_RRTYPE_A)
                         extra = rsrcP->rNext;
-                }        
+                }
             }
         }
     } // for nQuestions
@@ -661,20 +662,20 @@ static void mdns_reply(struct mdns_hdr* hdrP)
             respLen = mdns_add_to_answer(extra, mdns_response, respLen);
             rHdr->numextrarr = htons( htons(rHdr->numextrarr) + 1 );
         }
-        mdns_send_mcast(mdns_response,respLen);
+        mdns_send_mcast(mdns_response, respLen);
     }
     free(mdns_response);
 }
 
-static void mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port) 
+static void mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t port)
 // Callback from udp_recv
 {
     UNUSED_ARG(pcb);
     UNUSED_ARG(port);
-    
+
     u8_t* mdns_payload;
     int   plen;
-    
+
     // Sanity checks on size
     plen = p->tot_len;
     if (plen > DNS_MSG_SIZE) {
@@ -691,12 +692,12 @@ static void mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
         else {
             if (pbuf_copy_partial(p, mdns_payload, plen, 0) == plen) {
                 struct mdns_hdr* hdrP = (struct mdns_hdr*) mdns_payload;
-            
+
                 #ifdef qLogAllTraffic
                     mdns_print_msg(mdns_payload, plen);
                 #endif
-                    
-                if ( (hdrP->flags1 & (DNS_FLAG1_RESP + DNS_FLAG1_OPMASK + DNS_FLAG1_TRUNC) ) == 0 
+
+                if ( (hdrP->flags1 & (DNS_FLAG1_RESP + DNS_FLAG1_OPMASK + DNS_FLAG1_TRUNC) ) == 0
                      && hdrP->numquestions > 0 )
                     mdns_reply(hdrP);
             }
@@ -711,19 +712,19 @@ static void mdns_start()
 {
     struct ip_info ipInfo;
     err_t err;
-    
+
     if (sdk_wifi_get_opmode() != STATION_MODE) {
         printf(">>> mDNS_start: wifi opmode not station\n");
         return;
     }
-    
+
     if (!sdk_wifi_get_ip_info(STATION_IF,&ipInfo)) {
         printf(">>> mDNS_start: no IP addr\n");
         return;
     }
 
     mdns_update_ipaddr(&ipInfo);
-    
+
     // Start IGMP on the netif for our interface: this isn't done for us
     struct netif* nfp = netif_list;
     while (nfp!=NULL) {        
@@ -739,23 +740,23 @@ static void mdns_start()
         }
         nfp = nfp->next;
     }
-                      
+
     gMDNS_pcb = udp_new();
     if (!gMDNS_pcb) {
         printf(">>> mDNS_start: udp_new failed\n");
         return;
     }
-    
+
     if ((err=igmp_joingroup(&ipInfo.ip, &gMulticastAddr)) != ERR_OK) {
         printf(">>> mDNS_start: igmp_join failed %d\n",err);
         return;
     }
-    
+
     if ((err=udp_bind(gMDNS_pcb, IP_ADDR_ANY, DNS_MDNS_PORT)) != ERR_OK) {
         printf(">>> mDNS_start: udp_bind failed %d\n",err);
         return;
     }
-    
+
     udp_recv(gMDNS_pcb, mdns_recv, NULL);
 }
 
