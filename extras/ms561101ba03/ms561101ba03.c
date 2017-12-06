@@ -25,7 +25,7 @@
  */
 #define CONVERSION_TIME     20 / portTICK_PERIOD_MS // milliseconds
 
-static inline int reset(i2c_dev_t* i2c_dev)
+static inline int reset(i2c_dev_t *i2c_dev)
 {
     uint8_t buf[1] = { RESET };
     return i2c_slave_write(i2c_dev->bus, i2c_dev->addr, NULL, buf, 1);
@@ -34,33 +34,33 @@ static inline int reset(i2c_dev_t* i2c_dev)
 static inline bool read_prom(ms561101ba03_t *dev)
 {
     uint8_t tmp[2] = { 0, 0 };
-    uint8_t reg = 0xA2 ;
+    uint8_t reg = 0xA2;
 
     if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.sens = tmp[0] << 8 | tmp[1];
 
-    reg = 0xA4 ;
+    reg = 0xA4;
     if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.off = tmp[0] << 8 | tmp[1];
 
-    reg = 0xA6 ;
+    reg = 0xA6;
     if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.tcs = tmp[0] << 8 | tmp[1];
 
-    reg = 0xA8 ;
+    reg = 0xA8;
     if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.tco = tmp[0] << 8 | tmp[1];
 
-    reg = 0xAA ;
+    reg = 0xAA;
     if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.t_ref = tmp[0] << 8 | tmp[1];
 
-    reg = 0xAC ;
+    reg = 0xAC;
     if (i2c_slave_read(dev->i2c_dev.bus, dev->i2c_dev.addr, &reg, tmp, 2))
         return false;
     dev->config_data.tempsens = tmp[0] << 8 | tmp[1];
@@ -80,11 +80,11 @@ static inline int start_temperature_conversion(ms561101ba03_t *dev) //D2
     return i2c_slave_write(dev->i2c_dev.bus, dev->i2c_dev.addr, NULL, &buf, 1);
 }
 
-static inline bool read_adc(i2c_dev_t* i2c_dev, uint32_t *result)
+static inline bool read_adc(i2c_dev_t *i2c_dev, uint32_t *result)
 {
     *result = 0;
     uint8_t tmp[3];
-    uint8_t reg = 0x00 ;
+    uint8_t reg = 0x00;
     if (i2c_slave_read(i2c_dev->bus, i2c_dev->addr, &reg, tmp, 3))
         return false;
 

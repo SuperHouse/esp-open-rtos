@@ -11,12 +11,12 @@
 #define CMD_EEPROM 0x60
 #define BIT_READY  0x80
 
-static void read_data(i2c_dev_t* dev, uint8_t *buf, uint8_t size)
+static void read_data(i2c_dev_t *dev, uint8_t *buf, uint8_t size)
 {
-    i2c_slave_read(dev->bus, dev->addr , NULL, buf, size);
+    i2c_slave_read(dev->bus, dev->addr, NULL, buf, size);
 }
 
-bool mcp4725_eeprom_busy(i2c_dev_t* dev)
+bool mcp4725_eeprom_busy(i2c_dev_t *dev)
 {
     uint8_t res;
     read_data(dev, &res, 1);
@@ -24,7 +24,7 @@ bool mcp4725_eeprom_busy(i2c_dev_t* dev)
     return !(res & BIT_READY);
 }
 
-mcp4725_power_mode_t mcp4725_get_power_mode(i2c_dev_t* dev, bool eeprom)
+mcp4725_power_mode_t mcp4725_get_power_mode(i2c_dev_t *dev, bool eeprom)
 {
     uint8_t buf[4];
     read_data(dev, buf, eeprom ? 4 : 1);
@@ -32,7 +32,7 @@ mcp4725_power_mode_t mcp4725_get_power_mode(i2c_dev_t* dev, bool eeprom)
     return (eeprom ? buf[3] >> 5 : buf[0] >> 1) & 0x03;
 }
 
-void mcp4725_set_power_mode(i2c_dev_t* dev, mcp4725_power_mode_t mode, bool eeprom)
+void mcp4725_set_power_mode(i2c_dev_t *dev, mcp4725_power_mode_t mode, bool eeprom)
 {
     uint16_t value = mcp4725_get_raw_output(dev, eeprom);
     uint8_t data[] = {
@@ -43,7 +43,7 @@ void mcp4725_set_power_mode(i2c_dev_t* dev, mcp4725_power_mode_t mode, bool eepr
     i2c_slave_write(dev->bus, dev->addr, &data[0], &data[1], 2);
 }
 
-uint16_t mcp4725_get_raw_output(i2c_dev_t* dev, bool eeprom)
+uint16_t mcp4725_get_raw_output(i2c_dev_t *dev, bool eeprom)
 {
     uint8_t buf[5];
     read_data(dev, buf, eeprom ? 5 : 3);
@@ -53,7 +53,7 @@ uint16_t mcp4725_get_raw_output(i2c_dev_t* dev, bool eeprom)
         : ((uint16_t)buf[0] << 4) | (buf[1] >> 4);
 }
 
-void mcp4725_set_raw_output(i2c_dev_t* dev, uint16_t value, bool eeprom)
+void mcp4725_set_raw_output(i2c_dev_t *dev, uint16_t value, bool eeprom)
 {
     uint8_t data[] = {
         (eeprom ? CMD_EEPROM : CMD_DAC),

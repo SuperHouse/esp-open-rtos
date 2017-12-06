@@ -3,7 +3,7 @@
  *
  * Part of esp-open-rtos
  * Copyright (C) 2016 Ruslan V. Uss <unclerus@gmail.com>,
- *                    Pavel Merlyakov <merzlyakovpavel@gmail.com>
+ *                    Pavel Merzlyakov <merzlyakovpavel@gmail.com>
  * BSD Licensed as described in the file LICENSE
  */
 #ifndef EXTRAS_DS1302_H_

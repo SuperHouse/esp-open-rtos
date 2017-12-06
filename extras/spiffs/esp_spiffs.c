@@ -90,7 +90,7 @@ void esp_spiffs_init(uint32_t addr, uint32_t size)
     config.hal_write_f = esp_spiffs_write;
     config.hal_erase_f = esp_spiffs_erase;
 
-    config.fh_ix_offset = 3;
+    config.fh_ix_offset = SPIFFS_FILEHDL_OFFSET;
 
 }
 
@@ -149,7 +149,8 @@ int _open_r(struct _reent *r, const char *pathname, int flags, int mode)
     return SPIFFS_open(&fs, pathname, spiffs_flags, mode);
 }
 
-int _close_r(struct _reent *r, int fd)
+// This implementation replaces implementation in core/newlib_syscals.c
+int _close_filesystem_r(struct _reent *r, int fd)
 {
     return SPIFFS_close(&fs, (spiffs_file)fd);
 }

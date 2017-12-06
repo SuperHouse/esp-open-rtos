@@ -90,7 +90,7 @@ void ina_measure(void *pvParameters)
         if(dev.mask.wf&(1<<(3-WARNING_CHANNEL)))
             warning = true ;
 #endif
-        for (uint8_t i = 0 ; i < BUS_NUMBER ; i++)
+        for (uint8_t i = 0 ; i < INA3221_BUS_NUMBER ; i++)
         {
             if(ina3221_getBusVoltage(&dev, i, &bus_voltage)) // Get voltage in V
                 goto error_loop;

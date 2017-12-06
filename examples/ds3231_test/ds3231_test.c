@@ -41,7 +41,7 @@ void user_init(void)
     printf("SDK version : %s\n", sdk_system_get_sdk_version());
     printf("GIT version : %s\n", GITSHORTREV);
 
-    i2c_init(0,scl,sda,I2C_FREQ_400K);
+    i2c_init(0, scl, sda, I2C_FREQ_400K);
 
     xTaskCreate(task1, "tsk1", 256, NULL, 2, NULL);
 }

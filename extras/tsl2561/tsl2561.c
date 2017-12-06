@@ -95,26 +95,33 @@
 #define B8C 0x0000 // 0.000 * 2^LUX_SCALE
 #define M8C 0x0000 // 0.000 * 2^LUX_SCALE
 
-static int write_register(i2c_dev_t* i2c_dev, uint8_t reg, uint8_t value)
+#ifdef TSL2561_DEBUG
+#include <stdio.h>
+#define debug(fmt, ...) printf("%s: " fmt "\n", "TSL2561", ## __VA_ARGS__)
+#else
+#define debug(fmt, ...)
+#endif
+
+static int write_register(i2c_dev_t *i2c_dev, uint8_t reg, uint8_t value)
 {
     reg = TSL2561_REG_COMMAND | reg;
     return i2c_slave_write(i2c_dev->bus, i2c_dev->addr, &reg, &value, 1);
 }
 
-static uint8_t read_register(i2c_dev_t* i2c_dev, uint8_t reg)
+static uint8_t read_register(i2c_dev_t *i2c_dev, uint8_t reg)
 {
     uint8_t data[1];
     reg = TSL2561_REG_COMMAND | reg;
 
     if (i2c_slave_read(i2c_dev->bus, i2c_dev->addr, &reg, data, 1))
     {
-        printf("Error in tsl2561 read_register\n");
+        debug("Error in tsl2561 read_register\n");
     }
 
     return data[0];
 }
 
-static uint16_t read_register_16(i2c_dev_t* i2c_dev, uint8_t low_register_addr)
+static uint16_t read_register_16(i2c_dev_t *i2c_dev, uint8_t low_register_addr)
 {
     uint16_t value = 0;
     uint8_t data[2];
@@ -122,7 +129,7 @@ static uint16_t read_register_16(i2c_dev_t* i2c_dev, uint8_t low_register_addr)
 
     if (i2c_slave_read(i2c_dev->bus, i2c_dev->addr, &low_register_addr, data, 2))
     {
-        printf("Error with i2c_slave_read in read_register_16\n");
+        debug("Error with i2c_slave_read in read_register_16\n");
     }
 
     value = ((uint16_t)data[1] << 8) | (data[0]);
@@ -130,12 +137,12 @@ static uint16_t read_register_16(i2c_dev_t* i2c_dev, uint8_t low_register_addr)
     return value;
 }
 
-static int enable(i2c_dev_t* i2c_dev)
+static int enable(i2c_dev_t *i2c_dev)
 {
     return write_register(i2c_dev, TSL2561_REG_CONTROL, TSL2561_ON);
 }
 
-static int disable(i2c_dev_t* i2c_dev)
+static int disable(i2c_dev_t *i2c_dev)
 {
     return write_register(i2c_dev, TSL2561_REG_CONTROL, TSL2561_OFF);
 }
@@ -144,14 +151,14 @@ void tsl2561_init(tsl2561_t *device)
 {
     if (enable(&device->i2c_dev))
     {
-        printf("Error initializing tsl2561\n");
+        debug("Error initializing tsl2561\n");
     }
 
     uint8_t control_reg = (read_register(&device->i2c_dev, TSL2561_REG_CONTROL) & TSL2561_ON);
 
     if (control_reg != TSL2561_ON)
     {
-        printf("Error initializing tsl2561, control register wasn't set to ON\n");
+        debug("Error initializing tsl2561, control register wasn't set to ON\n");
     }
 
     // Fetch the package type
@@ -348,7 +355,7 @@ bool tsl2561_read_lux(tsl2561_t *device, uint32_t *lux)
 
             break;
         default:
-            printf("Invalid package type in CalculateLux\n");
+            debug("Invalid package type in CalculateLux\n");
             b = 0;
             m = 0;
             success = false;

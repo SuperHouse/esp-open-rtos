@@ -35,7 +35,7 @@ void user_init(void)
 
     printf("pwm_init(1, [14])\n");
     pins[0] = 14;
-    pwm_init(1, pins);
+    pwm_init(1, pins, false);
 
     printf("pwm_set_freq(1000)     # 1 kHz\n");
     pwm_set_freq(1000);
