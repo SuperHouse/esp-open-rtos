@@ -1,20 +1,25 @@
-#ifndef __MDNSRESPONDER_H__
-#define __MDNSRESPONDER_H__
-
-#include <lwip/ip_addr.h>
-
 /*
  * Basic multicast DNS responder
  *
- * Advertises the IP address, port, and characteristics of a service to other devices using multicast DNS on the same LAN,
- * so they can find devices with addresses dynamically allocated by DHCP. See avahi, Bonjour, etc
- * See RFC6762, RFC6763
+ * Advertises the IP address, port, and characteristics of a service to other
+ * devices using multicast DNS on the same LAN, so they can find devices with
+ * addresses dynamically allocated by DHCP. See avahi, Bonjour, etc See RFC6762,
+ * RFC6763
  *
  * This sample code is in the public domain.
  *
  * by M J A Hamel 2016
  */
 
+#ifndef __MDNSRESPONDER_H__
+#define __MDNSRESPONDER_H__
+
+#include <lwip/ip_addr.h>
+
+/* The default maximum reply size, increase as necessary. */
+#ifndef MDNS_RESPONDER_REPLY_SIZE
+#define MDNS_RESPONDER_REPLY_SIZE      320
+#endif
 
 // Starts the mDNS responder task, call first
 void mdns_init();
@@ -42,7 +47,10 @@ void mdns_add_facility( const char* instanceName,   // Short user-friendly insta
 void mdns_add_PTR(const char* rKey, u32_t ttl, const char* nameStr);
 void mdns_add_SRV(const char* rKey, u32_t ttl, u16_t rPort, const char* targname);
 void mdns_add_TXT(const char* rKey, u32_t ttl, const char* txtStr);
-void mdns_add_A  (const char* rKey, u32_t ttl, ip_addr_t addr);
+void mdns_add_A  (const char* rKey, u32_t ttl, const ip4_addr_t *addr);
+#if LWIP_IPV6
+void mdns_add_AAAA(const char* rKey, u32_t ttl, const ip6_addr_t *addr);
+#endif
 
 /* Sample usage, advertising a secure web service
 
