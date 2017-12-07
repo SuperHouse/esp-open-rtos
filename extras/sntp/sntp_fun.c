@@ -11,7 +11,7 @@
 #include <espressif/esp_common.h>
 #include <esp/timer.h>
 #include <esp/rtc_regs.h>
-#include "sntp.h"
+#include <sntp.h>
 
 #define TIMER_COUNT			RTC.COUNTER
 
