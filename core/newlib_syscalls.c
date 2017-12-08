@@ -15,6 +15,10 @@
 #include <stdout_redirect.h>
 #include <sys/time.h>
 #include <lwip/sockets.h>
+#include <sys/lock.h>
+#include <FreeRTOS.h>
+#include <semphr.h>
+#include <esp/hwrand.h>
 
 /*
  * The file descriptor index space is allocated in blocks. The first block of 3
@@ -32,7 +36,7 @@
 
 extern void *xPortSupervisorStackPointer;
 
-IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
+IRAM void *_sbrk_r (struct _reent *r, ptrdiff_t incr)
 {
     extern char   _heap_start; /* linker script defined */
     static char * heap_end;
@@ -58,15 +62,15 @@ IRAM caddr_t _sbrk_r (struct _reent *r, int incr)
 }
 
 /* syscall implementation for stdio write to UART */
-__attribute__((weak)) long _write_stdout_r(struct _reent *r, int fd, const char *ptr, int len )
+__attribute__((weak)) ssize_t _write_stdout_r(struct _reent *r, int fd, const void *ptr, size_t len )
 {
     for(int i = 0; i < len; i++) {
         /* Auto convert CR to CRLF, ignore other LFs (compatible with Espressif SDK behaviour) */
-        if(ptr[i] == '\r')
+        if(((char *)ptr)[i] == '\r')
             continue;
-        if(ptr[i] == '\n')
+        if(((char *)ptr)[i] == '\n')
             uart_putc(0, '\r');
-        uart_putc(0, ptr[i]);
+        uart_putc(0, ((char *)ptr)[i]);
     }
     return len;
 }
@@ -88,13 +92,13 @@ _WriteFunction *get_write_stdout()
 }
 
 /* default implementation, replace in a filesystem */
-__attribute__((weak)) long _write_filesystem_r(struct _reent *r, int fd, const char *ptr, int len )
+__attribute__((weak)) ssize_t _write_filesystem_r(struct _reent *r, int fd, const void *ptr, size_t len)
 {
     r->_errno = EBADF;
     return -1;
 }
 
-__attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, int len )
+__attribute__((weak)) ssize_t _write_r(struct _reent *r, int fd, const void *ptr, size_t len)
 {
     if (fd >= FILE_DESCRIPTOR_OFFSET) {
         return _write_filesystem_r(r, fd, ptr, len);
@@ -110,26 +114,26 @@ __attribute__((weak)) long _write_r(struct _reent *r, int fd, const char *ptr, i
 }
 
 /* syscall implementation for stdio read from UART */
-__attribute__((weak)) long _read_stdin_r(struct _reent *r, int fd, char *ptr, int len)
+__attribute__((weak)) ssize_t _read_stdin_r(struct _reent *r, int fd, void *ptr, size_t len)
 {
     int ch, i;
     uart_rxfifo_wait(0, 1);
     for(i = 0; i < len; i++) {
         ch = uart_getc_nowait(0);
         if (ch < 0) break;
-        ptr[i] = ch;
+        ((char *)ptr)[i] = ch;
     }
     return i;
 }
 
 /* default implementation, replace in a filesystem */
-__attribute__((weak)) long _read_filesystem_r( struct _reent *r, int fd, char *ptr, int len )
+__attribute__((weak)) ssize_t _read_filesystem_r( struct _reent *r, int fd, void *ptr, size_t len )
 {
     r->_errno = EBADF;
     return -1;
 }
 
-__attribute__((weak)) long _read_r( struct _reent *r, int fd, char *ptr, int len )
+__attribute__((weak)) ssize_t _read_r( struct _reent *r, int fd, void *ptr, size_t len )
 {
     if (fd >= FILE_DESCRIPTOR_OFFSET) {
         return _read_filesystem_r(r, fd, ptr, len);
@@ -173,10 +177,10 @@ __attribute__((weak, alias("syscall_returns_enosys")))
 int _unlink_r(struct _reent *r, const char *path);
 
 __attribute__((weak, alias("syscall_returns_enosys"))) 
-int _fstat_r(struct _reent *r, int fd, void *buf);
+int _fstat_r(struct _reent *r, int fd, struct stat *buf);
 
 __attribute__((weak, alias("syscall_returns_enosys"))) 
-int _stat_r(struct _reent *r, const char *pathname, void *buf);
+int _stat_r(struct _reent *r, const char *pathname, struct stat *buf);
 
 __attribute__((weak, alias("syscall_returns_enosys"))) 
 off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence);
@@ -196,4 +200,100 @@ static int syscall_returns_enosys(struct _reent *r)
 {
     r->_errno=ENOSYS;
     return -1;
+}
+
+int getentropy(void *ptr, size_t n)
+{
+    hwrand_fill(ptr, n);
+    return 0;
+}
+
+void _arc4random_getentropy_fail(void)
+{
+}
+
+void _exit(int status)
+{
+    while(1);
+}
+
+/*
+ * Newlib lock implementation. Some newlib locks are statically allocated, but
+ * can not be statically initialized so are set to NULL and initialized at
+ * startup. The malloc lock is used before it can be initialized so there are
+ * runtime checks on the functions that use it early.
+ */
+static int locks_initialized = 0;
+
+extern _lock_t __arc4random_mutex;
+extern _lock_t __at_quick_exit_mutex;
+//extern _lock_t __dd_hash_mutex;
+extern _lock_t __tz_mutex;
+
+extern _lock_t __atexit_recursive_mutex;
+extern _lock_t __env_recursive_mutex;
+extern _lock_t __malloc_recursive_mutex;
+extern _lock_t __sfp_recursive_mutex;
+extern _lock_t __sinit_recursive_mutex;
+
+void init_newlib_locks()
+{
+    _lock_init(&__arc4random_mutex);
+    _lock_init(&__at_quick_exit_mutex);
+    //_lock_init(&__dd_hash_mutex);
+    _lock_init(&__tz_mutex);
+
+    _lock_init_recursive(&__atexit_recursive_mutex);
+    _lock_init_recursive(&__env_recursive_mutex);
+    _lock_init_recursive(&__malloc_recursive_mutex);
+    _lock_init_recursive(&__sfp_recursive_mutex);
+    _lock_init_recursive(&__sinit_recursive_mutex);
+
+    locks_initialized = 1;
+}
+
+void _lock_init(_lock_t *lock) {
+    *lock = (_lock_t)xSemaphoreCreateMutex();
+}
+
+void _lock_init_recursive(_lock_t *lock) {
+    *lock = (_lock_t)xSemaphoreCreateRecursiveMutex();
+}
+
+void _lock_close(_lock_t *lock) {
+    vSemaphoreDelete((QueueHandle_t)*lock);
+    *lock = 0;
+}
+
+void _lock_close_recursive(_lock_t *lock) {
+    vSemaphoreDelete((QueueHandle_t)*lock);
+    *lock = 0;
+}
+
+void _lock_acquire(_lock_t *lock) {
+    xSemaphoreTake((QueueHandle_t)*lock, portMAX_DELAY);
+}
+
+void _lock_acquire_recursive(_lock_t *lock) {
+    if (locks_initialized) {
+        xSemaphoreTakeRecursive((QueueHandle_t)*lock, portMAX_DELAY);
+    }
+}
+
+int _lock_try_acquire(_lock_t *lock) {
+    return xSemaphoreTake((QueueHandle_t)*lock, 0);
+}
+
+int _lock_try_acquire_recursive(_lock_t *lock) {
+    return xSemaphoreTakeRecursive((QueueHandle_t)*lock, 0);
+}
+
+void _lock_release(_lock_t *lock) {
+    xSemaphoreGive((QueueHandle_t)*lock);
+}
+
+void _lock_release_recursive(_lock_t *lock) {
+    if (locks_initialized) {
+        xSemaphoreGiveRecursive((QueueHandle_t)*lock);
+    }
 }

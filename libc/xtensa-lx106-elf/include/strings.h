@@ -53,11 +53,9 @@ void	 explicit_bzero(void *, size_t);
 #if __MISC_VISIBLE || __POSIX_VISIBLE < 200809 || __XSI_VISIBLE >= 700
 int	 ffs(int) __pure2;
 #endif
-#if __GNU_VISIBLE
+#if __BSD_VISIBLE
 int	 ffsl(long) __pure2;
 int	 ffsll(long long) __pure2;
-#endif
-#if __BSD_VISIBLE
 int	 fls(int) __pure2;
 int	 flsl(long) __pure2;
 int	 flsll(long long) __pure2;
@@ -74,5 +72,9 @@ int	 strcasecmp_l (const char *, const char *, locale_t);
 int	 strncasecmp_l (const char *, const char *, size_t, locale_t);
 #endif
 __END_DECLS
+
+#if __SSP_FORTIFY_LEVEL > 0
+#include <ssp/strings.h>
+#endif
 
 #endif /* _STRINGS_H_ */

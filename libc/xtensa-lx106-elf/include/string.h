@@ -169,11 +169,15 @@ int	 _EXFUN(strverscmp,(const char *, const char *));
    sure here. */
 #if __GNU_VISIBLE && !defined(basename)
 # define basename basename
-char	*_EXFUN(__nonnull (1) basename,(const char *)) __asm__(__ASMNAME("__gnu_basename"));
+char	*_EXFUN(__nonnull ((1)) basename,(const char *)) __asm__(__ASMNAME("__gnu_basename"));
 #endif
 
 #include <sys/string.h>
 
 _END_STD_C
+
+#if __SSP_FORTIFY_LEVEL > 0
+#include <ssp/string.h>
+#endif
 
 #endif /* _STRING_H_ */

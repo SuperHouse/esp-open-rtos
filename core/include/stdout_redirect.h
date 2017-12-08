@@ -14,7 +14,7 @@ extern "C"
 {
 #endif
 
-typedef long _WriteFunction(struct _reent *r, int fd, const char *ptr, int len );
+typedef ssize_t _WriteFunction(struct _reent *r, int fd, const void *ptr, size_t len);
 
 /** Set implementation of write syscall for stdout.
  *
