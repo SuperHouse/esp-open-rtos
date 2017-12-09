@@ -204,7 +204,7 @@ void user_init(void) {
 	espFsInit((void*)(_binary_build_web_espfs_bin_start));
 	httpdInit(builtInUrls, 80);
 
-	xTaskCreate(websocketBcast, "wsbcast", 300, NULL, 3, NULL);
+	xTaskCreate(websocketBcast, "wsbcast", 384, NULL, 3, NULL);
 
 	printf("\nReady\n");
 }
