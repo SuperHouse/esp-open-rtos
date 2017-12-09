@@ -44,14 +44,31 @@ extern "C" {
     #define I2C_MAX_BUS 2
 #endif
 
+/* Set this to 1 if you intend to use GPIO 16 for I2C. It is not recommended
+ * and will result in degradation of performance and timing accuracy.
+ */
+#ifndef I2C_USE_GPIO16
+    #define I2C_USE_GPIO16 0
+#endif
+
 #define I2C_DEFAULT_CLK_STRETCH (10)
 
+/* SCL speed settings. 160 MHz sysclk frequency will result in improved
+ * timing accuracy. Greater bitrates will have poorer accuracy. 1000K is the
+ * maximum SCL speed at 80 MHz sysclk.
+ */
 typedef enum
 {
- 	I2C_FREQ_80K = 0,//!< I2C_FREQ_80K
- 	I2C_FREQ_100K,   //!< I2C_FREQ_100K
- 	I2C_FREQ_400K,   //!< I2C_FREQ_400K
- 	I2C_FREQ_500K,   //!< I2C_FREQ_500K
+  I2C_FREQ_80K = 0,
+  I2C_FREQ_100K,
+  I2C_FREQ_400K,
+  I2C_FREQ_500K,
+  I2C_FREQ_600K,
+  I2C_FREQ_800K,
+  I2C_FREQ_1000K,
+#if I2C_USE_GPIO16 == 0
+  I2C_FREQ_1300K
+#endif
 } i2c_freq_t;
 
 /**

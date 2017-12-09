@@ -25,7 +25,6 @@
 #include "i2c.h"
 
 #include <esp8266.h>
-#include <espressif/esp_misc.h> // sdk_os_delay_us
 #include <espressif/esp_system.h>
 #include <FreeRTOS.h>
 #include <task.h>
@@ -38,25 +37,42 @@
 #define debug(fmt, ...)
 #endif
 
-//#define CLK_STRETCH  (10)
-
-// Following array contain delay values for different frequencies
-// Warning: 1 is minimal, that mean at 80MHz clock, frequency max is 320kHz
+// The following array contains delay values for different frequencies.
+// These were tuned to match the specified SCL frequency on average.
+// The tuning was done using GCC 5.2.0 with -O2 optimization.
 const static uint8_t i2c_freq_array[][2] = {
-    [I2C_FREQ_80K]  = {255, 35},
-    [I2C_FREQ_100K] = {100, 20},
-    [I2C_FREQ_400K] = {10, 1},
-    [I2C_FREQ_500K] = {6, 1}
+#if I2C_USE_GPIO16 == 1
+    [I2C_FREQ_80K]   = {230, 107},
+    [I2C_FREQ_100K]  = {180, 82},
+    [I2C_FREQ_400K]  = {30, 7},
+    [I2C_FREQ_500K]  = {20, 1},
+    [I2C_FREQ_600K]  = {13, 0},
+    [I2C_FREQ_800K]  = {5, 0},
+    [I2C_FREQ_1000K] = {1, 0}
+#else
+    [I2C_FREQ_80K]   = {235, 112},
+    [I2C_FREQ_100K]  = {185, 88},
+    [I2C_FREQ_400K]  = {36, 13},
+    [I2C_FREQ_500K]  = {25, 8},
+    [I2C_FREQ_600K]  = {20, 5},
+    [I2C_FREQ_800K]  = {11, 1},
+    [I2C_FREQ_1000K] = {5, 0},
+    [I2C_FREQ_1300K] = {1, 0}
+#endif
 };
-
-static uint8_t freq; // Store CPU frequency for optimisation speed in delay function (Warning: Don't change CPU frequency during a transaction)
 
 // Bus settings
 typedef struct i2c_bus_description
 {
-  uint8_t g_scl_pin;  // SCL pin
-  uint8_t g_sda_pin;  // SDA pin
+#if I2C_USE_GPIO16 == 1
+  uint8_t g_scl_pin;     // SCL pin
+  uint8_t g_sda_pin;     // SDA pin
+#else
+  uint32_t g_scl_mask;   // SCL pin mask
+  uint32_t g_sda_mask;   // SDA pin mask
+#endif
   i2c_freq_t frequency;  // Frequency
+  uint8_t delay;
   bool started;
   bool flag;
   bool force;
@@ -77,28 +93,47 @@ int i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
         return -EINVAL;
     }
 
+#if I2C_USE_GPIO16 == 1
+    const int I2C_MAX_PIN = 16;
+#else
+    const int I2C_MAX_PIN = 15;
+#endif
+
+    if (scl_pin > I2C_MAX_PIN || sda_pin > I2C_MAX_PIN)
+    {
+        debug("Invalid GPIO number. All pins must be less than or equal to %d",
+              I2C_MAX_PIN);
+        return -EINVAL;
+    }
+
     i2c_bus[bus].started = false;
     i2c_bus[bus].flag = false;
+#if I2C_USE_GPIO16 == 1
     i2c_bus[bus].g_scl_pin = scl_pin;
     i2c_bus[bus].g_sda_pin = sda_pin;
+#else
+    i2c_bus[bus].g_scl_mask = BIT(scl_pin);
+    i2c_bus[bus].g_sda_mask = BIT(sda_pin);
+#endif
+
     i2c_bus[bus].frequency = freq;
     i2c_bus[bus].clk_stretch = I2C_DEFAULT_CLK_STRETCH;
 
     // Just to prevent these pins floating too much if not connected.
-    gpio_set_pullup(i2c_bus[bus].g_scl_pin, 1, 1);
-    gpio_set_pullup(i2c_bus[bus].g_sda_pin, 1, 1);
+    gpio_set_pullup(scl_pin, 1, 1);
+    gpio_set_pullup(sda_pin, 1, 1);
 
-    gpio_enable(i2c_bus[bus].g_scl_pin, GPIO_OUT_OPEN_DRAIN);
-    gpio_enable(i2c_bus[bus].g_sda_pin, GPIO_OUT_OPEN_DRAIN);
+    gpio_enable(scl_pin, GPIO_OUT_OPEN_DRAIN);
+    gpio_enable(sda_pin, GPIO_OUT_OPEN_DRAIN);
 
     // I2C bus idle state.
-    gpio_write(i2c_bus[bus].g_scl_pin, 1);
-    gpio_write(i2c_bus[bus].g_sda_pin, 1);
+    gpio_write(scl_pin, 1);
+    gpio_write(sda_pin, 1);
 
     // Prevent user, if frequency is high
     if (sdk_system_get_cpu_freq() == SYS_CPU_80MHZ)
-        if (i2c_freq_array[i2c_bus[bus].frequency][1] == 1) {
-            debug("Max frequency is 320Khz at 80MHz");
+        if (i2c_freq_array[i2c_bus[bus].frequency][1] == 0) {
+            debug("Frequency not supported");
             return -ENOTSUP;
         }
 
@@ -117,70 +152,90 @@ void i2c_set_clock_stretch(uint8_t bus, uint32_t clk_stretch)
 
 static inline void i2c_delay(uint8_t bus)
 {
-    uint32_t delay;
-    if (freq == SYS_CPU_160MHZ)
-    {
-       delay = i2c_freq_array[i2c_bus[bus].frequency][0];
-      __asm volatile (
-           "1: addi %0, %0, -1" "\n"
-      	   "bnez %0, 1b" "\n"
-        :: "a" (delay));
-    }
-    else
-    {
-       delay = i2c_freq_array[i2c_bus[bus].frequency][1];
-      __asm volatile (
-           "1: addi %0, %0, -1" "\n"
-      	   "bnez %0, 1b" "\n"
-        :: "a" (delay));
-    }
+    uint32_t delay = i2c_bus[bus].delay;
+    __asm volatile (
+        "1: addi %0, %0, -1" "\n"
+        "bnez %0, 1b" "\n"
+    : "=a" (delay) : "0" (delay));
 }
 
-// Set SCL as input, allowing it to float high, and return current
-// level of line, 0 or 1
 static inline bool read_scl(uint8_t bus)
 {
-    gpio_write(i2c_bus[bus].g_scl_pin, 1);
-    return gpio_read(i2c_bus[bus].g_scl_pin); // Clock high, valid ACK
+#if I2C_USE_GPIO16 == 1
+    return gpio_read(i2c_bus[bus].g_scl_pin);
+#else
+    return GPIO.IN & i2c_bus[bus].g_scl_mask;
+#endif
 }
 
-// Set SDA as input, allowing it to float high, and return current
-// level of line, 0 or 1
 static inline bool read_sda(uint8_t bus)
 {
-    gpio_write(i2c_bus[bus].g_sda_pin, 1);
-    // TODO: Without this delay we get arbitration lost in i2c_stop
-    i2c_delay(bus);
-    return gpio_read(i2c_bus[bus].g_sda_pin); // Clock high, valid ACK
+#if I2C_USE_GPIO16 == 1
+    return gpio_read(i2c_bus[bus].g_sda_pin);
+#else
+    return GPIO.IN & i2c_bus[bus].g_sda_mask;
+#endif
 }
 
 // Actively drive SCL signal low
 static inline void clear_scl(uint8_t bus)
 {
+#if I2C_USE_GPIO16 == 1
     gpio_write(i2c_bus[bus].g_scl_pin, 0);
+#else
+    GPIO.OUT_CLEAR = i2c_bus[bus].g_scl_mask;
+#endif
 }
 
 // Actively drive SDA signal low
 static inline void clear_sda(uint8_t bus)
 {
+#if I2C_USE_GPIO16 == 1
     gpio_write(i2c_bus[bus].g_sda_pin, 0);
+#else
+    GPIO.OUT_CLEAR = i2c_bus[bus].g_sda_mask;
+#endif
+}
+
+static inline void set_scl(uint8_t bus)
+{
+#if I2C_USE_GPIO16 == 1
+    gpio_write(i2c_bus[bus].g_scl_pin, 1);
+#else
+    GPIO.OUT_SET = i2c_bus[bus].g_scl_mask;
+#endif
+}
+
+static inline void set_sda(uint8_t bus)
+{
+#if I2C_USE_GPIO16 == 1
+    gpio_write(i2c_bus[bus].g_sda_pin, 1);
+#else
+    GPIO.OUT_SET = i2c_bus[bus].g_sda_mask;
+#endif
 }
 
 // Output start condition
 void i2c_start(uint8_t bus)
 {
-    freq = sdk_system_get_cpu_freq();
+    if (sdk_system_get_cpu_freq() == SYS_CPU_160MHZ)
+       i2c_bus[bus].delay = i2c_freq_array[i2c_bus[bus].frequency][0];
+    else
+       i2c_bus[bus].delay = i2c_freq_array[i2c_bus[bus].frequency][1];
+
     if (i2c_bus[bus].started) { // if started, do a restart cond
         // Set SDA to 1
-        (void) read_sda(bus);
+        set_sda(bus);
         i2c_delay(bus);
         uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
+        set_scl(bus);
         while (read_scl(bus) == 0 && clk_stretch--)
             ;
         // Repeated start setup time, minimum 4.7us
         i2c_delay(bus);
     }
     i2c_bus[bus].started = true;
+    set_sda(bus);
     if (read_sda(bus) == 0) {
         debug("arbitration lost in i2c_start from bus %u", bus);
     }
@@ -198,11 +253,15 @@ bool i2c_stop(uint8_t bus)
     clear_sda(bus);
     i2c_delay(bus);
     // Clock stretching
+    set_scl(bus);
     while (read_scl(bus) == 0 && clk_stretch--)
         ;
     // Stop bit setup time, minimum 4us
     i2c_delay(bus);
     // SCL is high, set SDA from 0 to 1
+    set_sda(bus);
+    // additional delay before testing SDA value to avoid wrong state
+    i2c_delay(bus); 
     if (read_sda(bus) == 0) {
         debug("arbitration lost in i2c_stop from bus %u", bus);
     }
@@ -220,12 +279,13 @@ static void i2c_write_bit(uint8_t bus, bool bit)
 {
     uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
     if (bit) {
-        (void) read_sda(bus);
+        set_sda(bus);
     } else {
         clear_sda(bus);
     }
     i2c_delay(bus);
     // Clock stretching
+    set_scl(bus);
     while (read_scl(bus) == 0 && clk_stretch--)
         ;
     // SCL is high, now data is valid
@@ -243,8 +303,9 @@ static bool i2c_read_bit(uint8_t bus)
     uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
     bool bit;
     // Let the slave drive data
-    (void) read_sda(bus);
+    set_sda(bus);
     i2c_delay(bus);
+    set_scl(bus);
     // Clock stretching
     while (read_scl(bus) == 0 && clk_stretch--)
         ;
