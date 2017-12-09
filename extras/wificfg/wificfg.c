@@ -394,6 +394,7 @@ typedef enum {
     FORM_NAME_STA_IP_ADDR,
     FORM_NAME_STA_NETMASK,
     FORM_NAME_STA_GATEWAY,
+    FORM_NAME_STA_MDNS,
     FORM_NAME_AP_ENABLE,
     FORM_NAME_AP_DISABLE_IF_STA,
     FORM_NAME_AP_DISABLED_RESTARTS,
@@ -427,6 +428,7 @@ static const struct {
     {"sta_ip_addr", FORM_NAME_STA_IP_ADDR},
     {"sta_netmask", FORM_NAME_STA_NETMASK},
     {"sta_gateway", FORM_NAME_STA_GATEWAY},
+    {"sta_mdns", FORM_NAME_STA_MDNS},
     {"ap_enable", FORM_NAME_AP_ENABLE},
     {"ap_disable_if_sta", FORM_NAME_AP_DISABLE_IF_STA},
     {"ap_disabled_restarts", FORM_NAME_AP_DISABLED_RESTARTS},
@@ -967,6 +969,12 @@ static int handle_wifi_station(int s, wificfg_method method,
 
         if (wificfg_write_string_chunk(s, http_wifi_station_content[11], buf, len) < 0) return -1;
 
+        int8_t wifi_sta_mdns = 1;
+        sysparam_get_int8("wifi_sta_mdns", &wifi_sta_mdns);
+        if (wifi_sta_mdns && wificfg_write_string_chunk(s, "checked", buf, len) < 0) return -1;
+
+        if (wificfg_write_string_chunk(s, http_wifi_station_content[12], buf, len) < 0) return -1;
+
         if (wificfg_write_chunk_end(s) < 0) return -1;
     }
     return 0;
@@ -990,6 +998,7 @@ static int handle_wifi_station_post(int s, wificfg_method method,
     /* Delay committing some values until all have been read. */
     bool done = false;
     uint8_t sta_enable = 0;
+    uint8_t mdns_enable = 0;
 
     while (rem > 0) {
         int r = wificfg_form_name_value(s, &valp, &rem, buf, len);
@@ -1044,6 +1053,10 @@ static int handle_wifi_station_post(int s, wificfg_method method,
             case FORM_NAME_STA_GATEWAY:
                 sysparam_set_string("wifi_sta_gateway", buf);
                 break;
+            case FORM_NAME_STA_MDNS: {
+                mdns_enable = strtoul(buf, NULL, 10) != 0;
+                break;
+            }
             case FORM_NAME_DONE:
                 done = true;
                 break;
@@ -1055,6 +1068,7 @@ static int handle_wifi_station_post(int s, wificfg_method method,
 
     if (done) {
         sysparam_set_int8("wifi_sta_enable", sta_enable);
+        sysparam_set_int8("wifi_sta_mdns", mdns_enable);
     }
 
     return wificfg_write_string(s, http_redirect_header);
@@ -1642,7 +1656,10 @@ static void server_task(void *pvParameters)
 {
     char *hostname_local = NULL;
     char *hostname = NULL;
+    int8_t wifi_sta_mdns = 1;
+
     sysparam_get_string("hostname", &hostname);
+    sysparam_get_int8("wifi_sta_mdns", &wifi_sta_mdns);
     if (hostname) {
         size_t len = strlen(hostname) + 6 + 1;
         hostname_local = (char *)malloc(len);
@@ -1650,19 +1667,21 @@ static void server_task(void *pvParameters)
             snprintf(hostname_local, len, "%s.local", hostname);
         }
 
+        struct netif *netif = sdk_system_get_netif(STATION_IF);
+        if (wifi_sta_mdns && netif) {
 #if EXTRAS_MDNS_RESPONDER
-        mdns_init();
-        mdns_add_facility(hostname, "_http", NULL, mdns_TCP + mdns_Browsable, 80, 600);
+            mdns_init();
+            mdns_add_facility(hostname, "_http", NULL, mdns_TCP + mdns_Browsable, 80, 600);
 #endif
 #if LWIP_MDNS_RESPONDER
-        mdns_resp_init();
-        struct netif *netif = sdk_system_get_netif(STATION_IF);
-        if (netif) {
-            mdns_resp_add_netif(netif, hostname, 120);
-            mdns_resp_add_service(netif, hostname, "_http",
-                                  DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
-        }
+            mdns_resp_init();
+            if (netif) {
+                mdns_resp_add_netif(netif, hostname, 120);
+                mdns_resp_add_service(netif, hostname, "_http",
+                                      DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+            }
 #endif
+        }
 
         free(hostname);
     }
