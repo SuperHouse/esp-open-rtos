@@ -56,20 +56,32 @@ static int handle_index(int s, wificfg_method method,
         if (wificfg_write_html_title(s, buf, len, "Home") < 0) return -1;
         if (wificfg_write_string_chunk(s, http_index_content[1], buf, len) < 0) return -1;
 
-        socklen_t addr_len;
-        struct sockaddr addr;
-        addr_len = sizeof(addr);
-        getpeername(s, (struct sockaddr*)&addr, &addr_len);
-
         if (wificfg_write_string_chunk(s, "<dl class=\"dlh\">", buf, len) < 0) return -1;
-        if (addr.sa_family == AF_INET) {
-            struct sockaddr_in *sa = (struct sockaddr_in *)&addr;
-            if (wificfg_write_string_chunk(s, "<dt>Peer address</dt>", buf, len) < 0) return -1;
-            snprintf(buf, len, "<dd>" IPSTR " : %d</dd>",
-                     IP2STR((ip4_addr_t *)&sa->sin_addr.s_addr), ntohs(sa->sin_port));
-            if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+
+        struct sockaddr_storage addr;
+        socklen_t addr_len = sizeof(addr);
+        if (getpeername(s, (struct sockaddr *)&addr, &addr_len) == 0) {
+            if (((struct sockaddr *)&addr)->sa_family == AF_INET) {
+                struct sockaddr_in *sa = (struct sockaddr_in *)&addr;
+                if (wificfg_write_string_chunk(s, "<dt>Peer address</dt>", buf, len) < 0) return -1;
+                snprintf(buf, len, "<dd>" IPSTR ", port %u</dd>",
+                         IP2STR((ip4_addr_t *)&sa->sin_addr.s_addr), ntohs(sa->sin_port));
+                if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+            }
+
+#if LWIP_IPV6
+            if (((struct sockaddr *)&addr)->sa_family == AF_INET6) {
+                struct sockaddr_in6 *sa = (struct sockaddr_in6 *)&addr;
+                if (wificfg_write_string_chunk(s, "<dt>Peer address</dt><dd>", buf, len) < 0) return -1;
+                if (inet6_ntoa_r(sa->sin6_addr, buf, len)) {
+                    if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+                }
+                snprintf(buf, len, ", port %u</dd>", ntohs(sa->sin6_port));
+                if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+            }
+#endif
         }
-        
+
         if (wificfg_write_string_chunk(s, "</dl>", buf, len) < 0) return -1;
         if (wificfg_write_string_chunk(s, http_index_content[2], buf, len) < 0) return -1;
         if (wificfg_write_chunk_end(s) < 0) return -1;

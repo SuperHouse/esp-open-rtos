@@ -45,6 +45,15 @@
 #include "wificfg.h"
 #include "sysparam.h"
 
+#if EXTRAS_MDNS_RESPONDER
+#include <mdnsresponder.h>
+#endif
+
+#if LWIP_MDNS_RESPONDER
+#include <lwip/apps/mdns.h>
+#endif
+
+
 char *wificfg_default_ssid = "EOR_%02X%02X%02X";
 char *wificfg_default_password = "esp-open-rtos";
 char *wificfg_default_hostname = "eor-%02x%02x%02x";
@@ -385,6 +394,7 @@ typedef enum {
     FORM_NAME_STA_IP_ADDR,
     FORM_NAME_STA_NETMASK,
     FORM_NAME_STA_GATEWAY,
+    FORM_NAME_STA_MDNS,
     FORM_NAME_AP_ENABLE,
     FORM_NAME_AP_DISABLE_IF_STA,
     FORM_NAME_AP_DISABLED_RESTARTS,
@@ -418,6 +428,7 @@ static const struct {
     {"sta_ip_addr", FORM_NAME_STA_IP_ADDR},
     {"sta_netmask", FORM_NAME_STA_NETMASK},
     {"sta_gateway", FORM_NAME_STA_GATEWAY},
+    {"sta_mdns", FORM_NAME_STA_MDNS},
     {"ap_enable", FORM_NAME_AP_ENABLE},
     {"ap_disable_if_sta", FORM_NAME_AP_DISABLE_IF_STA},
     {"ap_disabled_restarts", FORM_NAME_AP_DISABLED_RESTARTS},
@@ -529,14 +540,34 @@ static int handle_ipaddr_redirect(int s, char *buf, size_t len)
 {
     if (wificfg_write_string(s, "HTTP/1.1 302 \r\nLocation: http://") < 0) return -1;
 
-    struct sockaddr addr;
+    struct sockaddr_storage addr;
     socklen_t addr_len = sizeof(addr);
-    getsockname(s, &addr, &addr_len);
-    struct sockaddr_in *sa = (struct sockaddr_in *)&addr;
-    snprintf(buf, len, "" IPSTR "/\r\n", IP2STR((ip4_addr_t *)&sa->sin_addr.s_addr));
-    if (wificfg_write_string(s, buf) < 0) return -1;;
+    if (getsockname(s, (struct sockaddr *)&addr, &addr_len) == 0) {
+        if (((struct sockaddr *)&addr)->sa_family == AF_INET) {
+            struct sockaddr_in *sa = (struct sockaddr_in *)&addr;
+            snprintf(buf, len, IPSTR, IP2STR((ip4_addr_t *)&sa->sin_addr.s_addr));
+            if (wificfg_write_string(s, buf) < 0) return -1;
+        }
+#if LWIP_IPV6
+        if (((struct sockaddr *)&addr)->sa_family == AF_INET6) {
+            struct sockaddr_in6 *sa = (struct sockaddr_in6 *)&addr;
+            const ip6_addr_t *addr6 = (const ip6_addr_t*)&(sa->sin6_addr);
+            if (ip6_addr_isipv4mappedipv6(addr6)) {
+                snprintf(buf, len, IPSTR, IP2STR((ip4_addr_t *)&addr6->addr[3]));
+                if (wificfg_write_string(s, buf) < 0) return -1;
+            } else {
+                if (wificfg_write_string(s, "[") < 0) return -1;
+                if (ip6addr_ntoa_r(addr6, buf, len)) {
+                    if (wificfg_write_string(s, buf) < 0) return -1;
+                }
+                if (wificfg_write_string(s, "]") < 0) return -1;
+            }
+        }
+#endif
+    }
+
     /* Always close here - expect a new connection. */
-    return wificfg_write_string(s, "Content-Length: 0\r\n"
+    return wificfg_write_string(s, "\r\nContent-Length: 0\r\n"
                                 "Connection: close\r\n"
                                 "\r\n");
 }
@@ -692,6 +723,20 @@ static int handle_wificfg_index(int s, wificfg_method method,
                 snprintf(buf, len, "<dd>" IPSTR "</dd>", IP2STR(&info.gw));
                 if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
             }
+#if LWIP_IPV6
+            struct netif *netif = sdk_system_get_netif(STATION_IF);
+            if (netif) {
+                for (int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+                    if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
+                        if (wificfg_write_string_chunk(s, "<dt>Station IPv6</dt><dd>", buf, len) < 0) return -1;
+                        const ip6_addr_t *addr6 = netif_ip6_addr(netif, i);
+                        ip6addr_ntoa_r(addr6, buf, len);
+                        if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+                        if (wificfg_write_string_chunk(s, "</dd>", buf, len) < 0) return -1;
+                    }
+                }
+            }
+#endif
         }
 
         if (opmode == SOFTAP_MODE || opmode == STATIONAP_MODE) {
@@ -713,18 +758,51 @@ static int handle_wificfg_index(int s, wificfg_method method,
                 snprintf(buf, len, "<dd>" IPSTR "</dd>", IP2STR(&info.gw));
                 if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
             }
+
+#if LWIP_IPV6
+            struct netif *netif = sdk_system_get_netif(SOFTAP_IF);
+            if (netif) {
+                for (int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+                    if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
+                        if (wificfg_write_string_chunk(s, "<dt>AP IPv6</dt><dd>", buf, len) < 0) return -1;
+                        const ip6_addr_t *addr6 = netif_ip6_addr(netif, i);
+                        ip6addr_ntoa_r(addr6, buf, len);
+                        if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+                        if (wificfg_write_string_chunk(s, "</dd>", buf, len) < 0) return -1;
+                    }
+                }
+            }
+#endif
         }
 
-        struct sockaddr addr;
+        struct sockaddr_storage addr;
         socklen_t addr_len = sizeof(addr);
-        getpeername(s, (struct sockaddr*)&addr, &addr_len);
+        if (getpeername(s, (struct sockaddr *)&addr, &addr_len) == 0) {
+            if (((struct sockaddr *)&addr)->sa_family == AF_INET) {
+                struct sockaddr_in *sa = (struct sockaddr_in *)&addr;
+                if (wificfg_write_string_chunk(s, "<dt>Peer address</dt>", buf, len) < 0) return -1;
+                snprintf(buf, len, "<dd>" IPSTR ", port %u</dd>",
+                         IP2STR((ip4_addr_t *)&sa->sin_addr.s_addr), ntohs(sa->sin_port));
+                if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+            }
 
-        if (addr.sa_family == AF_INET) {
-            struct sockaddr_in *sa = (struct sockaddr_in *)&addr;
-            if (wificfg_write_string_chunk(s, "<dt>Peer address</dt>", buf, len) < 0) return -1;
-            snprintf(buf, len, "<dd>" IPSTR " : %u</dd>",
-                     IP2STR((ip4_addr_t *)&sa->sin_addr.s_addr), ntohs(sa->sin_port));
-            if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+#if LWIP_IPV6
+            if (((struct sockaddr *)&addr)->sa_family == AF_INET6) {
+                struct sockaddr_in6 *sa = (struct sockaddr_in6 *)&addr;
+                if (wificfg_write_string_chunk(s, "<dt>Peer address</dt><dd>", buf, len) < 0) return -1;
+                const ip6_addr_t *addr6 = (const ip6_addr_t*)&(sa->sin6_addr);
+                if (ip6_addr_isipv4mappedipv6(addr6)) {
+                    snprintf(buf, len, IPSTR, IP2STR((ip4_addr_t *)&addr6->addr[3]));
+                    if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+                } else {
+                    if (ip6addr_ntoa_r(addr6, buf, len)) {
+                        if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+                    }
+                }
+                snprintf(buf, len, ", port %u</dd>", ntohs(sa->sin6_port));
+                if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+            }
+#endif
         }
 
         if (wificfg_write_string_chunk(s, http_wificfg_content[2], buf, len) < 0) return -1;
@@ -891,6 +969,12 @@ static int handle_wifi_station(int s, wificfg_method method,
 
         if (wificfg_write_string_chunk(s, http_wifi_station_content[11], buf, len) < 0) return -1;
 
+        int8_t wifi_sta_mdns = 1;
+        sysparam_get_int8("wifi_sta_mdns", &wifi_sta_mdns);
+        if (wifi_sta_mdns && wificfg_write_string_chunk(s, "checked", buf, len) < 0) return -1;
+
+        if (wificfg_write_string_chunk(s, http_wifi_station_content[12], buf, len) < 0) return -1;
+
         if (wificfg_write_chunk_end(s) < 0) return -1;
     }
     return 0;
@@ -914,6 +998,7 @@ static int handle_wifi_station_post(int s, wificfg_method method,
     /* Delay committing some values until all have been read. */
     bool done = false;
     uint8_t sta_enable = 0;
+    uint8_t mdns_enable = 0;
 
     while (rem > 0) {
         int r = wificfg_form_name_value(s, &valp, &rem, buf, len);
@@ -968,6 +1053,10 @@ static int handle_wifi_station_post(int s, wificfg_method method,
             case FORM_NAME_STA_GATEWAY:
                 sysparam_set_string("wifi_sta_gateway", buf);
                 break;
+            case FORM_NAME_STA_MDNS: {
+                mdns_enable = strtoul(buf, NULL, 10) != 0;
+                break;
+            }
             case FORM_NAME_DONE:
                 done = true;
                 break;
@@ -979,6 +1068,7 @@ static int handle_wifi_station_post(int s, wificfg_method method,
 
     if (done) {
         sysparam_set_int8("wifi_sta_enable", sta_enable);
+        sysparam_set_int8("wifi_sta_mdns", mdns_enable);
     }
 
     return wificfg_write_string(s, http_redirect_header);
@@ -1510,6 +1600,41 @@ typedef struct {
 } server_params;
 
 /*
+ * Test if the http host string is a literal IP address. This is needed for the
+ * softap mode captive portal and must return false for typical server strings
+ * which will be redirected, and true for literal IP address to avoid a redirect
+ * for them.
+ */
+static bool host_is_name(const char *host)
+{
+    if (host == NULL) {
+        return true;
+    }
+
+    size_t len = strlen(host);
+
+    if (len < 4) {
+        return true;
+    }
+
+    char first = host[0];
+    char last = host[len - 1];
+
+    if (first == '[' && last == ']') {
+        /* Likely an IPv6 address */
+        return false;
+    }
+
+    if (first >= '0' && first <= '9' && last >= '0' && last <= '9') {
+        /* Likely IPv4 address */
+        return false;
+    }
+
+    return true;
+}
+
+
+/*
  * The http server uses a single thread to service all requests, one request at
  * a time, to keep peak resource usage to a minimum. Keeping connections open
  * would cause delays switching between connections. Thus it closes the
@@ -1529,14 +1654,57 @@ typedef struct {
  */
 static void server_task(void *pvParameters)
 {
+    char *hostname_local = NULL;
+    char *hostname = NULL;
+    int8_t wifi_sta_mdns = 1;
+
+    sysparam_get_string("hostname", &hostname);
+    sysparam_get_int8("wifi_sta_mdns", &wifi_sta_mdns);
+    if (hostname) {
+        size_t len = strlen(hostname) + 6 + 1;
+        hostname_local = (char *)malloc(len);
+        if (hostname_local) {
+            snprintf(hostname_local, len, "%s.local", hostname);
+        }
+
+        struct netif *netif = sdk_system_get_netif(STATION_IF);
+        if (wifi_sta_mdns && netif) {
+#if EXTRAS_MDNS_RESPONDER
+            mdns_init();
+            mdns_add_facility(hostname, "_http", NULL, mdns_TCP + mdns_Browsable, 80, 600);
+#endif
+#if LWIP_MDNS_RESPONDER
+            mdns_resp_init();
+            if (netif) {
+                mdns_resp_add_netif(netif, hostname, 120);
+                mdns_resp_add_service(netif, hostname, "_http",
+                                      DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+            }
+#endif
+        }
+
+        free(hostname);
+    }
+
     server_params *params = pvParameters;
 
-    struct sockaddr_in serv_addr;
+#if LWIP_IPV6
+    int listenfd = socket(AF_INET6, SOCK_STREAM, 0);
+    struct sockaddr_in6 serv_addr;
+    memset(&serv_addr, '0', sizeof(serv_addr));
+    serv_addr.sin6_family = AF_INET6;
+    serv_addr.sin6_port = htons(params->port);
+    serv_addr.sin6_flowinfo = 0;
+    serv_addr.sin6_addr = in6addr_any;
+    serv_addr.sin6_scope_id = IP6_NO_ZONE;
+#else
     int listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in serv_addr;
     memset(&serv_addr, '0', sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(params->port);
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+#endif
     bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     listen(listenfd, 2);
 
@@ -1618,8 +1786,7 @@ static void server_task(void *pvParameters)
                 /* Read the headers, noting some of interest. */
                 wificfg_content_type content_type = HTTP_CONTENT_TYPE_OTHER;
                 bool connection_close = false;
-                bool hostp = false;
-                uint32_t host = IPADDR_NONE;
+                bool host_redirect = false;
                 long content_length = 0;
 
                 for (;;) {
@@ -1640,8 +1807,10 @@ static void server_task(void *pvParameters)
                         value = skip_whitespace(value);
                         switch (header) {
                         case HTTP_HEADER_HOST:
-                            hostp = true;
-                            host = ipaddr_addr(value);
+                            if (hostname_local && host_is_name(value) &&
+                                strcmp(value, hostname_local)) {
+                                host_redirect = true;
+                            }
                             break;
                         case HTTP_HEADER_CONTENT_LENGTH:
                             content_length = strtoul(value, NULL, 10);
@@ -1658,12 +1827,14 @@ static void server_task(void *pvParameters)
                     }
                 }
 
-                if (hostp && host == IPADDR_NONE) {
+                if (host_redirect) {
                     /* Redirect to an IP address. */
                     handle_ipaddr_redirect(s, buf, sizeof(buf));
                     /* Close the connection. */
                     break;
-                } else if (match) {
+                }
+
+                if (match) {
                     if ((*match->handler)(s, method, content_length, content_type, buf, sizeof(buf)) < 0) break;
                 } else {
                     if (wificfg_write_string(s, not_found_header) < 0) break;
@@ -1712,13 +1883,23 @@ static void dns_task(void *pvParameters)
     ip4_addr_t server_addr;
     server_addr.addr = ipaddr_addr(wifi_ap_ip_addr);
 
-    struct sockaddr_in serv_addr;
+#if LWIP_IPV6
+    int fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+    struct sockaddr_in6 serv_addr;
+    memset(&serv_addr, '0', sizeof(serv_addr));
+    serv_addr.sin6_family = AF_INET6;
+    serv_addr.sin6_port = htons(53);
+    serv_addr.sin6_flowinfo = 0;
+    serv_addr.sin6_addr = in6addr_any;
+    serv_addr.sin6_scope_id = IP6_NO_ZONE;
+#else
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
+    struct sockaddr_in serv_addr;
     memset(&serv_addr, '0', sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(53);
+#endif
     bind(fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
 
     const struct ifreq ifreq0 = { "en0" };
@@ -1729,12 +1910,12 @@ static void dns_task(void *pvParameters)
 
     for (;;) {
         char buffer[96];
-        struct sockaddr src_addr;
+        struct sockaddr_storage src_addr;
         socklen_t src_addr_len = sizeof(src_addr);
         size_t count = recvfrom(fd, buffer, sizeof(buffer), 0, (struct sockaddr*)&src_addr, &src_addr_len);
 
         /* Drop messages that are too large to send a response in the buffer */
-        if (count > 0 && count <= sizeof(buffer) - 16 && src_addr.sa_family == AF_INET) {
+        if (count > 0 && count <= sizeof(buffer) - 16) {
             size_t qname_len = strlen(buffer + 12) + 1;
             uint32_t reply_len = 2 + 10 + qname_len + 16 + 4;
 
@@ -1771,7 +1952,7 @@ static void dns_task(void *pvParameters)
             *head++ = ip4_addr3(&server_addr);
             *head++ = ip4_addr4(&server_addr);
 
-            sendto(fd, buffer, reply_len, 0, &src_addr, src_addr_len);
+            sendto(fd, buffer, reply_len, 0, (struct sockaddr*)&src_addr, src_addr_len);
         }
     }
 }
@@ -2020,6 +2201,11 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
         params->wificfg_dispatch = wificfg_dispatch_list;
         params->dispatch = dispatch;
 
-        xTaskCreate(server_task, "WiFi Cfg HTTP", 464, params, 2, NULL);
+        size_t stack_size = 464;
+#if LWIP_MDNS_RESPONDER
+        /* Uses a lot of stack space, so allocate extra. */
+        stack_size += 128;
+#endif
+        xTaskCreate(server_task, "WiFi Cfg HTTP", stack_size, params, 2, NULL);
     }
 }
