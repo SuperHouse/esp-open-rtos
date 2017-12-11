@@ -1142,33 +1142,31 @@ static int handle_wifi_ap(int s, wificfg_method method,
 
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[8], buf, len) < 0) return -1;
 
-        int8_t wifi_ap_authmode = 4;
+        int8_t wifi_ap_authmode = AUTH_WPA_WPA2_PSK;
         sysparam_get_int8("wifi_ap_authmode", &wifi_ap_authmode);
-        if (wifi_ap_authmode == 0 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
+        if (wifi_ap_authmode == AUTH_OPEN && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[9], buf, len) < 0) return -1;
-        if (wifi_ap_authmode == 1 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
+        if (wifi_ap_authmode == AUTH_WPA_PSK && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[10], buf, len) < 0) return -1;
-        if (wifi_ap_authmode == 2 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
+        if (wifi_ap_authmode == AUTH_WPA2_PSK && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[11], buf, len) < 0) return -1;
-        if (wifi_ap_authmode == 3 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[12], buf, len) < 0) return -1;
-        if (wifi_ap_authmode == 4 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
+        if (wifi_ap_authmode == AUTH_WPA_WPA2_PSK && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[13], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[12], buf, len) < 0) return -1;
 
         int8_t wifi_ap_max_conn = 3;
         sysparam_get_int8("wifi_ap_max_conn", &wifi_ap_max_conn);
         snprintf(buf, len, "%u", wifi_ap_max_conn);
         if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[14], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[13], buf, len) < 0) return -1;
 
         int32_t wifi_ap_beacon_interval = 100;
         sysparam_get_int32("wifi_ap_beacon_interval", &wifi_ap_beacon_interval);
         snprintf(buf, len, "%u", wifi_ap_beacon_interval);
         if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[15], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[14], buf, len) < 0) return -1;
 
         char *wifi_ap_ip_addr = NULL;
         sysparam_get_string("wifi_ap_ip_addr", &wifi_ap_ip_addr);
@@ -1178,7 +1176,7 @@ static int handle_wifi_ap(int s, wificfg_method method,
             if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
         }
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[16], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[15], buf, len) < 0) return -1;
 
         char *wifi_ap_netmask = NULL;
         sysparam_get_string("wifi_ap_netmask", &wifi_ap_netmask);
@@ -1188,19 +1186,19 @@ static int handle_wifi_ap(int s, wificfg_method method,
             if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
         }
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[17], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[16], buf, len) < 0) return -1;
 
         int8_t wifi_ap_dhcp_leases = 4;
         sysparam_get_int8("wifi_ap_dhcp_leases", &wifi_ap_dhcp_leases);
         snprintf(buf, len, "%u", wifi_ap_dhcp_leases);
         if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[18], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[17], buf, len) < 0) return -1;
 
         int8_t wifi_ap_dns = 1;
         sysparam_get_int8("wifi_ap_dns", &wifi_ap_dns);
         if (wifi_ap_dns && wificfg_write_string_chunk(s, "checked", buf, len) < 0) return -1;
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[19], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[18], buf, len) < 0) return -1;
 
         if (wificfg_write_chunk_end(s) < 0) return -1;
     }
@@ -1281,8 +1279,10 @@ static int handle_wifi_ap_post(int s, wificfg_method method,
             }
             case FORM_NAME_AP_AUTHMODE: {
                 uint32_t mode = strtoul(buf, NULL, 10);
-                if (mode <= 5)
+                if (mode == AUTH_OPEN || mode == AUTH_WPA_PSK ||
+                    mode == AUTH_WPA2_PSK || mode == AUTH_WPA_WPA2_PSK) {
                     sysparam_set_int8("wifi_ap_authmode", mode);
+                }
                 break;
             }
             case FORM_NAME_AP_MAX_CONN: {
@@ -2097,8 +2097,9 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
         /* Read and validate paramenters. */
         int8_t wifi_ap_ssid_hidden = 0;
         sysparam_get_int8("wifi_ap_ssid_hidden", &wifi_ap_ssid_hidden);
-        if (wifi_ap_ssid_hidden < 0 || wifi_ap_ssid_hidden > 1)
+        if (wifi_ap_ssid_hidden < 0 || wifi_ap_ssid_hidden > 1) {
             wifi_ap_ssid_hidden = 1;
+        }
 
         int8_t wifi_ap_channel = 6;
         sysparam_get_int8("wifi_ap_channel", &wifi_ap_channel);
@@ -2119,18 +2120,22 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
 
         int8_t wifi_ap_authmode = AUTH_WPA_WPA2_PSK;
         sysparam_get_int8("wifi_ap_authmode", &wifi_ap_authmode);
-        if (wifi_ap_authmode < AUTH_OPEN || wifi_ap_authmode > AUTH_MAX)
+        if (wifi_ap_authmode != AUTH_OPEN && wifi_ap_authmode != AUTH_WPA_PSK &&
+            wifi_ap_authmode != AUTH_WPA2_PSK && wifi_ap_authmode != AUTH_WPA_WPA2_PSK) {
             wifi_ap_authmode = AUTH_WPA_WPA2_PSK;
+        }
 
         int8_t wifi_ap_max_conn = 3;
         sysparam_get_int8("wifi_ap_max_conn", &wifi_ap_max_conn);
-        if (wifi_ap_max_conn < 1 || wifi_ap_max_conn > 8)
+        if (wifi_ap_max_conn < 1 || wifi_ap_max_conn > 8) {
             wifi_ap_max_conn = 3;
+        }
 
         int32_t wifi_ap_beacon_interval = 100;
         sysparam_get_int32("wifi_ap_beacon_interval", &wifi_ap_beacon_interval);
-        if (wifi_ap_beacon_interval < 0 || wifi_ap_beacon_interval > 1000)
+        if (wifi_ap_beacon_interval < 0 || wifi_ap_beacon_interval > 1000) {
             wifi_ap_beacon_interval = 100;
+        }
 
         /* Default AP IP address and netmask. */
         char *wifi_ap_ip_addr = NULL;
