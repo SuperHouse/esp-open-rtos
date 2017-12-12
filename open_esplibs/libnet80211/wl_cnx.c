@@ -192,6 +192,11 @@ struct sdk_cnx_node *sdk_cnx_node_search(uint8_t mac[6])
 
     struct sdk_cnx_node **cnx_nodes = sdk_g_ic.v.softap_netif_info->cnx_nodes;
 
+    /* Multicast addresses */
+    if (mac[0] & 0x01) {
+        return cnx_nodes[0];
+    }
+
     int i = 0;
     do {
         struct sdk_cnx_node *cnx_node = cnx_nodes[i];
