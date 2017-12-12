@@ -409,6 +409,7 @@ typedef enum {
     FORM_NAME_AP_NETMASK,
     FORM_NAME_AP_DHCP_LEASES,
     FORM_NAME_AP_DNS,
+    FORM_NAME_AP_MDNS,
     FORM_NAME_DONE,
     FORM_NAME_NONE
 } form_name;
@@ -443,6 +444,7 @@ static const struct {
     {"ap_netmask", FORM_NAME_AP_NETMASK},
     {"ap_dhcp_leases", FORM_NAME_AP_DHCP_LEASES},
     {"ap_dns", FORM_NAME_AP_DNS},
+    {"ap_mdns", FORM_NAME_AP_MDNS},
     {"done", FORM_NAME_DONE}
 };
 
@@ -1198,7 +1200,14 @@ static int handle_wifi_ap(int s, wificfg_method method,
         int8_t wifi_ap_dns = 1;
         sysparam_get_int8("wifi_ap_dns", &wifi_ap_dns);
         if (wifi_ap_dns && wificfg_write_string_chunk(s, "checked", buf, len) < 0) return -1;
+
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[18], buf, len) < 0) return -1;
+
+        int8_t wifi_ap_mdns = 1;
+        sysparam_get_int8("wifi_ap_mdns", &wifi_ap_mdns);
+        if (wifi_ap_mdns && wificfg_write_string_chunk(s, "checked", buf, len) < 0) return -1;
+
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[19], buf, len) < 0) return -1;
 
         if (wificfg_write_chunk_end(s) < 0) return -1;
     }
@@ -1226,6 +1235,7 @@ static int handle_wifi_ap_post(int s, wificfg_method method,
     uint8_t ap_disable_if_sta = 0;
     uint8_t ssid_hidden = 0;
     uint8_t dns_enable = 0;
+    uint8_t mdns_enable = 0;
 
     while (rem > 0) {
         ssize_t r = wificfg_form_name_value(s, &valp, &rem, buf, len);
@@ -1313,6 +1323,10 @@ static int handle_wifi_ap_post(int s, wificfg_method method,
                 dns_enable = strtoul(buf, NULL, 10) != 0;
                 break;
             }
+            case FORM_NAME_AP_MDNS: {
+                mdns_enable = strtoul(buf, NULL, 10) != 0;
+                break;
+            }
             case FORM_NAME_DONE:
                 done = true;
                 break;
@@ -1327,6 +1341,7 @@ static int handle_wifi_ap_post(int s, wificfg_method method,
         sysparam_set_int8("wifi_ap_disable_if_sta", ap_disable_if_sta);
         sysparam_set_int8("wifi_ap_ssid_hidden", ssid_hidden);
         sysparam_set_int8("wifi_ap_dns", dns_enable);
+        sysparam_set_int8("wifi_ap_mdns", mdns_enable);
     }
 
     return wificfg_write_string(s, http_redirect_header);
@@ -1656,10 +1671,8 @@ static void server_task(void *pvParameters)
 {
     char *hostname_local = NULL;
     char *hostname = NULL;
-    int8_t wifi_sta_mdns = 1;
 
     sysparam_get_string("hostname", &hostname);
-    sysparam_get_int8("wifi_sta_mdns", &wifi_sta_mdns);
     if (hostname) {
         size_t len = strlen(hostname) + 6 + 1;
         hostname_local = (char *)malloc(len);
@@ -1667,21 +1680,34 @@ static void server_task(void *pvParameters)
             snprintf(hostname_local, len, "%s.local", hostname);
         }
 
-        struct netif *netif = sdk_system_get_netif(STATION_IF);
-        if (wifi_sta_mdns && netif) {
+        int8_t wifi_sta_mdns = 1;
+        int8_t wifi_ap_mdns = 1;
+        sysparam_get_int8("wifi_sta_mdns", &wifi_sta_mdns);
+        sysparam_get_int8("wifi_ap_mdns", &wifi_ap_mdns);
+
+        struct netif *station_netif = sdk_system_get_netif(STATION_IF);
+        struct netif *softap_netif = sdk_system_get_netif(SOFTAP_IF);
+        if ((wifi_sta_mdns && station_netif) || (wifi_ap_mdns && softap_netif)) {
+#if LWIP_MDNS_RESPONDER
+            mdns_resp_init();
+#endif
 #if EXTRAS_MDNS_RESPONDER
             mdns_init();
             mdns_add_facility(hostname, "_http", NULL, mdns_TCP + mdns_Browsable, 80, 600);
 #endif
-#if LWIP_MDNS_RESPONDER
-            mdns_resp_init();
-            if (netif) {
-                mdns_resp_add_netif(netif, hostname, 120);
-                mdns_resp_add_service(netif, hostname, "_http",
-                                      DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
-            }
-#endif
         }
+#if LWIP_MDNS_RESPONDER
+        if (wifi_sta_mdns && station_netif) {
+            mdns_resp_add_netif(station_netif, hostname, 120);
+            mdns_resp_add_service(station_netif, hostname, "_http",
+                                  DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+        }
+        if (wifi_ap_mdns && softap_netif) {
+            mdns_resp_add_netif(softap_netif, hostname, 120);
+            mdns_resp_add_service(softap_netif, hostname, "_http",
+                                  DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+        }
+#endif
 
         free(hostname);
     }
