@@ -41,7 +41,6 @@ FATFS_USE_FORWARD ?= 1
 
 # This option specifies the OEM code page to be used on the target system.
 # Incorrect setting of the code page can cause a file open failure.
-#   1   - ASCII (No extended character. Non-LFN cfg. only)
 #   437 - U.S.
 #   720 - Arabic
 #   737 - Greek
@@ -63,6 +62,7 @@ FATFS_USE_FORWARD ?= 1
 #   936 - Simplified Chinese (DBCS)
 #   949 - Korean (DBCS)
 #   950 - Traditional Chinese (DBCS)
+#     0 - Include all code pages above and configured by f_setcp()
 FATFS_CODE_PAGE ?= 437
 
 # The FATFS_USE_LFN switches the support of long file name (LFN).
@@ -112,7 +112,7 @@ FATFS_FS_EXFAT ?= 1
 FATFS_FS_NORTC ?= 1
 FATFS_NORTC_MON ?= 1
 FATFS_NORTC_MDAY ?= 1
-FATFS_NORTC_YEAR ?= 2016
+FATFS_NORTC_YEAR ?= 2017
 
 # The option FATFS_FS_LOCK switches file lock function to control duplicated file open
 # and illegal operation to open objects. This option must be 0 when FATFS_FS_READONLY

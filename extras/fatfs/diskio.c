@@ -14,7 +14,7 @@
 #include "ffconf.h"
 #include "volumes.h"
 
-static sdio_card_t *devices[_VOLUMES] = { 0 };
+static sdio_card_t *devices[FF_VOLUMES] = { 0 };
 
 static const uint8_t card_types[] = {
     [SDIO_TYPE_UNKNOWN] = 0,
@@ -26,14 +26,14 @@ static const uint8_t card_types[] = {
 
 DSTATUS disk_status(BYTE pdrv)
 {
-    if (pdrv >= _VOLUMES || !devices[pdrv] || devices[pdrv]->type == SDIO_TYPE_UNKNOWN)
+    if (pdrv >= FF_VOLUMES || !devices[pdrv] || devices[pdrv]->type == SDIO_TYPE_UNKNOWN)
         return STA_NOINIT;
     return 0;
 }
 
 DSTATUS disk_initialize(BYTE pdrv)
 {
-    if (pdrv >= _VOLUMES)
+    if (pdrv >= FF_VOLUMES)
         return STA_NOINIT;
 
     // allocate descriptior
@@ -53,7 +53,7 @@ DSTATUS disk_initialize(BYTE pdrv)
 
 DRESULT disk_read(BYTE pdrv, BYTE *buff, DWORD sector, UINT count)
 {
-    if (pdrv >= _VOLUMES || !devices[pdrv])
+    if (pdrv >= FF_VOLUMES || !devices[pdrv])
         return RES_PARERR;
     if (sdio_read_sectors(devices[pdrv], sector, buff, count) != SDIO_ERR_NONE)
         return RES_ERROR;
@@ -62,7 +62,7 @@ DRESULT disk_read(BYTE pdrv, BYTE *buff, DWORD sector, UINT count)
 
 DRESULT disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, UINT count)
 {
-    if (pdrv >= _VOLUMES || !devices[pdrv])
+    if (pdrv >= FF_VOLUMES || !devices[pdrv])
         return RES_PARERR;
     if (sdio_write_sectors(devices[pdrv], sector, (uint8_t *)buff, count) != SDIO_ERR_NONE)
         return RES_ERROR;
@@ -71,7 +71,7 @@ DRESULT disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, UINT count)
 
 DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void *buff)
 {
-    if (pdrv >= _VOLUMES || !devices[pdrv])
+    if (pdrv >= FF_VOLUMES || !devices[pdrv])
         return RES_PARERR;
 
     uint8_t *buf8 = (uint8_t *)buff;

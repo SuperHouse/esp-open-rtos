@@ -1,6 +1,6 @@
 # FatFs - Generic FAT File System Module
 
-Current version: R0.12b
+Current version: R0.13a
 
 ## How to use
 
