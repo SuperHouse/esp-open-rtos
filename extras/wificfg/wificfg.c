@@ -54,9 +54,9 @@
 #endif
 
 
-char *wificfg_default_ssid = "EOR_%02X%02X%02X";
-char *wificfg_default_password = "esp-open-rtos";
-char *wificfg_default_hostname = "eor-%02x%02x%02x";
+const char *wificfg_default_ssid = "EOR_%02X%02X%02X";
+const char *wificfg_default_password = "esp-open-rtos";
+const char *wificfg_default_hostname = "eor-%02x%02x%02x";
 
 /* The http task stack allocates a single buffer to do much of it's work. */
 #define HTTP_BUFFER_SIZE 54
@@ -646,7 +646,7 @@ static int handle_wificfg_index(int s, wificfg_method method,
         if (wificfg_write_string_chunk(s, "<dt>Newlib version</dt><dd>" _NEWLIB_VERSION "</dd>", buf, len) < 0) return -1;
 
         enum sdk_sleep_type sleep_type = sdk_wifi_get_sleep_type();
-        char *sleep_type_str = "??";
+        const char *sleep_type_str = "??";
         switch (sleep_type) {
         case WIFI_SLEEP_NONE:
             sleep_type_str = "None";
