@@ -31,20 +31,20 @@ extern "C" {
  * three bytes of the mac address. This may be NULL to not default the ssid,
  * but the AP network will not run without a ssid.
  */
-extern char *wificfg_default_ssid;
+extern const char *wificfg_default_ssid;
 
 /*
  * A default password for the AP interface. This may be NULL to not default the
  * password, but the AP network will not run without a password. The minimum
  * length is 8 characters.
  */
-extern char *wificfg_default_password;
+extern const char *wificfg_default_password;
 
 /*
  * A default hostname printf format string. This may be NULL to not default the
  * hostname.
  */
-extern char *wificfg_default_hostname;
+extern const char *wificfg_default_hostname;
 
 /*
  * The web server parses the http method string in these enums. The ANY method
