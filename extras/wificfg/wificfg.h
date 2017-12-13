@@ -97,7 +97,7 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch);
  * is truncated to the buffer length. The number of characters read is limited
  * to the remainder which is updated. The 'valp' flag is set if a value follows.
  */
-int wificfg_form_name_value(int s, bool *valp, size_t *rem, char *buf, size_t len);
+ssize_t wificfg_form_name_value(int s, bool *valp, size_t *rem, char *buf, size_t len);
 
 /* Support for form url-encoding decoder. */
 void wificfg_form_url_decode(char *string);
@@ -106,20 +106,17 @@ void wificfg_form_url_decode(char *string);
 void wificfg_html_escape(char *string, char *buf, size_t len);
 
 /* Support for writing a string in a response. */
-int wificfg_write_string(int s, const char *str);
+ssize_t wificfg_write_string(int s, const char *str);
 
 /* Support for writing a string in a response, with chunk transfer encoding.
  * An optional buffer may be supplied to use to construct a chunk with the
  * header and trailer, reducing the number of write() calls, and the str may be
  * at the start of this buffer.
  */
-int wificfg_write_string_chunk(int s, const char *str, char *buf, size_t len);
+ssize_t wificfg_write_string_chunk(int s, const char *str, char *buf, size_t len);
 
 /* Write a chunk transfer encoding end marker. */
-int wificfg_write_chunk_end(int s);
-
-/* Write a chunk offset 4 bytes into the buffer. */
-int wificfg_write_buffer_chunk(int s, char *buf);
+ssize_t wificfg_write_chunk_end(int s);
 
 /* Write a html title meta data, using the hostname or AP SSI. */
 int wificfg_write_html_title(int s, char *buf, size_t len, const char *str);

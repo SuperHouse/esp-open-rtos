@@ -76,7 +76,7 @@ static int read_crlf_line(int s, char *buf, size_t len)
 
     do {
         char c;
-        int r = read(s, &c, 1);
+        ssize_t r = read(s, &c, 1);
 
         /* Expecting a known terminator so fail on EOF. */
         if (r <= 0)
@@ -101,7 +101,7 @@ static int read_crlf_line(int s, char *buf, size_t len)
     return num;
 }
 
-int wificfg_form_name_value(int s, bool *valp, size_t *rem, char *buf, size_t len)
+ssize_t wificfg_form_name_value(int s, bool *valp, size_t *rem, char *buf, size_t len)
 {
     size_t num = 0;
 
@@ -110,7 +110,7 @@ int wificfg_form_name_value(int s, bool *valp, size_t *rem, char *buf, size_t le
             break;
 
         char c;
-        int r = read(s, &c, 1);
+        ssize_t r = read(s, &c, 1);
 
         /* Expecting a known number of characters so fail on EOF. */
         if (r <= 0) return -1;
@@ -243,7 +243,7 @@ static const struct {
 
 static wificfg_method intern_http_method(char *str)
 {
-    int i;
+    size_t i;
     for (i = 0;  i < sizeof(method_table) / sizeof(method_table[0]); i++) {
         if (!strcmp(str, method_table[i].str))
             return method_table[i].method;
@@ -274,7 +274,7 @@ static const struct {
 
 static http_header intern_http_header(char *str)
 {
-    int i;
+    size_t i;
     for (i = 0;  i < sizeof(http_header_table) / sizeof(http_header_table[0]); i++) {
         if (!strcmp(str, http_header_table[i].str))
             return http_header_table[i].name;
@@ -292,7 +292,7 @@ static const struct {
 
 static wificfg_content_type intern_http_content_type(char *str)
 {
-    int i;
+    size_t i;
     for (i = 0;  i < sizeof(content_type_table) / sizeof(content_type_table[0]); i++) {
         if (!strcmp(str, content_type_table[i].str))
             return content_type_table[i].type;
@@ -318,13 +318,13 @@ static char *skip_to_whitespace(char *string)
     return string;
 }
 
-int wificfg_write_string(int s, const char *str)
+ssize_t wificfg_write_string(int s, const char *str)
 {
-    int res = write(s, str, strlen(str));
+    ssize_t res = write(s, str, strlen(str));
     return res;
 }
 
-int wificfg_write_string_chunk(int s, const char *str, char *buf, size_t len)
+ssize_t wificfg_write_string_chunk(int s, const char *str, char *buf, size_t len)
 {
     size_t str_len = strlen(str);
 
@@ -366,7 +366,7 @@ int wificfg_write_string_chunk(int s, const char *str, char *buf, size_t len)
     /* Else too big for the buffer. */
     char size_buf[8];
     size_t size_len = snprintf(size_buf, sizeof(size_buf), "%x\r\n", str_len);
-    int res = write(s, size_buf, size_len);
+    ssize_t res = write(s, size_buf, size_len);
     if (res != size_len) {
         return res;
     }
@@ -377,7 +377,7 @@ int wificfg_write_string_chunk(int s, const char *str, char *buf, size_t len)
     return write(s, size_buf + size_len - 2, 2);
 }
 
-int wificfg_write_chunk_end(int s)
+ssize_t wificfg_write_chunk_end(int s)
 {
     return wificfg_write_string(s, "0\r\n\r\n");
 }
@@ -409,6 +409,7 @@ typedef enum {
     FORM_NAME_AP_NETMASK,
     FORM_NAME_AP_DHCP_LEASES,
     FORM_NAME_AP_DNS,
+    FORM_NAME_AP_MDNS,
     FORM_NAME_DONE,
     FORM_NAME_NONE
 } form_name;
@@ -443,17 +444,18 @@ static const struct {
     {"ap_netmask", FORM_NAME_AP_NETMASK},
     {"ap_dhcp_leases", FORM_NAME_AP_DHCP_LEASES},
     {"ap_dns", FORM_NAME_AP_DNS},
+    {"ap_mdns", FORM_NAME_AP_MDNS},
     {"done", FORM_NAME_DONE}
 };
 
 static form_name intern_form_name(char *str)
 {
-     int i;
-     for (i = 0;  i < sizeof(form_name_table) / sizeof(form_name_table[0]); i++) {
-         if (!strcmp(str, form_name_table[i].str))
-             return form_name_table[i].name;
-     }
-     return FORM_NAME_NONE;
+    size_t i;
+    for (i = 0;  i < sizeof(form_name_table) / sizeof(form_name_table[0]); i++) {
+        if (!strcmp(str, form_name_table[i].str))
+            return form_name_table[i].name;
+    }
+    return FORM_NAME_NONE;
 }
 
 
@@ -838,7 +840,7 @@ static int handle_wificfg_index_post(int s, wificfg_method method,
     bool valp = false;
 
     while (rem > 0) {
-        int r = wificfg_form_name_value(s, &valp, &rem, buf, len);
+        ssize_t r = wificfg_form_name_value(s, &valp, &rem, buf, len);
 
         if (r < 0) {
             break;
@@ -849,7 +851,7 @@ static int handle_wificfg_index_post(int s, wificfg_method method,
         form_name name = intern_form_name(buf);
 
         if (valp) {
-            int r = wificfg_form_name_value(s, NULL, &rem, buf, len);
+            ssize_t r = wificfg_form_name_value(s, NULL, &rem, buf, len);
             if (r < 0) {
                 break;
             }
@@ -1142,33 +1144,31 @@ static int handle_wifi_ap(int s, wificfg_method method,
 
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[8], buf, len) < 0) return -1;
 
-        int8_t wifi_ap_authmode = 4;
+        int8_t wifi_ap_authmode = AUTH_WPA_WPA2_PSK;
         sysparam_get_int8("wifi_ap_authmode", &wifi_ap_authmode);
-        if (wifi_ap_authmode == 0 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
+        if (wifi_ap_authmode == AUTH_OPEN && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[9], buf, len) < 0) return -1;
-        if (wifi_ap_authmode == 1 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
+        if (wifi_ap_authmode == AUTH_WPA_PSK && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[10], buf, len) < 0) return -1;
-        if (wifi_ap_authmode == 2 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
+        if (wifi_ap_authmode == AUTH_WPA2_PSK && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[11], buf, len) < 0) return -1;
-        if (wifi_ap_authmode == 3 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[12], buf, len) < 0) return -1;
-        if (wifi_ap_authmode == 4 && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
+        if (wifi_ap_authmode == AUTH_WPA_WPA2_PSK && wificfg_write_string_chunk(s, " selected", buf, len) < 0) return -1;
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[13], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[12], buf, len) < 0) return -1;
 
         int8_t wifi_ap_max_conn = 3;
         sysparam_get_int8("wifi_ap_max_conn", &wifi_ap_max_conn);
         snprintf(buf, len, "%u", wifi_ap_max_conn);
         if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[14], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[13], buf, len) < 0) return -1;
 
         int32_t wifi_ap_beacon_interval = 100;
         sysparam_get_int32("wifi_ap_beacon_interval", &wifi_ap_beacon_interval);
         snprintf(buf, len, "%u", wifi_ap_beacon_interval);
         if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[15], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[14], buf, len) < 0) return -1;
 
         char *wifi_ap_ip_addr = NULL;
         sysparam_get_string("wifi_ap_ip_addr", &wifi_ap_ip_addr);
@@ -1178,7 +1178,7 @@ static int handle_wifi_ap(int s, wificfg_method method,
             if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
         }
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[16], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[15], buf, len) < 0) return -1;
 
         char *wifi_ap_netmask = NULL;
         sysparam_get_string("wifi_ap_netmask", &wifi_ap_netmask);
@@ -1188,18 +1188,25 @@ static int handle_wifi_ap(int s, wificfg_method method,
             if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
         }
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[17], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[16], buf, len) < 0) return -1;
 
         int8_t wifi_ap_dhcp_leases = 4;
         sysparam_get_int8("wifi_ap_dhcp_leases", &wifi_ap_dhcp_leases);
         snprintf(buf, len, "%u", wifi_ap_dhcp_leases);
         if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
 
-        if (wificfg_write_string_chunk(s, http_wifi_ap_content[18], buf, len) < 0) return -1;
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[17], buf, len) < 0) return -1;
 
         int8_t wifi_ap_dns = 1;
         sysparam_get_int8("wifi_ap_dns", &wifi_ap_dns);
         if (wifi_ap_dns && wificfg_write_string_chunk(s, "checked", buf, len) < 0) return -1;
+
+        if (wificfg_write_string_chunk(s, http_wifi_ap_content[18], buf, len) < 0) return -1;
+
+        int8_t wifi_ap_mdns = 1;
+        sysparam_get_int8("wifi_ap_mdns", &wifi_ap_mdns);
+        if (wifi_ap_mdns && wificfg_write_string_chunk(s, "checked", buf, len) < 0) return -1;
+
         if (wificfg_write_string_chunk(s, http_wifi_ap_content[19], buf, len) < 0) return -1;
 
         if (wificfg_write_chunk_end(s) < 0) return -1;
@@ -1228,9 +1235,10 @@ static int handle_wifi_ap_post(int s, wificfg_method method,
     uint8_t ap_disable_if_sta = 0;
     uint8_t ssid_hidden = 0;
     uint8_t dns_enable = 0;
+    uint8_t mdns_enable = 0;
 
     while (rem > 0) {
-        int r = wificfg_form_name_value(s, &valp, &rem, buf, len);
+        ssize_t r = wificfg_form_name_value(s, &valp, &rem, buf, len);
 
         if (r < 0) {
             break;
@@ -1241,7 +1249,7 @@ static int handle_wifi_ap_post(int s, wificfg_method method,
         form_name name = intern_form_name(buf);
 
         if (valp) {
-            int r = wificfg_form_name_value(s, NULL, &rem, buf, len);
+            ssize_t r = wificfg_form_name_value(s, NULL, &rem, buf, len);
             if (r < 0) {
                 break;
             }
@@ -1281,19 +1289,21 @@ static int handle_wifi_ap_post(int s, wificfg_method method,
             }
             case FORM_NAME_AP_AUTHMODE: {
                 uint32_t mode = strtoul(buf, NULL, 10);
-                if (mode >= 0 && mode <= 5)
+                if (mode == AUTH_OPEN || mode == AUTH_WPA_PSK ||
+                    mode == AUTH_WPA2_PSK || mode == AUTH_WPA_WPA2_PSK) {
                     sysparam_set_int8("wifi_ap_authmode", mode);
+                }
                 break;
             }
             case FORM_NAME_AP_MAX_CONN: {
                 uint32_t max_conn = strtoul(buf, NULL, 10);
-                if (max_conn >= 0 && max_conn <= 8)
+                if (max_conn <= 8)
                     sysparam_set_int8("wifi_ap_max_conn", max_conn);
                 break;
             }
             case FORM_NAME_AP_BEACON_INTERVAL: {
                 uint32_t interval = strtoul(buf, NULL, 10);
-                if (interval >= 0 && interval <= 10000)
+                if (interval <= 10000)
                     sysparam_set_int32("wifi_ap_beacon_interval", interval);
                 break;
             }
@@ -1305,12 +1315,16 @@ static int handle_wifi_ap_post(int s, wificfg_method method,
                 break;
             case FORM_NAME_AP_DHCP_LEASES: {
                 uint32_t leases = strtoul(buf, NULL, 10);
-                if (leases >= 0 && leases <= 16)
+                if (leases <= 16)
                     sysparam_set_int8("wifi_ap_dhcp_leases", leases);
                 break;
             }
             case FORM_NAME_AP_DNS: {
                 dns_enable = strtoul(buf, NULL, 10) != 0;
+                break;
+            }
+            case FORM_NAME_AP_MDNS: {
+                mdns_enable = strtoul(buf, NULL, 10) != 0;
                 break;
             }
             case FORM_NAME_DONE:
@@ -1327,6 +1341,7 @@ static int handle_wifi_ap_post(int s, wificfg_method method,
         sysparam_set_int8("wifi_ap_disable_if_sta", ap_disable_if_sta);
         sysparam_set_int8("wifi_ap_ssid_hidden", ssid_hidden);
         sysparam_set_int8("wifi_ap_dns", dns_enable);
+        sysparam_set_int8("wifi_ap_mdns", mdns_enable);
     }
 
     return wificfg_write_string(s, http_redirect_header);
@@ -1656,10 +1671,8 @@ static void server_task(void *pvParameters)
 {
     char *hostname_local = NULL;
     char *hostname = NULL;
-    int8_t wifi_sta_mdns = 1;
 
     sysparam_get_string("hostname", &hostname);
-    sysparam_get_int8("wifi_sta_mdns", &wifi_sta_mdns);
     if (hostname) {
         size_t len = strlen(hostname) + 6 + 1;
         hostname_local = (char *)malloc(len);
@@ -1667,21 +1680,34 @@ static void server_task(void *pvParameters)
             snprintf(hostname_local, len, "%s.local", hostname);
         }
 
-        struct netif *netif = sdk_system_get_netif(STATION_IF);
-        if (wifi_sta_mdns && netif) {
+        int8_t wifi_sta_mdns = 1;
+        int8_t wifi_ap_mdns = 1;
+        sysparam_get_int8("wifi_sta_mdns", &wifi_sta_mdns);
+        sysparam_get_int8("wifi_ap_mdns", &wifi_ap_mdns);
+
+        struct netif *station_netif = sdk_system_get_netif(STATION_IF);
+        struct netif *softap_netif = sdk_system_get_netif(SOFTAP_IF);
+        if ((wifi_sta_mdns && station_netif) || (wifi_ap_mdns && softap_netif)) {
+#if LWIP_MDNS_RESPONDER
+            mdns_resp_init();
+#endif
 #if EXTRAS_MDNS_RESPONDER
             mdns_init();
             mdns_add_facility(hostname, "_http", NULL, mdns_TCP + mdns_Browsable, 80, 600);
 #endif
-#if LWIP_MDNS_RESPONDER
-            mdns_resp_init();
-            if (netif) {
-                mdns_resp_add_netif(netif, hostname, 120);
-                mdns_resp_add_service(netif, hostname, "_http",
-                                      DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
-            }
-#endif
         }
+#if LWIP_MDNS_RESPONDER
+        if (wifi_sta_mdns && station_netif) {
+            mdns_resp_add_netif(station_netif, hostname, 120);
+            mdns_resp_add_service(station_netif, hostname, "_http",
+                                  DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+        }
+        if (wifi_ap_mdns && softap_netif) {
+            mdns_resp_add_netif(softap_netif, hostname, 120);
+            mdns_resp_add_service(softap_netif, hostname, "_http",
+                                  DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+        }
+#endif
 
         free(hostname);
     }
@@ -1851,7 +1877,7 @@ static void server_task(void *pvParameters)
                 size_t len;
                 for (len = 0; len < 4096; len++) {
                     char c;
-                    int res = read(s, &c, 1);
+                    ssize_t res = read(s, &c, 1);
                     if (res != 1) break;
                 }
 
@@ -1912,7 +1938,7 @@ static void dns_task(void *pvParameters)
         char buffer[96];
         struct sockaddr_storage src_addr;
         socklen_t src_addr_len = sizeof(src_addr);
-        size_t count = recvfrom(fd, buffer, sizeof(buffer), 0, (struct sockaddr*)&src_addr, &src_addr_len);
+        ssize_t count = recvfrom(fd, buffer, sizeof(buffer), 0, (struct sockaddr*)&src_addr, &src_addr_len);
 
         /* Drop messages that are too large to send a response in the buffer */
         if (count > 0 && count <= sizeof(buffer) - 16) {
@@ -2097,8 +2123,9 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
         /* Read and validate paramenters. */
         int8_t wifi_ap_ssid_hidden = 0;
         sysparam_get_int8("wifi_ap_ssid_hidden", &wifi_ap_ssid_hidden);
-        if (wifi_ap_ssid_hidden < 0 || wifi_ap_ssid_hidden > 1)
+        if (wifi_ap_ssid_hidden < 0 || wifi_ap_ssid_hidden > 1) {
             wifi_ap_ssid_hidden = 1;
+        }
 
         int8_t wifi_ap_channel = 6;
         sysparam_get_int8("wifi_ap_channel", &wifi_ap_channel);
@@ -2119,18 +2146,22 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
 
         int8_t wifi_ap_authmode = AUTH_WPA_WPA2_PSK;
         sysparam_get_int8("wifi_ap_authmode", &wifi_ap_authmode);
-        if (wifi_ap_authmode < AUTH_OPEN || wifi_ap_authmode > AUTH_MAX)
+        if (wifi_ap_authmode != AUTH_OPEN && wifi_ap_authmode != AUTH_WPA_PSK &&
+            wifi_ap_authmode != AUTH_WPA2_PSK && wifi_ap_authmode != AUTH_WPA_WPA2_PSK) {
             wifi_ap_authmode = AUTH_WPA_WPA2_PSK;
+        }
 
         int8_t wifi_ap_max_conn = 3;
         sysparam_get_int8("wifi_ap_max_conn", &wifi_ap_max_conn);
-        if (wifi_ap_max_conn < 1 || wifi_ap_max_conn > 8)
+        if (wifi_ap_max_conn < 1 || wifi_ap_max_conn > 8) {
             wifi_ap_max_conn = 3;
+        }
 
         int32_t wifi_ap_beacon_interval = 100;
         sysparam_get_int32("wifi_ap_beacon_interval", &wifi_ap_beacon_interval);
-        if (wifi_ap_beacon_interval < 0 || wifi_ap_beacon_interval > 1000)
+        if (wifi_ap_beacon_interval < 0 || wifi_ap_beacon_interval > 1000) {
             wifi_ap_beacon_interval = 100;
+        }
 
         /* Default AP IP address and netmask. */
         char *wifi_ap_ip_addr = NULL;

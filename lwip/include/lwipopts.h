@@ -297,6 +297,12 @@
 #define DNS_MAX_NAME_LENGTH 128
 #endif
 
+/** Set this to 1 to enable querying ".local" names via mDNS
+ *  using a One-Shot Multicast DNS Query */
+#ifndef LWIP_DNS_SUPPORT_MDNS_QUERIES
+#define LWIP_DNS_SUPPORT_MDNS_QUERIES  1
+#endif
+
 /*
    ---------------------------------
    ---------- UDP options ----------
