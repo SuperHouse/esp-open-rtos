@@ -22,8 +22,17 @@ typedef _lock_t _LOCK_T;
    Lock functions all take a pointer to the _lock_t entry, so the
    value stored there can be manipulated.
 */
+#if 0
 #define __LOCK_INIT(CLASS,NAME) CLASS _lock_t NAME = 0;
 #define __LOCK_INIT_RECURSIVE(CLASS,NAME) CLASS _lock_t NAME = 0;
+#else
+/*
+ * Skip a 'static' class definition, so they are all visible and can
+ * be initialize at startup.
+ */
+#define __LOCK_INIT(CLASS,NAME) _lock_t NAME = 0;
+#define __LOCK_INIT_RECURSIVE(CLASS,NAME) _lock_t NAME = 0;
+#endif
 
 void _lock_init(_lock_t *lock);
 void _lock_init_recursive(_lock_t *lock);

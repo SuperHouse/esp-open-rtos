@@ -134,6 +134,8 @@ static void IRAM default_putc(char c) {
     uart_putc(0, c);
 }
 
+void init_newlib_locks(void);
+
 // .text+0x258
 void IRAM sdk_user_start(void) {
     uint32_t buf32[sizeof(struct sdk_g_ic_saved_st) / 4];
@@ -223,6 +225,7 @@ void IRAM sdk_user_start(void) {
             status = sysparam_init(sysparam_addr, 0);
         }
     }
+    init_newlib_locks();
     if (status != SYSPARAM_OK) {
         printf("WARNING: Could not initialize sysparams (%d)!\n", status);
     }

@@ -97,6 +97,9 @@
 #ifndef configCHECK_FOR_STACK_OVERFLOW
 #define configCHECK_FOR_STACK_OVERFLOW  2
 #endif
+#ifndef configUSE_RECURSIVE_MUTEXES
+#define configUSE_RECURSIVE_MUTEXES 1
+#endif
 #ifndef configUSE_MUTEXES
 #define configUSE_MUTEXES  1
 #endif

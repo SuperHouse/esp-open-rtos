@@ -294,7 +294,7 @@ int	_EXFUN(_unsetenv_r,(struct _reent *, const char *__string));
 #endif /* !__CYGWIN__ */
 
 #if __POSIX_VISIBLE >= 200112
-int _EXFUN(__nonnull (1) posix_memalign,(void **, size_t, size_t));
+int _EXFUN(__nonnull ((1)) posix_memalign,(void **, size_t, size_t));
 #endif
 
 char *	_EXFUN(_dtoa_r,(struct _reent *, double, int, int, int *, int*, char**));
@@ -345,5 +345,9 @@ _Noreturn void
 #endif /* __ISO_C_VISIBLE >= 2011 */
 
 _END_STD_C
+
+#if __SSP_FORTIFY_LEVEL > 0
+#include <ssp/stdlib.h>
+#endif
 
 #endif /* _STDLIB_H_ */
