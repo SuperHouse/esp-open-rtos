@@ -61,6 +61,14 @@ IRAM void *_sbrk_r (struct _reent *r, ptrdiff_t incr)
     return (caddr_t) prev_heap_end;
 }
 
+
+/* Insert a disjoint region into the nano malloc pool. Create a malloc chunk,
+ * filling the size as newlib nano malloc expects, and then free it. */
+void nano_malloc_insert_chunk(void *start, size_t size) {
+    *(uint32_t *)start = size;
+    free(start + sizeof(size_t));
+}
+
 /* syscall implementation for stdio write to UART */
 __attribute__((weak)) ssize_t _write_stdout_r(struct _reent *r, int fd, const void *ptr, size_t len )
 {
