@@ -44,6 +44,8 @@ LoadStoreErrorHandlerStack:
         .word   0       # a2
         .word   0       # a3
         .word   0       # a4
+        .word   0       # a5
+        .word   0       # a6
 
         .balign 4
         .global debug_saved_ctx
@@ -123,7 +125,11 @@ DoubleExceptionVector:
  *
  * Called from UserExceptionVector if EXCCAUSE is LoadStoreErrorCause
  *
- * (Fast path (no branches) is for L8UI)
+ * Accesses can be assumed aligned here as unaligned accesses would have generate
+ * an unaligned exception (9) before getting here.
+ *
+ * Fast path (no branches) is for L8UI from low registers 0, 2-5, and the fast
+ * store path is S8I for low registers 0, 2-7.
  */
         .literal_position
 
@@ -140,6 +146,8 @@ LoadStoreErrorHandler:
         s32i    a3, sp, 0x0c
         s32i    a4, sp, 0x10
         rsr     a0, sar         # Save SAR in a0 to restore later
+
+        # led_on  a2, a3
 
         /* Examine the opcode which generated the exception */
         /* Note: Instructions are in this order to avoid pipeline stalls. */
@@ -185,6 +193,8 @@ LoadStoreErrorHandler:
         addi    a3, a3, 0x3
         wsr     a3, epc1
 
+        # led_off  a0, a3
+
         /* Stupid opcode tricks: The jumptable we use later on needs 16 bytes
          * per entry (so we can avoid a second jump by just doing a RFE inside
          * each entry).  Unfortunately, however, Xtensa doesn't have an addx16
@@ -214,25 +224,11 @@ LoadStoreErrorHandler:
         rsr     a1, excsave1    # restore a1 saved by UserExceptionVector
         rfe
 
-.LSE_assign_reg:
-        /* At this point, a2 contains the register number times 2, a4 is the
-         * read value. */
-
-        /* Calculate the jumptable address, and restore all regs except a2 and
-         * a4 so we have less to do after jumping. */
-        /* Note: Instructions are in this order to avoid pipeline stalls. */
-        movi    a3, .LSE_jumptable_base
-        l32i    a0, sp, 0
-        addx8   a2, a2, a3      # a2 is now the address to jump to
-        l32i    a3, sp, 0x0c
-
-        jx      a2
-
         .balign 4
 .LSE_check_l16:
         /* At this point, a2 contains the opcode, a3 is masked opcode */
         movi    a4, 0x001002    # l16si or l16ui opcode after masking
-        bne     a3, a4, .LSE_wrong_opcode
+        bne     a3, a4, .LSE_check_s8i
 
         /* Note: At this point, the opcode could be one of two things:
          *   xx1xx2 (L16UI)
@@ -255,31 +251,90 @@ LoadStoreErrorHandler:
         or      a4, a3, a4      # set 32-bit sign bits
         j       .LSE_post_fetch
 
-.LSE_wrong_opcode:
-        /* If we got here it's not an opcode we can try to fix, so bomb out.
-         * Restore registers so any dump the fatal exception routine produces
-         * will have correct values */
-        wsr     a0, sar
-        l32i    a0, sp, 0
-        /*l32i    a2, sp, 0x08*/
-        l32i    a3, sp, 0x0c
-        l32i    a4, sp, 0x10
-        rsr     a1, excsave1
-        mov     a2, a1
-        movi    a3, 0
-        call0   fatal_exception_handler
-
         .balign 4
-.LSE_assign_a1:
-        /* a1 is saved in excsave1, so just update that with the value, */
-        wsr     a4, excsave1
-        /* Then restore all regs and return */
+.LSE_check_s8i:
+        /* At this point, a2 contains the opcode */
+        movi    a3, 0x00F00F    # opcode mask for s8i/s16i
+        s32i    a5, sp, 0x14    # Save a5, needed for store op
+        and     a3, a2, a3      # a3 is masked instruction
+        movi    a4, 0x004002    # s8i opcode after masking
+        s32i    a6, sp, 0x18    # Save a6, needed for store op
+        bne     a3, a4, .LSE_check_s16i
+
+        /* Note: At this point, the opcode is s8i */
+        movi    a5, 0x000000ff  # source mask
+.LSE_store:
+        /* We jump here for either S8I or S16I to get the address and load
+         * and mask the current contents. */
+        movi    a4, ~3
+        rsr     a3, excvaddr    # read faulting address
+        and     a4, a3, a4      # a4 now word aligned address
+        ssa8b   a3              # sar is now left shift amount
+        sll     a3, a5
+        movi    a6, 0xffffffff
+        xor     a6, a6, a3      # a6 now has the word mask
+        l32i    a3, a4, 0       # read the current word
+        and     a3, a3, a6      # a3 now has the masked word
+        extui   a2, a2, 4, 4    # a2 is now source register 0-15
+
+        /* At this point, a2 contains the source register 0-15, a3 contains the
+         * masked memory contents, a4 contains the address, a5 contains the source
+         * mask, and sar contains the left shift amount. */
+        bgei    a2, 7, .LSE_load_reg        # a7..a15 use jumptable
+        beqi    a2, 1, .LSE_load_a1         # a1 uses a special routine
+
+        /* We're loading from a0 or a2..a6, which are all saved in our "stack"
+         * area.  Calculate the correct address and load the value there. */
+        addx4   a2, a2, sp
+        l32i    a2, a2, 0
+
+.LSE_store_apply:
+        and     a2, a2, a5         # mask the source
+        sll     a2, a2             # shift the source
+        or      a3, a3, a2         # combine with the masked memory contents
+        s32i    a3, a4, 0          # write back to memory
+
+        /* Note: Instructions are in this order to avoid pipeline stalls */
+        rsr     a3, epc1
+        wsr     a0, sar
+        addi    a3, a3, 0x3
+        wsr     a3, epc1
+
+        # led_off  a2, a3
+
+        /* Restore all regs and return */
         l32i    a0, sp, 0
         l32i    a2, sp, 0x08
         l32i    a3, sp, 0x0c
         l32i    a4, sp, 0x10
-        rsr     a1, excsave1
+        l32i    a5, sp, 0x14
+        l32i    a6, sp, 0x18
+        rsr     a1, excsave1    # restore a1 saved by UserExceptionVector
         rfe
+
+        .balign 4
+.LSE_check_s16i:
+        /* At this point, a2 contains the opcode */
+        movi    a4, 0x005002    # s16i opcode after masking
+        bne     a3, a4, .LSE_wrong_opcode
+        /* Note: At this point, the opcode is s16i */
+        movi    a5, 0x0000ffff  # source mask
+        j       .LSE_store
+
+        .balign 4
+.LSE_assign_reg:
+        /* At this point, a2 contains the register number times 2, a4 is the
+         * read value. */
+
+        /* Calculate the jumptable address, and restore all regs except a2 and
+         * a4 so we have less to do after jumping. */
+        /* Note: Instructions are in this order to avoid pipeline stalls. */
+        movi    a3, .LSE_jumptable_base
+        l32i    a0, sp, 0
+        addx8   a2, a2, a3      # a2 is now the address to jump to
+        l32i    a3, sp, 0x0c
+
+        jx      a2
 
         .balign 4
 .LSE_jumptable:
@@ -366,6 +421,81 @@ LoadStoreErrorHandler:
         rsr     a1, excsave1
         rfe
 
+        .balign 4
+.LSE_assign_a1:
+        /* a1 is saved in excsave1, so just update that with the value, */
+        wsr     a4, excsave1
+        /* Then restore all regs and return */
+        l32i    a0, sp, 0
+        l32i    a2, sp, 0x08
+        l32i    a3, sp, 0x0c
+        l32i    a4, sp, 0x10
+        rsr     a1, excsave1
+        rfe
+
+        .balign 4
+.LSE_load_reg:
+        /* Calculate the jumptable address. */
+        movi    a6, .LSE_store_jumptable_base
+        addx8   a2, a2, a6      # a2 is now the address to jump to
+        jx      a2
+
+        .balign 4
+.LSE_store_jumptable:
+        /* The first 7 entries (56 bytes) of this table are unused (registers
+         * a0..a6 are handled separately above).  Rather than have a whole bunch
+         * of wasted space, we just pretend that the table starts 56 bytes
+         * earlier in memory. */
+        .set    .LSE_store_jumptable_base, .LSE_store_jumptable - (8 * 7)
+
+        mov     a2, a7
+        j       .LSE_store_apply
+        .balign 4
+        mov     a2, a8
+        j       .LSE_store_apply
+        .balign 4
+        mov     a2, a9
+        j       .LSE_store_apply
+        .balign 4
+        mov     a2, a10
+        j       .LSE_store_apply
+        .balign 4
+        mov     a2, a11
+        j       .LSE_store_apply
+        .balign 4
+        mov     a2, a12
+        j       .LSE_store_apply
+        .balign 4
+        mov     a2, a13
+        j       .LSE_store_apply
+        .balign 4
+        mov     a2, a14
+        j       .LSE_store_apply
+        .balign 4
+        mov     a2, a15
+        j       .LSE_store_apply
+        .balign 4
+
+.LSE_load_a1:
+        /* a1 is saved in excsave1, so just read the value, */
+        rsr     a2, excsave1
+        j       .LSE_store_apply
+
+        .balign 4
+.LSE_wrong_opcode:
+        /* If we got here it's not an opcode we can try to fix, so bomb out.
+         * Restore registers so any dump the fatal exception routine produces
+         * will have correct values */
+        wsr     a0, sar
+        l32i    a0, sp, 0
+        /*l32i    a2, sp, 0x08*/
+        l32i    a3, sp, 0x0c
+        l32i    a4, sp, 0x10
+        rsr     a1, excsave1
+        mov     a2, a1
+        movi    a3, 0
+        call0   fatal_exception_handler
+
 /*************************** Debug exception handler *************************/
 
         .section .vecbase.text, "x"
@@ -422,7 +552,7 @@ call_user_start:
 NMIExceptionHandler:
         .type   NMIExceptionHandler, @function
 
-        wsr     sp, excsave3	# excsave3 holds user stack
+        wsr     sp, excsave3        # excsave3 holds user stack
         movi    sp, .NMIHandlerStackTop - 0x40
         s32i    a0, sp, 0x00
         s32i    a2, sp, 0x04
@@ -460,28 +590,28 @@ NMIExceptionHandler:
         movi    a0, NMIHandlerStack
         l32i    a3, a0, 0
         movi    a2, NMI_STACK_CANARY
-        bne    a3, a2, .NMIFatalStackOverflow
+        bne     a3, a2, .NMIFatalStackOverflow
 
-	l32i 	a0, sp, 0x3c
-	wsr	a0, sar
-	l32i	a0, sp, 0x38
-	wsr	a0, excvaddr
-	l32i	a0, sp, 0x34
-	wsr	a0, excsave1
-	l32i	a0, sp, 0x30
-	wsr	a0, exccause
-	l32i	a0, sp, 0x2c
-	wsr	a0, epc1
-	l32i	a11, sp, 0x28
-	l32i 	a10, sp, 0x24
-	l32i	a9, sp, 0x20
-	l32i	a8, sp, 0x1c
-	l32i	a7, sp, 0x18
-	l32i 	a6, sp, 0x14
-	l32i	a5, sp, 0x10
-	l32i	a4, sp, 0x0c
-	l32i	a3, sp, 0x08
-        movi    a0, 0x33    	  # Reset PS
+        l32i    a0, sp, 0x3c
+        wsr     a0, sar
+        l32i    a0, sp, 0x38
+        wsr     a0, excvaddr
+        l32i    a0, sp, 0x34
+        wsr     a0, excsave1
+        l32i    a0, sp, 0x30
+        wsr     a0, exccause
+        l32i    a0, sp, 0x2c
+        wsr     a0, epc1
+        l32i    a11, sp, 0x28
+        l32i    a10, sp, 0x24
+        l32i    a9, sp, 0x20
+        l32i    a8, sp, 0x1c
+        l32i    a7, sp, 0x18
+        l32i    a6, sp, 0x14
+        l32i    a5, sp, 0x10
+        l32i    a4, sp, 0x0c
+        l32i    a3, sp, 0x08
+        movi    a0, 0x33              # Reset PS
         wsr     a0, ps
         rsync
         /* set dport nmi status to 1 (wDev_ProcessFiq clears bit 0 and verifies it
@@ -491,10 +621,10 @@ NMIExceptionHandler:
         movi    a0, 0x3ff00000
         movi    a2, 0x1
         s32i    a2, a0, 0
-	l32i	a2, sp, 0x04
-	l32i	a0, sp, 0x00
-	movi	a1, 0x0
-	xsr	a1, excsave3       # Load stack back from excsave3, clear excsave3
+        l32i    a2, sp, 0x04
+        l32i    a0, sp, 0x00
+        movi    a1, 0x0
+        xsr     a1, excsave3       # Load stack back from excsave3, clear excsave3
         rfi     3
 
         .section .rodata
