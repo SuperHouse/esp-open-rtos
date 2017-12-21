@@ -6,8 +6,8 @@
  *
  *   I2C   +-------------------------+     +----------+
  *         | ESP8266  Bus 0          |     | BME680   |
- *         |          GPIO 5 (SCL)   ------> SCL      |
- *         |          GPIO 4 (SDA)   ------- SDA      |
+ *         |          GPIO 14 (SCL)  ------> SCL      |
+ *         |          GPIO 13 (SDA)  ------- SDA      |
  *         +-------------------------+     +----------+
  */
 
@@ -25,8 +25,8 @@
 
 // define I2C interface for BME680 sensors
 #define I2C_BUS         0
-#define I2C_SCL_PIN     5
-#define I2C_SDA_PIN     4
+#define I2C_SCL_PIN     14
+#define I2C_SDA_PIN     13
 
 static bme680_sensor_t* sensor;
 
@@ -91,13 +91,13 @@ void user_init(void)
     /** -- MANDATORY PART -- */
 
     #ifdef SPI_USED
-    // Init the sensor connected either to SPI.
+    // Init the sensor connected to SPI.
     sensor = bme680_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
     #else
     // Init all I2C bus interfaces at which BME680 sensors are connected
     i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K);
 
-    // Init the sensor connected either to I2C.
+    // Init the sensor connected to I2C.
     sensor = bme680_init_sensor (I2C_BUS, BME680_I2C_ADDRESS_2, 0);
     #endif
 

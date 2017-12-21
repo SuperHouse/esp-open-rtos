@@ -1,8 +1,11 @@
 /*
- * Driver for Bosch Sensortec BME680 digital temperature, humity, pressure and
- * gas sensor connected to I2C or SPI
+ * Driver for Bosch Sensortec BME680 digital temperature, humidity, pressure
+ * and gas sensor connected to I2C or SPI
  *
- * Part of esp-open-rtos [https://github.com/SuperHouse/esp-open-rtos]
+ * This driver is for the usage with the ESP8266 and FreeRTOS (esp-open-rtos)
+ * [https://github.com/SuperHouse/esp-open-rtos]. It is also working with ESP32
+ * and ESP-IDF [https://github.com/espressif/esp-idf.git] as well as Linux
+ * based systems using a wrapper library for ESP8266 functions.
  *
  * ---------------------------------------------------------------------------
  *
@@ -46,16 +49,9 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
-#include "FreeRTOS.h"
-#include "task.h"
-
-#include "espressif/esp_common.h"
-#include "espressif/sdk_private.h"
-
-#include "esp/spi.h"
-#include "i2c/i2c.h"
-
+#include "bme680_platform.h"
 #include "bme680.h"
 
 #if defined(BME680_DEBUG_LEVEL_2)
@@ -276,12 +272,11 @@ static bool     bme680_i2c_write (bme680_sensor_t* dev, uint8_t reg, uint8_t *da
 static bool     bme680_spi_read  (bme680_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
 static bool     bme680_spi_write (bme680_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
 
-/** */
-
 #define lsb_msb_to_type(t,b,o) (t)(((t)b[o+1] << 8) | b[o])
 #define lsb_to_type(t,b,o)     (t)(b[o])
 
 bme680_sensor_t* bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs)
+
 {
     bme680_sensor_t* dev;
 
@@ -291,7 +286,7 @@ bme680_sensor_t* bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs)
     // init sensor data structure
     dev->bus  = bus;
     dev->addr = addr;
-    dev->spi_cs_pin = cs;
+    dev->cs   = cs;
     dev->meas_started = false;
     dev->meas_status = 0;
     dev->settings.ambient_temperature = 0;
@@ -303,12 +298,15 @@ bme680_sensor_t* bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs)
     memset(dev->settings.heater_temperature, 0, sizeof(uint16_t)*10);
     memset(dev->settings.heater_duration, 0, sizeof(uint16_t)*10);
 
-    if (!addr)
+    // if addr==0 then SPI is used and has to be initialized
+    if (!addr && !spi_device_init (bus, cs))
     {
-        // SPI interface used
-        gpio_enable(dev->spi_cs_pin, GPIO_OUTPUT);
-        gpio_write (dev->spi_cs_pin, true);
+        error_dev ("Could not initialize SPI interface.", __FUNCTION__, dev);
+        free (dev);
+        return NULL;
     }
+    if (!addr) 
+        spi_semaphore_init();
 
     // reset the sensor
     if (!bme680_reset(dev))
@@ -435,7 +433,6 @@ bool bme680_force_measurement (bme680_sensor_t* dev)
     }
 
     dev->meas_started = true;
-    dev->meas_start_tick = xTaskGetTickCount (); // system time in RTOS ticks
     dev->meas_status = 0;
 
     debug_dev ("Started measurement at %.3f.", __FUNCTION__, dev,
@@ -817,10 +814,7 @@ bool bme680_set_ambient_temperature (bme680_sensor_t* dev, int16_t ambient)
     // set ambient temperature configuration
     dev->settings.ambient_temperature = ambient; // degree Celsius
 
-
     // update all valid heater profiles
-
-    // takes 894 us for only one defined profile and 1585 us for 10 defined profiles
     uint8_t data[10];
     for (int i = 0; i < BME680_HEATER_PROFILES; i++)
     {
@@ -829,17 +823,6 @@ bool bme680_set_ambient_temperature (bme680_sensor_t* dev, int16_t ambient)
     }
     if (!bme680_write_reg(dev, BME680_REG_RES_HEAT_BASE, data, 10))
         return false;
-
-    /*
-    // takes 346 us for only one defined profile and 3316 us for 10 defined profiles
-    for (int i = 0; i < BME680_HEATER_PROFILES; i++)
-        if (dev->settings.heater_temperature[i])
-        {
-            uint8_t heat_res = bme680_heater_resistance(dev, dev->settings.heater_temperature[i]);
-            if (!bme680_write_reg(dev, BME680_REG_RES_HEAT_BASE+i, &heat_res, 1))
-                return false;
-        }
-    */
 
     debug_dev ("Setting heater ambient temperature done: ambient=%d",
                 __FUNCTION__, dev, dev->settings.ambient_temperature);
@@ -1110,16 +1093,16 @@ static bool bme680_get_raw_data(bme680_sensor_t *dev, bme680_raw_data_t* raw_dat
             return false;
         }
 
+        // test whether there are new data
         dev->meas_status = raw[0];
-        if (dev->meas_status & BME680_MEASURING_BITS)
+        if (dev->meas_status & BME680_MEASURING_BITS &&
+            !(dev->meas_status & BME680_NEW_DATA_BITS))
         {
             debug_dev ("Measurement is still running.", __FUNCTION__, dev);
             dev->error_code = BME680_MEAS_STILL_RUNNING;
             return false;
         }
-
-        // test whether there are new data
-        if (!(dev->meas_status & BME680_NEW_DATA_BITS))
+        else if (!(dev->meas_status & BME680_NEW_DATA_BITS))
         {
             debug_dev ("No new data.", __FUNCTION__, dev);
             dev->error_code = BME680_NO_NEW_DATA;
@@ -1242,17 +1225,6 @@ static void bme680_delay_ms(uint32_t period)
 }
 
 
-#define BME680_SPI_BUF_SIZE 64      // SPI register data buffer size of ESP866
-
-static const spi_settings_t bus_settings = {
-    .mode         = SPI_MODE3,
-    .freq_divider = SPI_FREQ_DIV_1M,
-    .msb          = true,
-    .minimal_pins = false,
-    .endianness   = SPI_LITTLE_ENDIAN
-};
-
-
 static bool bme680_read_reg(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
 {
     if (!dev || !data) return false;
@@ -1269,6 +1241,8 @@ static bool bme680_write_reg(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, u
     return (dev->addr) ? bme680_i2c_write (dev, reg, data, len)
                        : bme680_spi_write (dev, reg, data, len);
 }
+
+#define BME680_SPI_BUF_SIZE 64      // SPI register data buffer size of ESP866
 
 #define BME680_REG_SWITCH_MEM_PAGE     BME680_REG_STATUS
 #define BME680_BIT_SWITCH_MEM_PAGE_0   0x00
@@ -1288,15 +1262,13 @@ static bool bme680_spi_set_mem_page (bme680_sensor_t* dev, uint8_t reg)
         return false;
     }
     // sdk_os_delay_us (100);
-
     return true;
 }
-
 
 static bool bme680_spi_read(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
 {
     if (!dev || !data) return false;
-
+    
     if (len >= BME680_SPI_BUF_SIZE)
     {
         dev->error_code |= BME680_SPI_BUFFER_OVERFLOW;
@@ -1306,18 +1278,19 @@ static bool bme680_spi_read(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, ui
         return false;
     }
 
+    spi_semaphore_take ();
+
     // set mem page first
     if (!bme680_spi_set_mem_page (dev, reg))
     {
         error_dev ("Error on read from SPI slave on bus 1. Could not set mem page.",
                    __FUNCTION__, dev);
+        spi_semaphore_give ();
         return false;
-   }
+    }
 
     reg &= 0x7f;
     reg |= 0x80;
-
-    spi_settings_t old_settings;
 
     static uint8_t mosi[BME680_SPI_BUF_SIZE];
     static uint8_t miso[BME680_SPI_BUF_SIZE];
@@ -1326,34 +1299,27 @@ static bool bme680_spi_read(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, ui
     memset (miso, 0xff, BME680_SPI_BUF_SIZE);
 
     mosi[0] = reg;
-
-    spi_get_settings(dev->bus, &old_settings);
-    spi_set_settings(dev->bus, &bus_settings);
-    gpio_write(dev->spi_cs_pin, false);
-
-    size_t transfered = spi_transfer (dev->bus, (const void*)mosi, (void*)miso, len+1, SPI_8BIT);
-
-    gpio_write(dev->spi_cs_pin, true);
-    spi_set_settings(dev->bus, &old_settings);
-
-    if (!transfered)
+    
+    if (!spi_transfer_pf (dev->bus, dev->cs, mosi, miso, len+1))
     {
         error_dev ("Could not read data from SPI", __FUNCTION__, dev);
         dev->error_code |= BME680_SPI_READ_FAILED;
+        spi_semaphore_give ();
         return false;
     }
-
+    spi_semaphore_give ();
+    
     // shift data one by left, first byte received while sending register address is invalid
     for (int i=0; i < len; i++)
       data[i] = miso[i+1];
 
-#   ifdef BME680_DEBUG_LEVEL_2
+    #ifdef BME680_DEBUG_LEVEL_2
     printf("BME680 %s: read the following bytes: ", __FUNCTION__);
     printf("%0x ", reg);
     for (int i=0; i < len; i++)
         printf("%0x ", data[i]);
     printf("\n");
-#   endif
+    #endif
 
     return true;
 }
@@ -1374,11 +1340,14 @@ static bool bme680_spi_write(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, u
         return false;
     }
 
+    spi_semaphore_take ();
+    
     // set mem page first if not mem page register is used
     if (reg != BME680_REG_STATUS && !bme680_spi_set_mem_page (dev, reg))
     {
         error_dev ("Error on write from SPI slave on bus 1. Could not set mem page.",
                    __FUNCTION__, dev);
+        spi_semaphore_give ();
         return false;
     }
 
@@ -1391,33 +1360,25 @@ static bool bme680_spi_write(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, u
     for (int i = 0; i < len; i++)
         mosi[i+1] = data[i];
 
-#   ifdef BME680_DEBUG_LEVEL_2
+    #ifdef BME680_DEBUG_LEVEL_2
     printf("BME680 %s: Write the following bytes: ", __FUNCTION__);
     for (int i = 0; i < len+1; i++)
         printf("%0x ", mosi[i]);
     printf("\n");
-#   endif
+    #endif
 
-    spi_settings_t old_settings;
-
-    spi_get_settings(dev->bus, &old_settings);
-    spi_set_settings(dev->bus, &bus_settings);
-    gpio_write(dev->spi_cs_pin, false);
-
-    size_t transfered = spi_transfer (dev->bus, (const void*)mosi, NULL, len+1, SPI_8BIT);
-
-    gpio_write(dev->spi_cs_pin, true);
-    spi_set_settings(dev->bus, &old_settings);
-
-    if (!transfered)
+    if (!spi_transfer_pf (dev->bus, dev->cs, mosi, NULL, len+1))
     {
         error_dev ("Could not write data to SPI.", __FUNCTION__, dev);
         dev->error_code |= BME680_SPI_WRITE_FAILED;
+        spi_semaphore_give ();
         return false;
     }
+    spi_semaphore_give ();
 
     return true;
 }
+
 
 static bool bme680_i2c_read(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
 {

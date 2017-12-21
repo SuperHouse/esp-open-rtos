@@ -4,50 +4,72 @@
  *
  * Harware configuration:
  *
- *   I2C   +-------------------------+     +----------+
- *         | ESP8266  Bus 0          |     | BME680   |
- *         |          GPIO 5 (SCL)   ------> SCL      |
- *         |          GPIO 4 (SDA)   ------- SDA      |
- *         +-------------------------+     +----------+
+ *   I2C
  *
- *   SPI   +-------------------------+     +----------+
- *         | ESP8266  Bus 1          |     | BME680   |
- *         |          GPIO 12 (MISO) <-----< SDO      |
- *         |          GPIO 13 (MOSI) >-----> SDI      |
- *         |          GPIO 14 (SCK)  >-----> SCK      |
- *         |          GPIO 2  (CS)   >-----> CS       |
- *         +-------------------------+     +----------+
+ *   +-----------------+   +----------+
+ *   | ESP8266 / ESP32 |   | BME680   |
+ *   |                 |   |          |
+ *   |   GPIO 14 (SCL) ----> SCL      |
+ *   |   GPIO 13 (SDA) <---> SDA      |
+ *   +-----------------+   +----------+
+ *
+ *   SPI   
+ *
+ *   +-----------------+   +----------+      +-----------------+   +----------+
+ *   | ESP8266         |   | BME680   |      | ESP32           |   | BME680   |
+ *   |                 |   |          |      |                 |   |          |
+ *   |   GPIO 14 (SCK) ----> SCK      |      |   GPIO 16 (SCK) ----> SCK      |
+ *   |   GPIO 13 (MOSI)----> SDI      |      |   GPIO 17 (MOSI)----> SDI      |
+ *   |   GPIO 12 (MISO)<---- SDO      |      |   GPIO 18 (MISO)<---- SDO      |
+ *   |   GPIO 2  (CS)  ----> CS       |      |   GPIO 19 (CS)  ----> CS       |
+ *   +-----------------+    +---------+      +-----------------+   +----------+
  */
 
-// Uncomment to use SPI
+/* -- use following constants to define the example mode ----------- */
+
 // #define SPI_USED
 
-#include "espressif/esp_common.h"
-#include "esp/uart.h"
+/* -- includes ----------------------------------------------------- */
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include "bme680.h"
 
-// include communication interface driver
-#include "esp/spi.h"
-#include "i2c/i2c.h"
+/* -- platform dependent definitions ------------------------------- */
 
-// include BME680 driver
-#include "bme680/bme680.h"
+#ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
 
+// user task stack depth for ESP32
+#define TASK_STACK_DEPTH 2048
 
-#ifdef SPI_USED
-// define SPI interface for BME680 sensors
-#define SPI_BUS         1
-#define SPI_CS_GPIO     2   // GPIO 15, the default CS of SPI bus 1, can't be used
-#else
-// define I2C interface for BME680 sensors
-#define I2C_BUS         0
-#define I2C_SCL_PIN     5
-#define I2C_SDA_PIN     4
-#endif
+// SPI interface definitions for ESP32
+#define SPI_BUS       HSPI_HOST
+#define SPI_SCK_GPIO  16
+#define SPI_MOSI_GPIO 17
+#define SPI_MISO_GPIO 18
+#define SPI_CS_GPIO   19
 
-static bme680_sensor_t* sensor;
+#else  // ESP8266 (esp-open-rtos)
+
+// user task stack depth for ESP8266
+#define TASK_STACK_DEPTH 256
+
+// SPI interface definitions for ESP8266
+#define SPI_BUS       1
+#define SPI_SCK_GPIO  14
+#define SPI_MOSI_GPIO 13
+#define SPI_MISO_GPIO 12
+#define SPI_CS_GPIO   2   // GPIO 15, the default CS of SPI bus 1, can't be used
+
+#endif  // ESP_PLATFORM
+
+// I2C interface defintions for ESP32 and ESP8266
+#define I2C_BUS       0
+#define I2C_SCL_PIN   14
+#define I2C_SDA_PIN   13
+#define I2C_FREQ      I2C_FREQ_100K
+
+/* -- user tasks --------------------------------------------------- */
+
+static bme680_sensor_t* sensor = 0;
 
 /*
  * User task that triggers measurements of sensor every seconds. It uses
@@ -86,31 +108,38 @@ void user_task(void *pvParameters)
     }
 }
 
+/* -- main program ------------------------------------------------- */
 
 void user_init(void)
 {
-    // Set UART Parameter
+    // Set UART Parameter.
     uart_set_baud(0, 115200);
     // Give the UART some time to settle
-    sdk_os_delay_us(500);
-
+    vTaskDelay(1);
+    
     /** -- MANDATORY PART -- */
 
     #ifdef SPI_USED
-    // Init the sensor connected either to SPI.
-    sensor = bme680_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
-    #else
-    // Init all I2C bus interfaces at which BME680 sensors are connected
-    i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K);
 
-    // Init the sensor connected either to I2C.
+    spi_bus_init (SPI_BUS, SPI_SCK_GPIO, SPI_MISO_GPIO, SPI_MOSI_GPIO);
+
+    // init the sensor connected to SPI_BUS with SPI_CS_GPIO as chip select.
+    sensor = bme680_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
+    
+    #else  // I2C
+
+    // Init all I2C bus interfaces at which BME680 sensors are connected
+    i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ);
+
+    // init the sensor with slave address BME680_I2C_ADDRESS_2 connected to I2C_BUS.
     sensor = bme680_init_sensor (I2C_BUS, BME680_I2C_ADDRESS_2, 0);
-    #endif
+
+    #endif  // SPI_USED
 
     if (sensor)
     {
         // Create a task that uses the sensor
-        xTaskCreate(user_task, "user_task", 256, NULL, 2, NULL);
+        xTaskCreate(user_task, "user_task", TASK_STACK_DEPTH, NULL, 2, NULL);
 
         /** -- OPTIONAL PART -- */
 
