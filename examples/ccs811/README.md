@@ -9,8 +9,8 @@ Most examples use only one CCS811 sensor. Following figure shows the hardware co
 ```
   +------------------------+    +--------+
   | ESP8266  Bus 0         |    | CCS811 |
-  |          GPIO 5 (SCL)  >----> SCL    |
-  |          GPIO 4 (SDA)  ------ SDA    |
+  |          GPIO 5 (SCL)  -----> SCL    |
+  |          GPIO 4 (SDA)  <----> SDA    |
   |          GND           -----> /WAKE  |
   +------------------------+    +--------+
 ```
@@ -20,8 +20,8 @@ If *nINT* interrupt is used to fetch new data, additionally the interrupt pin ha
 ```
   +------------------------+    +--------+
   | ESP8266  Bus 0         |    | CCS811 |
-  |          GPIO 5 (SCL)  >----> SCL    |
-  |          GPIO 4 (SDA)  ------ SDA    |
+  |          GPIO 5 (SCL)  -----> SCL    |
+  |          GPIO 4 (SDA)  <----> SDA    |
   |          GPIO 2        <----- /nINT  |
   |          GND           -----> /WAKE  |
   +------------------------+    +--------+
@@ -32,13 +32,13 @@ In examples where CCS811 sensor is used in conjunction with a SHT3x sensor, the 
 ```
   +------------------------+       +--------+
   | ESP8266  Bus 0         |       | CCS811 |
-  |          GPIO 5 (SCL)  >--+----> SCL    |
-  |          GPIO 4 (SDA)  ---|-+--- SDA    |
+  |          GPIO 5 (SCL)  ---+----> SCL    |
+  |          GPIO 4 (SDA)  <--|-+--> SDA    |
   |          GND           ---|-|--> /WAKE  |
   |                        |  | |  +--------+
   |                        |  | |  | SHT3x  |
   |                        |  +----> SCL    |
-  |                        |    +--- SDA    |
+  |                        |    +--> SDA    |
   +------------------------+       +--------+
 ```
 
