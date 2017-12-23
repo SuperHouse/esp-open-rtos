@@ -13,7 +13,6 @@
  *   |   GPIO 14 (SCL) ----> SCL      |
  *   |   GPIO 13 (SDA) <---> SDA      |
  *   |   GPIO 5        <---- INT1     |
- *   |   GPIO 4        <---- DRDY/INT2|
  *   +-----------------+   +----------+
  *
  *   SPI   
@@ -26,14 +25,13 @@
  *   |   GPIO 12 (MISO)<---- SDO      |      |   GPIO 18 (MISO)<---- SDO      |
  *   |   GPIO 2  (CS)  ----> CS       |      |   GPIO 19 (CS)  ----> CS       |
  *   |   GPIO 5        <---- INT1     |      |   GPIO 5        <---- INT1     |
- *   |   GPIO 4        <---- DRDY/INT2|      |   GPIO 4        <---- DRDY/INT2|
  *   +-----------------+    +---------+      +-----------------+   +----------+
  */
 
 /* -- use following constants to define the example mode ----------- */
 
 // #define SPI_USED     // if defined SPI is used, otherwise I2C
-   #define DATA_INT     // data ready and FIFO status interrupts
+// #define DATA_INT     // data ready and FIFO status interrupts
 // #define CLICK_INT    // click detection interrupt
 // #define ACTIVITY_INT // wake-up, free fall or 6D/4D orientation detection 
 // #define FIFO_MODE    // multiple sample read mode
@@ -142,7 +140,7 @@ static QueueHandle_t gpio_evt_queue = NULL;
 
 void user_task_interrupt (void *pvParameters)
 {
-    uint32_t gpio_num;
+    uint8_t gpio_num;
 
     while (1)
     {
