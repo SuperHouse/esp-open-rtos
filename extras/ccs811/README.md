@@ -1,6 +1,8 @@
 # Driver for the ams CCS811 digital gas sensor for monitoring indoor air quality.
 
-This driver is written for usage with the ESP8266 and FreeRTOS using the I2C interface driver.
+The driver is for the usage with the ESP8266 and [esp-open-rtos](https://github.com/SuperHouse/esp-open-rtos). 
+
+It is also working with ESP32 and [ESP-IDF](https://github.com/espressif/esp-idf.git) using a wrapper component for ESP8266 functions, see folder ```components/esp8266_wrapper```, as well as Linux based systems using a wrapper library.
 
 ## About the sensor
 
@@ -32,7 +34,7 @@ After power up, the sensor starts automatically in *Idle, Low Current Mode* (```
 
 **Please note:** In *Constant Power Mode* with measurements every 250 ms (```mode_250ms```) only raw data are available. In all other measurement modes, the Indoor Air Quality (IAQ) values are available additionally. The *Constant Power Mode* with measurements every 250 ms (```mode_250ms```) is only intended for systems where an external host system wants to run an algorithm with raw data.
 
-Once the is initialized with function ```ccs811_init_sensor```, function ```ccs811_set_mode``` can be used to start periodic measurements with a given period.
+Once the sensor is initialized with function ```ccs811_init_sensor```, function ```ccs811_set_mode``` can be used to start periodic measurements with a given period.
 
 ```
 static ccs811_sensor_t* sensor;
@@ -211,42 +213,46 @@ First, the hardware configuration has to be established.
 
 ### Hardware configurations
 
-Following figure shows the hardware configuration if no interrupt is used.
+Following figure shows the hardware configuration for ESP8266 and ESP32 if no interrupt is used.
 
 ```
-  +------------------------+    +--------+
-  | ESP8266  Bus 0         |    | CCS811 |
-  |          GPIO 5 (SCL)  >----> SCL    |
-  |          GPIO 4 (SDA)  ------ SDA    |
-  |          GND           -----> /WAKE  |
-  +------------------------+    +--------+
+  +------------------+       +--------+
+  | ESP8266 / ESP32  |       | CCS811 |
+  |                  |       |        |
+  |    GPIO 14 (SCL) >-------> SCL    |
+  |    GPIO 13 (SDA) <-------> SDA    |
+  |    GND           --------> /WAKE  |
+  +------------------+       +--------+
 ```
 
 If interrupt signal *nINT* is used to fetch new data, additionally the interrupt pin has to be connected to a GPIO pin.
 
 ```
-  +------------------------+    +--------+
-  | ESP8266  Bus 0         |    | CCS811 |
-  |          GPIO 5 (SCL)  >----> SCL    |
-  |          GPIO 4 (SDA)  ------ SDA    |
-  |          GPIO 2        <----- /nINT  |
-  |          GND           -----> /WAKE  |
-  +------------------------+    +--------+
+  +------------------+       +--------+
+  | ESP8266 / ESP32  |       | CCS811 |
+  |                  |       |        |
+  |    GPIO 14 (SCL) >-------> SCL    |
+  |    GPIO 13 (SDA) <-------> SDA    |
+  |    GPIO 5        <-------- /nINT  |
+  |    GND           --------> /WAKE  |
+  +------------------+       +--------+
 ```
 
 If CCS811 sensor is used in conjunction with another sensor, e.g., a SHT3x sensor, the hardware configuration looks like following:
 
 ```
-  +------------------------+       +--------+
-  | ESP8266  Bus 0         |       | CCS811 |
-  |          GPIO 5 (SCL)  >--+----> SCL    |
-  |          GPIO 4 (SDA)  ---|-+--- SDA    |
-  |          GND           ---|-|--> /WAKE  |
-  |                        |  | |  +--------+
-  |                        |  | |  | SHT3x  |
-  |                        |  +----> SCL    |
-  |                        |    +--- SDA    |
-  +------------------------+       +--------+
+  +------------------+       +--------+
+  | ESP8266 / ESP32  |       | CCS811 |
+  |                  |       |        |
+  |    GPIO 14 (SCL) >--+----> SCL    |
+  |    GPIO 13 (SDA) <--|-+--> SDA    |
+  |    GND           ---|-|--> /WAKE  |
+  |                  |  | |  +--------+
+  |                  |  | |  | SHT3x  |
+  |                  |  | |  |        |
+  |                  |  +----> SCL    |
+  |                  |    +--> SDA    |
+  +------------------+       +--------+
 ```
 
 ### Communication interface settings
@@ -256,12 +262,11 @@ Dependent on the hardware configuration, the communication interface settings ha
 ```
 // define I2C interfaces at which CCS811 sensors can be connected
 #define I2C_BUS       0
-#define I2C_SCL_PIN   5
-#define I2C_SDA_PIN   4
+#define I2C_SCL_PIN   14
+#define I2C_SDA_PIN   13
 
 // define GPIO for interrupt
-#define INT_GPIO      2
-#include "sht3x/sht3x.h"
+#define INT_GPIO      5
 ```
 
 ### Main program
@@ -272,7 +277,7 @@ Before using the CCS811 driver, function ```i2c_init``` needs to be called for e
 
 ```
 ...
-i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K));
+i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K);
 i2c_set_clock_stretch (I2C_BUS, CCS811_I2C_CLOCK_STRETCH);
 ...
 ```
@@ -401,31 +406,47 @@ ccs811_set_eco2_thresholds (sensor, 600, 1100, 40);
 ## Full Example
 
 ```
-// use following constants to define the demo mode
+/* -- use following constants to define the example mode ----------- */
+
 // #define INT_DATA_RDY_USED
 // #define INT_THRESHOLD_USED
 
-#include "espressif/esp_common.h"
-#include "esp/uart.h"
-#include "i2c/i2c.h"
+#if defined(INT_DATA_RDY_USED) || defined(INT_THRESHOLD_USED)
+#define INT_USED
+#endif
 
-#include "FreeRTOS.h"
-#include <task.h>
+/* -- includes ----------------------------------------------------- */
 
-// include CCS811 driver
-#include "ccs811/ccs811.h"
+#include "ccs811.h"
 
-// define I2C interfaces at which CCS811 sensors can be connected
+/* -- platform dependent definitions ------------------------------- */
+
+#ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
+
+// user task stack depth for ESP32
+#define TASK_STACK_DEPTH 2048
+
+#else  // ESP8266 (esp-open-rtos)
+
+// user task stack depth for ESP8266
+#define TASK_STACK_DEPTH 256
+
+#endif  // ESP_PLATFORM
+
+// I2C interface defintions for ESP32 and ESP8266
 #define I2C_BUS       0
-#define I2C_SCL_PIN   5
-#define I2C_SDA_PIN   4
+#define I2C_SCL_PIN   14
+#define I2C_SDA_PIN   13
+#define I2C_FREQ      I2C_FREQ_100K
 
-// define GPIO for interrupt
-#define INT_GPIO      2
+// interrupt GPIOs defintions for ESP8266 and ESP32
+#define nINT_PIN      13
+
+/* -- user tasks --------------------------------------------------- */
 
 static ccs811_sensor_t* sensor;
 
-#if defined(INT_DATA_RDY_USED) || defined(INT_THRESHOLD_USED)
+#ifdef INT_USED
 /**
  * In this example, the interrupt *nINT* is used. It is triggered every time
  * new data are available (INT_DATA_RDY_USED) or exceed defined thresholds
@@ -459,12 +480,12 @@ void user_task_interrupt (void *pvParameters)
 
 // Interrupt handler which resumes user_task_interrupt on interrupt
 
-void nINT_handler (uint8_t gpio)
+static void IRAM nINT_handler(uint8_t gpio)
 {
     xTaskResumeFromISR (nINT_task);
 }
 
-#else
+#else // !INT_USED
 
 /*
  * In this example, user task fetches the sensor values every seconds.
@@ -492,21 +513,22 @@ void user_task_periodic(void *pvParameters)
     }
 }
 
-#endif
+#endif // INT_USED
 
+/* -- main program ------------------------------------------------- */
 
 void user_init(void)
 {
-    // set UART Parameter
+    // Set UART Parameter.
     uart_set_baud(0, 115200);
-    // give the UART some time to settle
-    sdk_os_delay_us(500);
+    // Give the UART some time to settle
+    vTaskDelay(1);
 
     /** -- MANDATORY PART -- */
 
     // init all I2C bus interfaces at which CCS811 sensors are connected
-    i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K);
-
+    i2c_init (I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ);
+    
     // longer clock stretching is required for CCS811
     i2c_set_clock_stretch (I2C_BUS, CCS811_I2C_CLOCK_STRETCH);
 
@@ -515,33 +537,35 @@ void user_init(void)
 
     if (sensor)
     {
-        #if defined(INT_DATA_RDY_USED) || defined(INT_THRESHOLD_USED)
+        #if !defined (INT_USED)
+
+        // create a periodic task that uses the sensor
+        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
+
+        #else // INT_USED
 
         // create a task that is resumed by interrupt handler to use the sensor
-        xTaskCreate(user_task_interrupt, "user_task_interrupt", 256, NULL, 2, &nINT_task);
+        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, &nINT_task);
 
-        // activate the interrupt for INT_GPIO and set the interrupt handler
-        gpio_set_interrupt(INT_GPIO, GPIO_INTTYPE_EDGE_NEG, nINT_handler);
+        // activate the interrupt for nINT_PIN and set the interrupt handler
+        gpio_enable(nINT_PIN, GPIO_INPUT);
+        gpio_set_interrupt(nINT_PIN, GPIO_INTTYPE_EDGE_NEG, nINT_handler);
 
         #ifdef INT_DATA_RDY_USED
         // enable the data ready interrupt
         ccs811_enable_interrupt (sensor, true);
-        #else
+        #else // INT_THRESHOLD_USED
         // set threshold parameters and enable threshold interrupt mode
         ccs811_set_eco2_thresholds (sensor, 600, 1100, 40);
         #endif
 
-        #else
-
-        // create a periodic task that uses the sensor
-        xTaskCreate(user_task_periodic, "user_task_periodic", 256, NULL, 2, NULL);
-
-        #endif
+        #endif  // !defined(INT_USED)
 
         // start periodic measurement with one measurement per second
         ccs811_set_mode (sensor, ccs811_mode_1s);
     }
 }
+
 ```
 
 ## Further Examples

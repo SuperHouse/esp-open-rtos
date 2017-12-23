@@ -7,8 +7,8 @@
  *
  * +------------------------+    +--------+
  * | ESP8266  Bus 0         |    | CCS811 |
- * |          GPIO 5 (SCL)  >----> SCL    |
- * |          GPIO 4 (SDA)  ------ SDA    |
+ * |          GPIO 14 (SCL) >----> SCL    |
+ * |          GPIO 13 (SDA) <----> SDA    |
  * |          GND           -----> /WAKE  |
  * +------------------------+    +--------+
  */
@@ -27,8 +27,8 @@
 
 // define I2C interfaces at which CCS811 sensors can be connected
 #define I2C_BUS       0
-#define I2C_SCL_PIN   5
-#define I2C_SDA_PIN   4
+#define I2C_SCL_PIN   14
+#define I2C_SDA_PIN   13
 
 
 static ccs811_sensor_t* sensor;
