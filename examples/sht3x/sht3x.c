@@ -10,29 +10,44 @@
  *
  * Harware configuration:
  *
- *   +------------------------+     +----------+
- *   | ESP8266  Bus 0         |     | SHT3x    |
- *   |          GPIO 5 (SCL)  ------> SCL      |
- *   |          GPIO 4 (SDA)  ------- SDA      |
- *   +------------------------+     +----------+
+ *    +-----------------+     +----------+
+ *    | ESP8266 / ESP32 |     | SHT3x    |
+ *    |                 |     |          |
+ *    |   GPIO 14 (SCL) ------> SCL      |
+ *    |   GPIO 13 (SDA) <-----> SDA      |
+ *    +-----------------+     +----------+
  */
+
+/* -- use following constants to define the example mode ----------- */
 
 // #define SINGLE_SHOT_LOW_LEVEL
 // #define SINGLE_SHOT_HIGH_LEVEL
- 
-#include "espressif/esp_common.h"
-#include "esp/uart.h"
 
-#include "FreeRTOS.h"
-#include "task.h"
+/* -- includes ----------------------------------------------------- */
 
-// include SHT3x driver
-#include "sht3x/sht3x.h"
+#include "sht3x.h"
 
-// define I2C interfaces at which SHTx3 sensors are connected
+/* -- platform dependent definitions ------------------------------- */
+
+#ifdef ESP_PLATFORM  // ESP32 (ESP-IDF)
+
+// user task stack depth for ESP32
+#define TASK_STACK_DEPTH 2048
+
+#else  // ESP8266 (esp-open-rtos)
+
+// user task stack depth for ESP8266
+#define TASK_STACK_DEPTH 256
+
+#endif  // ESP_PLATFORM
+
+// I2C interface defintions for ESP32 and ESP8266
 #define I2C_BUS       0
-#define I2C_SCL_PIN   GPIO_ID_PIN((5))
-#define I2C_SDA_PIN   GPIO_ID_PIN((4))
+#define I2C_SCL_PIN   14
+#define I2C_SDA_PIN   13
+#define I2C_FREQ      I2C_FREQ_100K
+
+/* -- user tasks --------------------------------------------------- */
 
 static sht3x_sensor_t* sensor;    // sensor device data structure
 
@@ -130,23 +145,24 @@ void user_task (void *pvParameters)
 }
 #endif
 
+/* -- main program ------------------------------------------------- */
+
 void user_init(void)
 {
     // Set UART Parameter.
     uart_set_baud(0, 115200);
-
-    // Give the UART some time to settle.
-    sdk_os_delay_us(500);
+    // Give the UART some time to settle
+    vTaskDelay(1);
     
     // Init I2C bus interfaces at which SHT3x sensors are connected
     // (different busses are possible).
-    i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K);
+    i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ);
     
     // Create the sensors, multiple sensors are possible.
     if ((sensor = sht3x_init_sensor (I2C_BUS, SHT3x_ADDR_2)))
     {
         // Create a user task that uses the sensors.
-        xTaskCreate(user_task, "user_task", 256, NULL, 2, 0);
+        xTaskCreate(user_task, "user_task", TASK_STACK_DEPTH, NULL, 2, 0);
     }
 
     // That's it.
