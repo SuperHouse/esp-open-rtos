@@ -8,14 +8,14 @@
  * Harware configuration:
  *
  *   +-------------------------+     +----------+
- *   | ESP8266  I2C Bus 0      |     | BME680_1 |
+ *   | ESP8266  I2C Bus 1      |     | BME680_1 |
  *   |          GPIO 5 (SCL)   ------> SCL      |
- *   |          GPIO 4 (SDA)   ------- SDA      |
+ *   |          GPIO 4 (SDA)   <-----> SDA      |
  *   |                         |     +----------+
  *   |          SPI Bus 1      |     | BME680_2 |
- *   |          GPIO 12 (MISO) <------ SDO      |
- *   |          GPIO 13 (MOSI) >-----> SDI      |
  *   |          GPIO 14 (SCK)  >-----> SCK      |
+ *   |          GPIO 13 (MOSI) >-----> SDI      |
+ *   |          GPIO 12 (MISO) <------ SDO      |
  *   |          GPIO 2  (CS)   >-----> CS       |
  *   +-------------------------+     +----------+
  */
@@ -37,7 +37,7 @@
 #define SPI_BUS         1
 #define SPI_CS_GPIO     2   // GPIO 15, the default CS of SPI bus 1, can't be used
 // define SPI interface for BME680 sensor 2
-#define I2C_BUS         0
+#define I2C_BUS         1
 #define I2C_SCL_PIN     5
 #define I2C_SDA_PIN     4
 
@@ -122,7 +122,7 @@ void user_init(void)
     // Init all I2C bus interfaces at which BME680 sensors are connected
     i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ_100K);
 
-    // Init the sensors connected to different I2C buses with same address
+    // Init the sensors
     sensor1 = bme680_init_sensor (I2C_BUS, BME680_I2C_ADDRESS_2, 0);
     sensor2 = bme680_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
 

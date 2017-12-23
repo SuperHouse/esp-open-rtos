@@ -11,8 +11,8 @@ For examples using BME680 sensor as I2C slave, just use GPIO5 (SCL) and GPIO4 (S
 ```
  +-------------------------+     +--------+
  | ESP8266  Bus 0          |     | BME680 |
- |          GPIO 5 (SCL)   +---->+ SCL    |
- |          GPIO 4 (SDA)   +-----+ SDA    |
+ |          GPIO 14 (SCL)  ------> SCL    |
+ |          GPIO 13 (SDA)  <-----> SDA    |
  |                         |     +--------+
  +-------------------------+
 ```
@@ -22,10 +22,10 @@ For examples that are using SPI, BME680 sensor has to be connected to SPI bus 1.
 ```
  +-------------------------+     +----------+
  | ESP8266  Bus 1          |     | BME680   |
- |          GPIO 12 (MISO) <-----< SDO      |
- |          GPIO 13 (MOSI) >-----> SDI      |
- |          GPIO 14 (SCK)  >-----> SCK      |
- |          GPIO 2  (CS)   >-----> CS       |
+ |          GPIO 14 (SCK)  ------> SCK      |
+ |          GPIO 13 (MOSI) ------> SDI      |
+ |          GPIO 12 (MISO) <------ SDO      |
+ |          GPIO 2  (CS)   ------> CS       |
  +-------------------------+     +----------+
 ```
 

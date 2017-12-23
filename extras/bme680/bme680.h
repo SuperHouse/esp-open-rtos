@@ -1,14 +1,17 @@
 /*
- * Driver for Bosch Sensortec BME680 digital temperature, humidity, pressure and
- * gas sensor connected to I2C or SPI
+ * Driver for Bosch Sensortec BME680 digital temperature, humidity, pressure
+ * and gas sensor connected to I2C or SPI
  *
- * Part of esp-open-rtos [https://github.com/SuperHouse/esp-open-rtos]
+ * This driver is for the usage with the ESP8266 and FreeRTOS (esp-open-rtos)
+ * [https://github.com/SuperHouse/esp-open-rtos]. It is also working with ESP32
+ * and ESP-IDF [https://github.com/espressif/esp-idf.git] as well as Linux
+ * based systems using a wrapper library for ESP8266 functions.
  *
  * ---------------------------------------------------------------------------
  *
  * The BSD License (3-clause license)
  *
- * Copyright (c) 2017 Gunar Schorcht (https://github.com/gschorcht]
+ * Copyright (c) 2017 Gunar Schorcht (https://github.com/gschorcht)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,11 +44,12 @@
 #ifndef __BME680_H__
 #define __BME680_H__
 
-#include "bme680/bme680_types.h"
-
 // Uncomment one of the following defines to enable debug output
 // #define BME680_DEBUG_LEVEL_1    // only error messages
 // #define BME680_DEBUG_LEVEL_2    // debug and error messages
+
+#include "bme680_types.h"
+#include "bme680_platform.h"
 
 // BME680 addresses
 #define BME680_I2C_ADDRESS_1           0x76  // SDO pin is low
@@ -144,8 +148,7 @@ extern "C"
  * @param   cs      SPI CS GPIO, ignored for I2C
  * @return          pointer to sensor data structure, or NULL on error
  */
-bme680_sensor_t* bme680_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs_pin);
-
+bme680_sensor_t* bme680_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs);
 
 /**
  * @brief	Force one single TPHG measurement
