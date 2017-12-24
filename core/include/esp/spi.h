@@ -400,6 +400,16 @@ void spi_repeat_send_16(uint8_t bus, uint16_t data, int32_t repeats);
  */
 void spi_repeat_send_32(uint8_t bus, uint32_t data, int32_t repeats);
 
+/**
+ * \brief Repeatedly send byte over SPI and receive data
+ * \param bus Bus ID: 0 - system, 1 - user
+ * \param out_byte Byte to send
+ * \param in_data Receive buffer
+ * \param len Buffer size in words
+ * \param word_size Size of the word
+ */
+void spi_read(uint8_t bus, uint8_t out_byte, void *in_data, size_t len, spi_word_size_t word_size);
+
 #ifdef __cplusplus
 }
 #endif
