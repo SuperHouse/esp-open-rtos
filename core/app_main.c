@@ -342,9 +342,15 @@ void sdk_wdt_init(void) {
     sdk_pp_soft_wdt_init();
 }
 
+extern void *xPortSupervisorStackPointer;
+
 // .irom0.text+0x474
 void sdk_user_init_task(void *params) {
     int phy_ver, pp_ver;
+
+    /* The start up stack is not used after scheduling has started, so all of
+     * the top area of RAM which was stack can be used for the dynamic heap. */
+    xPortSupervisorStackPointer = (void *)0x40000000;
 
     sdk_ets_timer_init();
     printf("\nESP-Open-SDK ver: %s compiled @ %s %s\n", OS_VERSION_STR, __DATE__, __TIME__);
