@@ -89,7 +89,6 @@ void max7219_clear(const max7219_display_t *disp);
 void max7219_draw_text(const max7219_display_t *disp, uint8_t pos, const char *s);
 
 #ifdef __cplusplus
-extern "C"
 }
 #endif
 
