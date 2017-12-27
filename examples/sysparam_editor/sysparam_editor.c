@@ -50,16 +50,25 @@ size_t tty_readline(char *buffer, size_t buf_size, bool echo) {
             break;
         } else if (c == '\b' || c == 0x7f) {
             if (i) {
-                if (echo) printf("\b \b");
+                if (echo) {
+                    printf("\b \b");
+                    fflush(stdout);
+                }
                 i--;
             }
         } else if (c < 0x20) {
             /* Ignore other control characters */
         } else if (i >= buf_size - 1) {
-            if (echo) putchar('\a');
+            if (echo) {
+                putchar('\a');
+                fflush(stdout);
+            }
         } else {
             buffer[i++] = c;
-            if (echo) putchar(c);
+            if (echo) {
+                putchar(c);
+                fflush(stdout);
+            }
         }
     }
 
@@ -177,6 +186,7 @@ void sysparam_editor_task(void *pvParameters) {
     }
     while (true) {
         printf("==> ");
+        fflush(stdout);
         len = tty_readline(cmd_buffer, CMD_BUF_SIZE, echo);
         status = 0;
         if (!len) continue;
