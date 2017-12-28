@@ -247,6 +247,10 @@ extern _lock_t __sinit_recursive_mutex;
 void init_newlib_locks()
 {
     _lock_init(&__arc4random_mutex);
+
+#if 0
+    /* Separate mutex for each lock.
+     * Each mutex uses about 96 bytes which adds up. */
     _lock_init(&__at_quick_exit_mutex);
     //_lock_init(&__dd_hash_mutex);
     _lock_init(&__tz_mutex);
@@ -256,6 +260,21 @@ void init_newlib_locks()
     _lock_init_recursive(&__malloc_recursive_mutex);
     _lock_init_recursive(&__sfp_recursive_mutex);
     _lock_init_recursive(&__sinit_recursive_mutex);
+#else
+    /* Reuse the same mutex for all these, reducing memory usage. Newlib
+     * will still allocate other locks dynamically and some of those need
+     * to be separate such as the file lock where a thread might block with
+     * them held. */
+    __at_quick_exit_mutex = __arc4random_mutex;
+    //__dd_hash_mutex = __arc4random_mutex;
+    __tz_mutex = __arc4random_mutex;
+
+    __atexit_recursive_mutex = __arc4random_mutex;
+    __env_recursive_mutex  = __arc4random_mutex;
+    __malloc_recursive_mutex = __arc4random_mutex;
+    __sfp_recursive_mutex = __arc4random_mutex;
+    __sinit_recursive_mutex = __arc4random_mutex;
+#endif
 
     locks_initialized = 1;
 }
