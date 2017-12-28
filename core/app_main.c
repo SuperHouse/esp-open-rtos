@@ -135,6 +135,8 @@ static void IRAM default_putc(char c) {
 }
 
 void init_newlib_locks(void);
+extern uint8_t sdk_wDevCtrl[];
+void nano_malloc_insert_chunk(void *start, size_t size);
 
 // .text+0x258
 void IRAM sdk_user_start(void) {
@@ -203,6 +205,15 @@ void IRAM sdk_user_start(void) {
     Cache_Read_Enable(0, 0, 1);
     zero_bss();
     sdk_os_install_putc1(default_putc);
+
+    /* HACK Reclaim a region of unused bss from wdev.o. This would not be
+     * necessary if the source code to wdev were available, and then it would
+     * not be a fragmented area, but the extra memory is desparately needed and
+     * it is in very useful dram. */
+    nano_malloc_insert_chunk((void *)(sdk_wDevCtrl + 0x2190), 8000);
+
+    init_newlib_locks();
+
     if (cksum_magic == 0xffffffff) {
         // No checksum required
     } else if ((cksum_magic == 0x55aa55aa) &&
@@ -225,7 +236,6 @@ void IRAM sdk_user_start(void) {
             status = sysparam_init(sysparam_addr, 0);
         }
     }
-    init_newlib_locks();
     if (status != SYSPARAM_OK) {
         printf("WARNING: Could not initialize sysparams (%d)!\n", status);
     }
