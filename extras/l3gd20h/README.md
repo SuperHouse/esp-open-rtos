@@ -337,6 +337,8 @@ Furthermore, with this data structure it is also configured
 - which time in 1/ODR an interrupt condition has to be given before the interrupt is generated, and
 - whether this time is also used when interrupt condition in no longer given before interrupt signal is reset.
 
+Function ```l3gd20h_enable_int``` is used to enable or disable the event interrupt generation.
+
 As with data ready and FIFO interrupts, function ```l3gd20h_get_int1_source``` can be used to determine the source of the interrupt signal whenever it is generated. This function returns a data structure of type ```l3gd20h_int1_source_t``` that contain a boolean member for each source that can be tested for true.
 
 ```
