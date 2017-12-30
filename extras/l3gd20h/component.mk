@@ -1,6 +1,6 @@
 # Component makefile for extras/l3gd20h
 
-# expected anyone using SHT3x driver includes it as 'l3gd20h/l3gd20h.h'
+# expected anyone using L3GD20H driver includes it as 'l3gd20h/l3gd20h.h'
 INC_DIRS += $(l3gd20h_ROOT)..
 INC_DIRS += $(l3gd20h_ROOT)
 

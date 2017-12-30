@@ -56,7 +56,8 @@ extern "C"
 /**
  * @brief 	Output data rates (ODR)
  */
-typedef enum {
+typedef enum 
+{
     l3gd20h_power_down = 0,  // power down mode
     l3gd20h_normal_odr_12_5, // normal mode with low output data rate 12.5 Hz
     l3gd20h_normal_odr_25,   // normal mode with low output data rate 25 Hz
@@ -65,23 +66,27 @@ typedef enum {
     l3gd20h_normal_odr_200,  // normal mode with high output data rate 200 Hz
     l3gd20h_normal_odr_400,  // normal mode with high output data rate 400 Hz
     l3gd20h_normal_odr_800,  // normal mode with high output data rate 800 Hz
+
 } l3gd20h_mode_t;
 
 
 /**
  * @brief   Sensitivity level
  */
-typedef enum {
+typedef enum 
+{
     l3gd20h_scale_245dps = 0,     // default
     l3gd20h_scale_500dps,
     l3gd20h_scale_2000dps
+
 } l3gd20h_scale_t;
 
 
 /**
  * @brief   FIFO mode
  */
-typedef enum {
+typedef enum 
+{
     l3gd20h_bypass = 0,     // default
     l3gd20h_fifo = 1,
     l3gd20h_stream = 2,
@@ -89,27 +94,46 @@ typedef enum {
     l3gd20h_bypass_to_stream = 5,
     l3gd20h_dynamic_stream = 6,
     l3gd20h_bypass_to_fifo = 7
+
 } l3gd20h_fifo_mode_t;
 
 
 /**
  * @brief   High pass filter (HPF) and low pass filter 2 (LPF2) modes
  */
-typedef enum {
+typedef enum 
+{
     l3gd20h_no_filter = 0,    // HPF not used, LPF2 not used
     l3gd20h_hpf_only,         // HPF used, LPF2 not used
     l3gd20h_lpf2_only,        // HPF not used, LPF2 used
     l3gd20h_hpf_and_lpf2      // HPF used, LPF2 used
+
 } l3gd20h_filter_t;
 
 
 /**
- * @brief   INT1 signal configuration (axis movement wake up interrupts)
- *
- * memset to 0 to disable all INT1 interrupt conditions (default)
+ * @brief   Interrupt types
  */
-typedef struct {
+typedef enum {
 
+    l3gd20h_int_data_ready,      // data are ready to read (INT2)
+
+    l3gd20h_int_fifo_threshold,  // FIFO filling exceds FTH level (INT2)
+    l3gd20h_int_fifo_overrun,    // FIFO is completely filled (INT2)
+    l3gd20h_int_fifo_empty,      // FIFO becomes empty (INT2)
+
+    l3gd20h_int_event            // angular rate of one or more axes becomes
+                                 // lower or higher than threshold (INT1)
+} l3gd20h_int_types_t;
+
+
+/**
+ * @brief   Event interrupt generator configuration (axis movement and wake up)
+ *
+ * memset to 0 to disable all interrupt conditions (default)
+ */
+typedef struct 
+{
     bool     x_low_enabled;   // x lower than threshold interrupt enabled
     bool     x_high_enabled;  // x higher than threshold interrupt enabled
     uint16_t x_threshold;     // x threshold value
@@ -140,52 +164,40 @@ typedef struct {
                               
     bool     counter_mode;    // DCRM is not documented and not used therefore
     
-} l3gd20h_int1_config_t;
+} l3gd20h_int_event_config_t;
 
 
 /**
- * @brief   INT1 source type (axis movement wake up interrupts)
+ * @brief   Event interrupt source (axis movement and wake up)
  */
 typedef struct {
 
-    bool    x_low :1;     // true - x low event occured
-    bool    x_high:1;     // true - x high event occured
+    bool    x_low :1;     // true - x is lower event occured
+    bool    x_high:1;     // true - x is higher event occured
 
-    bool    y_low :1;     // true - z low event occured
-    bool    y_high:1;     // true - z high event occured
+    bool    y_low :1;     // true - z is lower event occured
+    bool    y_high:1;     // true - z is higher event occured
 
-    bool    z_low :1;     // true - z low event occured
-    bool    z_high:1;     // true - z high event occured
+    bool    z_low :1;     // true - z is lower event occured
+    bool    z_high:1;     // true - z is higher event occured
     
     bool    active:1;     // true - one ore more have been generated
     
-} l3gd20h_int1_source_t;
+} l3gd20h_int_event_source_t;
 
 
 /**
- * @brief   INT2 signal interrupt types (data ready and FIFO interrupts)
- */
-typedef enum {
-
-    l3gd20h_data_ready,     // interrupt when data are ready to read
-    l3gd20h_fifo_threshold, // interrupt when FIFO filling >= FTH level
-    l3gd20h_fifo_overrun,   // interrupt when FIFO is completely filled
-    l3gd20h_fifo_empty      // interrupt when FIFO becomes empty
-
-} l3gd20h_int2_types_t;
-
-
-/**
- * @brief   INT2 source type (data ready and FIFO interrupts)
+ * @brief   Data interrupt source type (data ready and FIFO status)
  */
 typedef struct {
 
     bool data_ready;        // true when data are ready to read
+
     bool fifo_threshold;    // true when FIFO filling >= FTH level
     bool fifo_overrun;      // true when FIFO is completely filled
     bool fifo_empty;        // true when FIFO is empty
     
-} l3gd20h_int2_source_t;
+} l3gd20h_int_data_source_t;
 
 
 /**

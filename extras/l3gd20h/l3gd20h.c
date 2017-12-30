@@ -498,8 +498,40 @@ uint8_t l3gd20h_get_raw_data_fifo (l3gd20h_sensor_t* dev, l3gd20h_raw_data_fifo_
 }
 
 
-bool l3gd20h_set_int1_config (l3gd20h_sensor_t* dev, 
-                              l3gd20h_int1_config_t* config)
+bool l3gd20h_enable_int (l3gd20h_sensor_t* dev,
+                         l3gd20h_int_types_t type, bool value)
+{
+    if (!dev) return false;
+
+    dev->error_code = L3GD20H_OK;
+
+    uint8_t mask;
+    
+    switch (type)
+    {
+        case l3gd20h_int_data_ready:     mask  = L3GD20H_INT2_DRDY;  break;
+        case l3gd20h_int_fifo_threshold: mask  = L3GD20H_INT2_FTH;   break;
+        case l3gd20h_int_fifo_overrun:   mask  = L3GD20H_INT2_ORUN;  break;
+        case l3gd20h_int_fifo_empty:     mask  = L3GD20H_INT2_EMPTY; break;
+        case l3gd20h_int_event:          mask  = L3GD20H_INT1_IG;    break;
+        default: dev->error_code = L3GD20H_WRONG_INT_TYPE; 
+                 error_dev ("Wrong interrupt type", __FUNCTION__, dev);
+                 return false;
+    }        
+        
+    if (!l3gd20h_update_reg (dev, L3GD20H_REG_CTRL3, mask, value))
+    {
+        error_dev ("Could not %s interrupt INT2", __FUNCTION__, dev, value ? "enable" : "disable");
+        dev->error_code |= L3GD20H_CONFIG_INT2_FAILED;
+        return false;
+    }
+    
+    return true;
+}
+
+
+bool l3gd20h_set_int_event_config (l3gd20h_sensor_t* dev, 
+                                   l3gd20h_int_event_config_t* config)
 {
     if (!dev || !config) return false;
 
@@ -538,10 +570,7 @@ bool l3gd20h_set_int1_config (l3gd20h_sensor_t* dev,
         !l3gd20h_write_reg (dev, L3GD20H_REG_IG_DURATION, &ig_dur, 1) ||
         
         // write INT1 configuration  to IG_CFG
-        !l3gd20h_write_reg (dev, L3GD20H_REG_IG_CFG, &ig_cfg, 1) ||
-        
-        // enable or disable the INT1 signal in register CTRL3
-        !l3gd20h_update_reg (dev, L3GD20H_REG_CTRL3, L3GD20H_INT1_IG, (ig_cfg & 0x3f) ? 1 : 0))
+        !l3gd20h_write_reg (dev, L3GD20H_REG_IG_CFG, &ig_cfg, 1))
     {   
         error_dev ("Could not configure interrupt INT1", __FUNCTION__, dev);
         dev->error_code |= L3GD20H_CONFIG_INT1_FAILED;
@@ -565,8 +594,8 @@ bool l3gd20h_set_int1_config (l3gd20h_sensor_t* dev,
 }
 
 
-bool l3gd20h_get_int1_config (l3gd20h_sensor_t* dev, 
-                              l3gd20h_int1_config_t* config)
+bool l3gd20h_get_int_event_config (l3gd20h_sensor_t* dev, 
+                                   l3gd20h_int_event_config_t* config)
 {
     if (!dev || !config) return false;
 
@@ -617,14 +646,14 @@ bool l3gd20h_get_int1_config (l3gd20h_sensor_t* dev,
 }
 
 
-bool l3gd20h_get_int1_source (l3gd20h_sensor_t* dev, l3gd20h_int1_source_t* source)
+bool l3gd20h_get_int_event_source (l3gd20h_sensor_t* dev, l3gd20h_int_event_source_t* source)
 {
     if (!dev || !source) return false;
 
     dev->error_code = L3GD20H_OK;
 
-    l3gd20h_int1_source_t ig_cfg;
-    l3gd20h_int1_source_t ig_src;
+    l3gd20h_int_event_source_t ig_cfg;
+    l3gd20h_int_event_source_t ig_src;
 
     if (!l3gd20h_read_reg (dev, L3GD20H_REG_IG_CFG, (uint8_t*)&ig_cfg, 1) ||
         !l3gd20h_read_reg (dev, L3GD20H_REG_IG_SRC, (uint8_t*)&ig_src, 1))
@@ -646,38 +675,7 @@ bool l3gd20h_get_int1_source (l3gd20h_sensor_t* dev, l3gd20h_int1_source_t* sour
 }
 
 
-bool l3gd20h_enable_int2 (l3gd20h_sensor_t* dev,
-                          l3gd20h_int2_types_t type, bool value)
-{
-    if (!dev) return false;
-
-    dev->error_code = L3GD20H_OK;
-
-    uint8_t mask;
-    
-    switch (type)
-    {
-        case l3gd20h_data_ready:     mask  = L3GD20H_INT2_DRDY;  break;
-        case l3gd20h_fifo_threshold: mask  = L3GD20H_INT2_FTH;   break;
-        case l3gd20h_fifo_overrun:   mask  = L3GD20H_INT2_ORUN;  break;
-        case l3gd20h_fifo_empty:     mask  = L3GD20H_INT2_EMPTY; break;
-        default: dev->error_code = L3GD20H_WRONG_INT_TYPE; 
-                 error_dev ("Wrong interrupt type", __FUNCTION__, dev);
-                 return false;
-    }        
-        
-    if (!l3gd20h_update_reg (dev, L3GD20H_REG_CTRL3, mask, value))
-    {
-        error_dev ("Could not %s interrupt INT2", __FUNCTION__, dev, value ? "enable" : "disable");
-        dev->error_code |= L3GD20H_CONFIG_INT2_FAILED;
-        return false;
-    }
-    
-    return true;
-}
-
-
-bool l3gd20h_get_int2_source (l3gd20h_sensor_t* dev, l3gd20h_int2_source_t* source)
+bool l3gd20h_get_int_data_source (l3gd20h_sensor_t* dev, l3gd20h_int_data_source_t* source)
 {
     if (!dev || !source) return false;
 

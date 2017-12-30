@@ -241,70 +241,68 @@ uint8_t l3gd20h_get_raw_data_fifo (l3gd20h_sensor_t* dev,
                                    
 
 /**
- * @brief   Enable or disable interrupt signal INT1 (axis movement wake up)
- *
- * Set the configuration for interrupts that are generated when a certain
- * angular rate is higher or lower than defined thresholds. It enables the
- * the interrupt if any interrupt source in the configuration is enabled and
- * disables the interrupt in the case that all interrupt sources are disabled.
+ * @brief   Enable / disable data or event interrupts on signal INT1/INT2
  *
  * @param   dev      pointer to the sensor device data structure
- * @param   config   INT1 configuration
+ * @param   type     type of the interrupt to be enabled/disabled
+ * @param   value    true to enable or false to disable the interrupt
  * @return           true on success, false on error
  */
-bool l3gd20h_set_int1_config (l3gd20h_sensor_t* dev, 
-                              l3gd20h_int1_config_t* config);
+bool l3gd20h_enable_int (l3gd20h_sensor_t* dev, 
+                         l3gd20h_int_types_t type, bool value);
+                                   
 
 
 /**
- * @brief   Get configuration for interrupt signal INT1
+ * @brief   Set the configuration of the event interrupt generator
  *
- * Get the configuration for interrupts that are generated when a certain
- * angular rate is higher or lower than defined thresholds.
+ * The event interrupt generator produces interrupts (axis movement and wake up)
+ * on signal INT1 whenever the angular rate of one or more axes becomes higher
+ * or lower than defined thresholds.
  *
  * @param   dev      pointer to the sensor device data structure
- * @param   config   INT1 configuration
+ * @param   config   pointer to the interrupt generator configuration
  * @return           true on success, false on error
  */
-bool l3gd20h_get_int1_config (l3gd20h_sensor_t* dev, 
-                              l3gd20h_int1_config_t* config);
+bool l3gd20h_set_int_event_config (l3gd20h_sensor_t* dev, 
+                                   l3gd20h_int_event_config_t* config);
 
 
 /**
- * @brief   Get the source of the interrupt signal INT1 when happened
+ * @brief   Get the configuration of the event interrupt generator
+ *
+ * The event interrupt generator produces interrupts (axis movement and wake up)
+ * on signal INT1 whenever the angular rate of one or more axes becomes higher
+ * or lower than defined thresholds.
+ *
+ * @param   dev      pointer to the sensor device data structure
+ * @param   config   pointer to the interrupt generator configuration
+ * @return           true on success, false on error
+ */
+bool l3gd20h_get_int_event_config (l3gd20h_sensor_t* dev, 
+                                   l3gd20h_int_event_config_t* config);
+
+
+/**
+ * @brief   Get the source of an event interrupt (axis movement and wake up)
  *
  * @param   dev      pointer to the sensor device data structure
  * @param   type     pointer to the interrupt source
  * @return           true on success, false on error
  */
-bool l3gd20h_get_int1_source (l3gd20h_sensor_t* dev, 
-                              l3gd20h_int1_source_t* source);
+bool l3gd20h_get_int_event_source (l3gd20h_sensor_t* dev, 
+                                   l3gd20h_int_event_source_t* source);
 
 
 /**
- * @brief   Enable/disable interrupt signal INT2 (data ready / fifo)
- *
- * Enables or diables interrupts that are generated either when data are 
- * ready to read or FIFO events happen.
- *
- * @param   dev      pointer to the sensor device data structure
- * @param   type     type of interrupt to be enabled/disabled
- * @param   value    true to enable/false to disable the interrupt
- * @return           true on success, false on error
- */
-bool l3gd20h_enable_int2 (l3gd20h_sensor_t* dev, 
-                          l3gd20h_int2_types_t type, bool value);
-                                   
-
-/**
- * @brief   Get the source of the interrupt signal INT2 when happened
+ * @brief   Get the source of a data interrupt (data ready or FIFO status)
  *
  * @param   dev      pointer to the sensor device data structure
  * @param   source   pointer to the interrupt source
  * @return           true on success, false on error
  */
-bool l3gd20h_get_int2_source (l3gd20h_sensor_t* dev, 
-                              l3gd20h_int2_source_t* source);
+bool l3gd20h_get_int_data_source (l3gd20h_sensor_t* dev, 
+                                  l3gd20h_int_data_source_t* source);
 
 
 /**

@@ -33,17 +33,16 @@
 
 // use following constants to define the example mode
 // #define SPI_USED    // if defined SPI is used, otherwise I2C
-// #define INT1_USED   // axes movement / wake up interrupts
-// #define INT2_USED   // data ready and FIFO status interrupts
+// #define INT_EVENT   // event interrupts used (axes movement and wake up)
+// #define INT_DATA    // data interrupts used (data ready and FIFO status)
 // #define FIFO_MODE   // multiple sample read mode
 
-#if defined(INT1_USED) || defined(INT2_USED)
+#if defined(INT_EVENT) || defined(INT_DATA)
 #define INT_USED
 #endif
 
 /* -- includes -------------------------------------------------- */
 
-#include <string.h>
 #include "l3gd20h.h"
 
 /* -- platform dependent definitions ---------------------------- */
@@ -149,21 +148,21 @@ void user_task_interrupt (void *pvParameters)
         {
             if (gpio_num == INT1_PIN)
             {
-                l3gd20h_int1_source_t source;
+                l3gd20h_int_event_source_t source;
 
-                // get the source of the interrupt and reset INT1 signal
-                l3gd20h_get_int1_source (sensor, &source);
+                // get the source of INT1 reset INT1 signal
+                l3gd20h_get_int_event_source (sensor, &source);
 
-                // if data ready interrupt, get the results and do something with them
+                // in case of data ready interrupt, get the results and do something with them
                 if (source.active)
                     read_data ();
             }
             else if (gpio_num == INT2_PIN)
             {
-                l3gd20h_int2_source_t source;
+                l3gd20h_int_data_source_t source;
 
-                // get the source of the interrupt
-                l3gd20h_get_int2_source (sensor, &source);
+                // get the source of INT2
+                l3gd20h_get_int_data_source (sensor, &source);
 
                 // if data ready interrupt, get the results and do something with them
                 read_data();
@@ -265,40 +264,42 @@ void user_init(void)
         // set polarity of INT signals if necessary
         // l3gd20h_config_int_signals (dev, l3gd20h_high_active, l3gd20h_push_pull);
 
-        #ifdef INT1_USED
-        // enable event interrupts
-        l3gd20h_int1_config_t int1_config;
+        #ifdef INT_EVENT
+        // enable event interrupts (axis movement and wake up)
+        l3gd20h_int_event_config_t int_cfg;
     
-        l3gd20h_get_int1_config (sensor, &int1_config);
+        l3gd20h_get_int_event_config (sensor, &int_cfg);
     
-        int1_config.x_high_enabled = true;
-        int1_config.y_high_enabled = true;
-        int1_config.z_high_enabled = true;
-        int1_config.x_low_enabled  = false;
-        int1_config.y_low_enabled  = false;
-        int1_config.z_low_enabled  = false;
-        int1_config.x_threshold = 1000;
-        int1_config.y_threshold = 1000;
-        int1_config.z_threshold = 1000;
+        int_cfg.x_high_enabled = true;
+        int_cfg.y_high_enabled = true;
+        int_cfg.z_high_enabled = true;
+        int_cfg.x_low_enabled  = false;
+        int_cfg.y_low_enabled  = false;
+        int_cfg.z_low_enabled  = false;
+        int_cfg.x_threshold = 1000;
+        int_cfg.y_threshold = 1000;
+        int_cfg.z_threshold = 1000;
     
-        int1_config.filter = l3gd20h_hpf_only;
-        int1_config.and_or = false;
-        int1_config.duration = 0;
-        int1_config.latch = true;
+        int_cfg.filter = l3gd20h_hpf_only;
+        int_cfg.and_or = false;
+        int_cfg.duration = 0;
+        int_cfg.latch = true;
     
-        l3gd20h_set_int1_config (sensor, &int1_config);
-        #endif // INT1_USED
+        l3gd20h_set_int_event_config (sensor, &int_cfg);
+        l3gd20h_enable_int (sensor, l3gd20h_int_event, true);
         
-        #ifdef INT2_USED
+        #endif // INT_EVENT
+        
+        #ifdef INT_DATA
         // enable data ready (DRDY) and FIFO interrupt signal *INT2*
         // NOTE: DRDY and FIFO interrupts must not be enabled at the same time
         #ifdef FIFO_MODE
-        l3gd20h_enable_int2 (sensor, l3gd20h_fifo_overrun, true);
-        l3gd20h_enable_int2 (sensor, l3gd20h_fifo_threshold, true);
+        l3gd20h_enable_int (sensor, l3gd20h_int_fifo_overrun, true);
+        l3gd20h_enable_int (sensor, l3gd20h_int_fifo_threshold, true);
         #else
-        l3gd20h_enable_int2 (sensor, l3gd20h_data_ready, true);
+        l3gd20h_enable_int (sensor, l3gd20h_int_data_ready, true);
         #endif
-        #endif // INT2_USED
+        #endif // INT_DATA
 
         #ifdef FIFO_MODE
         // clear FIFO and activate FIFO mode if needed
