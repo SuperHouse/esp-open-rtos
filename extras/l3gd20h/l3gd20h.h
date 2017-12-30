@@ -380,7 +380,7 @@ int8_t l3gd20h_get_temperature (l3gd20h_sensor_t* dev);
  * @param   len      number of bytes to be written to the register
  * @return           true on success, false on error
  */
-bool l3gd20h_write_reg (l3gd20h_sensor_t* dev, 
+bool l3gd20h_reg_write (l3gd20h_sensor_t* dev, 
                         uint8_t reg, uint8_t *data, uint16_t len);
 
 /**
@@ -397,7 +397,7 @@ bool l3gd20h_write_reg (l3gd20h_sensor_t* dev,
  * @param   len      number of bytes to be read from the register
  * @return           true on success, false on error
  */
-bool l3gd20h_read_reg (l3gd20h_sensor_t* dev, 
+bool l3gd20h_reg_read (l3gd20h_sensor_t* dev, 
                        uint8_t reg, uint8_t *data, uint16_t len);
 
 #ifdef __cplusplus

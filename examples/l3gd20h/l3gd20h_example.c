@@ -33,9 +33,9 @@
 
 // use following constants to define the example mode
 // #define SPI_USED    // if defined SPI is used, otherwise I2C
-// #define INT_EVENT   // event interrupts used (axes movement and wake up)
-// #define INT_DATA    // data interrupts used (data ready and FIFO status)
 // #define FIFO_MODE   // multiple sample read mode
+// #define INT_DATA    // data interrupts used (data ready and FIFO status)
+// #define INT_EVENT   // event interrupts used (axis movement and wake up)
 
 #if defined(INT_EVENT) || defined(INT_DATA)
 #define INT_USED

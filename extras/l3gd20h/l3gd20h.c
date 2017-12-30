@@ -252,8 +252,8 @@ bool l3gd20h_set_mode (l3gd20h_sensor_t* dev, l3gd20h_mode_t mode, uint8_t bw,
     if (mode != l3gd20h_power_down)
     {
         // read current register values
-        if (!l3gd20h_read_reg (dev, L3GD20H_REG_CTRL1, &reg1, 1) ||
-            !l3gd20h_read_reg (dev, L3GD20H_REG_LOW_ODR, &reg2, 1))
+        if (!l3gd20h_reg_read (dev, L3GD20H_REG_CTRL1, &reg1, 1) ||
+            !l3gd20h_reg_read (dev, L3GD20H_REG_LOW_ODR, &reg2, 1))
             return false;
    
         // if sensor is in power mode it takes at least 100 ms to start in another mode
@@ -279,13 +279,13 @@ bool l3gd20h_set_mode (l3gd20h_sensor_t* dev, l3gd20h_mode_t mode, uint8_t bw,
         l3gd20h_set_reg_bit (&reg1, L3GD20H_Y_ENABLED, y);
         l3gd20h_set_reg_bit (&reg1, L3GD20H_Z_ENABLED, z);
         
-        if (!l3gd20h_write_reg (dev, L3GD20H_REG_LOW_ODR, &reg2, 1))
+        if (!l3gd20h_reg_write (dev, L3GD20H_REG_LOW_ODR, &reg2, 1))
             return false;
     } 
     else
         l3gd20h_set_reg_bit (&reg1, L3GD20H_POWER_MODE, 0);
 
-    if (!l3gd20h_write_reg (dev, L3GD20H_REG_CTRL1, &reg1, 1))
+    if (!l3gd20h_reg_write (dev, L3GD20H_REG_CTRL1, &reg1, 1))
         return false;
         
     return true;
@@ -357,7 +357,7 @@ bool l3gd20h_new_data (l3gd20h_sensor_t* dev)
 
     if (dev->fifo_mode == l3gd20h_bypass)
     {
-        if (!l3gd20h_read_reg (dev, L3GD20H_REG_STATUS, &reg, 1))
+        if (!l3gd20h_reg_read (dev, L3GD20H_REG_STATUS, &reg, 1))
         {
             error_dev ("Could not get sensor status", __FUNCTION__, dev);
             return false;
@@ -366,7 +366,7 @@ bool l3gd20h_new_data (l3gd20h_sensor_t* dev)
     }
     else
     {
-        if (!l3gd20h_read_reg (dev, L3GD20H_REG_FIFO_SRC, &reg, 1))
+        if (!l3gd20h_reg_read (dev, L3GD20H_REG_FIFO_SRC, &reg, 1))
         {
             error_dev ("Could not get fifo source register data", __FUNCTION__, dev);
             return false;
@@ -432,7 +432,7 @@ bool l3gd20h_get_raw_data (l3gd20h_sensor_t* dev, l3gd20h_raw_data_t* raw)
     }
 
     // read raw data sample
-    if (!l3gd20h_read_reg (dev, L3GD20H_REG_OUT_X_L, (uint8_t*)raw, 6))
+    if (!l3gd20h_reg_read (dev, L3GD20H_REG_OUT_X_L, (uint8_t*)raw, 6))
     {
         error_dev ("Could not get raw data", __FUNCTION__, dev);
         dev->error_code |= L3GD20H_GET_RAW_DATA_FAILED;
@@ -455,7 +455,7 @@ uint8_t l3gd20h_get_raw_data_fifo (l3gd20h_sensor_t* dev, l3gd20h_raw_data_fifo_
     uint8_t reg;
 
     // read FIFO state
-    if (!l3gd20h_read_reg (dev, L3GD20H_REG_FIFO_SRC, &reg, 1))
+    if (!l3gd20h_reg_read (dev, L3GD20H_REG_FIFO_SRC, &reg, 1))
     {
         error_dev ("Could not get fifo source register data", __FUNCTION__, dev);
         return 0;
@@ -470,14 +470,14 @@ uint8_t l3gd20h_get_raw_data_fifo (l3gd20h_sensor_t* dev, l3gd20h_raw_data_fifo_
 
     // read samples from FIFO
     for (int i = 0; i < samples; i++)
-        if (!l3gd20h_read_reg (dev, L3GD20H_REG_OUT_X_L, (uint8_t*)&raw[i], 6))
+        if (!l3gd20h_reg_read (dev, L3GD20H_REG_OUT_X_L, (uint8_t*)&raw[i], 6))
         {
             error_dev ("Could not get raw data", __FUNCTION__, dev);
             dev->error_code |= L3GD20H_GET_RAW_DATA_FIFO_FAILED;
             return i;
         }
 
-    l3gd20h_read_reg (dev, L3GD20H_REG_FIFO_SRC, &reg, 1);
+    l3gd20h_reg_read (dev, L3GD20H_REG_FIFO_SRC, &reg, 1);
 
     if (reg & L3GD20H_FIFO_FFS)
     {
@@ -564,13 +564,13 @@ bool l3gd20h_set_int_event_config (l3gd20h_sensor_t* dev,
     ig_ths[5] = (config->z_threshold & 0xff);
 
     if (// write the thresholds to registers IG_THS_*
-        !l3gd20h_write_reg (dev, L3GD20H_REG_IG_THS_XH, ig_ths, 6) ||
+        !l3gd20h_reg_write (dev, L3GD20H_REG_IG_THS_XH, ig_ths, 6) ||
         
         // write duration configuration to IG_DURATION 
-        !l3gd20h_write_reg (dev, L3GD20H_REG_IG_DURATION, &ig_dur, 1) ||
+        !l3gd20h_reg_write (dev, L3GD20H_REG_IG_DURATION, &ig_dur, 1) ||
         
         // write INT1 configuration  to IG_CFG
-        !l3gd20h_write_reg (dev, L3GD20H_REG_IG_CFG, &ig_cfg, 1))
+        !l3gd20h_reg_write (dev, L3GD20H_REG_IG_CFG, &ig_cfg, 1))
     {   
         error_dev ("Could not configure interrupt INT1", __FUNCTION__, dev);
         dev->error_code |= L3GD20H_CONFIG_INT1_FAILED;
@@ -607,11 +607,11 @@ bool l3gd20h_get_int_event_config (l3gd20h_sensor_t* dev,
     uint8_t ctrl3;
     uint8_t ctrl5;
 
-    if (!l3gd20h_read_reg (dev, L3GD20H_REG_IG_THS_XH, ig_ths, 6) ||
-        !l3gd20h_read_reg (dev, L3GD20H_REG_IG_CFG, &ig_cfg, 1) ||
-        !l3gd20h_read_reg (dev, L3GD20H_REG_IG_DURATION, &ig_dur, 1) ||
-        !l3gd20h_read_reg (dev, L3GD20H_REG_CTRL3, &ctrl3, 1) ||
-        !l3gd20h_read_reg (dev, L3GD20H_REG_CTRL5, &ctrl5, 1))
+    if (!l3gd20h_reg_read (dev, L3GD20H_REG_IG_THS_XH, ig_ths, 6) ||
+        !l3gd20h_reg_read (dev, L3GD20H_REG_IG_CFG, &ig_cfg, 1) ||
+        !l3gd20h_reg_read (dev, L3GD20H_REG_IG_DURATION, &ig_dur, 1) ||
+        !l3gd20h_reg_read (dev, L3GD20H_REG_CTRL3, &ctrl3, 1) ||
+        !l3gd20h_reg_read (dev, L3GD20H_REG_CTRL5, &ctrl5, 1))
     {   
         dev->error_code |= L3GD20H_CONFIG_INT1_FAILED;
         error_dev ("Could not read configuration for interrupt INT1 from sensor",
@@ -655,8 +655,8 @@ bool l3gd20h_get_int_event_source (l3gd20h_sensor_t* dev, l3gd20h_int_event_sour
     l3gd20h_int_event_source_t ig_cfg;
     l3gd20h_int_event_source_t ig_src;
 
-    if (!l3gd20h_read_reg (dev, L3GD20H_REG_IG_CFG, (uint8_t*)&ig_cfg, 1) ||
-        !l3gd20h_read_reg (dev, L3GD20H_REG_IG_SRC, (uint8_t*)&ig_src, 1))
+    if (!l3gd20h_reg_read (dev, L3GD20H_REG_IG_CFG, (uint8_t*)&ig_cfg, 1) ||
+        !l3gd20h_reg_read (dev, L3GD20H_REG_IG_SRC, (uint8_t*)&ig_src, 1))
     {   
         error_dev ("Could not read source of interrupt INT1 from sensor", __FUNCTION__, dev);
         dev->error_code |= L3GD20H_INT1_SOURCE_FAILED;
@@ -684,8 +684,8 @@ bool l3gd20h_get_int_data_source (l3gd20h_sensor_t* dev, l3gd20h_int_data_source
     uint8_t fifo_src;
     uint8_t status;
 
-    if (!l3gd20h_read_reg (dev, L3GD20H_REG_STATUS, &status, 1) ||
-        !l3gd20h_read_reg (dev, L3GD20H_REG_FIFO_SRC, &fifo_src, 1))
+    if (!l3gd20h_reg_read (dev, L3GD20H_REG_STATUS, &status, 1) ||
+        !l3gd20h_reg_read (dev, L3GD20H_REG_FIFO_SRC, &fifo_src, 1))
     {   
         error_dev ("Could not read source of interrupt INT2 from sensor", __FUNCTION__, dev);
         dev->error_code |= L3GD20H_INT2_SOURCE_FAILED;
@@ -747,7 +747,7 @@ bool l3gd20h_set_hpf_ref (l3gd20h_sensor_t* dev, int8_t ref)
 
     dev->error_code = L3GD20H_OK;
 
-    if (!l3gd20h_write_reg (dev, L3GD20H_REG_REFERENCE, (uint8_t*)&ref, 1))
+    if (!l3gd20h_reg_write (dev, L3GD20H_REG_REFERENCE, (uint8_t*)&ref, 1))
     {   
         error_dev ("Could not set high pass filter reference", __FUNCTION__, dev);
         dev->error_code |= L3GD20H_CONFIG_HPF_FAILED;
@@ -765,7 +765,7 @@ int8_t l3gd20h_get_hpf_ref (l3gd20h_sensor_t* dev)
 
     int8_t ref = 0;
     
-    if (!l3gd20h_read_reg (dev, L3GD20H_REG_REFERENCE, (uint8_t*)&ref, 1))
+    if (!l3gd20h_reg_read (dev, L3GD20H_REG_REFERENCE, (uint8_t*)&ref, 1))
     {   
         error_dev ("Could not get high pass filter reference", __FUNCTION__, dev);
         dev->error_code |= L3GD20H_CONFIG_HPF_FAILED;
@@ -784,7 +784,7 @@ int8_t l3gd20h_get_temperature (l3gd20h_sensor_t* dev)
 
     int8_t reg;
     
-    if (!l3gd20h_read_reg (dev, L3GD20H_REG_OUT_TEMP, (uint8_t*)(&reg), 1))
+    if (!l3gd20h_reg_read (dev, L3GD20H_REG_OUT_TEMP, (uint8_t*)(&reg), 1))
     {   
         error_dev ("Could not get temperature", __FUNCTION__, dev);
         return false;
@@ -807,7 +807,7 @@ static bool l3gd20h_is_available (l3gd20h_sensor_t* dev)
 
     dev->error_code = L3GD20H_OK;
 
-    if (!l3gd20h_read_reg (dev, L3GD20H_REG_WHO_AM_I, &chip_id, 1))
+    if (!l3gd20h_reg_read (dev, L3GD20H_REG_WHO_AM_I, &chip_id, 1))
         return false;
 
     if (chip_id != L3GD20H_CHIP_ID &&
@@ -838,10 +838,10 @@ static bool l3gd20h_reset (l3gd20h_sensor_t* dev)
     uint8_t reg[6] = { 0 };
     
     // initialize sensor completely including setting in power down mode
-    l3gd20h_write_reg (dev, L3GD20H_REG_CTRL1    , reg, 6);
-    l3gd20h_write_reg (dev, L3GD20H_REG_FIFO_CTRL, reg, 1);
-    l3gd20h_write_reg (dev, L3GD20H_REG_IG_CFG   , reg, 1);
-    l3gd20h_write_reg (dev, L3GD20H_REG_IG_THS_XH, reg, 6);
+    l3gd20h_reg_write (dev, L3GD20H_REG_CTRL1    , reg, 6);
+    l3gd20h_reg_write (dev, L3GD20H_REG_FIFO_CTRL, reg, 1);
+    l3gd20h_reg_write (dev, L3GD20H_REG_IG_CFG   , reg, 1);
+    l3gd20h_reg_write (dev, L3GD20H_REG_IG_THS_XH, reg, 6);
     
     return true;
 }
@@ -857,20 +857,20 @@ static bool l3gd20h_update_reg(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t mask,
     while (!((mask >> shift) & 0x01)) shift++;
 
     // read current register value
-    if (!l3gd20h_read_reg (dev, reg, &reg_val, 1))
+    if (!l3gd20h_reg_read (dev, reg, &reg_val, 1))
         return false;
 
     // set masked bits to the given value 
     reg_val = (reg_val & ~mask) | ((val << shift) & mask);
 
     // write back new register value
-    if (!l3gd20h_write_reg (dev, reg, &reg_val, 1))
+    if (!l3gd20h_reg_write (dev, reg, &reg_val, 1))
         return false;
         
     return true;
 }
 
-bool l3gd20h_read_reg(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
+bool l3gd20h_reg_read(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
 {
     if (!dev || !data) return false;
 
@@ -879,7 +879,7 @@ bool l3gd20h_read_reg(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_
 }
 
 
-bool l3gd20h_write_reg(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
+bool l3gd20h_reg_write(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
 {
     if (!dev || !data) return false;
 
