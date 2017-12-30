@@ -258,10 +258,10 @@ static bool    lis3dh_spi_write   (lis3dh_sensor_t* dev, uint8_t reg, uint8_t *d
 #define lis3dh_update_reg(dev,addr,type,elem,value) \
         { \
             struct type __reg; \
-            if (!lis3dh_read_reg (dev, (addr), (uint8_t*)&__reg, 1)) \
+            if (!lis3dh_reg_read (dev, (addr), (uint8_t*)&__reg, 1)) \
                 return false; \
             __reg.elem = (value); \
-            if (!lis3dh_write_reg (dev, (addr), (uint8_t*)&__reg, 1)) \
+            if (!lis3dh_reg_write (dev, (addr), (uint8_t*)&__reg, 1)) \
                 return false; \
         }
 
@@ -325,7 +325,7 @@ bool lis3dh_set_mode (lis3dh_sensor_t* dev,
     uint8_t old_odr;
 
     // read current register values
-    if (!lis3dh_read_reg (dev, LIS3DH_REG_CTRL1, (uint8_t*)&reg, 1))
+    if (!lis3dh_reg_read (dev, LIS3DH_REG_CTRL1, (uint8_t*)&reg, 1))
         return false;
    
     old_odr = reg.ODR;
@@ -340,7 +340,7 @@ bool lis3dh_set_mode (lis3dh_sensor_t* dev,
     lis3dh_update_reg (dev, LIS3DH_REG_CTRL4, lis3dh_reg_ctrl4, 
                        HR, (res == lis3dh_high_res));
     
-    if (!lis3dh_write_reg (dev, LIS3DH_REG_CTRL1, (uint8_t*)&reg, 1))
+    if (!lis3dh_reg_write (dev, LIS3DH_REG_CTRL1, (uint8_t*)&reg, 1))
         return false;
     
     // if sensor was in power down mode it takes at least 100 ms to start in another mode
@@ -366,7 +366,7 @@ bool lis3dh_set_scale (lis3dh_sensor_t* dev, lis3dh_scale_t scale)
 
 
 bool lis3dh_set_fifo_mode (lis3dh_sensor_t* dev, lis3dh_fifo_mode_t mode,
-                           uint8_t thresh, lis3dh_int_signals_t trigger)
+                           uint8_t thresh, lis3dh_int_signal_t trigger)
 {
     if (!dev) return false;
     
@@ -383,7 +383,7 @@ bool lis3dh_set_fifo_mode (lis3dh_sensor_t* dev, lis3dh_fifo_mode_t mode,
     };
 
     // write FIFO_CTRL register
-    if (!lis3dh_write_reg (dev, LIS3DH_REG_FIFO_CTRL, (uint8_t*)&fifo_ctrl, 1))
+    if (!lis3dh_reg_write (dev, LIS3DH_REG_FIFO_CTRL, (uint8_t*)&fifo_ctrl, 1))
         return false;
 
     return true;
@@ -400,7 +400,7 @@ bool lis3dh_new_data (lis3dh_sensor_t* dev)
     {
         struct lis3dh_reg_status status;
         
-        if (!lis3dh_read_reg (dev, LIS3DH_REG_STATUS, (uint8_t*)&status, 1))
+        if (!lis3dh_reg_read (dev, LIS3DH_REG_STATUS, (uint8_t*)&status, 1))
         {
             error_dev ("Could not get sensor status", __FUNCTION__, dev);
             return false;
@@ -411,7 +411,7 @@ bool lis3dh_new_data (lis3dh_sensor_t* dev)
     {
         struct lis3dh_reg_fifo_src fifo_src;
         
-        if (!lis3dh_read_reg (dev, LIS3DH_REG_FIFO_SRC, (uint8_t*)&fifo_src, 1))
+        if (!lis3dh_reg_read (dev, LIS3DH_REG_FIFO_SRC, (uint8_t*)&fifo_src, 1))
         {
             error_dev ("Could not get fifo source register data", __FUNCTION__, dev);
             return false;
@@ -483,7 +483,7 @@ bool lis3dh_get_raw_data (lis3dh_sensor_t* dev, lis3dh_raw_data_t* raw)
     }
 
     // read raw data sample
-    if (!lis3dh_read_reg (dev, LIS3DH_REG_OUT_X_L, (uint8_t*)raw, 6))
+    if (!lis3dh_reg_read (dev, LIS3DH_REG_OUT_X_L, (uint8_t*)raw, 6))
     {
         error_dev ("Could not get raw data sample", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_GET_RAW_DATA_FAILED;
@@ -507,7 +507,7 @@ uint8_t lis3dh_get_raw_data_fifo (lis3dh_sensor_t* dev, lis3dh_raw_data_fifo_t r
     struct lis3dh_reg_fifo_src fifo_src;
     
     // read FIFO state
-    if (!lis3dh_read_reg (dev, LIS3DH_REG_FIFO_SRC, (uint8_t*)&fifo_src, 1))
+    if (!lis3dh_reg_read (dev, LIS3DH_REG_FIFO_SRC, (uint8_t*)&fifo_src, 1))
     {
         error_dev ("Could not get fifo source register data", __FUNCTION__, dev);
         return 0;
@@ -521,14 +521,14 @@ uint8_t lis3dh_get_raw_data_fifo (lis3dh_sensor_t* dev, lis3dh_raw_data_fifo_t r
 
     // read samples from FIFO
     for (int i = 0; i < samples; i++)
-        if (!lis3dh_read_reg (dev, LIS3DH_REG_OUT_X_L, (uint8_t*)&raw[i], 6))
+        if (!lis3dh_reg_read (dev, LIS3DH_REG_OUT_X_L, (uint8_t*)&raw[i], 6))
         {
             error_dev ("Could not get raw data samples", __FUNCTION__, dev);
             dev->error_code |= LIS3DH_GET_RAW_DATA_FIFO_FAILED;
             return i;
         }
 
-    lis3dh_read_reg (dev, LIS3DH_REG_FIFO_SRC, (uint8_t*)&fifo_src, 1);
+    lis3dh_reg_read (dev, LIS3DH_REG_FIFO_SRC, (uint8_t*)&fifo_src, 1);
     
     // if FFS is not 0 after all samples read, ODR is higher than fetching rate
     if (fifo_src.FFS)
@@ -550,9 +550,124 @@ uint8_t lis3dh_get_raw_data_fifo (lis3dh_sensor_t* dev, lis3dh_raw_data_fifo_t r
 }
 
 
-bool lis3dh_set_int_activity_config (lis3dh_sensor_t* dev,
-                                     lis3dh_int_signals_t signal,
-                                     lis3dh_int_activity_config_t* config)
+bool lis3dh_enable_int (lis3dh_sensor_t* dev, 
+                        lis3dh_int_type_t type, 
+                        lis3dh_int_signal_t signal, bool value)
+{
+    if (!dev) return false;
+
+    dev->error_code = LIS3DH_OK;
+
+    struct lis3dh_reg_ctrl3  ctrl3;
+    struct lis3dh_reg_ctrl6  ctrl6;
+
+    uint8_t* reg = NULL;
+    uint8_t  addr;
+
+    // determine the addr of the register to change
+    if (type == lis3dh_int_data_ready     ||
+        type == lis3dh_int_fifo_watermark ||
+        type == lis3dh_int_fifo_overrun)
+    {
+        reg  = (uint8_t*)&ctrl3;
+        addr = LIS3DH_REG_CTRL3;
+    }
+    else if (signal == lis3dh_int1_signal)
+    {
+        reg  = (uint8_t*)&ctrl3;
+        addr = LIS3DH_REG_CTRL3;
+    }
+    else
+    {
+        reg  = (uint8_t*)&ctrl6;
+        addr = LIS3DH_REG_CTRL6;
+    }
+
+    // read the register
+    if (!lis3dh_reg_read (dev, addr, reg, 1))
+    {   
+        error_dev ("Could not read interrupt control registers", __FUNCTION__, dev);
+        dev->error_code |= LIS3DH_CONFIG_INT_FAILED;
+        return false;
+    }
+
+    // change the register
+    switch (type)
+    {
+        case lis3dh_int_data_ready:     ctrl3.IT_DRDY1 = value;
+                                        break;
+                                        
+        case lis3dh_int_fifo_watermark: ctrl3.I1_WTM1 = value;
+                                        break;
+                                        
+        case lis3dh_int_fifo_overrun:   ctrl3.I1_OVERRUN = value;
+                                        break;
+                                        
+        case lis3dh_int_event1:         if (signal == lis3dh_int1_signal)
+                                            ctrl3.I1_AOI1 = value;
+                                        else
+                                            ctrl6.I2_AOI1 = value;
+                                        break;
+
+        case lis3dh_int_event2:         if (signal == lis3dh_int1_signal)
+                                            ctrl3.I1_AOI2 = value;
+                                        else
+                                            ctrl6.I2_AOI2 = value;
+                                        break;
+
+        case lis3dh_int_click:          if (signal == lis3dh_int1_signal)
+                                            ctrl3.I1_CLICK = value;
+                                        else
+                                            ctrl6.I2_CLICK = value;
+                                        break;
+                      
+        default: dev->error_code = LIS3DH_WRONG_INT_TYPE; 
+                 error_dev ("Wrong interrupt type", __FUNCTION__, dev);
+                 return false;
+    }        
+    
+    if (!lis3dh_reg_write (dev, addr, reg, 1))
+    {   
+        error_dev ("Could not enable/disable interrupt", __FUNCTION__, dev);
+        dev->error_code |= LIS3DH_CONFIG_INT_FAILED;
+        return false;
+    }
+    
+    return true;
+}
+
+
+bool lis3dh_get_int_data_source (lis3dh_sensor_t* dev, 
+                                 lis3dh_int_data_source_t* source)
+{
+    if (!dev || !source) return false;
+
+    dev->error_code = LIS3DH_OK;
+
+    struct lis3dh_reg_ctrl3    ctrl3;
+    struct lis3dh_reg_status   status;
+    struct lis3dh_reg_fifo_src fifo_src;
+
+    if (!lis3dh_reg_read (dev, LIS3DH_REG_CTRL3   , (uint8_t*)&ctrl3   , 1) ||
+        !lis3dh_reg_read (dev, LIS3DH_REG_STATUS  , (uint8_t*)&status  , 1) ||
+        !lis3dh_reg_read (dev, LIS3DH_REG_FIFO_SRC, (uint8_t*)&fifo_src, 1))
+    {   
+        error_dev ("Could not read source of interrupt INT2 from sensor", __FUNCTION__, dev);
+        dev->error_code |= LIS3DH_INT_SOURCE_FAILED;
+        return false;
+    }
+
+    source->data_ready     = status.ZYXDA & ctrl3.IT_DRDY1;
+    source->fifo_watermark = fifo_src.WTM & ctrl3.I1_WTM1;
+    source->fifo_overrun   = fifo_src.OVRN_FIFO & ctrl3.I1_OVERRUN;
+
+    return true;
+}
+
+
+bool lis3dh_set_int_event_config (lis3dh_sensor_t* dev,
+                                  lis3dh_int_event_config_t* config,
+                                  lis3dh_int_event_gen_t gen)
 {
     if (!dev || !config) return false;
 
@@ -571,7 +686,7 @@ bool lis3dh_set_int_activity_config (lis3dh_sensor_t* dev,
     
     bool d4d_int = false;
     
-    switch (config->activity)
+    switch (config->mode)
     {
         case lis3dh_wake_up     : intx_cfg.AOI = 0; intx_cfg.SIXD = 0; break;
         case lis3dh_free_fall   : intx_cfg.AOI = 1; intx_cfg.SIXD = 0; break;
@@ -583,66 +698,58 @@ bool lis3dh_set_int_activity_config (lis3dh_sensor_t* dev,
         case lis3dh_6d_position : intx_cfg.AOI = 1; intx_cfg.SIXD = 1; break;
     }
 
-    uint8_t intx_cfg_addr = !signal ? LIS3DH_REG_INT1_CFG : LIS3DH_REG_INT2_CFG;
-    uint8_t intx_ths_addr = !signal ? LIS3DH_REG_INT1_THS : LIS3DH_REG_INT2_THS;
-    uint8_t intx_dur_addr = !signal ? LIS3DH_REG_INT1_DUR : LIS3DH_REG_INT2_DUR;
+    uint8_t intx_cfg_addr = (gen == lis3dh_int_event1_gen) ? LIS3DH_REG_INT1_CFG : LIS3DH_REG_INT2_CFG;
+    uint8_t intx_ths_addr = (gen == lis3dh_int_event1_gen) ? LIS3DH_REG_INT1_THS : LIS3DH_REG_INT2_THS;
+    uint8_t intx_dur_addr = (gen == lis3dh_int_event1_gen) ? LIS3DH_REG_INT1_DUR : LIS3DH_REG_INT2_DUR;
 
     if (// write the thresholds to registers IG_THS_*
-        !lis3dh_write_reg (dev, intx_ths_addr, &config->threshold, 1) ||
+        !lis3dh_reg_write (dev, intx_ths_addr, &config->threshold, 1) ||
         
         // write duration configuration to IG_DURATION 
-        !lis3dh_write_reg (dev, intx_dur_addr, &config->duration, 1) ||
+        !lis3dh_reg_write (dev, intx_dur_addr, &config->duration, 1) ||
         
         // write INT1 configuration  to IG_CFG
-        !lis3dh_write_reg (dev, intx_cfg_addr, (uint8_t*)&intx_cfg, 1))
+        !lis3dh_reg_write (dev, intx_cfg_addr, (uint8_t*)&intx_cfg, 1))
     {   
         error_dev ("Could not configure interrupt INT1", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_CONFIG_INT_FAILED;
         return false;
     }
     
-    bool enable = intx_cfg.XLIE || intx_cfg.XHIE ||
-                  intx_cfg.YLIE || intx_cfg.YHIE ||
-                  intx_cfg.ZLIE || intx_cfg.ZHIE;
-    
-    if (!signal)
+    if (gen == lis3dh_int_event1_gen)
     {
         lis3dh_update_reg (dev, LIS3DH_REG_CTRL5, lis3dh_reg_ctrl5, LIR_INT1, config->latch);
         lis3dh_update_reg (dev, LIS3DH_REG_CTRL5, lis3dh_reg_ctrl5, D4D_INT1, d4d_int);
-        // enable or disable I1_AOI
-        lis3dh_update_reg (dev, LIS3DH_REG_CTRL3, lis3dh_reg_ctrl3, I1_AOI1, enable);
     }
     else
     {
         lis3dh_update_reg (dev, LIS3DH_REG_CTRL5, lis3dh_reg_ctrl5, LIR_INT2, config->latch);
         lis3dh_update_reg (dev, LIS3DH_REG_CTRL5, lis3dh_reg_ctrl5, D4D_INT2, d4d_int);
-        // enable or disable I2_AOI
-        lis3dh_update_reg (dev, LIS3DH_REG_CTRL3, lis3dh_reg_ctrl6, I2_AOI1, enable);
     }
         
     return true;
 }
 
 
-bool lis3dh_get_int_activity_config (lis3dh_sensor_t* dev,
-                                     lis3dh_int_signals_t signal,
-                                     lis3dh_int_activity_config_t* config)
+bool lis3dh_get_int_event_config (lis3dh_sensor_t* dev,
+                                  lis3dh_int_event_config_t* config,
+                                  lis3dh_int_event_gen_t gen)
 {
     if (!dev || !config) return false;
 
     dev->error_code = LIS3DH_OK;
 
-    uint8_t intx_cfg_addr = !signal ? LIS3DH_REG_INT1_CFG : LIS3DH_REG_INT2_CFG;
-    uint8_t intx_ths_addr = !signal ? LIS3DH_REG_INT1_THS : LIS3DH_REG_INT2_THS;
-    uint8_t intx_dur_addr = !signal ? LIS3DH_REG_INT1_DUR : LIS3DH_REG_INT2_DUR;
+    uint8_t intx_cfg_addr = (gen == lis3dh_int_event1_gen) ? LIS3DH_REG_INT1_CFG : LIS3DH_REG_INT2_CFG;
+    uint8_t intx_ths_addr = (gen == lis3dh_int_event1_gen) ? LIS3DH_REG_INT1_THS : LIS3DH_REG_INT2_THS;
+    uint8_t intx_dur_addr = (gen == lis3dh_int_event1_gen) ? LIS3DH_REG_INT1_DUR : LIS3DH_REG_INT2_DUR;
 
     struct lis3dh_reg_intx_cfg intx_cfg;
     struct lis3dh_reg_ctrl5    ctrl5;
 
-    if (!lis3dh_read_reg (dev, intx_cfg_addr, (uint8_t*)&intx_cfg, 1) ||
-        !lis3dh_read_reg (dev, intx_ths_addr, (uint8_t*)&config->threshold, 1) ||
-        !lis3dh_read_reg (dev, intx_dur_addr, (uint8_t*)&config->duration, 1) ||
-        !lis3dh_read_reg (dev, LIS3DH_REG_CTRL5, (uint8_t*)&ctrl5, 1))
+    if (!lis3dh_reg_read (dev, intx_cfg_addr, (uint8_t*)&intx_cfg, 1) ||
+        !lis3dh_reg_read (dev, intx_ths_addr, (uint8_t*)&config->threshold, 1) ||
+        !lis3dh_reg_read (dev, intx_dur_addr, (uint8_t*)&config->duration, 1) ||
+        !lis3dh_reg_read (dev, LIS3DH_REG_CTRL5, (uint8_t*)&ctrl5, 1))
     {   
         error_dev ("Could not read interrupt configuration from sensor", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_CONFIG_INT_FAILED;
@@ -660,7 +767,7 @@ bool lis3dh_get_int_activity_config (lis3dh_sensor_t* dev,
     
     bool d4d_int = false;
 
-    if (!signal)
+    if (gen == lis3dh_int_event1_gen)
     {
         config->latch = ctrl5.LIR_INT1;
         d4d_int = ctrl5.D4D_INT1;
@@ -674,29 +781,29 @@ bool lis3dh_get_int_activity_config (lis3dh_sensor_t* dev,
     if (intx_cfg.AOI)
     {
         if (intx_cfg.SIXD && d4d_int)
-            config->activity = lis3dh_4d_position;
+            config->mode = lis3dh_4d_position;
         else if (intx_cfg.SIXD && !d4d_int)
-            config->activity = lis3dh_6d_position;
+            config->mode = lis3dh_6d_position;
         else
-            config->activity = lis3dh_free_fall;
+            config->mode = lis3dh_free_fall;
     }
     else
     {
         if (intx_cfg.SIXD && d4d_int)
-            config->activity = lis3dh_4d_movement;
+            config->mode = lis3dh_4d_movement;
         else if (intx_cfg.SIXD && !d4d_int)
-            config->activity = lis3dh_6d_movement;
+            config->mode = lis3dh_6d_movement;
         else
-            config->activity = lis3dh_wake_up;
+            config->mode = lis3dh_wake_up;
     }
 
     return true;
 }
 
 
-bool lis3dh_get_int_activity_source (lis3dh_sensor_t* dev,
-                                     lis3dh_int_activity_source_t* source, 
-                                     lis3dh_int_signals_t signal)
+bool lis3dh_get_int_event_source (lis3dh_sensor_t* dev,
+                                  lis3dh_int_event_source_t* source,
+                                  lis3dh_int_event_gen_t gen)
 {
     if (!dev || !source) return false;
 
@@ -705,11 +812,11 @@ bool lis3dh_get_int_activity_source (lis3dh_sensor_t* dev,
     struct lis3dh_reg_intx_cfg intx_cfg;
     struct lis3dh_reg_intx_src intx_src;
     
-    uint8_t intx_cfg_addr = (!signal) ? LIS3DH_REG_INT1_CFG : LIS3DH_REG_INT2_CFG;
-    uint8_t intx_src_addr = (!signal) ? LIS3DH_REG_INT1_SRC : LIS3DH_REG_INT2_SRC;
+    uint8_t intx_cfg_addr = (gen == lis3dh_int_event1_gen) ? LIS3DH_REG_INT1_CFG : LIS3DH_REG_INT2_CFG;
+    uint8_t intx_src_addr = (gen == lis3dh_int_event1_gen) ? LIS3DH_REG_INT1_SRC : LIS3DH_REG_INT2_SRC;
 
-    if (!lis3dh_read_reg (dev, intx_src_addr, (uint8_t*)&intx_src, 1) ||
-        !lis3dh_read_reg (dev, intx_cfg_addr, (uint8_t*)&intx_cfg, 1))
+    if (!lis3dh_reg_read (dev, intx_src_addr, (uint8_t*)&intx_src, 1) ||
+        !lis3dh_reg_read (dev, intx_cfg_addr, (uint8_t*)&intx_cfg, 1))
     {   
         error_dev ("Could not read source of interrupt INT1/INT2 from sensor", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_INT_SOURCE_FAILED;
@@ -728,66 +835,7 @@ bool lis3dh_get_int_activity_source (lis3dh_sensor_t* dev,
 }
 
 
-bool lis3dh_enable_int_data (lis3dh_sensor_t* dev, 
-                             lis3dh_int_data_t type, bool value)
-{
-    if (!dev) return false;
-
-    dev->error_code = LIS3DH_OK;
-
-    switch (type)
-    {
-        case lis3dh_data_ready:     lis3dh_update_reg (dev, LIS3DH_REG_CTRL3, 
-                                                       lis3dh_reg_ctrl3, 
-                                                       IT_DRDY1, value);
-                                    break;
-        case lis3dh_fifo_watermark: lis3dh_update_reg (dev, LIS3DH_REG_CTRL3, 
-                                                       lis3dh_reg_ctrl3, 
-                                                       I1_WTM1, value);
-                                    break;
-        case lis3dh_fifo_overrun:   lis3dh_update_reg (dev, LIS3DH_REG_CTRL3, 
-                                                       lis3dh_reg_ctrl3, 
-                                                       I1_OVERRUN, value);
-                                    break;
-        default: dev->error_code = LIS3DH_WRONG_INT_TYPE; 
-                 error_dev ("Wrong interrupt type", __FUNCTION__, dev);
-                 return false;
-    }        
-    
-    return true;
-}
-
-
-bool lis3dh_get_int_data_source (lis3dh_sensor_t* dev, 
-                                 lis3dh_int_data_source_t* source)
-{
-    if (!dev || !source) return false;
-
-    dev->error_code = LIS3DH_OK;
-
-    struct lis3dh_reg_ctrl3    ctrl3;
-    struct lis3dh_reg_status   status;
-    struct lis3dh_reg_fifo_src fifo_src;
-
-    if (!lis3dh_read_reg (dev, LIS3DH_REG_CTRL3   , (uint8_t*)&ctrl3   , 1) ||
-        !lis3dh_read_reg (dev, LIS3DH_REG_STATUS  , (uint8_t*)&status  , 1) ||
-        !lis3dh_read_reg (dev, LIS3DH_REG_FIFO_SRC, (uint8_t*)&fifo_src, 1))
-    {   
-        error_dev ("Could not read source of interrupt INT2 from sensor", __FUNCTION__, dev);
-        dev->error_code |= LIS3DH_INT_SOURCE_FAILED;
-        return false;
-    }
-
-    source->data_ready     = status.ZYXDA & ctrl3.IT_DRDY1;
-    source->fifo_watermark = fifo_src.WTM & ctrl3.I1_WTM1;
-    source->fifo_overrun   = fifo_src.OVRN_FIFO & ctrl3.I1_OVERRUN;
-
-    return true;
-}
-
-
 bool lis3dh_set_int_click_config (lis3dh_sensor_t* dev,
-                                  lis3dh_int_signals_t signal,
                                   lis3dh_int_click_config_t* config)
 {
     if (!dev || !config) return false;
@@ -807,34 +855,21 @@ bool lis3dh_set_int_click_config (lis3dh_sensor_t* dev,
     
     uint8_t click_ths = config->threshold | ((config->latch) ? 0x80 : 0x00);
 
-    if (!lis3dh_write_reg (dev, LIS3DH_REG_CLICK_CFG   , (uint8_t*)&click_cfg, 1) ||
-        !lis3dh_write_reg (dev, LIS3DH_REG_CLICK_THS   , (uint8_t*)&click_ths, 1) ||
-        !lis3dh_write_reg (dev, LIS3DH_REG_TIME_LIMIT  , (uint8_t*)&config->time_limit, 1) ||
-        !lis3dh_write_reg (dev, LIS3DH_REG_TIME_LATENCY, (uint8_t*)&config->time_latency, 1) ||
-        !lis3dh_write_reg (dev, LIS3DH_REG_TIME_WINDOW , (uint8_t*)&config->time_window, 1))
+    if (!lis3dh_reg_write (dev, LIS3DH_REG_CLICK_CFG   , (uint8_t*)&click_cfg, 1) ||
+        !lis3dh_reg_write (dev, LIS3DH_REG_CLICK_THS   , (uint8_t*)&click_ths, 1) ||
+        !lis3dh_reg_write (dev, LIS3DH_REG_TIME_LIMIT  , (uint8_t*)&config->time_limit, 1) ||
+        !lis3dh_reg_write (dev, LIS3DH_REG_TIME_LATENCY, (uint8_t*)&config->time_latency, 1) ||
+        !lis3dh_reg_write (dev, LIS3DH_REG_TIME_WINDOW , (uint8_t*)&config->time_window, 1))
     {   
         error_dev ("Could not configure click detection interrupt", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_CONFIG_CLICK_FAILED;
         return false;
     }
     
-    bool enable = click_cfg.XS || click_cfg.XD || 
-                  click_cfg.YS || click_cfg.YD ||
-                  click_cfg.ZS || click_cfg.ZD;
-    if (!signal)
-    {
-        lis3dh_update_reg (dev, LIS3DH_REG_CTRL3, lis3dh_reg_ctrl3, I1_CLICK, enable);
-    }
-    else
-    {
-        lis3dh_update_reg (dev, LIS3DH_REG_CTRL3, lis3dh_reg_ctrl6, I2_CLICK, enable);
-    }
-
     return true;
 }
 
 bool lis3dh_get_int_click_config (lis3dh_sensor_t* dev,
-                                  lis3dh_int_signals_t signal,
                                   lis3dh_int_click_config_t* config)
 {
     if (!dev || !config) return false;
@@ -844,11 +879,11 @@ bool lis3dh_get_int_click_config (lis3dh_sensor_t* dev,
     struct lis3dh_reg_click_cfg  click_cfg;
     uint8_t click_ths;
 
-    if (!lis3dh_read_reg (dev, LIS3DH_REG_CLICK_CFG   , (uint8_t*)&click_cfg, 1) ||
-        !lis3dh_read_reg (dev, LIS3DH_REG_CLICK_THS   , (uint8_t*)&click_ths, 1) ||
-        !lis3dh_read_reg (dev, LIS3DH_REG_TIME_LIMIT  , (uint8_t*)&config->time_limit, 1) ||
-        !lis3dh_read_reg (dev, LIS3DH_REG_TIME_LATENCY, (uint8_t*)&config->time_latency, 1) ||
-        !lis3dh_read_reg (dev, LIS3DH_REG_TIME_WINDOW , (uint8_t*)&config->time_window, 1))
+    if (!lis3dh_reg_read (dev, LIS3DH_REG_CLICK_CFG   , (uint8_t*)&click_cfg, 1) ||
+        !lis3dh_reg_read (dev, LIS3DH_REG_CLICK_THS   , (uint8_t*)&click_ths, 1) ||
+        !lis3dh_reg_read (dev, LIS3DH_REG_TIME_LIMIT  , (uint8_t*)&config->time_limit, 1) ||
+        !lis3dh_reg_read (dev, LIS3DH_REG_TIME_LATENCY, (uint8_t*)&config->time_latency, 1) ||
+        !lis3dh_reg_read (dev, LIS3DH_REG_TIME_WINDOW , (uint8_t*)&config->time_window, 1))
     {   
         error_dev ("Could not configure click detection interrupt", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_CONFIG_CLICK_FAILED;
@@ -877,7 +912,7 @@ bool lis3dh_get_int_click_source (lis3dh_sensor_t* dev,
 
     dev->error_code = LIS3DH_OK;
 
-    if (!lis3dh_read_reg (dev, LIS3DH_REG_CLICK_SRC, (uint8_t*)source, 1))
+    if (!lis3dh_reg_read (dev, LIS3DH_REG_CLICK_SRC, (uint8_t*)source, 1))
     {   
         error_dev ("Could not read source of click interrupt from sensor", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_CLICK_SOURCE_FAILED;
@@ -918,7 +953,7 @@ bool lis3dh_config_hpf (lis3dh_sensor_t* dev,
     reg.HPIS1   = int1;
     reg.HPIS2   = int2;
     
-    if (!lis3dh_write_reg (dev, LIS3DH_REG_CTRL2, (uint8_t*)&reg, 1))
+    if (!lis3dh_reg_write (dev, LIS3DH_REG_CTRL2, (uint8_t*)&reg, 1))
     {   
         error_dev ("Could not configure high pass filter", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_CONFIG_HPF_FAILED;
@@ -935,7 +970,7 @@ bool lis3dh_set_hpf_ref (lis3dh_sensor_t* dev, int8_t ref)
 
     dev->error_code = LIS3DH_OK;
 
-    if (!lis3dh_write_reg (dev, LIS3DH_REG_REFERENCE, (uint8_t*)&ref, 1))
+    if (!lis3dh_reg_write (dev, LIS3DH_REG_REFERENCE, (uint8_t*)&ref, 1))
     {   
         error_dev ("Could not set high pass filter reference", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_CONFIG_HPF_FAILED;
@@ -954,7 +989,7 @@ int8_t lis3dh_get_hpf_ref (lis3dh_sensor_t* dev)
 
     int8_t ref;
     
-    if (!lis3dh_read_reg (dev, LIS3DH_REG_REFERENCE, (uint8_t*)&ref, 1))
+    if (!lis3dh_reg_read (dev, LIS3DH_REG_REFERENCE, (uint8_t*)&ref, 1))
     {   
         error_dev ("Could not get high pass filter reference", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_CONFIG_HPF_FAILED;
@@ -975,7 +1010,7 @@ int8_t lis3dh_enable_adc (lis3dh_sensor_t* dev, bool adc, bool tmp)
     reg |= (adc) ? 0x80 : 0;
     reg |= (tmp) ? 0x40 : 0;
     
-    return lis3dh_write_reg (dev, LIS3DH_REG_TEMP_CFG, (uint8_t*)&reg, 1);  
+    return lis3dh_reg_write (dev, LIS3DH_REG_TEMP_CFG, (uint8_t*)&reg, 1);  
 }
 
 
@@ -990,9 +1025,9 @@ bool lis3dh_get_adc (lis3dh_sensor_t* dev,
     uint8_t temp_cfg;
     struct lis3dh_reg_ctrl1 ctrl1;
 
-    if (!lis3dh_read_reg (dev, LIS3DH_REG_OUT_ADC1_L, data, 6) ||
-        !lis3dh_read_reg (dev, LIS3DH_REG_CTRL1, (uint8_t*)&ctrl1, 1) ||
-        !lis3dh_read_reg (dev, LIS3DH_REG_TEMP_CFG, &temp_cfg, 1))
+    if (!lis3dh_reg_read (dev, LIS3DH_REG_OUT_ADC1_L, data, 6) ||
+        !lis3dh_reg_read (dev, LIS3DH_REG_CTRL1, (uint8_t*)&ctrl1, 1) ||
+        !lis3dh_reg_read (dev, LIS3DH_REG_TEMP_CFG, &temp_cfg, 1))
     {
         error_dev ("Could not get adc data", __FUNCTION__, dev);
         dev->error_code |= LIS3DH_GET_ADC_DATA_FAILED;
@@ -1025,7 +1060,7 @@ static bool lis3dh_is_available (lis3dh_sensor_t* dev)
 
     dev->error_code = LIS3DH_OK;
 
-    if (!lis3dh_read_reg (dev, LIS3DH_REG_WHO_AM_I, &chip_id, 1))
+    if (!lis3dh_reg_read (dev, LIS3DH_REG_WHO_AM_I, &chip_id, 1))
         return false;
 
     if (chip_id != LIS3DH_CHIP_ID)
@@ -1048,20 +1083,20 @@ static bool lis3dh_reset (lis3dh_sensor_t* dev)
     uint8_t reg[8] = { 0 };
     
     // initialize sensor completely including setting in power down mode
-    lis3dh_write_reg (dev, LIS3DH_REG_TEMP_CFG , reg, 8);
-    lis3dh_write_reg (dev, LIS3DH_REG_FIFO_CTRL, reg, 1);
-    lis3dh_write_reg (dev, LIS3DH_REG_INT1_CFG , reg, 1);
-    lis3dh_write_reg (dev, LIS3DH_REG_INT1_THS , reg, 2);
-    lis3dh_write_reg (dev, LIS3DH_REG_INT2_CFG , reg, 1);
-    lis3dh_write_reg (dev, LIS3DH_REG_INT2_THS , reg, 2);
-    lis3dh_write_reg (dev, LIS3DH_REG_CLICK_CFG, reg, 1);
-    lis3dh_write_reg (dev, LIS3DH_REG_CLICK_THS, reg, 4);
+    lis3dh_reg_write (dev, LIS3DH_REG_TEMP_CFG , reg, 8);
+    lis3dh_reg_write (dev, LIS3DH_REG_FIFO_CTRL, reg, 1);
+    lis3dh_reg_write (dev, LIS3DH_REG_INT1_CFG , reg, 1);
+    lis3dh_reg_write (dev, LIS3DH_REG_INT1_THS , reg, 2);
+    lis3dh_reg_write (dev, LIS3DH_REG_INT2_CFG , reg, 1);
+    lis3dh_reg_write (dev, LIS3DH_REG_INT2_THS , reg, 2);
+    lis3dh_reg_write (dev, LIS3DH_REG_CLICK_CFG, reg, 1);
+    lis3dh_reg_write (dev, LIS3DH_REG_CLICK_THS, reg, 4);
     
     return true;
 }
 
 
-bool lis3dh_read_reg(lis3dh_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
+bool lis3dh_reg_read(lis3dh_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
 {
     if (!dev || !data) return false;
 
@@ -1070,7 +1105,7 @@ bool lis3dh_read_reg(lis3dh_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t 
 }
 
 
-bool lis3dh_write_reg(lis3dh_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
+bool lis3dh_reg_write(lis3dh_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len)
 {
     if (!dev || !data) return false;
 

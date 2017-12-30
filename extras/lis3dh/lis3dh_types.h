@@ -115,17 +115,59 @@ typedef enum {
     lis3dh_int1_signal = 0,
     lis3dh_int2_signal = 1    
 
-} lis3dh_int_signals_t;
+} lis3dh_int_signal_t;
  
  
 /**
- * @brief   Activity interrupt configuration for INT1/INT2 signals
- *
- * Activity interrupts are: axes movement wake-up, free-fall, 6D/4D detection.
+ * @brief   Inertial event interrupt generators
+ */
+typedef enum {
+
+    lis3dh_int_event1_gen = 0,
+    lis3dh_int_event2_gen = 1    
+
+} lis3dh_int_event_gen_t;
+
+
+/**
+ * @brief   Interrupt types for interrupt signals INT1/INT2
+ */
+typedef enum {
+
+    lis3dh_int_data_ready,     // data ready for read interrupt (only INT1)
+
+    lis3dh_int_fifo_watermark, // FIFO exceeds the threshold (only INT1)
+    lis3dh_int_fifo_overrun,   // FIFO is completely filled (only INT1)
+    
+    lis3dh_int_event1,         // inertial event interrupt 1
+    lis3dh_int_event2,         // inertial event interrupt 2
+
+    lis3dh_int_click           // click detection interrupt
+    
+} lis3dh_int_type_t;
+
+
+/**
+ * @brief   Data ready and FIFO status interrupt source for INT1
  */
 typedef struct {
 
-    enum {                    // activity type for the interrupt
+    bool data_ready;      // true when acceleration data are ready to read
+
+    bool fifo_watermark;  // true when FIFO exceeds the FIFO threshold
+    bool fifo_overrun;    // true when FIFO is completely filled
+    
+} lis3dh_int_data_source_t;
+
+
+/**
+ * @brief   Inertial interrupt generator configuration for INT1/INT2
+ *
+ * Inertial events are: wake-up, free-fall, 6D/4D detection.
+ */
+typedef struct {
+
+    enum {                    // interrupt mode
 
         lis3dh_wake_up,       // AOI = 0, 6D = 0
         lis3dh_free_fall,     // AOI = 1, 6D = 0
@@ -136,7 +178,7 @@ typedef struct {
         lis3dh_4d_movement,   // AOI = 0, 6D = 1, D4D = 1
         lis3dh_4d_position,   // AOI = 1, 6D = 1, D4D = 1
     
-    } activity;            
+    } mode;            
 
     uint8_t  threshold;       // threshold used for comparison for all axes
 
@@ -154,50 +196,26 @@ typedef struct {
                               
     uint8_t  duration;        // duration in 1/ODR an interrupt condition has
                               // to be given before the interrupt is generated
-} lis3dh_int_activity_config_t;
+} lis3dh_int_event_config_t;
 
 
 /**
- * @brief   Activity interrupt source type for interrupt signals INT1/INT2 
+ * @brief   Inertial event source type for interrupt generator INT1/INT2 
  */
 typedef struct {
 
-    bool    active:1;     // true - one ore more activities occured
+    bool    active:1;     // true - one ore more events occured
     
-    bool    x_low :1;     // true - x low activity occured
-    bool    x_high:1;     // true - x high activity occured
+    bool    x_low :1;     // true - x lower than threshold event
+    bool    x_high:1;     // true - x higher than threshold event
 
-    bool    y_low :1;     // true - z low activity occured
-    bool    y_high:1;     // true - z high activity occured
+    bool    y_low :1;     // true - z lower than threshold event
+    bool    y_high:1;     // true - z higher than threshold event
 
-    bool    z_low :1;     // true - z low activity occured
-    bool    z_high:1;     // true - z high activity occured
+    bool    z_low :1;     // true - z lower than threshold event
+    bool    z_high:1;     // true - z higher than threshold event
     
-} lis3dh_int_activity_source_t;
-
-
-/**
- * @brief   Data interrupt types for INT1 signal
- */
-typedef enum {
-
-    lis3dh_data_ready,     // interrupt when data are ready to read
-    lis3dh_fifo_watermark, // interrupt when FIFO exceeds the FIFO threashold
-    lis3dh_fifo_overrun    // interrupt when FIFO is completely filled
-
-} lis3dh_int_data_t;
-
-
-/**
- * @brief   Data interrupt source type for INT1 signal
- */
-typedef struct {
-
-    bool data_ready;        // true when data are ready to read
-    bool fifo_watermark;    // true when FIFO exceeds the FIFO threashold
-    bool fifo_overrun;      // true when FIFO is completely filled
-    
-} lis3dh_int_data_source_t;
+} lis3dh_int_event_source_t;
 
 
 /**
@@ -230,7 +248,7 @@ typedef struct {
 
 
 /**
- * @brief   Click interrupt configuration for interrupt signals INT1/INT2 
+ * @brief   Click interrupt source for interrupt signals INT1/INT2 
  */
 typedef struct {
 
@@ -243,7 +261,7 @@ typedef struct {
     bool    s_click:1;    // single click detected
     bool    d_click:1;    // double click detected
 
-    bool    active :1;    // true - one ore more Activities occured
+    bool    active :1;    // true - one ore more event occured
 
 } lis3dh_int_click_source_t;
 
@@ -278,7 +296,7 @@ typedef lis3dh_raw_data_t lis3dh_raw_data_fifo_t[32];
 
 
 /**
- * @brief   Floating point output value set in degree
+ * @brief   Floating point output value set in g
  */
 typedef struct {
 
@@ -321,8 +339,9 @@ typedef struct {
     uint8_t   cs;                   // ESP8266, ESP32: GPIO used as SPI CS
                                     // __linux__: device index
 
-    lis3dh_scale_t      scale;      // fill range scale (default 245 dps)
+    lis3dh_scale_t      scale;      // full range scale (default 2 g)
     lis3dh_resolution_t res;        // resolution used
+    
     lis3dh_fifo_mode_t  fifo_mode;  // FIFO operation mode (default bypass)
     bool                fifo_first; // first FIFO access
       
