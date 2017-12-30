@@ -371,18 +371,18 @@ void sdk_user_init_task(void *params) {
     user_init();
     sdk_user_init_flag = 1;
     sdk_wifi_mode_set(sdk_g_ic.s.wifi_mode);
-    if (sdk_g_ic.s.wifi_mode == 1) {
+    if (sdk_g_ic.s.wifi_mode == STATION_MODE) {
         sdk_wifi_station_start();
         netif_set_default(sdk_g_ic.v.station_netif_info->netif);
     }
-    if (sdk_g_ic.s.wifi_mode == 2) {
+    if (sdk_g_ic.s.wifi_mode == SOFTAP_MODE) {
         sdk_wifi_softap_start();
         netif_set_default(sdk_g_ic.v.softap_netif_info->netif);
     }
-    if (sdk_g_ic.s.wifi_mode == 3) {
+    if (sdk_g_ic.s.wifi_mode == STATIONAP_MODE) {
         sdk_wifi_station_start();
         sdk_wifi_softap_start();
-        netif_set_default(sdk_g_ic.v.softap_netif_info->netif);
+        netif_set_default(sdk_g_ic.v.station_netif_info->netif);
     }
     if (sdk_wifi_station_get_auto_connect()) {
         sdk_wifi_station_connect();
