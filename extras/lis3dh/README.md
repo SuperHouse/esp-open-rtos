@@ -85,18 +85,14 @@ In this example, a LIS3DH sensor connected to I2C is initialized and set to high
 
 The sensor determines periodically the accelerations for2 all axes that are enabled for measurement and produces output data with the selected output data rate (ODR).
 
-Raw **output data** (**raw data**) are given as 16-bit signed integer values in 2’s complement representation and are always left-aligned. The resolution depends on the selected operation mode and the selected full scale. For example, in low power mode with 8-bit resolution only the high byte is used.
-
-
-
-range and the resolution of these data depend the selected measurement mode and on the sensitivity of the sensor which is selected by the **full scale** value. The LIS3DH allows to select the following full scales:
+Raw **output data** (**raw data**) are given as 16-bit signed integer values in 2’s complement representation and are always left-aligned. The resolution depends on the selected operation mode and the selected full scale. For example, in low power mode with 8-bit resolution only the high byte is used. LIS3DH allows to select the following full scales:
 
 Full Scale  | Driver symbol | Resolution 12 bit <br>```lis3dh_high_res``` | Resolution 10 bit<br>```lis3dh_normal``` | Resolution 8 bit <br>```lis3dh_low_power```
-:--------------------- | -----------:|-----------:|:---------------
-```lis3dh_scale_2g```  | ±2 g |  1 mg  |  4 mg |  16 mg
-```lis3dh_scale_4g```  | ±4 g |  2 mg  |  8 mg |  32 mg
-```lis3dh_scale_8g```  | ±8 g |  4 mg  | 16 mg |  64 mg
-```lis3dh_scale_16g``` |±16 g | 12 mg  | 48 mg | 192 mg
+---------------------:|:-----------:|-----------:|---------------:|-----:
+ ±2 g | ```lis3dh_scale_2g```  |  1 mg  |  4 mg |  16 mg
+ ±4 g | ```lis3dh_scale_4g```  |  2 mg  |  8 mg |  32 mg
+ ±8 g | ```lis3dh_scale_8g```  |  4 mg  | 16 mg |  64 mg
+±16 g | ```lis3dh_scale_16g``` | 12 mg  | 48 mg | 192 mg
 
 By default, a full scale of ±2 g is used. Function ```lis3dh_set_scale``` can be used to change it.
 
@@ -143,11 +139,11 @@ void user_task_periodic(void *pvParameters)
 ```
 
 **Please note:** 
-The functions ```lis3dh_get_float_data``` and ```lis3dh_get_raw_data``` always return the last available results. If these functions are called more often than measurements are performed, some measurement results are retrieved multiple times. If these functions are called too rarely, some measurement results will be lost.
+Functions ```lis3dh_get_float_data``` and ```lis3dh_get_raw_data``` always return the last available results. If these functions are called more often than measurements are taken, some measurement results are retrieved multiple times. If these functions are called too rarely, some measurement results will be lost.
 
 ### High pass filtering
 
-LIS3DH provides embedded high-pass filtering capability to improve measurement results. Please refer the [datasheet](http://www.st.com/resource/en/datasheet/lis3dh.pdf) or [application note](http://www.st.com/resource/en/application_note/cd00290365.pdf) for more details.
+LIS3DH provides embedded high-pass filtering capabilities to improve measurement results. Please refer the [datasheet](http://www.st.com/resource/en/datasheet/lis3dh.pdf) or [application note](http://www.st.com/resource/en/application_note/cd00290365.pdf) for more details.
 
 The high pass filter can independently apply to 
 
@@ -458,12 +454,12 @@ ADC sampling rate is the same the output data rate (ODR). Results are given as l
 The LIS3DH is a very complex and flexible sensor with a lot of features. It can be used for a big number of different use cases. Since it is quite impossible to implement a high level interface which is generic enough to cover all the functionality of the sensor for all different use cases, there are two low level interface functions that allow direct read and write access to the registers of the sensor.
 
 ```
-bool lis3dh_read_reg  (lis3dh_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
-bool lis3dh_write_reg (lis3dh_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
+bool lis3dh_reg_read  (lis3dh_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
+bool lis3dh_reg_write (lis3dh_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
 ```
 
 **Please note**
-These functions should only be used to do something special that is not covered by the high level interface AND if you exactly know what you do and what it might affect. Please be aware that it might affect the high level interface.
+These functions should only be used to do something special that is not covered by drivers's  high level interface AND if you exactly know what you do and what it might affect. Please be aware that it might always affect the high level interface.
 
 
 ## Usage
@@ -481,7 +477,7 @@ Following figure shows a possible hardware configuration for ESP8266 and ESP32 i
   |   GPIO 14 (SCL) >-----> SCL      |
   |   GPIO 13 (SDA) <-----> SDA      |
   |   GPIO 5        <------ INT1     |
-  |   GPIO 4        <------ DRDY/INT2|
+  |   GPIO 4        <------ INT2     |
   +-----------------+     +----------+
 ```
 
@@ -496,6 +492,7 @@ If SPI interface is used, configuration for ESP8266 and ESP32 could look like fo
   |   GPIO 12 (MISO)<------ SDO      |              |   GPIO 18 (MISO)<------ SDO      |
   |   GPIO 2  (CS)  ------> CS       |              |   GPIO 19 (CS)  ------> CS       |
   |   GPIO 5        <------ INT1     |              |   GPIO 5        <------ INT1     |
+  |   GPIO 4        <------ INT2     |              |   GPIO 5        <------ INT2     |
   +-----------------+     +----------+              +-----------------+     +----------+
 ```
 
@@ -554,9 +551,7 @@ i2c_init (I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ);
 SPI interface has only to be initialized explicitly on ESP32 platform to declare the GPIOs that are used for SPI interface.
 
 ```
-#ifdef ESP_PLATFORM
 spi_bus_init (SPI_BUS, SPI_SCK_GPIO, SPI_MISO_GPIO, SPI_MOSI_GPIO);
-#endif
 ```
 
 Once the interfaces are initialized, function ```lis3dh_init_sensor``` has to be called for each LIS3DH sensor in order to initialize the sensor and to check its availability as well as its error state. This function returns a pointer to a sensor device data structure or NULL in case of error.
@@ -616,7 +611,7 @@ void user_task_periodic(void *pvParameters)
 xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
 ```
 
-The user task simply tests periodically with a higher rate than the output data rate (ODR) of the sensor whether new data are available. If new data are available, it fetches the data.
+The user task simply tests periodically with a rate higher than the output data rate (ODR) of the sensor whether new data are available. If new data are available, it fetches the data.
 
 #### Interrupt user task
 
@@ -697,6 +692,8 @@ lis3dh_set_mode (sensor, lis3dh_odr_10, lis3dh_high_res, true, true, true);
 ## Full Example
 
 ```
+/* -- use following constants to define the example mode ----------- */
+
 // #define SPI_USED     // SPI interface is used, otherwise I2C
 // #define FIFO_MODE    // multiple sample read mode
 // #define INT_DATA     // data interrupts used (data ready and FIFO status)
