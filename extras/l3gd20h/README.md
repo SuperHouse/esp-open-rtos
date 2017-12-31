@@ -430,8 +430,8 @@ The L3GD20H contains a temperature sensor. Function ```l3gd20h_get_temperature``
 The L3GD20H is a very complex and flexible sensor with a lot of features. It can be used for a big number of different use cases. Since it is quite impossible to implement a high level interface which is generic enough to cover all the functionality of the sensor for all different use cases, there are two low level interface functions that allow direct read and write access to the registers of the sensor.
 
 ```
-bool l3gd20h_read_reg  (l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
-bool l3gd20h_write_reg (l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
+bool l3gd20h_reg_read  (l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
+bool l3gd20h_reg_write (l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, uint16_t len);
 ```
 **Please note**
 These functions should only be used to do something special that is not covered by the high level interface AND if you exactly know what you do and what it might affect. Please be aware that it might affect the high level interface.
