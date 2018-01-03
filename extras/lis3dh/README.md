@@ -1,6 +1,6 @@
 # Driver for the LIS3DH 3-axes digital output accelerometer 
 
-The driver is for the usage with the ESP8266 and [esp-open-rtos](https://github.com/SuperHouse/esp-open-rtos). 
+The driver is for the usage with the ESP8266 and [esp-open-rtos](https://github.com/SuperHouse/esp-open-rtos). If you can't find it in folder [extras/lis3dh](https://github.com/SuperHouse/esp-open-rtos/tree/master/extras) of original repository, it is not yet merged. Please take a look to branch [lis3dh](https://github.com/gschorcht/esp-open-rtos/tree/lis3dh) of my fork in that case.
 
 It is also working with ESP32 and [ESP-IDF](https://github.com/espressif/esp-idf.git) using a wrapper component for ESP8266 functions, see folder ```components/esp8266_wrapper```, as well as Linux based systems using a wrapper library.
 
@@ -76,14 +76,14 @@ if ((sensor = lis3dh_init_sensor (I2C_BUS, LIS3DH_I2C_ADDRESS_2, 0)))
 In this example, a LIS3DH sensor connected to I2C is initialized and set to high-resolution mode to start measurements for all three axes with an output data rate (ODR) of 10 Hz.
 
 **Please note:** 
-- Function ```lis3dh_init_sensor``` resets the sensor completely, switches it to the power down mode, and returns a pointer to a sensor device data structure on success. All registers are reset to default values and the embedded FIFO is cleared.
+- ```lis3dh_init_sensor``` function resets the sensor completely, switches it to the power down mode, and returns a pointer to a sensor device data structure on success. All registers are reset to default values and the embedded FIFO is cleared.
 - All sensor configurations should be done before calling function ```lis3dh_set_mode```. In particular, the interrupt configuration should be performed before to avoid loosing the first interrupt and locking the system.
 
 ## Measurement results
 
 ### Output data format
 
-The sensor determines periodically the accelerations for2 all axes that are enabled for measurement and produces output data with the selected output data rate (ODR).
+The sensor determines periodically the accelerations for all axes that are enabled for measurement and produces output data with the selected output data rate (ODR).
 
 Raw **output data** (**raw data**) are given as 16-bit signed integer values in 2’s complement representation and are always left-aligned. The resolution depends on the selected operation mode and the selected full scale. For example, in low power mode with 8-bit resolution only the high byte is used. LIS3DH allows to select the following full scales:
 
@@ -155,9 +155,9 @@ The mode and the cutoff frequency of the high pass filter can be configured usin
 
 Driver symbol | HPF mode
 :--------------|:---------
-lis3dh_hpf_normal    | Normal mode
-lis3dh_hpf_reference | Reference mode
-lis3dh_hpf_autoreset | Auto-reset on interrupt
+```lis3dh_hpf_normal```    | Normal mode
+```lis3dh_hpf_reference``` | Reference mode
+```lis3dh_hpf_autoreset``` | Auto-reset on interrupt
 
 For each output data rate (ODR), 4 different HPF cutoff frequencies can be used. Furthermore, a number of boolean parameters indicate to which data the HPF is applied.
 
@@ -177,10 +177,10 @@ In order to limit the rate at which the host processor has to fetch the data, th
 
 Driver symbol | FIFO mode
 --------------|-------------------------
-lis3dh_bypass  | Bypass mode (FIFO is not used)
-lis3dh_fifo    | FIFO mode
-lis3dh_stream  | Stream mode
-lis3dh_stream_to_fifo | Stream-to-FIFO mode
+```lis3dh_bypass```  | Bypass mode (FIFO is not used)
+```lis3dh_fifo```    | FIFO mode
+```lis3dh_stream```  | Stream mode
+```lis3dh_stream_to_fifo``` | Stream-to-FIFO mode
 
 The FIFO mode can be set using function ```lis3dh_set_fifo_mode```. This function takes three parameters
 
@@ -205,7 +205,7 @@ lis3dh_set_fifo_mode (sensor, lis3dh_stream, 10, lis3dh_int1_signal);
 To read data from the FIFO, simply use either 
 
 - the function ```lis3dh_get_raw_data_fifo``` to all get raw output data stored in FIFO or
-- the function ```lis3dh_get_float_data_fifo``` to get all data stored in FIFO and converted to real values in dps (degrees per second). 
+- the function ```lis3dh_get_float_data_fifo``` to get all data stored in FIFO and converted to real values in g. 
 
 Both functions clear the FIFO and return the number of samples read from the FIFO. 
 
@@ -233,25 +233,25 @@ void user_task_periodic (void *pvParameters)
 }
 ```
 
-### Interrupts
+## Interrupts
 
 The LIS3DH supports two dedicated interrupt signals **```INT1```** and **```INT2```** and three different types of interrupts:
 
-- data interrupts (data ready and FIFO status),
-- inertial event interrupts (axis movement, wake-up, free fall, and 6D/4D orientation detection), and
-- click detection interrupts.
+- **data** interrupts (data ready and FIFO status),
+- **inertial event** interrupts (axis movement, wake-up, free fall, and 6D/4D orientation detection), and
+- **click detection** interrupts.
 
 While inertial event interrupts and click detection interrupts can be configured for both interrupt signals, data ready and FIFO status interrupts can be configured only for interrupt signal ```INT1```.
 
-#### Data interrupts (data ready and FIFO status)
+### Data interrupts (data ready and FIFO status)
 
 Following sources can generate an interrupt on signal ```INT1```:
 
 Interrupt source | Driver symbol
 :-----------------|:-------------
-Output data become ready to read | lis3dh_int_data_ready
-FIFO content exceeds the watermark level | lis3dh_int_fifo_watermark
-FIFO is completely filled | lis3dh_int_fifo_overrun
+Output data become ready to read | ```lis3dh_int_data_ready```
+FIFO content exceeds the watermark level | ```lis3dh_int_fifo_watermark```
+FIFO is completely filled | ```lis3dh_int_fifo_overrun```
 
 Each of these interrupt sources can be enabled or disabled separately with function ```lis3dh_enable_int```. By default all interrupt sources are disabled.
 
@@ -266,21 +266,21 @@ void int1_handler ()
 {
     lis3dh_int_data_source_t data_src;
 
-    // get the interrupt source of INT1
+    // get the source of the interrupt on *INT1* signal
     lis3dh_get_int_data_source  (sensor, &data_src);
 
     // in case of data ready interrupt, get the results and do something with them
     if (data_src.data_ready)
-        // ... read data
+        ... // read data
    
     // in case of FIFO interrupts read the whole FIFO
     else  if (data_src.fifo_watermark || data_src.fifo_overrun)
-        // ... read FIFO data
+        ... // read FIFO data
     ...
 }
 ```
 
-#### Inertial event interrupts
+### Inertial event interrupts
 
 Inertial interrupt generators allow to generate interrupts when certain inertial event occures (event interrupts), that is, the acceleration of defined axes is higher or lower than a defined threshold. If activated, the acceleration of each axis is compared with a defined threshold to check whether it is below or above the threshold. The results of all activated comparisons are then combined OR or AND to generate the interrupt signal.
 
@@ -294,7 +294,7 @@ Inertial event interrupts can be configured with the function ```lis3dh_get_int_
 
 Inertial event interrupts have to be enabled or disabled using function ```lis3dh_enable_int```. The interrupt signal on which the interrupts are generated is given as parameter.
 
-For example, wake-up detection interrupt on signal ```INT1``` could be configured as following:
+For example, axis movement detection interrupt generated by inertial interrupt generator 2 on signal ```INT1``` could be configured as following:
 
 ```
 lis3dh_int_event_config_t event_config;
@@ -311,7 +311,7 @@ event_config.z_high_enabled = true;
 event_config.duration = 0;
 event_config.latch = true;
         
-lis3dh_set_int_event_config (sensor, &event_config, lis3dh_int_event1_gen);
+lis3dh_set_int_event_config (sensor, &event_config, lis3dh_int_event2_gen);
 lis3dh_enable_int (sensor, lis3dh_int_event1, lis3dh_int1_signal, true);
 ```
 
@@ -328,24 +328,26 @@ void int1_handler ()
     lis3dh_int_data_source_t  data_src;
     lis3dh_int_event_source_t event_src;
 
-    // get the interrupt source of INT1
+    // get the source of the interrupt on *INT1* signal
     lis3dh_get_int_data_source  (sensor, &data_src);
-    lis3dh_get_int_event_source (sensor, &event_src, lis3dh_int_event1_gen);
+    lis3dh_get_int_event_source (sensor, &event_src, lis3dh_int_event2_gen);
 
     // in case of data ready interrupt, get the results and do something with them
     if (data_src.data_ready)
-        // ... read data
+        ... // read data
    
     // in case of FIFO interrupts read the whole FIFO
     else  if (data_src.fifo_watermark || data_src.fifo_overrun)
-        // ... read FIFO data
+        ... // read FIFO data
 
     // in case of inertial event interrupt
     else if (event_src.active)
-        // ... read data
+        ... // read data
     ...
 }
 ```
+
+**Please note:** If the interrupt is configured to be latched, the interrupt signal is active until the interrupt source is read. Otherwise the interrupt signal is only active as long as the interrupt condition is satisfied.
 
 **Please note** Activating all threshold comparisons and the OR combination (```lis3dh_wake_up```) is the most flexible way to deal with inertial event interrupts. Functions such as free fall detection and so on can then be realized by suitably combining the various interrupt sources by the user task. Following example realizes the free fall detection in user task.
 
@@ -364,7 +366,7 @@ event_config.z_high_enabled = true;
 event_config.duration = 0;
 event_config.latch = true;
         
-lis3dh_set_int_event_config (sensor, &event_config, lis3dh_int_event1_gen);
+lis3dh_set_int_event_config (sensor, &event_config, lis3dh_int_event2_gen);
 lis3dh_enable_int (sensor, lis3dh_int_event1, lis3dh_int1_signal, true);
 ```
 
@@ -373,24 +375,22 @@ void int1_handler ()
 {
     lis3dh_int_event_source_t event_src;
 
-    // get the interrupt source of INT1
-    lis3dh_get_int_event_source (sensor, &event_src, lis3dh_int1_signal);
+    // get the source of the interrupt from interrupt generator 2 on *INT1* signal
+    lis3dh_get_int_event_source (sensor, &event_src, lis3dh_int_event2_gen);
 
-    // detect free fall (all accelerations are below the threshold)
+    // test for free fall condition (all accelerations are below the threshold)
     if (event_src.x_low && event_src.y_low && event_src.z_low)
-        ... 
+        ...  // do something
     ...
 }
 
 ```
 
-#### Click detection interrupts
+### Click detection interrupts
 
 A sequence of acceleration values over time measured along certain axes can be used to detect single and double clicks. Please refer the [datasheet](http://www.st.com/resource/en/datasheet/lis3dh.pdf) or [application note](http://www.st.com/resource/en/application_note/cd00290365.pdf) for more information.
 
-Click detection interrupts are configured with function ```lis3dh_set_int_click_config```. This function requires as parameters the configuration of type ```lis3dh_int_click_config_t``` and the interrupt signal to be used for click detection interrupts.
-
-Inertial event interrupts have to be enabled or disabled using function ```lis3dh_enable_int```. The interrupt signal on which the interrupts are generated is given as parameter.
+Click detection interrupts are configured using the ``` lis3dh_set_int_click_config``` function. This function requires the configuration of type ```lis3dh_int_click_config_t``` as parameter. The interrupt has to be activated or deactivated using the ```lis3dh_enable_int``` function with the interrupt signal on which the interrupts are generated as parameter.
 
 In following example, the single click detection for z-axis is enabled with a time limit of 1/ODR, a time latency of 1/ODR and a time window of 3/ODR.
 
@@ -413,6 +413,8 @@ lis3dh_set_int_click_config (sensor, &click_config);
 lis3dh_enable_int (sensor, lis3dh_int_click, lis3dh_int1_signal, true);
 ```
 
+Please refer the [application note](http://www.st.com/resource/en/application_note/cd00290365.pdf) for more information about the configuration parameters.
+
 As with other interrupts, the function ```lis3dh_get_int_click_source``` can be used to determine the source of the interrupt signal whenever it is generated. This function returns a data structure of type ```lis3dh_int_click_source_t``` that contains a boolean member for each source that can be tested for true.
 
 ```
@@ -420,28 +422,29 @@ void int1_handler ()
 {
     lis3dh_int_click_source_t click_src;
 
-    // get the interrupt source of INT1
+    // get the source of the interrupt on *INT1* signal
     lis3dh_get_int_click_source (sensor, &click_src);
 
     // detect single click along z-axis
     if (click_src.z_click && click_src.s_click)
-        ... 
+        ...  // do something
     ...
 }
 
 ```
+**Please note:** If the interrupt is configured to be latched, the interrupt signal is active until the interrupt source is read. Otherwise the interrupt signal is only active as long as the interrupt condition is satisfied.
 
-#### Interrupt signal properties
+### Interrupt signal properties
 
 By default, interrupt signals are high active. Using function ```lis3dh_config_int_signals```, the level of the interrupt signal can be changed.
 
 Driver symbol | Meaning
 :-------------|:-------
-lis3dh_high_active | Interrupt signal is high active (default)
-lis3dh_low_active | Interrupt signal is low active
+```lis3dh_high_active``` | Interrupt signal is high active (default)
+```lis3dh_low_active``` | Interrupt signal is low active
 
 
-### Analog inputs and temperature sensor
+## Analog inputs and temperature sensor
 
 The LIS3DH sensor contains an auxiliary ADC with 3 separate dedicated inputs ADC1, ADC2, and ADC3. ADC3 can be connected to the internal temperatur sensor. The input range is 1200 ± 400 mV. The resolution of the A/D converter is 10 bit in normal and high-resolution mode, but only 8 bit in low-power mode. 
 
@@ -449,7 +452,7 @@ ADC inputs can be activated and deactivated (default) with function ```lis3dh_en
 
 ADC sampling rate is the same the output data rate (ODR). Results are given as left-aligned 16-bit signed integer values in 2’s complement. Function ```lis3dh_get_adc``` can be used to get the results.
 
-### Low level functions
+## Low level functions
 
 The LIS3DH is a very complex and flexible sensor with a lot of features. It can be used for a big number of different use cases. Since it is quite impossible to implement a high level interface which is generic enough to cover all the functionality of the sensor for all different use cases, there are two low level interface functions that allow direct read and write access to the registers of the sensor.
 
