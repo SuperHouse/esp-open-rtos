@@ -1,6 +1,6 @@
 # Driver for the LIS3MDL 3-axes digital output magnetometer
 
-The driver is for the usage with the ESP8266 and [esp-open-rtos](https://github.com/SuperHouse/esp-open-rtos). 
+The driver is for the usage with the ESP8266 and [esp-open-rtos](https://github.com/SuperHouse/esp-open-rtos). If you can't find it in folder [extras/lis3mdl](https://github.com/SuperHouse/esp-open-rtos/tree/master/extras) of original repository, it is not yet merged. Please take a look to branch [lis3mdl](https://github.com/gschorcht/esp-open-rtos/tree/lis3mdl) of my fork in that case. 
 
 It is also working with ESP32 and [ESP-IDF](https://github.com/espressif/esp-idf.git) using a wrapper component for ESP8266 functions, see folder ```components/esp8266_wrapper```, as well as Linux based systems using a wrapper library.
 
@@ -66,7 +66,7 @@ In this example, a LIS3MDL sensor is connected to I2C bus. It is initialized and
 
 **Please note:** 
 - ```lis3mdl_init_sensor``` function resets the sensor completely. That is, all sensor registers are reset to their default values and the sensor is switched to the power-down mode. The function returns a pointer to an sensor device data structure on success which is allocated from memory.
-- All sensor configurations should be done before calling function ```lis3mdl_set_mode```. In particular, the interrupt configuration should be performed before to avoid loosing the first interrupt and locking the system.
+- All sensor configurations should be done before calling ```lis3mdl_set_mode``` function. In particular, the interrupt configuration should be performed before to avoid loosing the first interrupt and locking the system.
 
 ## Measurement results
 
@@ -81,7 +81,7 @@ Full Scale | Resolution   | Driver symbol
  ±4 Gauss  |  1/6.842 mGauss | ```lis3mdl_scale_4_Gs```
  ±8 Gauss  |  1/3.421 mGauss | ```lis3mdl_scale_8_Gs```
 ±12 Gauss  |  1/2.281 mGauss | ```lis3mdl_scale_12_Gs```
-±16 Gauss  |  1/1.711 mGauss | ```lis3mdl_scale_16g```
+±16 Gauss  |  1/1.711 mGauss | ```lis3mdl_scale_16_Gs```
 
 By default, a full scale of ±4 Gauss is used. ```lis3mdl_set_scale``` function can be used to change it.
 
@@ -130,7 +130,7 @@ void user_task_periodic(void *pvParameters)
 **Please note:** 
 ```lis3mdl_get_float_data``` and ```lis3mdl_get_raw_data``` functions always return the last available results. If these functions are called more often than measurements are taken, some measurement results are retrieved multiple times. If these functions are called too rarely, some measurement results will be lost.
 
-### Interrupts
+## Interrupts
 
 The LIS3MDL supports two dedicated interrupt signals for two different types of interrupts:
 
@@ -139,7 +139,7 @@ The LIS3MDL supports two dedicated interrupt signals for two different types of 
 
 While magnetic threshold interrupts can be configured as well as enabled or disabled, data-ready interrupts are always enabled and can not be explicitly configured.
 
-#### Data ready interrupts
+### Data ready interrupts
 
 Whenever an interrupt is generated at interrupt signal ```DRDY```, new data are available and can be read with ```lis3mdl_get_float_data``` function or ```lis3mdl_get_raw_data``` function.
 
@@ -155,11 +155,11 @@ void drdy_handler ()
 }
 ```
 
-#### Magnetic threshold interrupts
+### Magnetic threshold interrupts
 
 Magnetic threshold detection of LIS3MDL allows to generate interrupts on ```INT``` signal whenever measured magnetic data exceed a defined threshold value at positive or negative side. It can be enabled for each axis separatly. The defined threshhold is valid for all enabled axes.
 
-Magnetic threshold interrupts can be configured with ```lis3mdl_get_int_config``` function . This function requires configuration of type ```lis3mdl_int_activity_config_t``` as paramater.
+Magnetic threshold interrupts can be configured with ```lis3mdl_get_int_config``` function . This function requires configuration of type ```lis3mdl_int_config_t``` as paramater.
 
 ```
 lis3mdl_int_config_t int_config;
@@ -176,7 +176,7 @@ lis3mdl_set_int_config (sensor, &int_config);
 
 In this example, magnetic threshold detection is enabled for all axes and a threshold of 1000 is defined. 
 
-The parameter of type ```lis3mdl_int_activity_config_t``` also configures
+The parameter of type ```lis3mdl_int_config_t``` also configures
 
 - whether the interrupt signal should latched until the interrupt source is read, and 
 - whether the interrupt signal is high (default) or low active.
@@ -201,12 +201,13 @@ void int_handler ()
     ...
 }
 ```
+**Please note:** If the interrupt is configured to be latched, the interrupt signal is active until the interrupt source is read. Otherwise the interrupt signal is only active as long as the interrupt condition is satisfied.
 
-### Temperature sensor
+## Temperature sensor
 
-The LIS3MDL sensor contains an internal temperature sensor. It can be activated and deactivated with the function ```lis3mdl_enable_temperature```. With the function ```lis3mdl_get_temperature```, the temperature can be determined as a floating point value in degrees. The temperature is measured by the sensor at the same rate as the magnetic data.
+The LIS3MDL sensor contains an internal temperature sensor. It can be activated and deactivated with the ```lis3mdl_enable_temperature``` function. Using ```lis3mdl_get_temperature``` function, the temperature can be determined as a floating point value in degrees. The temperature is measured by the sensor at the same rate as the magnetic data.
 
-### Low level functions
+## Low level functions
 
 The LIS3MDL is a very complex and flexible sensor with a lot of features. It can be used for a big number of different use cases. Since it is quite impossible to implement a high level interface which is generic enough to cover all the functionality of the sensor for all different use cases, there are two low level interface functions that allow direct read and write access to the registers of the sensor.
 
@@ -555,7 +556,7 @@ void user_task_interrupt (void *pvParameters)
                 // get the source of the interrupt and reset INT signals
                 lis3mdl_get_int_source (sensor, &int_src);
     
-                // in case of DRDY interrupt or activity interrupt read one data sample
+                // in case of DRDY interrupt
                 if (int_src.active)
                     read_data ();
             }
