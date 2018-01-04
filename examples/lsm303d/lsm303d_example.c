@@ -409,8 +409,8 @@ void user_init(void)
         #endif
                 
         // LAST STEP: Finally set scale and mode to start measurements
-        lsm303d_set_a_scale(sensor, lsm303d_a_scale_2);
-        lsm303d_set_m_scale(sensor, lsm303d_m_scale_4);
+        lsm303d_set_a_scale(sensor, lsm303d_a_scale_2_g);
+        lsm303d_set_m_scale(sensor, lsm303d_m_scale_4_Gs);
         lsm303d_set_a_mode (sensor, lsm303d_a_odr_12_5, lsm303d_a_aaf_bw_773, true, true, true);
         lsm303d_set_m_mode (sensor, lsm303d_m_odr_12_5, lsm303d_m_low_res, lsm303d_m_continuous);
 

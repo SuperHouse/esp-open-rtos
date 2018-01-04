@@ -89,11 +89,11 @@ typedef enum {
  */
 typedef enum {
 
-    lsm303d_a_scale_2 = 0,     // default
-    lsm303d_a_scale_4,
-    lsm303d_a_scale_6,
-    lsm303d_a_scale_8,
-    lsm303d_a_scale_16
+    lsm303d_a_scale_2_g = 0,     // default
+    lsm303d_a_scale_4_g,
+    lsm303d_a_scale_6_g,
+    lsm303d_a_scale_8_g,
+    lsm303d_a_scale_16_g
 
 } lsm303d_a_scale_t;
 
@@ -140,10 +140,10 @@ typedef enum {
  */
 typedef enum {
 
-    lsm303d_m_scale_2 = 0,
-    lsm303d_m_scale_4,     // default
-    lsm303d_m_scale_8,
-    lsm303d_m_scale_12
+    lsm303d_m_scale_2_Gs = 0,
+    lsm303d_m_scale_4_Gs,     // default
+    lsm303d_m_scale_8_Gs,
+    lsm303d_m_scale_12_Gs
 
 } lsm303d_m_scale_t;
 
@@ -231,7 +231,7 @@ typedef struct {
 
 
 /**
- * @brief   Threshold interrupt configuration for INT signal
+ * @brief   Magnetic threshold interrupt configuration for INT1/INT2 signals
  */
 typedef struct {
     
@@ -254,7 +254,7 @@ typedef struct {
 
 
 /**
- * @brief   Threshold interrupt source type for interrupt signals INT 
+ * @brief   Magnetic threshold interrupt source of INT1/INT2 signals
  */
 typedef struct {
     
@@ -330,42 +330,6 @@ typedef struct {
     bool    z_high:1;     // true - z is higher than threshold event
     
 } lsm303d_int_event_source_t;
-
-
-/**
- * @brief   magnetic value interrupt configuration for INT1/INT2 signals
- */
-typedef struct {
-    
-    uint16_t threshold; // threshold used for interrupt generation
-
-    bool     x_enabled; // true - x exceeds threshold on positive side
-    bool     y_enabled; // true - y exceeds threshold on positive side
-    bool     z_enabled; // true - z exceeds threshold on positive side
-
-    bool     latch;     // true - latch the interrupt until the interrupt
-                        //        source has been read
-    
-} lsm303d_int_magnetic_config_t;
-
-
-/**
- * @brief   Threshold interrupt source type for interrupt signals INT 
- */
-typedef struct {
-    
-    bool x_pos :1;     // true - x exceeds threshold on positive side
-    bool y_pos :1;     // true - y exceeds threshold on positive side
-    bool z_pos :1;     // true - z exceeds threshold on positive side
-
-    bool x_neg :1;     // true - x exceeds threshold on negative side
-    bool y_neg :1;     // true - y exceeds threshold on negative side
-    bool z_neg :1;     // true - z exceeds threshold on negative side
-
-    bool mroi  :1;     // true - internal measurement range overflow
-    bool active:1;     // true - interrupt event occured
-    
-} lsm303d_int_magnetic_source_t;
 
 
 /**

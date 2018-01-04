@@ -127,24 +127,24 @@ Raw **output data** (**raw data**) are given as 16-bit signed integer values in 
 
 Accelerometer full scale  | Resolution | Driver symbol
 ---------------------:|-----------:|:-----------
- ±2 g |  0.061 mg | ```lsm303d_a_scale_2```
- ±4 g |  0.122 mg | ```lsm303d_a_scale_4```
- ±6 g |  0.183 mg | ```lsm303d_a_scale_6``` 
- ±8 g |  0.244 mg | ```lsm303d_a_scale_8```
-±16 g |  0.732 mg | ```lsm303d_a_scale_16```
+ ±2 g |  0.061 mg | ```lsm303d_a_scale_2_g```
+ ±4 g |  0.122 mg | ```lsm303d_a_scale_4_g```
+ ±6 g |  0.183 mg | ```lsm303d_a_scale_6_g``` 
+ ±8 g |  0.244 mg | ```lsm303d_a_scale_8_g```
+±16 g |  0.732 mg | ```lsm303d_a_scale_16_g```
 
 Magnetormeter full scale | Resolution   | Driver symbol
 ---------------------:|:-----------|:------
- ±2 Gauss  |  0.080 mGauss | ```lsm303d_m_scale_2```
- ±4 Gauss  |  0.160 mGauss | ```lsm303d_m_scale_4```
- ±8 Gauss  |  0.320 mGauss | ```lsm303d_m_scale_8```
-±12 Gauss  |  0.479 mGauss | ```lsm303d_m_scale_12```
+ ±2 Gauss  |  0.080 mGauss | ```lsm303d_m_scale_2_Gs```
+ ±4 Gauss  |  0.160 mGauss | ```lsm303d_m_scale_4_Gs```
+ ±8 Gauss  |  0.320 mGauss | ```lsm303d_m_scale_8_Gs```
+±12 Gauss  |  0.479 mGauss | ```lsm303d_m_scale_12_Gs```
 
 By default, a full scale of ±2 g is used for the acceleration and ±2 Gauss for the magnetic measurement. ```lsm303d_set_a_scale``` and ```lsm303d_set_m_scale``` functions can be used to change these values.
 
 ```
-lsm303d_set_a_scale(sensor, lsm303d_a_scale_4);
-lsm303d_set_m_scale(sensor, lsm303d_m_scale_8);
+lsm303d_set_a_scale(sensor, lsm303d_a_scale_4_g);
+lsm303d_set_m_scale(sensor, lsm303d_m_scale_8_Gs);
 ```
 
 ### Fetching output data
@@ -1190,8 +1190,8 @@ void user_init(void)
         #endif
                 
         // LAST STEP: Finally set scale and mode to start measurements
-        lsm303d_set_a_scale(sensor, lsm303d_a_scale_2);
-        lsm303d_set_m_scale(sensor, lsm303d_m_scale_4);
+        lsm303d_set_a_scale(sensor, lsm303d_a_scale_2_g);
+        lsm303d_set_m_scale(sensor, lsm303d_m_scale_4_Gs);
         lsm303d_set_a_mode (sensor, lsm303d_a_odr_12_5, lsm303d_a_aaf_bw_773, true, true, true);
         lsm303d_set_m_mode (sensor, lsm303d_m_odr_12_5, lsm303d_m_low_res, lsm303d_m_continuous);
 

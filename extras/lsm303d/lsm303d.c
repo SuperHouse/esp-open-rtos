@@ -53,6 +53,16 @@
 
 #include "lsm303d.h"
 
+#ifdef debug
+#undef debug
+#undef debug_dev
+#endif
+
+#ifdef error
+#undef error
+#undef error_dev
+#endif
+
 #if defined(LSM303D_DEBUG_LEVEL_2)
 #define debug(s, f, ...) printf("%s %s: " s "\n", "LSM303D", f, ## __VA_ARGS__)
 #define debug_dev(s, f, d, ...) printf("%s %s: bus %d, addr %02x - " s "\n", "LSM303D", f, d->bus, d->addr, ## __VA_ARGS__)
@@ -374,8 +384,8 @@ lsm303d_sensor_t* lsm303d_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs)
     dev->cs     = cs;
 
     dev->error_code = LSM303D_OK;
-    dev->a_scale    = lsm303d_a_scale_2;
-    dev->m_scale    = lsm303d_m_scale_4;
+    dev->a_scale    = lsm303d_a_scale_2_g;
+    dev->m_scale    = lsm303d_m_scale_4_Gs;
     dev->m_res      = lsm303d_m_low_res;
     dev->fifo_mode  = lsm303d_bypass;
     dev->fifo_first = true;
@@ -408,8 +418,8 @@ lsm303d_sensor_t* lsm303d_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs)
     lsm303d_update_reg (dev, LSM303D_REG_CTRL1, lsm303d_reg_ctrl1, BDU, 1);
 
     // not necessary, following values are the defaults
-    // lsm303d_update_reg (dev, LSM303D_REG_CTRL2, lsm303d_reg_ctrl2, AFS, lsm303d_a_scale_2);
-    // lsm303d_update_reg (dev, LSM303D_REG_CTRL6, lsm303d_reg_ctrl6, MFS, lsm303d_m_scale_4);
+    // lsm303d_update_reg (dev, LSM303D_REG_CTRL2, lsm303d_reg_ctrl2, AFS, lsm303d_a_scale_2_g);
+    // lsm303d_update_reg (dev, LSM303D_REG_CTRL6, lsm303d_reg_ctrl6, MFS, lsm303d_m_scale_4_Gs);
     
     // clear FIFO
     // lsm303d_set_fifo_mode (sensor, lsm303d_bypass, 0);
@@ -582,8 +592,7 @@ bool lsm303d_new_a_data (lsm303d_sensor_t* dev)
             error_dev ("Could not get fifo source register data", __FUNCTION__, dev);
             return false;
         }
-        printf("AAAA %02x\n", *(uint8_t*)&fifo_src);
-                return !fifo_src.EMPTY;
+        return !fifo_src.EMPTY;
     }
 }
 
@@ -1381,8 +1390,8 @@ bool lsm303d_get_a_hpf_ref (lsm303d_sensor_t* dev,
 }
 
 
-bool lsm303d_set_m_off (lsm303d_sensor_t* dev, 
-                        int16_t x_off, int16_t y_off, int16_t z_off)
+bool lsm303d_set_m_offset (lsm303d_sensor_t* dev, 
+                           int16_t x_off, int16_t y_off, int16_t z_off)
 {
     if (!dev) return false;
 
@@ -1405,8 +1414,8 @@ bool lsm303d_set_m_off (lsm303d_sensor_t* dev,
 }
 
 
-bool lsm303d_get_m_off (lsm303d_sensor_t* dev, 
-                        int16_t* x_off, int16_t* y_off, int16_t* z_off)
+bool lsm303d_get_m_offset (lsm303d_sensor_t* dev, 
+                           int16_t* x_off, int16_t* y_off, int16_t* z_off)
 {
     if (!dev) return false;
 

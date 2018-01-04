@@ -503,26 +503,26 @@ bool lsm303d_get_a_hpf_ref (lsm303d_sensor_t* dev,
  * @brief   Set magnetic offset
  *
  * @param   dev      pointer to the sensor device data structure
- * @param   x_off    magnetic offset for x axis
- * @param   y_off    magnetic offset for y axis
- * @param   z_off    magnetic offset for z axis
+ * @param   x        magnetic offset for x axis
+ * @param   y        magnetic offset for y axis
+ * @param   z        magnetic offset for z axis
  * @return           true on success, false on error
  */
-bool lsm303d_set_m_off (lsm303d_sensor_t* dev, 
-                        int16_t x_off, int16_t y_off, int16_t z_off);
+bool lsm303d_set_m_offset (lsm303d_sensor_t* dev, 
+                           int16_t x, int16_t y, int16_t z);
 
 
 /**
  * @brief   Get magnetic offset
  *
  * @param   dev      pointer to the sensor device data structure
- * @param   x_off    magnetic offset for x axis
- * @param   y_off    magnetic offset for y axis
- * @param   z_off    magnetic offset for z axis
+ * @param   x        magnetic offset for x axis
+ * @param   y        magnetic offset for y axis
+ * @param   z        magnetic offset for z axis
  * @return           true on success, false on error
  */
-bool lsm303d_get_m_off (lsm303d_sensor_t* dev, 
-                        int16_t* x_off, int16_t* y_off, int16_t* z_off);
+bool lsm303d_get_m_offset (lsm303d_sensor_t* dev, 
+                           int16_t* x, int16_t* y, int16_t* z);
 
 
 /**
