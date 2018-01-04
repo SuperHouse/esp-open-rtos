@@ -101,7 +101,9 @@
 #define L3GD20H_ENABLE_HPF_FAILED          (13 << 8)
 #define L3GD20H_SENSOR_IN_BYPASS_MODE      (14 << 8)
 #define L3GD20H_SENSOR_IN_FIFO_MODE        (15 << 8)
-#define LG3GD20H_ODR_TOO_HIGH              (16 << 8)
+#define L3GD20H_ODR_TOO_HIGH               (16 << 8)
+#define L3GD20H_ODR_NOT_AVAILABLE          (17 << 8)
+#define L3GD20H_FIFO_MODE_NOT_AVAILABLE    (18 << 8)
 
 #include "l3gd20h_platform.h"
 #include "l3gd20h_types.h"
@@ -309,13 +311,12 @@ bool l3gd20h_get_int_data_source (l3gd20h_sensor_t* dev,
  * @brief   Set signal configuration for INT1 and INT2 signals
  *
  * @param   dev      pointer to the sensor device data structure
- * @param   level    define interrupt signal as low or high active
  * @param   type     define interrupt signal as pushed/pulled or open drain
  * @return           true on success, false on error
  */
 bool l3gd20h_config_int_signals (l3gd20h_sensor_t* dev,
-                                 l3gd20h_signal_level_t level,
-                                 l3gd20h_signal_type_t type);
+                                 l3gd20h_signal_type_t type,
+                                 l3gd20h_signal_level_t level);
 
                               
 /**

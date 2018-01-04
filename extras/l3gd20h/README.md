@@ -87,14 +87,14 @@ Raw **output data** (**raw data**) are given as 16-bit signed integer values in 
 
 Full Scale  | Resolution | Driver symbol 
 -----------:|-----------:|:---------------
-±245 dps | 2 mdps  | ```l3gd20h_scale_245dps```
-±500 dps | 4 mdps  | ```l3gd20h_scale_500dps```
-±2000 dps | 16 mdps | ```l3gd20h_scale_2000dps```
+±245 dps | 2 mdps  | ```l3gd20h_scale_245_dps```
+±500 dps | 4 mdps  | ```l3gd20h_scale_500_dps```
+±2000 dps | 16 mdps | ```l3gd20h_scale_2000_dps```
 
 By default, a full scale of ±245 dps is used. Function ```l3gd20h_set_scale``` can be used to change it.
 
 ```
-l3gd20h_set_scale(sensor, l3gd20h_scale_500dps);
+l3gd20h_set_scale(sensor, l3gd20h_scale_500_dps);
 ```
 
 ### Fetching output data
@@ -938,8 +938,8 @@ void user_init(void)
         // Interrupt configuration has to be done before the sensor is set
         // into measurement mode
 
-        // set polarity of INT signals if necessary
-        // l3gd20h_config_int_signals (dev, l3gd20h_high_active, l3gd20h_push_pull);
+        // set type and polarity of INT signals if necessary
+        // l3gd20h_config_int_signals (dev, l3gd20h_push_pull, l3gd20h_high_active);
 
         #ifdef INT_EVENT
         // enable event interrupts (axis movement and wake up)
@@ -990,7 +990,7 @@ void user_init(void)
         l3gd20h_get_hpf_ref (sensor);
 
         // LAST STEP: Finally set scale and sensor mode to start measurements
-        l3gd20h_set_scale(sensor, l3gd20h_scale_245dps);
+        l3gd20h_set_scale(sensor, l3gd20h_scale_245_dps);
         l3gd20h_set_mode (sensor, l3gd20h_normal_odr_12_5, 3, true, true, true);
 
         // -- SENSOR CONFIGURATION PART ---

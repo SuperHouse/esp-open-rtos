@@ -69,18 +69,25 @@ typedef enum
 
 } l3gd20h_mode_t;
 
+#define l3gd20_normal_odr_95   l3gd20h_normal_odr_100
+#define l3gd20_normal_odr_190  l3gd20h_normal_odr_200
+#define l3gd20_normal_odr_380  l3gd20h_normal_odr_400
+#define l3gd20_normal_odr_760  l3gd20h_normal_odr_800
 
 /**
  * @brief   Sensitivity level
  */
 typedef enum 
 {
-    l3gd20h_scale_245dps = 0,     // default
-    l3gd20h_scale_500dps,
-    l3gd20h_scale_2000dps
+    l3gd20h_scale_245_dps = 0,     // default
+    l3gd20h_scale_500_dps,
+    l3gd20h_scale_2000_dps
 
 } l3gd20h_scale_t;
 
+#define l3gd20_scale_250_dps    l3gd20h_scale_245_dps
+#define l3gd20_scale_500_dps    l3gd20h_scale_500_dps
+#define l3gd20_scale_2000_dps   l3gd20h_scale_2000_dps
 
 /**
  * @brief   FIFO mode
@@ -286,6 +293,12 @@ typedef struct {
 
     l3gd20h_scale_t     scale;     // fill range scale (default 245 dps)
     l3gd20h_fifo_mode_t fifo_mode; // FIFO operation mode (default bypass)
+
+    enum {
+        l3gd20h,
+        l3gd20,
+        l3g4200d
+    } mode;
       
 } l3gd20h_sensor_t;
                                  

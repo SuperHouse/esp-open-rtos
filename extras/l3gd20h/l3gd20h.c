@@ -53,6 +53,16 @@
 
 #include "l3gd20h.h"
 
+#ifdef debug
+#undef debug
+#undef debug_dev
+#endif
+
+#ifdef error
+#undef error
+#undef error_dev
+#endif
+
 #if defined(L3GD20H_DEBUG_LEVEL_2)
 #define debug(s, f, ...) printf("%s %s: " s "\n", "L3GD20H", f, ## __VA_ARGS__)
 #define debug_dev(s, f, d, ...) printf("%s %s: bus %d, addr %02x - " s "\n", "L3GD20H", f, d->bus, d->addr, ## __VA_ARGS__)
@@ -108,7 +118,7 @@
 #define L3GD20H_YDA               0x02    // L3GD20H_REG_STATUS<1>
 #define L3GD20H_XDA               0x01    // L3GD20H_REG_STATUS<0>
 
-#define L3GD20H_ANY_DATA_READY    0x0f    // L3GD20H_REG_STATUS<3:0>
+#define L3GD20H_ANY_DATA_READY    0x07    // L3GD20H_REG_STATUS<2:0>
 
 #define L3GD20H_ODR               0xc0    // L3GD20H_REG_CTRL1<7:6>
 #define L3GD20H_BW                0x30    // L3GD20H_REG_CTRL1<5:4>
@@ -198,7 +208,7 @@ l3gd20h_sensor_t* l3gd20h_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs)
     dev->cs     = cs;
 
     dev->error_code = L3GD20H_OK;
-    dev->scale      = l3gd20h_scale_245dps;
+    dev->scale      = l3gd20h_scale_245_dps;
     dev->fifo_mode  = l3gd20h_bypass;
     
     // if addr==0 then SPI is used and has to be initialized
@@ -225,7 +235,7 @@ l3gd20h_sensor_t* l3gd20h_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs)
         return NULL;
     }
     
-    l3gd20h_update_reg (dev, L3GD20H_REG_CTRL4, L3GD20H_FULL_SCALE, l3gd20h_scale_245dps);
+    l3gd20h_update_reg (dev, L3GD20H_REG_CTRL4, L3GD20H_FULL_SCALE, l3gd20h_scale_245_dps);
     l3gd20h_update_reg (dev, L3GD20H_REG_CTRL4, L3GD20H_BLOCK_DATA_UPDATE, 1);
 
     return dev;
@@ -241,6 +251,13 @@ bool l3gd20h_set_mode (l3gd20h_sensor_t* dev, l3gd20h_mode_t mode, uint8_t bw,
     {
         error_dev ("Bandwidth value %d not in range 0 ... 3", __FUNCTION__, dev, bw);
         dev->error_code = L3GD20H_WRONG_BANDWIDTH;
+        return false;
+    }
+    
+    if (dev->mode != l3gd20h && mode != l3gd20h_power_down && mode < l3gd20h_normal_odr_100)
+    {
+        error_dev ("Low ODRs are not available for this sensor", __FUNCTION__, dev);
+        dev->error_code = L3GD20H_ODR_NOT_AVAILABLE;
         return false;
     }
     
@@ -279,7 +296,8 @@ bool l3gd20h_set_mode (l3gd20h_sensor_t* dev, l3gd20h_mode_t mode, uint8_t bw,
         l3gd20h_set_reg_bit (&reg1, L3GD20H_Y_ENABLED, y);
         l3gd20h_set_reg_bit (&reg1, L3GD20H_Z_ENABLED, z);
         
-        if (!l3gd20h_reg_write (dev, L3GD20H_REG_LOW_ODR, &reg2, 1))
+        if (dev->mode == l3gd20h && 
+            !l3gd20h_reg_write (dev, L3GD20H_REG_LOW_ODR, &reg2, 1))
             return false;
     } 
     else
@@ -309,6 +327,13 @@ bool l3gd20h_set_fifo_mode (l3gd20h_sensor_t* dev, l3gd20h_fifo_mode_t mode,
 {
     if (!dev) return false;
     
+    if (dev->mode != l3gd20h && mode > l3gd20h_bypass_to_stream)
+    {
+        error_dev ("FIFO mode is not available for this sensor", __FUNCTION__, dev);
+        dev->error_code = L3GD20H_FIFO_MODE_NOT_AVAILABLE;
+        return false;
+    }
+        
     dev->error_code = L3GD20H_OK;
     dev->fifo_mode = mode;
     
@@ -362,7 +387,7 @@ bool l3gd20h_new_data (l3gd20h_sensor_t* dev)
             error_dev ("Could not get sensor status", __FUNCTION__, dev);
             return false;
         }
-        return l3gd20h_get_reg_bit (reg, L3GD20H_ZYXDA);
+        return l3gd20h_get_reg_bit (reg, L3GD20H_ANY_DATA_READY);
     }
     else
     {
@@ -404,7 +429,7 @@ uint8_t l3gd20h_get_float_data_fifo (l3gd20h_sensor_t* dev, l3gd20h_float_data_f
     l3gd20h_raw_data_fifo_t raw;
     
     uint8_t num = l3gd20h_get_raw_data_fifo (dev, raw);
-    
+
     for (int i = 0; i < num; i++)
     {
         data[i].x = raw[i].x * L3GD20H_SCALES[dev->scale];
@@ -481,10 +506,9 @@ uint8_t l3gd20h_get_raw_data_fifo (l3gd20h_sensor_t* dev, l3gd20h_raw_data_fifo_
 
     if (reg & L3GD20H_FIFO_FFS)
     {
-        dev->error_code = LG3GD20H_ODR_TOO_HIGH;
+        dev->error_code = L3GD20H_ODR_TOO_HIGH;
         error_dev ("New samples stored in FIFO while reading, "
                    "output data rate (ODR) too high", __FUNCTION__, dev);
-        return 0;
     }
 
     if (dev->fifo_mode == l3gd20h_fifo && samples == 32)
@@ -702,8 +726,8 @@ bool l3gd20h_get_int_data_source (l3gd20h_sensor_t* dev, l3gd20h_int_data_source
 
 
 bool l3gd20h_config_int_signals (l3gd20h_sensor_t* dev,
-                                 l3gd20h_signal_level_t level,
-                                 l3gd20h_signal_type_t type)
+                                 l3gd20h_signal_type_t type,
+                                 l3gd20h_signal_level_t level)
 {
     if (!dev) return false;
 
@@ -810,14 +834,15 @@ static bool l3gd20h_is_available (l3gd20h_sensor_t* dev)
     if (!l3gd20h_reg_read (dev, L3GD20H_REG_WHO_AM_I, &chip_id, 1))
         return false;
 
-    if (chip_id != L3GD20H_CHIP_ID &&
-        chip_id != L3GD20_CHIP_ID &&
-        chip_id != L3G4200D_CHIP_ID)
+    switch (chip_id)
     {
-        error_dev ("Chip id %02x is wrong, should be %02x.",
-                    __FUNCTION__, dev, chip_id, L3GD20H_CHIP_ID);
-        dev->error_code = L3GD20H_WRONG_CHIP_ID;
-        return false;
+        case L3GD20H_CHIP_ID:  dev->mode = l3gd20h ; break;
+        case L3GD20_CHIP_ID:   dev->mode = l3gd20  ; break;
+        case L3G4200D_CHIP_ID: dev->mode = l3g4200d; break;
+        default: error_dev ("Chip id %02x is wrong, should be %02x.",
+                            __FUNCTION__, dev, chip_id, L3GD20H_CHIP_ID);
+                 dev->error_code = L3GD20H_WRONG_CHIP_ID;
+                 return false;
     }
 
     return true;
