@@ -88,7 +88,7 @@ typedef enum {
 } lis3mdl_scale_t;
 
 /**
- * @brief   Threshold interrupt configuration for INT signal
+ * @brief   Magnetic threshold interrupt configuration for INT signal
  */
 typedef struct {
     
@@ -111,7 +111,7 @@ typedef struct {
 
 
 /**
- * @brief   Threshold interrupt source type for interrupt signals INT 
+ * @brief   Magnetic threshold interrupt source of INT signal
  */
 typedef struct {
     
