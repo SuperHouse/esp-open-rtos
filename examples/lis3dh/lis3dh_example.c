@@ -346,7 +346,7 @@ void user_init(void)
         lis3dh_enable_adc (sensor, true, true);
         
         // LAST STEP: Finally set scale and mode to start measurements
-        lis3dh_set_scale(sensor, lis3dh_scale_2g);
+        lis3dh_set_scale(sensor, lis3dh_scale_2_g);
         lis3dh_set_mode (sensor, lis3dh_odr_10, lis3dh_high_res, true, true, true);
 
         // -- SENSOR CONFIGURATION PART ---

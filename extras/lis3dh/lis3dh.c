@@ -278,7 +278,7 @@ lis3dh_sensor_t* lis3dh_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs)
     dev->cs     = cs;
 
     dev->error_code = LIS3DH_OK;
-    dev->scale      = lis3dh_scale_2g;
+    dev->scale      = lis3dh_scale_2_g;
     dev->fifo_mode  = lis3dh_bypass;
     dev->fifo_first = true;
     
@@ -306,7 +306,7 @@ lis3dh_sensor_t* lis3dh_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs)
         return NULL;
     }
     
-    lis3dh_update_reg (dev, LIS3DH_REG_CTRL4, lis3dh_reg_ctrl4, FS, lis3dh_scale_2g);
+    lis3dh_update_reg (dev, LIS3DH_REG_CTRL4, lis3dh_reg_ctrl4, FS, lis3dh_scale_2_g);
     lis3dh_update_reg (dev, LIS3DH_REG_CTRL4, lis3dh_reg_ctrl4, BDU, 1);
 
     return dev;

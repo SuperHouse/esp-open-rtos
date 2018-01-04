@@ -86,10 +86,10 @@ typedef enum {
  */
 typedef enum {
 
-    lis3dh_scale_2g = 0,     // default
-    lis3dh_scale_4g,
-    lis3dh_scale_8g,
-    lis3dh_scale_16g
+    lis3dh_scale_2_g = 0,     // default
+    lis3dh_scale_4_g,
+    lis3dh_scale_8_g,
+    lis3dh_scale_16_g
 
 } lis3dh_scale_t;
 

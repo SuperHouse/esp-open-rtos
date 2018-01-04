@@ -89,15 +89,15 @@ Raw **output data** (**raw data**) are given as 16-bit signed integer values in 
 
 Full Scale  | Driver symbol | Resolution 12 bit <br>```lis3dh_high_res``` | Resolution 10 bit<br>```lis3dh_normal``` | Resolution 8 bit <br>```lis3dh_low_power```
 ---------------------:|:-----------:|-----------:|---------------:|-----:
- ±2 g | ```lis3dh_scale_2g```  |  1 mg  |  4 mg |  16 mg
- ±4 g | ```lis3dh_scale_4g```  |  2 mg  |  8 mg |  32 mg
- ±8 g | ```lis3dh_scale_8g```  |  4 mg  | 16 mg |  64 mg
-±16 g | ```lis3dh_scale_16g``` | 12 mg  | 48 mg | 192 mg
+ ±2 g | ```lis3dh_scale_2_g```  |  1 mg  |  4 mg |  16 mg
+ ±4 g | ```lis3dh_scale_4_g```  |  2 mg  |  8 mg |  32 mg
+ ±8 g | ```lis3dh_scale_8_g```  |  4 mg  | 16 mg |  64 mg
+±16 g | ```lis3dh_scale_16_g``` | 12 mg  | 48 mg | 192 mg
 
 By default, a full scale of ±2 g is used. Function ```lis3dh_set_scale``` can be used to change it.
 
 ```
-lis3dh_set_scale(sensor, lis3dh_scale_4g);
+lis3dh_set_scale(sensor, lis3dh_scale_4_g);
 ```
 
 ### Fetching output data
@@ -1013,7 +1013,7 @@ void user_init(void)
         lis3dh_enable_adc (sensor, true, true);
         
         // LAST STEP: Finally set scale and mode to start measurements
-        lis3dh_set_scale(sensor, lis3dh_scale_2g);
+        lis3dh_set_scale(sensor, lis3dh_scale_2_g);
         lis3dh_set_mode (sensor, lis3dh_odr_10, lis3dh_high_res, true, true, true);
 
         // -- SENSOR CONFIGURATION PART ---
