@@ -4,7 +4,7 @@ EXTRA_COMPONENTS=extras/dhcpserver extras/spiffs
 
 PROGRAM_SRC_DIR = . ./cases
 
-FLASH_SIZE = 32
+FLASH_SIZE = 4
 
 # spiffs configuration
 SPIFFS_BASE_ADDR = 0x200000
