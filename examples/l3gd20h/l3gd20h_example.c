@@ -110,8 +110,8 @@ void read_data (void)
     
     l3gd20h_float_data_t  data;
 
-    while (l3gd20h_new_data (sensor) &&
-           l3gd20h_get_float_data (sensor, &data))
+    if (l3gd20h_new_data (sensor) &&
+        l3gd20h_get_float_data (sensor, &data))
         // max. full scale is +-2000 dps and best sensitivity is 1 mdps, i.e. 7 digits
         printf("%.3f L3GD20H (xyz)[dps]: %+9.3f %+9.3f  %+9.3f\n",
                (double)sdk_system_get_time()*1e-3, data.x, data.y, data.z);
@@ -194,9 +194,9 @@ void user_task_periodic(void *pvParameters)
     {
         // read sensor data
         read_data ();
-        
+
         // passive waiting until 1 second is over
-        vTaskDelay (1000/portTICK_PERIOD_MS);
+        vTaskDelay (100/portTICK_PERIOD_MS);
     }
 }
 
@@ -261,8 +261,8 @@ void user_init(void)
         // Interrupt configuration has to be done before the sensor is set
         // into measurement mode
 
-        // set polarity of INT signals if necessary
-        // l3gd20h_config_int_signals (dev, l3gd20h_high_active, l3gd20h_push_pull);
+        // set type and polarity of INT signals if necessary
+        // l3gd20h_config_int_signals (dev, l3gd20h_push_pull, l3gd20h_high_active);
 
         #ifdef INT_EVENT
         // enable event interrupts (axis movement and wake up)
@@ -313,7 +313,7 @@ void user_init(void)
         l3gd20h_get_hpf_ref (sensor);
 
         // LAST STEP: Finally set scale and sensor mode to start measurements
-        l3gd20h_set_scale(sensor, l3gd20h_scale_245dps);
+        l3gd20h_set_scale(sensor, l3gd20h_scale_245_dps);
         l3gd20h_set_mode (sensor, l3gd20h_normal_odr_12_5, 3, true, true, true);
 
         // -- SENSOR CONFIGURATION PART ---
