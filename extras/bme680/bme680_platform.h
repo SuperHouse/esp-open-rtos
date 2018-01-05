@@ -76,36 +76,10 @@
 
 #define spi_bus_init(bus,sck,miso,mosi) // not needed on ESP8266
 
-static const spi_settings_t bus_settings = {
-    .mode         = SPI_MODE0,
-    .freq_divider = SPI_FREQ_DIV_1M,
-    .msb          = true,
-    .minimal_pins = false,
-    .endianness   = SPI_LITTLE_ENDIAN
-};
-
-inline static bool spi_device_init (uint8_t bus, uint8_t cs)
-{
-    gpio_enable(cs, GPIO_OUTPUT);
-    gpio_write (cs, true);
-    return true;
-}
-
-inline static size_t spi_transfer_pf(uint8_t bus, uint8_t cs, const uint8_t *mosi, uint8_t *miso, uint16_t len)
-{
-    spi_settings_t old_settings;
-
-    spi_get_settings(bus, &old_settings);
-    spi_set_settings(bus, &bus_settings);
-    gpio_write(cs, false);
-
-    size_t transfered = spi_transfer (bus, (const void*)mosi, (void*)miso, len, SPI_8BIT);
-
-    gpio_write(cs, true);
-    spi_set_settings(bus, &old_settings);
-    
-    return transfered;
-}
+extern bool   spi_device_init (uint8_t bus, uint8_t cs);
+extern size_t spi_transfer_pf (uint8_t bus, uint8_t cs,
+                               const uint8_t *mosi, uint8_t *miso,
+                               uint16_t len);
 
 #endif // ESP_OPEN_RTOS
 
