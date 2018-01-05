@@ -218,6 +218,8 @@ l3gd20h_sensor_t* l3gd20h_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs)
         free (dev);
         return NULL;
     }
+    if (!addr) 
+        spi_semaphore_init(dev);
         
     // check availability of the sensor
     if (!l3gd20h_is_available (dev))
@@ -953,6 +955,8 @@ static bool l3gd20h_spi_read(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, 
 
     uint8_t addr = (reg & 0x3f) | L3GD20H_SPI_READ_FLAG | L3GD20H_SPI_AUTO_INC_FLAG;
     
+    spi_semaphore_take (dev);
+
     static uint8_t mosi[L3GD20H_SPI_BUF_SIZE];
     static uint8_t miso[L3GD20H_SPI_BUF_SIZE];
 
@@ -965,12 +969,15 @@ static bool l3gd20h_spi_read(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data, 
     {
         error_dev ("Could not read data from SPI", __FUNCTION__, dev);
         dev->error_code |= L3GD20H_SPI_READ_FAILED;
+        spi_semaphore_give (dev);
         return false;
     }
     
     // shift data one by left, first byte received while sending register address is invalid
     for (int i=0; i < len; i++)
       data[i] = miso[i+1];
+
+    spi_semaphore_give (dev);
 
     #ifdef L3GD20H_DEBUG_LEVEL_2
     printf("L3GD20H %s: read the following bytes from reg %02x: ", __FUNCTION__, reg);
@@ -1000,6 +1007,8 @@ static bool l3gd20h_spi_write(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data,
         return false;
     }
 
+    spi_semaphore_take (dev);
+
     reg &= 0x7f;
 
     // first byte in output is the register address
@@ -1018,10 +1027,13 @@ static bool l3gd20h_spi_write(l3gd20h_sensor_t* dev, uint8_t reg, uint8_t *data,
 
     if (!spi_transfer_pf (dev->bus, dev->cs, mosi, NULL, len+1))
     {
+        spi_semaphore_give (dev);
         error_dev ("Could not write data to SPI.", __FUNCTION__, dev);
         dev->error_code |= L3GD20H_SPI_WRITE_FAILED;
         return false;
     }
+
+    spi_semaphore_give (dev);
 
     return true;
 }

@@ -69,9 +69,9 @@
 
 // platform specific definitions
 
-#define spi_semaphore_init()
-#define spi_semaphore_take()
-#define spi_semaphore_give()
+#define spi_semaphore_init(d)
+#define spi_semaphore_take(d)
+#define spi_semaphore_give(d)
 
 // platform specific SPI functions
 
