@@ -397,6 +397,8 @@ lsm303d_sensor_t* lsm303d_init_sensor (uint8_t bus, uint8_t addr, uint8_t cs)
         free (dev);
         return NULL;
     }
+    if (!addr) 
+        spi_semaphore_init(dev);
         
     // check availability of the sensor
     if (!lsm303d_is_available (dev))
@@ -1554,6 +1556,8 @@ static bool lsm303d_spi_read(lsm303d_sensor_t* dev, uint8_t reg, uint8_t *data, 
 
     uint8_t addr = (reg & 0x3f) | LSM303D_SPI_READ_FLAG | LSM303D_SPI_AUTO_INC_FLAG;
     
+    spi_semaphore_take (dev);
+
     static uint8_t mosi[LSM303D_SPI_BUF_SIZE];
     static uint8_t miso[LSM303D_SPI_BUF_SIZE];
 
@@ -1564,6 +1568,7 @@ static bool lsm303d_spi_read(lsm303d_sensor_t* dev, uint8_t reg, uint8_t *data, 
     
     if (!spi_transfer_pf (dev->bus, dev->cs, mosi, miso, len+1))
     {
+        spi_semaphore_give (dev);
         error_dev ("Could not read data from SPI", __FUNCTION__, dev);
         dev->error_code |= LSM303D_SPI_READ_FAILED;
         return false;
@@ -1572,6 +1577,8 @@ static bool lsm303d_spi_read(lsm303d_sensor_t* dev, uint8_t reg, uint8_t *data, 
     // shift data one by left, first byte received while sending register address is invalid
     for (int i=0; i < len; i++)
       data[i] = miso[i+1];
+
+    spi_semaphore_give (dev);
 
     #ifdef LSM303D_DEBUG_LEVEL_2
     printf("LSM303D %s: read the following bytes from reg %02x: ", __FUNCTION__, reg);
@@ -1602,6 +1609,8 @@ static bool lsm303d_spi_write(lsm303d_sensor_t* dev, uint8_t reg, uint8_t *data,
         return false;
     }
 
+    spi_semaphore_take (dev);
+
     reg &= 0x7f;
 
     // first byte in output is the register address
@@ -1620,10 +1629,13 @@ static bool lsm303d_spi_write(lsm303d_sensor_t* dev, uint8_t reg, uint8_t *data,
 
     if (!spi_transfer_pf (dev->bus, dev->cs, mosi, NULL, len+1))
     {
+        spi_semaphore_give (dev);
         error_dev ("Could not write data to SPI.", __FUNCTION__, dev);
         dev->error_code |= LSM303D_SPI_WRITE_FAILED;
         return false;
     }
+
+    spi_semaphore_give (dev);
 
     return true;
 }
