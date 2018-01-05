@@ -153,9 +153,11 @@ void user_task_interrupt (void *pvParameters)
             // get the source of the interrupt and reset *INTx* signals
             #ifdef INT_DATA
             lis3dh_get_int_data_source  (sensor, &data_src);
-            #elif INT_EVENT
+            #endif
+            #ifdef INT_EVENT
             lis3dh_get_int_event_source (sensor, &event_src, lis3dh_int_event1_gen);
-            #elif INT_CLICK
+            #endif
+            #ifdef INT_CLICK
             lis3dh_get_int_click_source (sensor, &click_src);
             #endif
     
