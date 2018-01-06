@@ -305,11 +305,13 @@ ccs811_set_mode (sensor, ccs811_mode_1s);
 ...
 ```
 
-Last, the user task that uses the sensor has to be created.
+Finally, a user task that uses the sensor has to be created.
 
 ```
 xTaskCreate(user_task, "user_task", 256, NULL, 2, 0);
 ```
+
+**Please note:** To avoid concurrency situations when driver functions are used to access the sensor, for example to read data, the user task must not be created until the sensor configuration is completed.
 
 The user task can use different approaches to fetch new data. Either new data are fetched periodically or the interrupt signal *nINT* is used when new data are available or eCO2 value exceeds defined thresholds.
 
@@ -564,6 +566,8 @@ void user_init(void)
         // start periodic measurement with one measurement per second
         ccs811_set_mode (sensor, ccs811_mode_1s);
     }
+    else
+        printf("Could not initialize CCS811 sensor\n");
 }
 
 ```
