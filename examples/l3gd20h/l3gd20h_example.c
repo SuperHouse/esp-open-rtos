@@ -1,7 +1,7 @@
 /**
  * Simple example with one sensor connected to I2C or SPI. It demonstrates the
  * different approaches to fetch the data. Either one of the interrupt signals
- * for axes movement wake up *INT1* and data ready interrupt *INT2* is used
+ * for axis movement wake up *INT1* and data ready interrupt *INT2* is used
  * or the new data are fetched periodically.
  *
  * Harware configuration:
@@ -31,7 +31,8 @@
  *   +---------------+    +---------+        +---------------+   +----------+
  */
 
-// use following constants to define the example mode
+/* -- use following constants to define the example mode ----------- */
+
 // #define SPI_USED    // if defined SPI is used, otherwise I2C
 // #define FIFO_MODE   // multiple sample read mode
 // #define INT_DATA    // data interrupts used (data ready and FIFO status)
@@ -233,33 +234,27 @@ void user_init(void)
     
     if (sensor)
     {
-        // --- SYSTEM CONFIGURATION PART ----
+        #ifdef INT_USED
+
+        /** --- INTERRUPT CONFIGURATION PART ---- */
         
-        #if !defined (INT_USED)
+        // Interrupt configuration has to be done before the sensor is set
+        // into measurement mode to avoid losing interrupts
 
-        // create a user task that fetches data from sensor periodically
-        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        #else // INT_USED
-
-        // create a task that is triggered only in case of interrupts to fetch the data
-        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        // create event queue
+        // create an event queue to send interrupt events from interrupt
+        // handler to the interrupt task
         gpio_evt_queue = xQueueCreate(10, sizeof(uint8_t));
 
-        // configure interupt pins for *INT1* and *INT2* signals and set the interrupt handler
+        // configure interupt pins for *INT1* and *INT2* signals and set the
+        // interrupt handler
         gpio_enable(INT1_PIN, GPIO_INPUT);
         gpio_enable(INT2_PIN, GPIO_INPUT);
         gpio_set_interrupt(INT1_PIN, GPIO_INTTYPE_EDGE_POS, int_signal_handler);
         gpio_set_interrupt(INT2_PIN, GPIO_INTTYPE_EDGE_POS, int_signal_handler);
 
-        #endif  // !defined(INT_USED)
+        #endif  // INT_USED
         
-        // -- SENSOR CONFIGURATION PART ---
-
-        // Interrupt configuration has to be done before the sensor is set
-        // into measurement mode
+        /** -- SENSOR CONFIGURATION PART --- */
 
         // set type and polarity of INT signals if necessary
         // l3gd20h_config_int_signals (dev, l3gd20h_push_pull, l3gd20h_high_active);
@@ -316,7 +311,24 @@ void user_init(void)
         l3gd20h_set_scale(sensor, l3gd20h_scale_245_dps);
         l3gd20h_set_mode (sensor, l3gd20h_normal_odr_12_5, 3, true, true, true);
 
-        // -- SENSOR CONFIGURATION PART ---
+        /** -- TASK CREATION PART --- */
+
+        // must be done last to avoid concurrency situations with the sensor
+        // configuration part
+
+        #ifdef INT_USED
+
+        // create a task that is triggered only in case of interrupts to fetch the data
+        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
+        
+        #else // INT_USED
+
+        // create a user task that fetches data from sensor periodically
+        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
+
+        #endif
     }
+    else
+        printf("Could not initialize L3GD20H sensor\n");
 }
 

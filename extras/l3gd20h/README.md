@@ -556,9 +556,28 @@ sensor = l3gd20h_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
 
 The remaining of the program is independent on the communication interface.
 
+#### Configuring the sensor
+
+Optionally, you could wish to set some measurement parameters. For details see the sections above, the header file of the driver ```l3gd20h.h```, and of course the data sheet of the sensor.
+
+#### Starting measurements
+
+As last step, the sensor mode has be set to start periodic measurement. The sensor mode can be changed anytime later.
+
+```
+...
+// start periodic measurement with output data rate of 12.5 Hz
+l3gd20h_set_mode (sensor, l3gd20h_normal_odr_12_5, 3, true, true, true);
+...
+```
+
 #### Periodic user task
 
-If initialization of the sensor was successful, the user task that uses the sensor has to be created. The user task can use different approaches to fetch new data. Either new data are fetched periodically or interrupt signals are used when new data are available or a configured event happens.
+Finally, a user task that uses the sensor has to be created. 
+
+**Please note:** To avoid concurrency situations when driver functions are used to access the sensor, for example to read data, the user task must not be created until the sensor configuration is completed.
+
+The user task can use different approaches to fetch new data. Either new data are fetched periodically or interrupt signals are used when new data are available or a configured event happens.
 
 If new data are fetched **periodically** the implementation of the user task is quite simple and could look like following.
 
@@ -657,62 +676,15 @@ gpio_set_interrupt(INT2_PIN, GPIO_INTTYPE_EDGE_POS, int_signal_handler);
 
 Furthermore, the interrupts have to be enabled and configured in the L3GD20H sensor, see section **Interrupts** above.
 
-#### Configuring the sensor
-
-Optionally, you could wish to set some measurement parameters. For details see the sections above, the header file of the driver ```l3gd20h.h```, and of course the data sheet of the sensor.
-
-#### Starting measurements
-
-As last step, the sensor mode has be set to start periodic measurement. The sensor mode can be changed anytime later.
-
-```
-...
-// start periodic measurement with output data rate of 12.5 Hz
-l3gd20h_set_mode (sensor, l3gd20h_normal_odr_12_5, 3, true, true, true);
-...
-```
-
 ## Full Example
 
 ```
-/**
- * Simple example with one sensor connected to I2C or SPI. It demonstrates the
- * different approaches to fetch the data. Either one of the interrupt signals
- * for axes movement wake up *INT1* and data ready interrupt *INT2* is used
- * or the new data are fetched periodically.
- *
- * Harware configuration:
- *
- *   I2C
- *
- *   +-----------------+   +----------+
- *   | ESP8266 / ESP32 |   | L3GD20H  |
- *   |                 |   |          |
- *   |   GPIO 14 (SCL) ----> SCL      |
- *   |   GPIO 13 (SDA) <---> SDA      |
- *   |   GPIO 5        <---- INT1     |
- *   |   GPIO 4        <---- DRDY/INT2|
- *   +-----------------+   +----------+
- *
- *   SPI
- *
- *   +---------------+   +----------+        +---------------+   +----------+
- *   | ESP8266       |   | L3GD20H  |        | ESP32         |   | L3GD20H  |
- *   |               |   |          |        |               |   |          |
- *   | GPIO 14 (SCK) ----> SCK      |        | GPIO 16 (SCK) ----> SCK      |
- *   | GPIO 13 (MOSI)----> SDI      |        | GPIO 17 (MOSI)----> SDI      |
- *   | GPIO 12 (MISO)<---- SDO      |        | GPIO 18 (MISO)<---- SDO      |
- *   | GPIO 2  (CS)  ----> CS       |        | GPIO 19 (CS)  ----> CS       |
- *   | GPIO 5        <---- INT1     |        | GPIO 5        <---- INT1     |
- *   | GPIO 4        <---- DRDY/INT2|        | GPIO 4        <---- DRDY/INT2|
- *   +---------------+    +---------+        +---------------+   +----------+
- */
+/* -- use following constants to define the example mode ----------- */
 
-// use following constants to define the example mode
 // #define SPI_USED    // if defined SPI is used, otherwise I2C
-// #define INT_EVENT   // event interrupts used (axes movement and wake up)
-// #define INT_DATA    // data interrupts used (data ready and FIFO status)
 // #define FIFO_MODE   // multiple sample read mode
+// #define INT_DATA    // data interrupts used (data ready and FIFO status)
+// #define INT_EVENT   // event interrupts used (axis movement and wake up)
 
 #if defined(INT_EVENT) || defined(INT_DATA)
 #define INT_USED
@@ -787,8 +759,8 @@ void read_data (void)
     
     l3gd20h_float_data_t  data;
 
-    while (l3gd20h_new_data (sensor) &&
-           l3gd20h_get_float_data (sensor, &data))
+    if (l3gd20h_new_data (sensor) &&
+        l3gd20h_get_float_data (sensor, &data))
         // max. full scale is +-2000 dps and best sensitivity is 1 mdps, i.e. 7 digits
         printf("%.3f L3GD20H (xyz)[dps]: %+9.3f %+9.3f  %+9.3f\n",
                (double)sdk_system_get_time()*1e-3, data.x, data.y, data.z);
@@ -871,9 +843,9 @@ void user_task_periodic(void *pvParameters)
     {
         // read sensor data
         read_data ();
-        
+
         // passive waiting until 1 second is over
-        vTaskDelay (1000/portTICK_PERIOD_MS);
+        vTaskDelay (100/portTICK_PERIOD_MS);
     }
 }
 
@@ -910,33 +882,27 @@ void user_init(void)
     
     if (sensor)
     {
-        // --- SYSTEM CONFIGURATION PART ----
+        #ifdef INT_USED
+
+        /** --- INTERRUPT CONFIGURATION PART ---- */
         
-        #if !defined (INT_USED)
+        // Interrupt configuration has to be done before the sensor is set
+        // into measurement mode to avoid losing interrupts
 
-        // create a user task that fetches data from sensor periodically
-        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        #else // INT_USED
-
-        // create a task that is triggered only in case of interrupts to fetch the data
-        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        // create event queue
+        // create an event queue to send interrupt events from interrupt
+        // handler to the interrupt task
         gpio_evt_queue = xQueueCreate(10, sizeof(uint8_t));
 
-        // configure interupt pins for *INT1* and *INT2* signals and set the interrupt handler
+        // configure interupt pins for *INT1* and *INT2* signals and set the
+        // interrupt handler
         gpio_enable(INT1_PIN, GPIO_INPUT);
         gpio_enable(INT2_PIN, GPIO_INPUT);
         gpio_set_interrupt(INT1_PIN, GPIO_INTTYPE_EDGE_POS, int_signal_handler);
         gpio_set_interrupt(INT2_PIN, GPIO_INTTYPE_EDGE_POS, int_signal_handler);
 
-        #endif  // !defined(INT_USED)
+        #endif  // INT_USED
         
-        // -- SENSOR CONFIGURATION PART ---
-
-        // Interrupt configuration has to be done before the sensor is set
-        // into measurement mode
+        /** -- SENSOR CONFIGURATION PART --- */
 
         // set type and polarity of INT signals if necessary
         // l3gd20h_config_int_signals (dev, l3gd20h_push_pull, l3gd20h_high_active);
@@ -993,8 +959,25 @@ void user_init(void)
         l3gd20h_set_scale(sensor, l3gd20h_scale_245_dps);
         l3gd20h_set_mode (sensor, l3gd20h_normal_odr_12_5, 3, true, true, true);
 
-        // -- SENSOR CONFIGURATION PART ---
+        /** -- TASK CREATION PART --- */
+
+        // must be done last to avoid concurrency situations with the sensor
+        // configuration part
+
+        #ifdef INT_USED
+
+        // create a task that is triggered only in case of interrupts to fetch the data
+        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
+        
+        #else // INT_USED
+
+        // create a user task that fetches data from sensor periodically
+        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
+
+        #endif
     }
+    else
+        printf("Could not initialize L3GD20H sensor\n");
 }
 ```
 
