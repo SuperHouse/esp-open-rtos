@@ -378,10 +378,7 @@ Optionally, you could wish to set some measurement parameters. For details see t
 ```
 if (sensor)
 {
-    // Create a task that uses the sensor
-    xTaskCreate(user_task, "user_task", 256, NULL, 2, NULL);
-
-    /** -- OPTIONAL PART -- */
+    /** -- SENSOR CONFIGURATION PART (optional) --- */
 
     // Changes the oversampling rates to 4x oversampling for temperature
     // and 2x oversampling for humidity. Pressure measurement is skipped.
@@ -394,11 +391,21 @@ if (sensor)
     bme680_set_heater_profile (sensor, 0, 200, 100);
     bme680_use_heater_profile (sensor, 0);
 
+    /** -- TASK CREATION PART --- */
+
+    // must be done last to avoid concurrency situations with the sensor 
+    // configuration part
+
+    // Create a task that uses the sensor
+    xTaskCreate(user_task, "user_task", TASK_STACK_DEPTH, NULL, 2, NULL);
+
     ...
 }
 ```
 
-Last, the user task that uses the sensor has to be created.
+Finally, a user task that uses the sensor has to be created.
+
+**Please note:** To avoid concurrency situations when driver functions are used to access the sensor, for example to read data, the user task must not be created until the sensor configuration is completed.
 
 
 ### User task
@@ -566,10 +573,7 @@ void user_init(void)
 
     if (sensor)
     {
-        // Create a task that uses the sensor
-        xTaskCreate(user_task, "user_task", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        /** -- OPTIONAL PART -- */
+        /** -- SENSOR CONFIGURATION PART (optional) --- */
 
         // Changes the oversampling rates to 4x oversampling for temperature
         // and 2x oversampling for humidity. Pressure measurement is skipped.
@@ -584,7 +588,17 @@ void user_init(void)
 
         // Set ambient temperature to 10 degree Celsius
         bme680_set_ambient_temperature (sensor, 10);
+            
+        /** -- TASK CREATION PART --- */
+
+        // must be done last to avoid concurrency situations with the sensor 
+        // configuration part
+
+        // Create a task that uses the sensor
+        xTaskCreate(user_task, "user_task", TASK_STACK_DEPTH, NULL, 2, NULL);
     }
+    else
+        printf("Could not initialize BME680 sensor\n");
 }
 ```
 

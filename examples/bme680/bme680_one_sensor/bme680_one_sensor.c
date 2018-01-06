@@ -138,10 +138,7 @@ void user_init(void)
 
     if (sensor)
     {
-        // Create a task that uses the sensor
-        xTaskCreate(user_task, "user_task", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        /** -- OPTIONAL PART -- */
+        /** -- SENSOR CONFIGURATION PART (optional) --- */
 
         // Changes the oversampling rates to 4x oversampling for temperature
         // and 2x oversampling for humidity. Pressure measurement is skipped.
@@ -156,5 +153,15 @@ void user_init(void)
 
         // Set ambient temperature to 10 degree Celsius
         bme680_set_ambient_temperature (sensor, 10);
+            
+        /** -- TASK CREATION PART --- */
+
+        // must be done last to avoid concurrency situations with the sensor 
+        // configuration part
+
+        // Create a task that uses the sensor
+        xTaskCreate(user_task, "user_task", TASK_STACK_DEPTH, NULL, 2, NULL);
     }
+    else
+        printf("Could not initialize BME680 sensor\n");
 }
