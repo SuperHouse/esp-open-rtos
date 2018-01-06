@@ -596,7 +596,7 @@ If SPI interface is used, configuration for ESP8266 and ESP32 could look like fo
   |   GPIO 12 (MISO)<------ SDO      |              |   GPIO 18 (MISO)<------ SDO      |
   |   GPIO 2  (CS)  ------> CS       |              |   GPIO 19 (CS)  ------> CS       |
   |   GPIO 5        <------ INT1     |              |   GPIO 5        <------ INT1     |
-  |   GPIO 4        <------ INT2     |              |   GPIO 5        <------ INT2     |
+  |   GPIO 4        <------ INT2     |              |   GPIO 4        <------ INT2     |
   +-----------------+     +----------+              +-----------------+     +----------+
 ```
 
@@ -682,9 +682,29 @@ sensor = lsm303d_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
 
 The remaining of the program is independent on the communication interface.
 
+#### Configuring the sensor
+
+Optionally, you could wish to set some measurement parameters. For details see the sections above, the header file of the driver ```lsm303d.h```, and of course the data sheet of the sensor.
+
+#### Starting measurements
+
+As last step, the sensor mode has be set to start periodic measurement. The sensor mode can be changed anytime later.
+
+```
+...
+// start periodic measurement with output data rate of 12.5 Hz
+lsm303d_set_a_mode (sensor, lsm303d_a_odr_12_5, lsm303d_a_aaf_bw_773, true, true, true);
+lsm303d_set_m_mode (sensor, lsm303d_m_odr_12_5, lsm303d_m_low_res, lsm303d_m_continuous);
+...
+```
+
 #### Periodic user task
 
-If initialization of the sensor was successful, the user task that uses the sensor has to be created. The user task can use different approaches to fetch new data. Either new data are fetched periodically or interrupt signals are used when new data are available or a configured event happens.
+Finally, a user task that uses the sensor has to be created. 
+
+**Please note:** To avoid concurrency situations when driver functions are used to access the sensor, for example to read data, the user task must not be created until the sensor configuration is completed.
+
+The user task can use different approaches to fetch new data. Either new data are fetched periodically or interrupt signals are used when new data are available or a configured event happens.
 
 If new data are fetched **periodically** the implementation of the user task is quite simple and could look like following.
 
@@ -789,22 +809,6 @@ gpio_set_interrupt(INT2_PIN, GPIO_INTTYPE_EDGE_POS, int_signal_handler);
 ```
 
 Furthermore, the interrupts have to be enabled and configured in the LSM303D sensor, see section **Interrupts** above.
-
-#### Configuring the sensor
-
-Optionally, you could wish to set some measurement parameters. For details see the sections above, the header file of the driver ```lsm303d.h```, and of course the data sheet of the sensor.
-
-#### Starting measurements
-
-As last step, the sensor mode has be set to start periodic measurement. The sensor mode can be changed anytime later.
-
-```
-...
-// start periodic measurement with output data rate of 12.5 Hz
-lsm303d_set_a_mode (sensor, lsm303d_a_odr_12_5, lsm303d_a_aaf_bw_773, true, true, true);
-lsm303d_set_m_mode (sensor, lsm303d_m_odr_12_5, lsm303d_m_low_res, lsm303d_m_continuous);
-...
-```
 
 ## Full Example
 
@@ -917,8 +921,6 @@ void read_data ()
                (double)sdk_system_get_time()*1e-3, 
                 m_data.mx, m_data.my, m_data.mz);
 
-    lsm303d_raw_m_data_t  m_data;
-
     #ifdef TEMP_USED
     float temp = lsm303d_get_temperature (sensor);
     
@@ -958,11 +960,14 @@ void user_task_interrupt (void *pvParameters)
             // get the source of the interrupt that reset *INTx* signals
             #ifdef INT_DATA
             lsm303d_get_int_data_source    (sensor, &data_src);
-            #elif INT_THRESH
+            #endif
+            #ifdef INT_THRESH
             lsm303d_get_int_m_thresh_source(sensor, &thresh_src);
-            #elif INT_EVENT
+            #endif
+            #ifdef INT_EVENT
             lsm303d_get_int_event_source   (sensor, &event_src, lsm303d_int_event1_gen);
-            #elif INT_CLICK
+            #endif
+            #ifdef INT_CLICK
             lsm303d_get_int_click_source   (sensor, &click_src);
             #endif
 
@@ -1067,17 +1072,12 @@ void user_init(void)
     
     if (sensor)
     {
-        // --- SYSTEM CONFIGURATION PART ----
+        #ifdef INT_USED
+
+        /** --- INTERRUPT CONFIGURATION PART ---- */
         
-        #if !defined (INT_USED)
-
-        // create a user task that fetches data from sensor periodically
-        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        #else // INT_USED
-
-        // create a task that is triggered only in case of interrupts to fetch the data
-        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
+        // Interrupt configuration has to be done before the sensor is set
+        // into measurement mode to avoid losing interrupts
 
         // create an event queue to send interrupt events from interrupt
         // handler to the interrupt task
@@ -1089,13 +1089,10 @@ void user_init(void)
         gpio_set_interrupt(INT1_PIN, GPIO_INTTYPE_EDGE_POS, int_signal_handler);
         gpio_set_interrupt(INT2_PIN, GPIO_INTTYPE_EDGE_POS, int_signal_handler);
 
-        #endif  // !defined(INT_USED)
+        #endif  // INT_USED
         
-        // -- SENSOR CONFIGURATION PART ---
+        /** -- SENSOR CONFIGURATION PART --- */
 
-        // Interrupt configuration has to be done before the sensor is set
-        // into measurement mode
-        
         // set the type of INTx signals if necessary
         // lsm303d_config_int_signals (sensor, lsm303d_push_pull);
 
@@ -1195,7 +1192,25 @@ void user_init(void)
         lsm303d_set_a_mode (sensor, lsm303d_a_odr_12_5, lsm303d_a_aaf_bw_773, true, true, true);
         lsm303d_set_m_mode (sensor, lsm303d_m_odr_12_5, lsm303d_m_low_res, lsm303d_m_continuous);
 
-        // -- SENSOR CONFIGURATION PART ---
+        /** -- TASK CREATION PART --- */
+
+        // must be done last to avoid concurrency situations with the sensor
+        // configuration part
+
+        #ifdef INT_USED
+
+        // create a task that is triggered only in case of interrupts to fetch the data
+        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
+        
+        #else // INT_USED
+
+        // create a user task that fetches data from sensor periodically
+        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
+
+        #endif
     }
+    else
+        printf("Could not initialize LSM303D sensor\n");
 }
+
 ```

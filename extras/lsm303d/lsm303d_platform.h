@@ -67,12 +67,6 @@
 #include "esp/spi.h"
 #include "i2c/i2c.h"
 
-// platform specific definitions
-
-#define spi_semaphore_init(d)
-#define spi_semaphore_take(d)
-#define spi_semaphore_give(d)
-
 // platform specific SPI functions
 
 #define spi_bus_init(bus,sck,miso,mosi) // not needed on ESP8266
