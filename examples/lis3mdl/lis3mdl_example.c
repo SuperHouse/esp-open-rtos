@@ -203,19 +203,15 @@ void user_init(void)
     
     if (sensor)
     {
-        // --- SYSTEM CONFIGURATION PART ----
+        #ifdef INT_USED
+
+        /** --- INTERRUPT CONFIGURATION PART ---- */
         
-        #if !defined (INT_USED)
+        // Interrupt configuration has to be done before the sensor is set
+        // into measurement mode to avoid losing interrupts
 
-        // create a user task that fetches data from sensor periodically
-        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        #else // INT_USED
-
-        // create a task that is triggered only in case of interrupts to fetch the data
-        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        // create event queue
+        // create an event queue to send interrupt events from interrupt
+        // handler to the interrupt task
         gpio_evt_queue = xQueueCreate(10, sizeof(uint8_t));
 
         // configure interupt pins for *INT* and *DRDY* signals and set the interrupt handler
@@ -249,7 +245,24 @@ void user_init(void)
         lis3mdl_set_scale(sensor, lis3mdl_scale_4_Gs);
         lis3mdl_set_mode (sensor, lis3mdl_lpm_10);
 
-        // -- SENSOR CONFIGURATION PART ---
+        /** -- TASK CREATION PART --- */
+
+        // must be done last to avoid concurrency situations with the sensor
+        // configuration part
+
+        #ifdef INT_USED
+
+        // create a task that is triggered only in case of interrupts to fetch the data
+        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
+        
+        #else // INT_USED
+
+        // create a user task that fetches data from sensor periodically
+        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
+
+        #endif
     }
+    else
+        printf("Could not initialize LIS3MDL sensor\n");
 }
 

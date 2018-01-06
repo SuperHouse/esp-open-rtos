@@ -337,9 +337,28 @@ sensor = lis3mdl_init_sensor (SPI_BUS, 0, SPI_CS_GPIO);
 
 The remaining of the program is independent on the communication interface.
 
+#### Configuring the sensor
+
+Optionally, you could wish to set some measurement parameters. For details see the sections above, the header file of the driver ```lis3mdl.h```, and of course the data sheet of the sensor.
+
+#### Starting measurements
+
+As last step, the sensor mode has be set to start periodic measurement. The sensor mode can be changed anytime later.
+
+```
+...
+// start periodic measurement with output data rate of 10 Hz
+lis3mdl_set_mode (sensor, lis3mdl_lpm_10);
+...
+```
+
 #### Periodic user task
 
-If initialization of the sensor was successful, the user task that uses the sensor has to be created. The user task can use different approaches to fetch new data. Either new data are fetched periodically or interrupt signals are used when new data are available or a configured event happens.
+Finally, a user task that uses the sensor has to be created. 
+
+**Please note:** To avoid concurrency situations when driver functions are used to access the sensor, for example to read data, the user task must not be created until the sensor configuration is completed.
+
+The user task can use different approaches to fetch new data. Either new data are fetched periodically or interrupt signals are used when new data are available or a configured event happens.
 
 If new data are fetched **periodically** the implementation of the user task is quite simple and could look like following.
 
@@ -432,21 +451,6 @@ gpio_set_interrupt(PIN_DRDY, GPIO_INTTYPE_EDGE_POS, int_signal_handler);
 ```
 
 Furthermore, the interrupts have to be enabled and configured in the LIS3MDL sensor, see section **Interrupts** above.
-
-#### Configuring the sensor
-
-Optionally, you could wish to set some measurement parameters. For details see the sections above, the header file of the driver ```lis3mdl.h```, and of course the data sheet of the sensor.
-
-#### Starting measurements
-
-As last step, the sensor mode has be set to start periodic measurement. The sensor mode can be changed anytime later.
-
-```
-...
-// start periodic measurement with output data rate of 10 Hz
-lis3mdl_set_mode (sensor, lis3mdl_lpm_10);
-...
-```
 
 ## Full Example
 
@@ -556,7 +560,7 @@ void user_task_interrupt (void *pvParameters)
                 // get the source of the interrupt and reset INT signals
                 lis3mdl_get_int_source (sensor, &int_src);
     
-                // in case of DRDY interrupt
+                // in case of DRDY interrupt or activity interrupt read one data sample
                 if (int_src.active)
                     read_data ();
             }
@@ -624,19 +628,15 @@ void user_init(void)
     
     if (sensor)
     {
-        // --- SYSTEM CONFIGURATION PART ----
+        #ifdef INT_USED
+
+        /** --- INTERRUPT CONFIGURATION PART ---- */
         
-        #if !defined (INT_USED)
+        // Interrupt configuration has to be done before the sensor is set
+        // into measurement mode to avoid losing interrupts
 
-        // create a user task that fetches data from sensor periodically
-        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        #else // INT_USED
-
-        // create a task that is triggered only in case of interrupts to fetch the data
-        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
-
-        // create event queue
+        // create an event queue to send interrupt events from interrupt
+        // handler to the interrupt task
         gpio_evt_queue = xQueueCreate(10, sizeof(uint8_t));
 
         // configure interupt pins for *INT* and *DRDY* signals and set the interrupt handler
@@ -670,8 +670,25 @@ void user_init(void)
         lis3mdl_set_scale(sensor, lis3mdl_scale_4_Gs);
         lis3mdl_set_mode (sensor, lis3mdl_lpm_10);
 
-        // -- SENSOR CONFIGURATION PART ---
+        /** -- TASK CREATION PART --- */
+
+        // must be done last to avoid concurrency situations with the sensor
+        // configuration part
+
+        #ifdef INT_USED
+
+        // create a task that is triggered only in case of interrupts to fetch the data
+        xTaskCreate(user_task_interrupt, "user_task_interrupt", TASK_STACK_DEPTH, NULL, 2, NULL);
+        
+        #else // INT_USED
+
+        // create a user task that fetches data from sensor periodically
+        xTaskCreate(user_task_periodic, "user_task_periodic", TASK_STACK_DEPTH, NULL, 2, NULL);
+
+        #endif
     }
+    else
+        printf("Could not initialize LIS3MDL sensor\n");
 }
 
 ```
