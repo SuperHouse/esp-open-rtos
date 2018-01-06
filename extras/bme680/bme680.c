@@ -305,8 +305,6 @@ bme680_sensor_t* bme680_init_sensor(uint8_t bus, uint8_t addr, uint8_t cs)
         free (dev);
         return NULL;
     }
-    if (!addr) 
-        spi_semaphore_init(dev);
 
     // reset the sensor
     if (!bme680_reset(dev))
@@ -1278,12 +1276,9 @@ static bool bme680_spi_read(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, ui
         return false;
     }
 
-    spi_semaphore_take (dev);
-
     // set mem page first
     if (!bme680_spi_set_mem_page (dev, reg))
     {
-        spi_semaphore_give (dev);
         error_dev ("Error on read from SPI slave on bus 1. Could not set mem page.",
                    __FUNCTION__, dev);
         return false;
@@ -1302,7 +1297,6 @@ static bool bme680_spi_read(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, ui
     
     if (!spi_transfer_pf (dev->bus, dev->cs, mosi, miso, len+1))
     {
-        spi_semaphore_give (dev);
         error_dev ("Could not read data from SPI", __FUNCTION__, dev);
         dev->error_code |= BME680_SPI_READ_FAILED;
         return false;
@@ -1311,8 +1305,6 @@ static bool bme680_spi_read(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, ui
     for (int i=0; i < len; i++)
       data[i] = miso[i+1];
 
-    spi_semaphore_give (dev);
-    
     #ifdef BME680_DEBUG_LEVEL_2
     printf("BME680 %s: read the following bytes: ", __FUNCTION__);
     printf("%0x ", reg);
@@ -1340,15 +1332,11 @@ static bool bme680_spi_write(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, u
         return false;
     }
 
-    if (reg != BME680_REG_STATUS)
-        spi_semaphore_take (dev);
-    
     // set mem page first if not mem page register is used
     if (reg != BME680_REG_STATUS && !bme680_spi_set_mem_page (dev, reg))
     {
         error_dev ("Error on write from SPI slave on bus 1. Could not set mem page.",
                    __FUNCTION__, dev);
-        spi_semaphore_give (dev);
         return false;
     }
 
@@ -1370,14 +1358,10 @@ static bool bme680_spi_write(bme680_sensor_t* dev, uint8_t reg, uint8_t *data, u
 
     if (!spi_transfer_pf (dev->bus, dev->cs, mosi, NULL, len+1))
     {
-        if (reg != BME680_REG_STATUS)
-            spi_semaphore_give (dev);
         error_dev ("Could not write data to SPI.", __FUNCTION__, dev);
         dev->error_code |= BME680_SPI_WRITE_FAILED;
         return false;
     }
-    if (reg != BME680_REG_STATUS)
-        spi_semaphore_give (dev);
 
     return true;
 }
