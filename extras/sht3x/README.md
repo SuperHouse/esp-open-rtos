@@ -102,11 +102,13 @@ if ((sensor = sht3x_init_sensor (I2C_BUS, SHT3x_ADDR_2)))
 
 Function ```sht3x_init_sensor``` returns a pointer to the sensor device data structure or NULL in case of error.
 
-Last, the user task that uses the sensor has to be created.
+Finally, a user task that uses the sensor has to be created.
 
 ```
 xTaskCreate(user_task, "user_task", 256, NULL, 2, 0);
 ```
+
+**Please note:** To avoid concurrency situations when driver functions are used to access the sensor, for example to read data, the user task must not be created until the sensor configuration is completed.
 
 In **periodic mode**, the user task has to start the periodic measurement only once at the beginning of the task. After that, it has only to wait for the results of the first measurement. In the task loop itself, it simply fetches the next measurement results in each cycle.
 
