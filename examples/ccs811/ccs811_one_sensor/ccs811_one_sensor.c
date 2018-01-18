@@ -175,6 +175,6 @@ void user_init(void)
         ccs811_set_mode (sensor, ccs811_mode_1s);
     }
     else
-        printf("Could not initialize CCS811 sensor\n");
+        printf("Could not initialize the CCS811 sensor\n");
 }
 
