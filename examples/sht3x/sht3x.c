@@ -164,6 +164,8 @@ void user_init(void)
         // Create a user task that uses the sensors.
         xTaskCreate(user_task, "user_task", TASK_STACK_DEPTH, NULL, 2, 0);
     }
+    else
+        printf("Could not initialize SHT3x sensor\n");
 
     // That's it.
 }
