@@ -494,7 +494,8 @@ static bool ccs811_reg_read(ccs811_sensor_t* dev, uint8_t reg, uint8_t *data, ui
     }
 
 #   ifdef CCS811_DEBUG_LEVEL_2
-    printf("CCS811 %s: Read following bytes: ", __FUNCTION__);
+    printf("CCS811 %s: bus %d, addr %02x - Read following bytes: ", 
+           __FUNCTION__, dev->bus, dev->addr);
     printf("%0x: ", reg);
     for (int i=0; i < len; i++)
         printf("%0x ", data[i]);
@@ -514,7 +515,8 @@ static bool ccs811_reg_write(ccs811_sensor_t* dev, uint8_t reg, uint8_t *data, u
 #   ifdef CCS811_DEBUG_LEVEL_2
     if (data && len)
     {
-        printf("CCS811 %s: Write following bytes starting at reg addr %02x: ", __FUNCTION__, reg);
+        printf("CCS811 %s: bus %d, addr %02x - Write following bytes: ", 
+               __FUNCTION__, dev->bus, dev->addr);
         for (int i=0; i < len; i++)
             printf("%02x ", data[i]);
         printf("\n");
