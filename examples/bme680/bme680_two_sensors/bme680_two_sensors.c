@@ -1,7 +1,7 @@
 /**
  * Simple example with two sensors, one sensor connected to I2C bus 0 and
  * one sensor connected to SPI. It defines two different user tasks, one for
- * each sensor. It demonstrate the possible approaches to wait for measurement
+ * each sensor. It demonstrates the possible approaches to wait for measurement
  * results, active busy waiting using ```bme680_is_measuring``` and passive
  * waiting using *vTaskDelay*.
  *
@@ -128,13 +128,7 @@ void user_init(void)
 
     if (sensor1 && sensor2)
     {
-        // Create the tasks that use the sensors
-        xTaskCreate(user_task_sensor1, "user_task_sensor1", 256, NULL, 2, 0);
-        xTaskCreate(user_task_sensor2, "user_task_sensor2", 256, NULL, 2, 0);
-
-        // That's it.
-
-        /** -- OPTIONAL PART -- */
+        /** -- SENSOR CONFIGURATION PART (optional) --- */
 
         // Changes the oversampling rates for both sensor to different values
         bme680_set_oversampling_rates(sensor1, osr_4x, osr_2x, osr_1x);
@@ -151,5 +145,14 @@ void user_init(void)
         // Activate the heater profile 0
         bme680_use_heater_profile (sensor1, 0);
         bme680_use_heater_profile (sensor2, 0);
+
+        /** -- TASK CREATION PART --- */
+
+        // must be done last to avoid concurrency situations with the sensor 
+        // configuration part
+
+        // Create the tasks that use the sensors
+        xTaskCreate(user_task_sensor1, "user_task_sensor1", 256, NULL, 2, 0);
+        xTaskCreate(user_task_sensor2, "user_task_sensor2", 256, NULL, 2, 0);
     }
 }
