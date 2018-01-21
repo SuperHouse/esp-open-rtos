@@ -97,10 +97,14 @@ $(1)_DEFAULT_ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 $(1)_ROOT ?= $$($(1)_DEFAULT_ROOT)
 $(1)_OBJ_DIR   = $(call lc,$(BUILD_DIR)$(1)/)
 ### determine source files and object files ###
-$(1)_SRC_FILES ?= $$(foreach sdir,$$($(1)_SRC_DIR), 				\
-			$$(wildcard $$(sdir)/*.c) $$(wildcard $$(sdir)/*.S) 	\
-			$$(wildcard $$(sdir)/*.cpp)) 				\
+$(1)_TMP_SRC_FILES = $$(foreach sdir,$$($(1)_SRC_DIR), 			\
+			$$(wildcard $$(sdir)/*.c) $$(wildcard $$(sdir)/*.S)) 	\
 			$$($(1)_EXTRA_SRC_FILES)
+ifeq ($(ENABLE_CXX),1)
+		$(1)_TMP_SRC_FILES += $$(foreach sdir,$$($(1)_SRC_DIR), \
+			$$(wildcard $$(sdir)/*.cpp))
+endif
+$(1)_SRC_FILES ?= $$($(1)_TMP_SRC_FILES)
 $(1)_REAL_SRC_FILES = $$(foreach sfile,$$($(1)_SRC_FILES),$$(realpath $$(sfile)))
 $(1)_REAL_ROOT = $$(realpath $$($(1)_ROOT))
 # patsubst here substitutes real component root path for the relative OBJ_DIR path, making things short again

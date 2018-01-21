@@ -85,6 +85,8 @@ SPLIT_SECTIONS ?= 1
 # compile without warnings to be accepted.
 WARNINGS_AS_ERRORS ?= 0
 
+ENABLE_CXX ?= 1
+
 # Common flags for both C & C++_
 C_CXX_FLAGS ?= -Wall -Wl,-EL -nostdlib $(EXTRA_C_CXX_FLAGS)
 # Flags for C only
