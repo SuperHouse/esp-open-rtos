@@ -1689,7 +1689,9 @@ static void server_task(void *pvParameters)
         struct netif *softap_netif = sdk_system_get_netif(SOFTAP_IF);
         if ((wifi_sta_mdns && station_netif) || (wifi_ap_mdns && softap_netif)) {
 #if LWIP_MDNS_RESPONDER
+            LOCK_TCPIP_CORE();
             mdns_resp_init();
+            UNLOCK_TCPIP_CORE();
 #endif
 #if EXTRAS_MDNS_RESPONDER
             mdns_init();
@@ -1697,16 +1699,22 @@ static void server_task(void *pvParameters)
 #endif
         }
 #if LWIP_MDNS_RESPONDER
+        LOCK_TCPIP_CORE();
         if (wifi_sta_mdns && station_netif) {
+            LOCK_TCPIP_CORE();
             mdns_resp_add_netif(station_netif, hostname, 120);
             mdns_resp_add_service(station_netif, hostname, "_http",
                                   DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+            UNLOCK_TCPIP_CORE();
         }
         if (wifi_ap_mdns && softap_netif) {
+            LOCK_TCPIP_CORE();
             mdns_resp_add_netif(softap_netif, hostname, 120);
             mdns_resp_add_service(softap_netif, hostname, "_http",
                                   DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+            UNLOCK_TCPIP_CORE();
         }
+        UNLOCK_TCPIP_CORE();
 #endif
 
         free(hostname);
@@ -2233,10 +2241,6 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
         params->dispatch = dispatch;
 
         size_t stack_size = 464;
-#if LWIP_MDNS_RESPONDER
-        /* Uses a lot of stack space, so allocate extra. */
-        stack_size += 128;
-#endif
         xTaskCreate(server_task, "WiFi Cfg HTTP", stack_size, params, 2, NULL);
     }
 }

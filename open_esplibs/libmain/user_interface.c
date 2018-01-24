@@ -546,10 +546,13 @@ bool sdk_wifi_station_dhcpc_start(void) {
         sdk_info.sta_ipaddr.addr = 0;
         sdk_info.sta_netmask.addr = 0;
         sdk_info.sta_gw.addr = 0;
+        LOCK_TCPIP_CORE();
         netif_set_addr(netif, &sdk_info.sta_ipaddr, &sdk_info.sta_netmask, &sdk_info.sta_gw);
         if (dhcp_start(netif)) {
+            UNLOCK_TCPIP_CORE();
             return false;
         }
+        UNLOCK_TCPIP_CORE();
     }
     sdk_dhcpc_flag = DHCP_STARTED;
     return true;
@@ -561,9 +564,11 @@ bool sdk_wifi_station_dhcpc_stop(void) {
         return false;
     }
     if (netif && sdk_dhcpc_flag == DHCP_STARTED) {
+        LOCK_TCPIP_CORE();
         dhcp_stop(netif);
+        sdk_dhcpc_flag = DHCP_STOPPED;
+        UNLOCK_TCPIP_CORE();
     }
-    sdk_dhcpc_flag = DHCP_STOPPED;
     return true;
 }
 
@@ -616,8 +621,11 @@ bool sdk_wifi_set_ip_info(uint8_t if_index, struct ip_info *info) {
     }
 
     struct netif *netif = _get_netif(if_index);
-    if (netif)
+    if (netif) {
+        LOCK_TCPIP_CORE();
         netif_set_addr(netif, &info->ip, &info->netmask, &info->gw);
+        UNLOCK_TCPIP_CORE();
+    }
 
     return true;
 }

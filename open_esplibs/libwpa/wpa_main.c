@@ -97,8 +97,10 @@ void sdk_eagle_auth_done() {
 
     if (sdk_dhcpc_flag != DHCP_STOPPED) {
         printf("dhcp client start...\n");
+        LOCK_TCPIP_CORE();
         netif_set_up(netif);
         dhcp_start(netif);
+        UNLOCK_TCPIP_CORE();
         return;
     }
 
@@ -107,8 +109,10 @@ void sdk_eagle_auth_done() {
         return;
     }
 
+    LOCK_TCPIP_CORE();
     netif_set_addr(netif, &sdk_info.sta_ipaddr, &sdk_info.sta_netmask, &sdk_info.sta_gw);
     netif_set_up(netif);
+    UNLOCK_TCPIP_CORE();
     sdk_system_station_got_ip_set(ip_2_ip4(&netif->ip_addr),
                                   ip_2_ip4(&netif->netmask),
                                   ip_2_ip4(&netif->gw));
