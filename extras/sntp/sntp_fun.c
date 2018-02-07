@@ -102,18 +102,22 @@ int _gettimeofday_r(struct _reent *r, struct timeval *tp, void *tzp) {
 
 // Update RTC timer. Called by SNTP module each time it receives an update.
 void sntp_update_rtc(time_t t, uint32_t us) {
+
+    uint32_t rtc_now = TIMER_COUNT;
+
 	// Apply daylight and timezone correction
 	t += (stz.tz_minuteswest + stz.tz_dsttime * 60) * 60;
+
 	// DEBUG: Compute and print drift
-	int64_t sntp_current = sntp_base + TIMER_COUNT - tim_ref;
+	int64_t sntp_current = sntp_base + rtc_now - tim_ref;
 	int64_t sntp_correct = (((uint64_t)us + (uint64_t)t * 1000000U)<<12) / cal;
 	// esp-open-rtos printf does not supply %lld or PRiu64; use long double
 	SNTP_LOGD("RTC Adjust: drift = %.0Lf ticks, cal = %d",
 			  (long double)(sntp_correct - sntp_current), (uint32_t)cal);
 
-	tim_ref = TIMER_COUNT;
-	cal = sdk_system_rtc_clock_cali_proc();
 
+	cal = sdk_system_rtc_clock_cali_proc();
+    tim_ref = rtc_now;
 	sntp_base = (((uint64_t)us + (uint64_t)t * 1000000U)<<12) / cal;
 }
 
