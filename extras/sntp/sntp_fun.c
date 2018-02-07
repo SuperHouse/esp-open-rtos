@@ -88,9 +88,9 @@ inline time_t sntp_get_rtc_time(int32_t *us) {
 	// Check for timer wrap
 	sntp_check_timer_wrap(tim);
 	base = sntp_base + tim - tim_ref;
-	secs = base * cal / (1000000U<<12);
+	secs = (base * cal) / (1000000U<<12);
 	if (us) {
-		*us = base * cal % (1000000U<<12);
+		*us = ((base * cal) % (1000000U<<12)) >>12;
 	}
 	return secs;
 }
@@ -154,7 +154,7 @@ void sntp_update_rtc(time_t t, uint32_t us) {
 
 	cal = sdk_system_rtc_clock_cali_proc();
     tim_ref = now_rtc;
-	sntp_base = (((uint64_t)us + (uint64_t)t * 1000000U)<<12) / cal;
+	sntp_base = (((uint64_t)us + (uint64_t)t * 1000000U) <<12) / cal;
 
 }
 
