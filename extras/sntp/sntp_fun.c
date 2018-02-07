@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <stdio.h>
+#include <sys/time.h>
 #include <espressif/esp_common.h>
 #include <esp/timer.h>
 #include <esp/rtc_regs.h>
@@ -27,6 +28,11 @@
 #define tim_ref 	(RTC.SCRATCH[2])
 // Calibration value
 #define cal 		(RTC.SCRATCH[3])
+
+#ifdef SNTP_LOGD
+// Keep the last time SNTP updated the time
+static struct timeval last_update_time = {0, 0};
+#endif
 
 // Timezone related data.
 static struct timezone stz;
@@ -68,7 +74,7 @@ static inline void sntp_check_timer_wrap(uint32_t current_value) {
 		// Timer wrap has occurred, compensate by subtracting 2^32 to ref.
 		sntp_base -= 1LLU<<32;
 		// DEBUG
-		SNTP_LOGD("TIMER WRAPPED!");
+		SNTP_LOGD("SNTP RTC counter wrapped");
 	}
 }
 
@@ -103,21 +109,52 @@ int _gettimeofday_r(struct _reent *r, struct timeval *tp, void *tzp) {
 // Update RTC timer. Called by SNTP module each time it receives an update.
 void sntp_update_rtc(time_t t, uint32_t us) {
 
-    uint32_t rtc_now = TIMER_COUNT;
+    uint32_t now_rtc = TIMER_COUNT;
 
-	// Apply daylight and timezone correction
-	t += (stz.tz_minuteswest + stz.tz_dsttime * 60) * 60;
+    // Apply daylight and timezone correction
+    t += (stz.tz_minuteswest + stz.tz_dsttime * 60) * 60;
 
-	// DEBUG: Compute and print drift
-	int64_t sntp_current = sntp_base + rtc_now - tim_ref;
-	int64_t sntp_correct = (((uint64_t)us + (uint64_t)t * 1000000U)<<12) / cal;
-	// esp-open-rtos printf does not supply %lld or PRiu64; use long double
-	SNTP_LOGD("RTC Adjust: drift = %.0Lf ticks, cal = %d",
-			  (long double)(sntp_correct - sntp_current), (uint32_t)cal);
+#ifdef SNTP_LOGD
 
+    int64_t sntp_reference_time, local_clock_time, clock_difference;
+    struct timeval this_update_time, elapsed_since_update;
+    double ppm;
+
+    // Calculate in diagnostics in microseconds
+    sntp_reference_time = (uint64_t)us + (uint64_t)t * 1000000U;
+    local_clock_time = ((sntp_base + now_rtc - tim_ref) * cal) / (1U<<12);
+    clock_difference = sntp_reference_time - local_clock_time;
+
+    this_update_time.tv_sec  = t;
+    this_update_time.tv_usec = us;
+
+    timersub(&this_update_time, &last_update_time, &elapsed_since_update);
+
+    // If over a day since last update, don't trust the last_update_time
+    if (elapsed_since_update.tv_sec < 24 * 60 * 60 ) {
+        ppm = ((double)clock_difference /
+               ((double)elapsed_since_update.tv_sec * 1000000
+                        + elapsed_since_update.tv_usec))
+              * 1000000;
+        SNTP_LOGD("SNTP RTC adjust: %0.3Lf s; %0.3f ppm over %0.3f s; cal: %u\n",
+                  ((long double)clock_difference)/1000000,
+                  ppm,
+                  (double)elapsed_since_update.tv_sec
+                  + ((double)elapsed_since_update.tv_usec)/1000000,
+                  cal);
+    } else {
+        SNTP_LOGD("SNTP RTC adjust: %0.3Lf s; cal: %u\n",
+                  ((long double)clock_difference)/1000000, cal);
+    }
+
+    last_update_time.tv_sec  = t;
+    last_update_time.tv_usec = us;
+
+#endif // SNTP_LOGD
 
 	cal = sdk_system_rtc_clock_cali_proc();
-    tim_ref = rtc_now;
+    tim_ref = now_rtc;
 	sntp_base = (((uint64_t)us + (uint64_t)t * 1000000U)<<12) / cal;
+
 }
 
