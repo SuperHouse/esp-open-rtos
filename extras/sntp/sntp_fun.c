@@ -26,7 +26,7 @@
 #define sntp_base	(*((uint64_t*)RTC.SCRATCH))
 // Timer value when base was obtained
 #define tim_ref 	(RTC.SCRATCH[2])
-// Calibration value
+// Calibration value -- ( microseconds / RTC tick ) * 2^12
 #define cal 		(RTC.SCRATCH[3])
 
 #ifdef SNTP_LOGD
@@ -61,7 +61,7 @@ void sntp_initialize(const struct timezone *tz) {
 	}
 	sntp_base = 0;
 	// To avoid div by 0 exceptions if requesting time before SNTP config
-	cal = 1;
+	cal = sdk_system_rtc_clock_cali_proc();
 	tim_ref = TIMER_COUNT;
 	sntp_init();
 }
