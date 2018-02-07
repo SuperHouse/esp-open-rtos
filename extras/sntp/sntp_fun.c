@@ -13,6 +13,11 @@
 #include <esp/rtc_regs.h>
 #include <sntp.h>
 
+#define SNTP_LOGD(FMT, ...) printf(FMT "\n", ##__VA_ARGS__)
+#ifndef SNTP_LOGD
+#define SNTP_LOGD(...)
+#endif
+
 #define TIMER_COUNT			RTC.COUNTER
 
 // daylight settings
@@ -63,7 +68,7 @@ static inline void sntp_check_timer_wrap(uint32_t current_value) {
 		// Timer wrap has occurred, compensate by subtracting 2^32 to ref.
 		sntp_base -= 1LLU<<32;
 		// DEBUG
-		printf("\nTIMER WRAPPED!\n");
+		SNTP_LOGD("TIMER WRAPPED!");
 	}
 }
 
@@ -102,7 +107,9 @@ void sntp_update_rtc(time_t t, uint32_t us) {
 	// DEBUG: Compute and print drift
 	int64_t sntp_current = sntp_base + TIMER_COUNT - tim_ref;
 	int64_t sntp_correct = (((uint64_t)us + (uint64_t)t * 1000000U)<<12) / cal;
-	printf("\nRTC Adjust: drift = %lld ticks, cal = %d\n", (time_t)(sntp_correct - sntp_current), (uint32_t)cal);
+	// esp-open-rtos printf does not supply %lld or PRiu64; use long double
+	SNTP_LOGD("RTC Adjust: drift = %.0Lf ticks, cal = %d",
+			  (long double)(sntp_correct - sntp_current), (uint32_t)cal);
 
 	tim_ref = TIMER_COUNT;
 	cal = sdk_system_rtc_clock_cali_proc();
