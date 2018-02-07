@@ -14,9 +14,10 @@
 #include <esp/rtc_regs.h>
 #include <sntp.h>
 
-#define SNTP_LOGD(FMT, ...) printf(FMT "\n", ##__VA_ARGS__)
+// #define SNTP_LOGD(FMT, ...) printf(FMT "\n", ##__VA_ARGS__)
 #ifndef SNTP_LOGD
 #define SNTP_LOGD(...)
+#define SKIP_DIAGNOSTICS
 #endif
 
 #define TIMER_COUNT			RTC.COUNTER
@@ -29,7 +30,7 @@
 // Calibration value -- ( microseconds / RTC tick ) * 2^12
 #define cal 		(RTC.SCRATCH[3])
 
-#ifdef SNTP_LOGD
+#ifndef SKIP_DIAGNOSTICS
 // Keep the last time SNTP updated the time
 static struct timeval last_update_time = {0, 0};
 #endif
@@ -114,7 +115,7 @@ void sntp_update_rtc(time_t t, uint32_t us) {
     // Apply daylight and timezone correction
     t += (stz.tz_minuteswest + stz.tz_dsttime * 60) * 60;
 
-#ifdef SNTP_LOGD
+#ifndef SKIP_DIAGNOSTICS
 
     int64_t sntp_reference_time, local_clock_time, clock_difference;
     struct timeval this_update_time, elapsed_since_update;
@@ -150,7 +151,7 @@ void sntp_update_rtc(time_t t, uint32_t us) {
     last_update_time.tv_sec  = t;
     last_update_time.tv_usec = us;
 
-#endif // SNTP_LOGD
+#endif // SKIP_DIAGNOSTICS
 
 	cal = sdk_system_rtc_clock_cali_proc();
     tim_ref = now_rtc;
