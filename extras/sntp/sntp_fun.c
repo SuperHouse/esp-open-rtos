@@ -14,7 +14,11 @@
 #include <esp/rtc_regs.h>
 #include <sntp.h>
 
-// #define SNTP_LOGD(FMT, ...) printf(FMT "\n", ##__VA_ARGS__)
+
+#ifdef  SNTP_LOGD_WITH_PRINTF
+#define SNTP_LOGD(FMT, ...) printf(FMT "\n", ##__VA_ARGS__)
+#endif
+
 #ifndef SNTP_LOGD
 #define SNTP_LOGD(...)
 #define SKIP_DIAGNOSTICS
