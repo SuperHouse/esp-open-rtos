@@ -130,6 +130,7 @@ CPPFLAGS += -DGITSHORTREV=$(GITSHORTREV)
 LINKER_SCRIPTS += $(ROOT)ld/program.ld $(ROOT)ld/rom.ld
 
 # rboot firmware binary paths for flashing
+RBOOT_ARGS ?= 0x0 $(RBOOT_BIN) 0x1000 $(RBOOT_CONF)
 RBOOT_BIN = $(ROOT)bootloader/firmware/rboot.bin
 RBOOT_PREBUILT_BIN = $(ROOT)bootloader/firmware_prebuilt/rboot.bin
 RBOOT_CONF = $(ROOT)bootloader/firmware_prebuilt/blank_config.bin
