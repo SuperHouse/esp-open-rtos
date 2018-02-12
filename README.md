@@ -100,7 +100,7 @@ Some binary libraries appear to contain unattributed open source code:
 
 * BSD license (as described in LICENSE) applies to original source files, [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki). lwIP is Copyright (C) Swedish Institute of Computer Science.
 
-* FreeRTOS is provided under the GPL with the FreeRTOS linking exception, allowing non-GPL firmwares to be produced using FreeRTOS as the RTOS core. License details in files under FreeRTOS dir. FreeRTOS is Copyright (C) Real Time Engineers Ltd.
+* FreeRTOS (since v10) is provided under the MIT license. License details in files under FreeRTOS dir. FreeRTOS is Copyright (C) Amazon.
 
 * Source & binary components from the [Espressif IOT RTOS SDK](https://github.com/espressif/esp_iot_rtos_sdk) were released under the MIT license. Source code components are relicensed here under the BSD license. The original parts are Copyright (C) Espressif Systems.
 
