@@ -216,13 +216,17 @@ bool sdk_wifi_softap_start() {
          struct netif *netif = (struct netif *)malloc(sizeof(struct netif));
          netif_info->netif = netif;
          memcpy(&netif->hwaddr, mac_addr, 6);
+         LOCK_TCPIP_CORE();
          netif_add(netif, &sdk_info.softap_ipaddr, &sdk_info.softap_netmask,
                    &sdk_info.softap_gw, netif_info, ethernetif_init, tcpip_input);
+         UNLOCK_TCPIP_CORE();
      }
 
     sdk_ic_set_vif(1, 1, mac_addr, 1, 0);
 
+    LOCK_TCPIP_CORE();
     netif_set_up(netif_info->netif);
+    UNLOCK_TCPIP_CORE();
 
     if (sdk_wifi_get_opmode() != 3 ||
         !sdk_g_ic.v.station_netif_info ||
@@ -293,7 +297,9 @@ bool sdk_wifi_softap_stop() {
         } while (count < end);
     }
 
+    LOCK_TCPIP_CORE();
     netif_set_down(netif_info->netif);
+    UNLOCK_TCPIP_CORE();
     sdk_TmpSTAAPCloseAP = 1;
     sdk_ets_timer_disarm(&hostap_timer);
     sdk_ic_bss_info_update(1, &sdk_info.softap_mac_addr, 2, 0);

@@ -81,7 +81,9 @@
  * UNLOCK_TCPIP_CORE().
  * Your system should provide mutexes supporting priority inversion to use this.
  */
+#ifndef LWIP_TCPIP_CORE_LOCKING
 #define LWIP_TCPIP_CORE_LOCKING         1
+#endif
 
 /**
  * LWIP_TCPIP_CORE_LOCKING_INPUT: when LWIP_TCPIP_CORE_LOCKING is enabled,
@@ -94,6 +96,48 @@
 #ifndef LWIP_TCPIP_CORE_LOCKING_INPUT
 #define LWIP_TCPIP_CORE_LOCKING_INPUT   0
 #endif
+
+/**
+ * Macro/function to check whether lwIP's threading/locking
+ * requirements are satisfied during current function call.
+ * This macro usually calls a function that is implemented in the OS-dependent
+ * sys layer and performs the following checks:
+ * - Not in ISR
+ * - If @ref LWIP_TCPIP_CORE_LOCKING = 1: TCPIP core lock is held
+ * - If @ref LWIP_TCPIP_CORE_LOCKING = 0: function is called from TCPIP thread
+ * @see @ref multithreading
+ */
+#ifndef LWIP_ASSERT_CORE_LOCKED
+void sys_check_core_locking(void);
+#define LWIP_ASSERT_CORE_LOCKED()       sys_check_core_locking()
+#endif
+
+/**
+ * Called as first thing in the lwIP TCPIP thread. Can be used in conjunction
+ * with @ref LWIP_ASSERT_CORE_LOCKED to check core locking.
+ * @see @ref multithreading
+ */
+#ifndef LWIP_MARK_TCPIP_THREAD
+void sys_mark_tcpip_thread(void);
+#define LWIP_MARK_TCPIP_THREAD()        sys_mark_tcpip_thread()
+#endif
+
+#if LWIP_TCPIP_CORE_LOCKING
+
+#ifndef LOCK_TCPIP_CORE
+void sys_lock_tcpip_core(void);
+#define LOCK_TCPIP_CORE()          sys_lock_tcpip_core()
+#endif
+
+#ifndef UNLOCK_TCPIP_CORE
+void sys_unlock_tcpip_core(void);
+#define UNLOCK_TCPIP_CORE()        sys_unlock_tcpip_core()
+#endif
+
+#else
+#define LOCK_TCPIP_CORE()
+#define UNLOCK_TCPIP_CORE()
+#endif /* LWIP_TCPIP_CORE_LOCKING */
 
 /*
    ------------------------------------
@@ -484,6 +528,21 @@
 #endif
 
 /**
+ * LWIP_NETIF_API==1: Support netif api (in netifapi.c)
+ */
+#ifndef LWIP_NETIF_API
+#define LWIP_NETIF_API                  0
+#endif
+
+/**
+ * LWIP_NETIF_STATUS_CALLBACK==1: Support a callback function whenever an interface
+ * changes its up/down status (i.e., due to DHCP IP acquisition)
+ */
+#ifndef LWIP_NETIF_STATUS_CALLBACK
+#define LWIP_NETIF_STATUS_CALLBACK      0
+#endif
+
+/**
  * LWIP_NETIF_TX_SINGLE_PBUF: if this is set to 1, lwIP *tries* to put all data
  * to be sent into one single pbuf. This is for compatibility with DMA-enabled
  * MACs that do not support scatter-gather.
@@ -515,7 +574,7 @@
  * sys_thread_new() when the thread is created.
  */
 #ifndef TCPIP_THREAD_STACKSIZE
-#define TCPIP_THREAD_STACKSIZE          768
+#define TCPIP_THREAD_STACKSIZE          480
 #endif
 
 /**
@@ -671,6 +730,20 @@
    ---------- Hook options ---------------
    ---------------------------------------
 */
+
+/*
+   ---------------------------------------
+   ---------- mDNS options ---------------
+   ---------------------------------------
+*/
+
+/**
+ * LWIP_MDNS_RESPONDER_QUEUE_ANNOUNCEMENTS==1: Unsolicited announcements are
+ * queued and run from a timer callback.
+ */
+#ifndef LWIP_MDNS_RESPONDER_QUEUE_ANNOUNCEMENTS
+#define LWIP_MDNS_RESPONDER_QUEUE_ANNOUNCEMENTS     1
+#endif
 
 /*
    ---------------------------------------
@@ -854,6 +927,11 @@
  * IP6_DEBUG: Enable debugging for IPv6.
  */
 #define IP6_DEBUG                       LWIP_DBG_OFF
+
+/**
+ * MDNS_DEBUG: Enable debugging for multicast DNS.
+ */
+#define MDNS_DEBUG                      LWIP_DBG_OFF
 
 /*
    --------------------------------------------------

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * All rights reserved. 
+ * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
  * are permitted provided that the following conditions are met:
@@ -53,6 +53,10 @@ typedef TaskHandle_t sys_thread_t;
 #define sys_sem_valid( x ) ( ( ( *x ) == NULL) ? pdFALSE : pdTRUE )
 #define sys_sem_set_invalid( x ) ( ( *x ) = NULL )
 
+#define sys_jiffies() xTaskGetTickCount()
+
+void sys_arch_msleep(uint32_t ms);
+#define sys_msleep(ms) sys_arch_msleep(ms)
 
 #endif /* __ARCH_SYS_ARCH_H__ */
 

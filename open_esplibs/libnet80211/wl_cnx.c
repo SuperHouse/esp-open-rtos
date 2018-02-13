@@ -24,8 +24,10 @@ extern void *sdk_g_cnx_probe_rc_list_cb;
  */
 void dhcp_if_down(struct netif *netif)
 {
+    LOCK_TCPIP_CORE();
     dhcp_release_and_stop(netif);
     netif_set_down(netif);
+    UNLOCK_TCPIP_CORE();
 }
 
 struct sdk_cnx_node *sdk_cnx_rc_search(uint8_t *hwaddr) {

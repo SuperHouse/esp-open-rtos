@@ -87,14 +87,9 @@ typedef int sys_prot_t;
     } while(0)
 #define LWIP_PLATFORM_ASSERT(x) do { printf("Assertion \"%s\" failed at line %d in %s\n", \
                                             x, __LINE__, __FILE__); abort(); } while(0)
-
-#define LWIP_ERROR(message, expression, handler) do { if (!(expression)) { \
-  printf("Assertion \"%s\" failed at line %d in %s\n", message, __LINE__, __FILE__); \
-  handler;} } while(0)
 #else
 #define LWIP_PLATFORM_DIAG(x)
 #define LWIP_PLATFORM_ASSERT(x)
-#define LWIP_ERROR(m,e,h)
 #endif
 
 #define LWIP_PLATFORM_BYTESWAP 1
@@ -103,5 +98,8 @@ typedef int sys_prot_t;
 #define LWIP_PLATFORM_HTONL(_n)  ((u32_t)( (((_n) & 0xff) << 24) | (((_n) & 0xff00) << 8) | (((_n) >> 8)  & 0xff00) | (((_n) >> 24) & 0xff) ))
 
 #define LWIP_RAND()                         hwrand()
+
+/* Newlib includes this definition so use it. */
+#define lwip_strnstr(buffer, token, n) strnstr(buffer, token, n)
 
 #endif /* __ARCH_CC_H__ */
