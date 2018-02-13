@@ -246,7 +246,7 @@ $(FW_FILE): $(PROGRAM_OUT) $(FIRMWARE_DIR)
 flash: all
 	$(if will_flash, $(call will_flash, "flash"))
 	$(ESPTOOL) -p $(ESPPORT) --baud $(ESPBAUD) write_flash $(ESPTOOL_ARGS) \
-		0x0 $(RBOOT_BIN) 0x1000 $(RBOOT_CONF) 0x2000 $(FW_FILE) $(SPIFFS_ESPTOOL_ARGS)
+		$(RBOOT_ARGS) 0x2000 $(FW_FILE) $(SPIFFS_ESPTOOL_ARGS)
 	$(if did_flash, $(call did_flash, "flash"))
 
 erase_flash:
