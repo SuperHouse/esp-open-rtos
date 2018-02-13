@@ -284,6 +284,12 @@ err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg)
     return ERR_MEM;
 }
 
+err_t sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
+{
+    /* Quietly fail - not implemented. */
+    return ERR_MEM;
+}
+
 /*---------------------------------------------------------------------------*
  * Routine:  sys_arch_mbox_fetch
  *---------------------------------------------------------------------------*
