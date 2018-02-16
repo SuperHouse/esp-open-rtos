@@ -165,7 +165,7 @@ struct __sFILE_fake {
 /* Following is needed both in libc/stdio and libc/stdlib so we put it
  * here instead of libc/stdio/local.h where it was previously. */
 
-extern _VOID   _EXFUN(__sinit,(struct _reent *));
+extern void   __sinit (struct _reent *);
 
 # define _REENT_SMALL_CHECK_INIT(ptr)		\
   do						\
@@ -192,15 +192,15 @@ struct __sFILE {
 #endif
 
   /* operations */
-  _PTR	_cookie;	/* cookie passed to io functions */
+  void *	_cookie;	/* cookie passed to io functions */
 
-  _READ_WRITE_RETURN_TYPE _EXFNPTR(_read, (struct _reent *, _PTR,
-					   char *, _READ_WRITE_BUFSIZE_TYPE));
-  _READ_WRITE_RETURN_TYPE _EXFNPTR(_write, (struct _reent *, _PTR,
+  _READ_WRITE_RETURN_TYPE (*_read) (struct _reent *, void *,
+					   char *, _READ_WRITE_BUFSIZE_TYPE);
+  _READ_WRITE_RETURN_TYPE (*_write) (struct _reent *, void *,
 					    const char *,
-					    _READ_WRITE_BUFSIZE_TYPE));
-  _fpos_t _EXFNPTR(_seek, (struct _reent *, _PTR, _fpos_t, int));
-  int _EXFNPTR(_close, (struct _reent *, _PTR));
+					    _READ_WRITE_BUFSIZE_TYPE);
+  _fpos_t (*_seek) (struct _reent *, void *, _fpos_t, int);
+  int (*_close) (struct _reent *, void *);
 
   /* separate buffer for long sequences of ungetc() */
   struct __sbuf _ub;	/* ungetc buffer */
@@ -248,15 +248,15 @@ struct __sFILE64 {
   struct _reent *_data;
 
   /* operations */
-  _PTR	_cookie;	/* cookie passed to io functions */
+  void *	_cookie;	/* cookie passed to io functions */
 
-  _READ_WRITE_RETURN_TYPE _EXFNPTR(_read, (struct _reent *, _PTR,
-					   char *, _READ_WRITE_BUFSIZE_TYPE));
-  _READ_WRITE_RETURN_TYPE _EXFNPTR(_write, (struct _reent *, _PTR,
+  _READ_WRITE_RETURN_TYPE (*_read) (struct _reent *, void *,
+					   char *, _READ_WRITE_BUFSIZE_TYPE);
+  _READ_WRITE_RETURN_TYPE (*_write) (struct _reent *, void *,
 					    const char *,
-					    _READ_WRITE_BUFSIZE_TYPE));
-  _fpos_t _EXFNPTR(_seek, (struct _reent *, _PTR, _fpos_t, int));
-  int _EXFNPTR(_close, (struct _reent *, _PTR));
+					    _READ_WRITE_BUFSIZE_TYPE);
+  _fpos_t (*_seek) (struct _reent *, void *, _fpos_t, int);
+  int (*_close) (struct _reent *, void *);
 
   /* separate buffer for long sequences of ungetc() */
   struct __sbuf _ub;	/* ungetc buffer */
@@ -275,7 +275,7 @@ struct __sFILE64 {
   int   _flags2;        /* for future use */
 
   _off64_t _offset;     /* current lseek offset */
-  _fpos64_t _EXFNPTR(_seek64, (struct _reent *, _PTR, _fpos64_t, int));
+  _fpos64_t (*_seek64) (struct _reent *, void *, _fpos64_t, int);
 
 #ifndef __SINGLE_THREAD__
   _flock_t _lock;	/* for thread-safety locking */
@@ -391,7 +391,7 @@ struct _reent
 
   struct _mprec *_mp;
 
-  void _EXFNPTR(__cleanup, (struct _reent *));
+  void (*__cleanup) (struct _reent *);
 
   int _gamma_signgam;
 
@@ -584,7 +584,7 @@ struct _reent
 
   int __sdidinit;		/* 1 means stdio has been init'd */
 
-  void _EXFNPTR(__cleanup, (struct _reent *));
+  void (*__cleanup) (struct _reent *);
 
   /* used by mprec routines */
   struct _Bigint *_result;
@@ -773,15 +773,15 @@ extern __FILE __sf[3];
 #endif
 
 extern struct _reent *_impure_ptr __ATTRIBUTE_IMPURE_PTR__;
-extern struct _reent *_CONST _global_impure_ptr __ATTRIBUTE_IMPURE_PTR__;
+extern struct _reent *const _global_impure_ptr __ATTRIBUTE_IMPURE_PTR__;
 
-void _reclaim_reent _PARAMS ((struct _reent *));
+void _reclaim_reent (struct _reent *);
 
 /* #define _REENT_ONLY define this to get only reentrant routines */
 
 #if defined(__DYNAMIC_REENT__) && !defined(__SINGLE_THREAD__)
 #ifndef __getreent
-  struct _reent * _EXFUN(__getreent, (void));
+  struct _reent * __getreent (void);
 #endif
 # define _REENT (__getreent())
 #else /* __SINGLE_THREAD__ || !__DYNAMIC_REENT__ */
