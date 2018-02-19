@@ -194,9 +194,9 @@ __attribute__((weak, alias("syscall_returns_enosys")))
 off_t _lseek_r(struct _reent *r, int fd, off_t offset, int whence);
 
 __attribute__((weak, alias("_gettimeofday_r")))
-int _gettimeofday_r _PARAMS ((struct _reent *r, struct timeval *now, void *p)) {
-  now->tv_sec = 0;
-  now->tv_usec = 0;
+int _gettimeofday_r (struct _reent *ptr, struct timeval *ptimeval, void *ptimezone) {
+  ptimeval->tv_sec = 0;
+  ptimeval->tv_usec = 0;
   errno = ENOSYS;
   return -1;
 }
