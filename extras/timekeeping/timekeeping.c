@@ -46,8 +46,6 @@
 
 #include <time.h>
 
-#include "timekeeping.h"
-
 
 /* #define here for easier use of other system clocks */
 #define GET_SYSTEM_CLOCK_US() sdk_system_get_time()
@@ -113,7 +111,7 @@ extern void __tz_unlock(void);
 
 #ifdef TIMEKEEPING_LOCK_USE_CRITICAL
 #define TIMEKEEPING_LOCK()   do {TZ_LOCK; taskENTER_CRITICAL();} while (0)
-#define TIMEKEEPING_UNLOCK() do {TZ_UNLOCK; taskEXIT_CRITICAL();} while (0)
+#define TIMEKEEPING_UNLOCK() do {taskEXIT_CRITICAL(); TZ_UNLOCK;} while (0)
 #else
 #define TIMEKEEPING_LOCK()   TZ_LOCK
 #define TIMEKEEPING_UNLOCK() TZ_UNLOCK
