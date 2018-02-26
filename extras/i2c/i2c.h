@@ -66,9 +66,7 @@ typedef enum
   I2C_FREQ_600K,
   I2C_FREQ_800K,
   I2C_FREQ_1000K,
-#if I2C_USE_GPIO16 == 0
   I2C_FREQ_1300K
-#endif
 } i2c_freq_t;
 
 /**
@@ -94,11 +92,29 @@ typedef struct i2c_dev
 int i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq);
 
 /**
+ * Init bitbanging I2C driver on given pins
+ * @param bus Bus i2c selection
+ * @param scl_pin SCL pin for I2C
+ * @param sda_pin SDA pin for I2C
+ * @param freq frequency of bus in hertz
+ * @param clk_stretch I2C clock stretch. I2C_DEFAULT_CLK_STRETCH would be good in most cases
+ * @return Non-zero if error occured
+ */
+int i2c_init_hz(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, uint32_t freq);
+
+/**
  * Change bus frequency
  * @param bus Bus i2c selection
  * @param freq frequency of bus (ex : I2C_FREQ_400K)
  */
-void i2c_set_frequency(uint8_t bus, i2c_freq_t freq);
+int i2c_set_frequency(uint8_t bus, i2c_freq_t freq);
+
+/**
+ * Change bus frequency
+ * @param bus Bus i2c selection
+ * @param freq frequency of bus in hertz
+ */
+int i2c_set_frequency_hz(uint8_t bus, uint32_t freq);
 
 /**
  * Change clock stretch
