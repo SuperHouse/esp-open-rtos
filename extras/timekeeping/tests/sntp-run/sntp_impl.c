@@ -2,7 +2,8 @@
  * Test implementation of callback for LWIP SNTP
  *
  * Production code would likely decide how to handle
- * various magnitude changes, and be brisk about it
+ * various magnitude changes, be robust to outliers,
+ * and be brisk about it all
  */
 
 /*-
@@ -43,9 +44,20 @@
 
 #include "sntp_impl.h"
 
-
+/**********************************************************
+ * IMPORTANT: THIS IS A TEST HARNESS, NOT PRODUCTION CODE *
+ **********************************************************
+ *
+ * Spikes in delay of over 200 ms have been observed in testing.
+ * Such spikes would likely cause both a forward and a backward jump
+ * in time using this simplistic approach. Increasing the threshold to,
+ * for example, 250 ms would require 2000 * 250 ms = 500 sec ~ 10 min
+ * for the time to slew back after a "bad set" or series of "bad" packets.
+ *
+ * PRODUCTION CODE SHOULD USE AN APPLICATION-APPROPRIATE CLOCK DISCIPLINE
+ */
 #ifndef SNTP_IMPL_STEP_THRESHOLD
-#define SNTP_IMPL_STEP_THRESHOLD 128000
+#define SNTP_IMPL_STEP_THRESHOLD 125000
 #endif
 
 

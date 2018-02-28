@@ -129,7 +129,8 @@ user_init(void)
      * Run at a high enough priority so that the initial time-set doesn't get interrupted
      * Later calls and listen-only mode calls run in the high-priority "tcpip_thread" (LWIP)
      *
-     * 256 heap seems sufficient, 196 didn't bomb, but not examined in detail
+     * While 196 heap seemed sufficient for many tests, use of an NTP pool
+     * with DNS caused heap errors/warnings on starting NTP at 256 heap
      */
-    xTaskCreate(sntp_task, "SNTP task", 256, NULL, 6, NULL);
+    xTaskCreate(sntp_task, "SNTP task", 288, NULL, 6, NULL);
 }
