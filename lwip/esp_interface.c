@@ -178,7 +178,9 @@ size_t ooseq_bytes_limit(struct tcp_pcb *pcb)
         ooseq_blen += p->tot_len;
     }
 
+    uint32_t malloc_mask = set_malloc_regions(MALLOC_MASK_DRAM);
     size_t free = xPortGetFreeHeapSize();
+    set_malloc_regions(malloc_mask);
     ssize_t target = ((ssize_t)free - 8000) + ooseq_blen;
 
     if (target < 0) {

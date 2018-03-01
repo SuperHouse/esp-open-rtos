@@ -599,6 +599,11 @@ static const char *http_wificfg_content[] = {
 #include "content/wificfg/index.html"
 };
 
+extern unsigned nano_malloc_region_total_0;
+extern unsigned nano_malloc_region_free_0;
+extern unsigned nano_malloc_region_total_1;
+extern unsigned nano_malloc_region_free_1;
+
 static int handle_wificfg_index(int s, wificfg_method method,
                                 uint32_t content_length,
                                 wificfg_content_type content_type,
@@ -632,7 +637,19 @@ static int handle_wificfg_index(int s, wificfg_method method,
                  xTaskGetTickCount() * portTICK_PERIOD_MS / 1000);
         if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
 
-        snprintf(buf, len, "<dt>Free heap</dt><dd>%u bytes</dd>", (int)xPortGetFreeHeapSize());
+        snprintf(buf, len, "<dt>Free dram heap</dt><dd>%u of %u bytes</dd>",
+                 nano_malloc_region_free_0, nano_malloc_region_total_0);
+        if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+
+        set_malloc_regions(MALLOC_MASK_IRAM);
+        snprintf(buf, len, "<dt>Free iram heap</dt><dd>%u of %u bytes</dd>",
+                 nano_malloc_region_free_1, nano_malloc_region_total_1);
+        if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
+
+        set_malloc_regions(MALLOC_MASK_PREFER_DRAM);
+        snprintf(buf, len, "<dt>Free heap</dt><dd>%u of %u bytes</dd>",
+                 nano_malloc_region_free_0 + nano_malloc_region_free_1,
+                 nano_malloc_region_total_0 + nano_malloc_region_total_1);
         if (wificfg_write_string_chunk(s, buf, buf, len) < 0) return -1;
 
         snprintf(buf, len, "<dt>Flash ID</dt><dd>0x%08x</dd>", sdk_spi_flash_get_id());

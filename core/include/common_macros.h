@@ -117,5 +117,10 @@
     #define IROM __attribute__((section(".irom0.literal"))) const
 #endif
 
+uint32_t set_malloc_regions(uint32_t mask);
+#define MALLOC_MASK_PREFER_IRAM 0xfffdfffc
+#define MALLOC_MASK_PREFER_DRAM 0
+#define MALLOC_MASK_DRAM 0xfffffffe
+#define MALLOC_MASK_IRAM 0xfffffffd
 
 #endif
