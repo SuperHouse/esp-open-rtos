@@ -135,7 +135,7 @@ static inline UART_StopBits uart_get_stopbits(int uart_num) {
 }
 
 /* Set if uart parity bit should be enabled */
-static inline void uart_set_parity_enabled(int uart_num, int enable) {
+static inline void uart_set_parity_enabled(int uart_num, bool enable) {
     if(enable)
         UART(uart_num).CONF0 = SET_MASK_BITS(UART(uart_num).CONF0, UART_CONF0_PARITY_ENABLE);
     else
@@ -151,7 +151,7 @@ static inline void uart_set_parity(int uart_num, UART_Parity parity) {
 }
 
 /* Returns if parity bit is currently enabled for UART uart_num */
-static inline int uart_get_parity_enabled(int uart_num) {
+static inline bool uart_get_parity_enabled(int uart_num) {
     return ((UART(uart_num).CONF0 & UART_CONF0_PARITY_ENABLE) != 0);
 }
 
