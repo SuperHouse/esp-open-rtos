@@ -50,6 +50,18 @@ struct UART_REGS {
 
 _Static_assert(sizeof(struct UART_REGS) == 0x80, "UART_REGS is the wrong size");
 
+typedef enum {
+    UART_STOPBITS_0 = 0b00,
+    UART_STOPBITS_1 = 0b01,
+    UART_STOPBITS_1_5 = 0b10,
+    UART_STOPBITS_2 = 0b11
+} UART_StopBits;
+
+typedef enum {
+    UART_PARITY_EVEN = 0b0,
+    UART_PARITY_ODD = 0b1
+} UART_Parity;
+
 /* Details for FIFO register */
 
 #define UART_FIFO_DATA_M  0x000000ff
@@ -153,7 +165,7 @@ _Static_assert(sizeof(struct UART_REGS) == 0x80, "UART_REGS is the wrong size");
 #define UART_CONF0_BYTE_LEN_M                0x00000003
 #define UART_CONF0_BYTE_LEN_S                2
 #define UART_CONF0_PARITY_ENABLE             BIT(1)
-#define UART_CONF0_PARITY                    BIT(0) //FIXME: does this indicate odd or even?
+#define UART_CONF0_PARITY                    BIT(0) //where 0 means even
 
 /* Details for CONF1 register */
 
