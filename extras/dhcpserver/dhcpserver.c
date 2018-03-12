@@ -99,6 +99,7 @@ void dhcpserver_start(const ip4_addr_t *first_client_addr, uint8_t max_leases)
         dhcpserver_stop();
 
     state = malloc(sizeof(server_state_t));
+    memset(state, 0, sizeof(*state));
     state->max_leases = max_leases;
     state->leases = calloc(max_leases, sizeof(dhcp_lease_t));
     bzero(state->leases, max_leases * sizeof(dhcp_lease_t));
@@ -116,8 +117,13 @@ void dhcpserver_stop(void)
 {
     if (dhcpserver_task_handle) {
         vTaskDelete(dhcpserver_task_handle);
-        free(state);
         dhcpserver_task_handle = NULL;
+
+        if (state->nc)
+            netconn_delete(state->nc);
+        free(state->leases);
+        free(state);
+        state = NULL;
     }
 }
 
