@@ -124,4 +124,40 @@ static inline int uart_get_baud(int uart_num)
     return APB_CLK_FREQ / FIELD2VAL(UART_CLOCK_DIVIDER_VALUE, UART(uart_num).CLOCK_DIVIDER);
 }
 
+/* Set uart stop bit count to the desired value */
+static inline void uart_set_stopbits(int uart_num, UART_StopBits stop_bits) {
+    UART(uart_num).CONF0 = SET_FIELD(UART(uart_num).CONF0, UART_CONF0_STOP_BITS, stop_bits);
+}
+
+/* Returns the current stopbit count for the UART */
+static inline UART_StopBits uart_get_stopbits(int uart_num) {
+    return (UART_StopBits)(FIELD2VAL(UART_CONF0_STOP_BITS, UART(uart_num).CONF0));
+}
+
+/* Set if uart parity bit should be enabled */
+static inline void uart_set_parity_enabled(int uart_num, bool enable) {
+    if(enable)
+        UART(uart_num).CONF0 = SET_MASK_BITS(UART(uart_num).CONF0, UART_CONF0_PARITY_ENABLE);
+    else
+        UART(uart_num).CONF0 = CLEAR_MASK_BITS(UART(uart_num).CONF0, UART_CONF0_PARITY_ENABLE);
+}
+
+/* Set uart parity bit type */
+static inline void uart_set_parity(int uart_num, UART_Parity parity) {
+    if(parity == UART_PARITY_EVEN)
+        UART(uart_num).CONF0 = CLEAR_MASK_BITS(UART(uart_num).CONF0, UART_CONF0_PARITY);
+    else
+        UART(uart_num).CONF0 = SET_MASK_BITS(UART(uart_num).CONF0, UART_CONF0_PARITY);
+}
+
+/* Returns if parity bit is currently enabled for UART uart_num */
+static inline bool uart_get_parity_enabled(int uart_num) {
+    return ((UART(uart_num).CONF0 & UART_CONF0_PARITY_ENABLE) != 0);
+}
+
+/* Returns the current parity bit type for UART uart_num (also if parity bit is not enabled) */
+static inline UART_Parity uart_get_parity(int uart_num) {
+    return (UART_Parity)((UART(uart_num).CONF0 & UART_CONF0_PARITY) != 0);
+}
+
 #endif /* _ESP_UART_H */
