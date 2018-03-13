@@ -37,29 +37,18 @@
 #define debug(fmt, ...)
 #endif
 
-// The following array contains delay values for different frequencies.
-// These were tuned to match the specified SCL frequency on average.
-// The tuning was done using GCC 5.2.0 with -O2 optimization.
-const static uint8_t i2c_freq_array[][2] = {
+// Delay loop takes four CPU clock cycles per round
+#define DELAY_LOOPS_PER_US_160MHZ 40
+// The value for 80 MHz is half the above
+// Constant overhead per I2C clock cycle in terms of delay loop rounds.
+// If timing is changed by some code change, these will require tuning.
 #if I2C_USE_GPIO16 == 1
-    [I2C_FREQ_80K]   = {230, 107},
-    [I2C_FREQ_100K]  = {180, 82},
-    [I2C_FREQ_400K]  = {30, 7},
-    [I2C_FREQ_500K]  = {20, 1},
-    [I2C_FREQ_600K]  = {13, 0},
-    [I2C_FREQ_800K]  = {5, 0},
-    [I2C_FREQ_1000K] = {1, 0}
+    #define DELAY_OVERHEAD_80MHZ  18
+    #define DELAY_OVERHEAD_160MHZ 20
 #else
-    [I2C_FREQ_80K]   = {235, 112},
-    [I2C_FREQ_100K]  = {185, 88},
-    [I2C_FREQ_400K]  = {36, 13},
-    [I2C_FREQ_500K]  = {25, 8},
-    [I2C_FREQ_600K]  = {20, 5},
-    [I2C_FREQ_800K]  = {11, 1},
-    [I2C_FREQ_1000K] = {5, 0},
-    [I2C_FREQ_1300K] = {1, 0}
+    #define DELAY_OVERHEAD_80MHZ  12
+    #define DELAY_OVERHEAD_160MHZ 14
 #endif
-};
 
 // Bus settings
 typedef struct i2c_bus_description
@@ -71,7 +60,8 @@ typedef struct i2c_bus_description
   uint32_t g_scl_mask;   // SCL pin mask
   uint32_t g_sda_mask;   // SDA pin mask
 #endif
-  i2c_freq_t frequency;  // Frequency
+  uint8_t delay_80;
+  uint8_t delay_160;
   uint8_t delay;
   bool started;
   bool flag;
@@ -86,7 +76,28 @@ inline bool i2c_status(uint8_t bus)
     return i2c_bus[bus].started;
 }
 
+static uint32_t freq_t_to_hz(i2c_freq_t freq)
+{
+    switch (freq)
+    {
+        case I2C_FREQ_80K:   return 80000;
+        case I2C_FREQ_100K:  return 100000;
+        case I2C_FREQ_400K:  return 400000;
+        case I2C_FREQ_500K:  return 500000;
+        case I2C_FREQ_600K:  return 600000;
+        case I2C_FREQ_800K:  return 800000;
+        case I2C_FREQ_1000K: return 1000000;
+        case I2C_FREQ_1300K: return 1300000;
+    }
+    return 80000;
+}
+
 int i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
+{
+    return i2c_init_hz(bus, scl_pin, sda_pin, freq_t_to_hz(freq));
+}
+
+int i2c_init_hz(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, uint32_t freq)
 {
     if (bus >= I2C_MAX_BUS) {
         debug("Invalid bus");
@@ -115,8 +126,6 @@ int i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
     i2c_bus[bus].g_scl_mask = BIT(scl_pin);
     i2c_bus[bus].g_sda_mask = BIT(sda_pin);
 #endif
-
-    i2c_bus[bus].frequency = freq;
     i2c_bus[bus].clk_stretch = I2C_DEFAULT_CLK_STRETCH;
 
     // Just to prevent these pins floating too much if not connected.
@@ -130,19 +139,48 @@ int i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq)
     gpio_write(scl_pin, 1);
     gpio_write(sda_pin, 1);
 
-    // Prevent user, if frequency is high
-    if (sdk_system_get_cpu_freq() == SYS_CPU_80MHZ)
-        if (i2c_freq_array[i2c_bus[bus].frequency][1] == 0) {
-            debug("Frequency not supported");
-            return -ENOTSUP;
-        }
+    // Inform user if the desired frequency is not supported.
+    if (i2c_set_frequency_hz(bus, freq) != 0) {
+        debug("Frequency not supported");
+        return -ENOTSUP;
+    }
 
     return 0;
 }
 
-void i2c_set_frequency(uint8_t bus, i2c_freq_t freq)
+int i2c_set_frequency(uint8_t bus, i2c_freq_t freq)
 {
-    i2c_bus[bus].frequency = freq;
+    return i2c_set_frequency_hz(bus, freq_t_to_hz(freq));
+}
+
+int i2c_set_frequency_hz(uint8_t bus, uint32_t freq)
+{
+    if (freq == 0) return -EINVAL;
+
+    uint32_t tick_count = (1000000UL * DELAY_LOOPS_PER_US_160MHZ) / (2 * freq);
+
+    bool not_ok = false;
+
+    int32_t delay_80 = tick_count / 2 - DELAY_OVERHEAD_80MHZ;
+    if (delay_80 > 255) {
+        delay_80 = 255;
+        not_ok = true;
+    } else if (delay_80 < 0) {
+        delay_80 = 0;
+        not_ok = true;
+    }
+    int32_t delay_160 = tick_count - DELAY_OVERHEAD_160MHZ;
+    if (delay_160 > 255) {
+        delay_160 = 255;
+        not_ok = true;
+    } else if (delay_160 < 0) {
+        delay_160 = 0;
+        not_ok = true;
+    }
+    i2c_bus[bus].delay_80 = delay_80;
+    i2c_bus[bus].delay_160 = delay_160;
+
+    return not_ok ? -EINVAL : 0;
 }
 
 void i2c_set_clock_stretch(uint8_t bus, uint32_t clk_stretch)
@@ -219,9 +257,9 @@ static inline void set_sda(uint8_t bus)
 void i2c_start(uint8_t bus)
 {
     if (sdk_system_get_cpu_freq() == SYS_CPU_160MHZ)
-       i2c_bus[bus].delay = i2c_freq_array[i2c_bus[bus].frequency][0];
+       i2c_bus[bus].delay = i2c_bus[bus].delay_160;
     else
-       i2c_bus[bus].delay = i2c_freq_array[i2c_bus[bus].frequency][1];
+       i2c_bus[bus].delay = i2c_bus[bus].delay_80;
 
     if (i2c_bus[bus].started) { // if started, do a restart cond
         // Set SDA to 1
