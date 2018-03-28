@@ -23,6 +23,7 @@
 #include "espressif/esp_common.h"
 #include "esplibs/libmain.h"
 #include "user_exception.h"
+#include "stdout_redirect.h"
 
 /* Forward declarations */
 static void IRAM fatal_handler_prelude(void);
@@ -173,6 +174,7 @@ static void standard_fatal_exception_handler_inner(uint32_t *sp, bool registers_
     /* Replace the fatal exception handler 'inner' function so we
        don't end up in a crash loop if this handler crashes. */
     fatal_exception_handler_inner = second_fatal_exception_handler_inner;
+    set_write_stdout(NULL);
     dump_excinfo();
     if (sp) {
         if (registers_saved_on_stack) {
@@ -232,6 +234,7 @@ void dump_heapinfo(void)
    IRAM.
 */
 static void abort_handler_inner(uint32_t *caller, uint32_t *sp) {
+    set_write_stdout(NULL);
     printf("abort() invoked at %p.\n", caller);
     dump_stack(sp);
     dump_heapinfo();
