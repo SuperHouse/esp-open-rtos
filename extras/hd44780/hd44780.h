@@ -11,9 +11,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifndef HD44780_I2C
-#define HD44780_I2C 1
-#endif
+//#ifndef HD44780_I2C
+//#define HD44780_I2C 1
+//#endif
 #if (HD44780_I2C)
 #include <i2c/i2c.h>
 #endif
