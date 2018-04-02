@@ -1,6 +1,6 @@
 # Component makefile for extras/uart_repl
 
-# expected anyone using RTC driver includes it as 'uart_repl/uart_repl.h'
+# expected anyone using this library includes it as 'uart_repl/uart_repl.h'
 INC_DIRS += $(uart_repl_ROOT)..
 
 # args for passing into compile rule generation
