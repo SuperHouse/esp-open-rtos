@@ -129,7 +129,7 @@ that uses task notifications. */
 /*lint -restore (9026) */
 
 /* The number of bytes used to hold the length of a message in the buffer. */
-#define sbBYTES_TO_STORE_MESSAGE_LENGTH ( sizeof( size_t ) )
+#define sbBYTES_TO_STORE_MESSAGE_LENGTH ( sizeof( configMESSAGE_BUFFER_LENGTH_TYPE ) )
 
 /* Bits stored in the ucFlags field of the stream buffer. */
 #define sbFLAGS_IS_MESSAGE_BUFFER		( ( uint8_t ) 1 ) /* Set if the stream buffer was created as a message buffer, in which case it holds discrete messages rather than a stream. */
@@ -504,6 +504,9 @@ TimeOut_t xTimeOut;
 	if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
 	{
 		xRequiredSpace += sbBYTES_TO_STORE_MESSAGE_LENGTH;
+
+		/* Overflow? */
+		configASSERT( xRequiredSpace > xDataLengthBytes );
 	}
 	else
 	{
@@ -540,7 +543,7 @@ TimeOut_t xTimeOut;
 			taskEXIT_CRITICAL();
 
 			traceBLOCKING_ON_STREAM_BUFFER_SEND( xStreamBuffer );
-			( void ) xTaskNotifyWait( ( uint32_t ) 0, UINT32_MAX, NULL, xTicksToWait );
+			( void ) xTaskNotifyWait( ( uint32_t ) 0, ( uint32_t ) 0, NULL, xTicksToWait );
 			pxStreamBuffer->xTaskWaitingToSend = NULL;
 
 		} while( xTaskCheckForTimeOut( &xTimeOut, &xTicksToWait ) == pdFALSE );
@@ -746,7 +749,7 @@ size_t xReceivedLength = 0, xBytesAvailable, xBytesToStoreMessageLength;
 		{
 			/* Wait for data to be available. */
 			traceBLOCKING_ON_STREAM_BUFFER_RECEIVE( xStreamBuffer );
-			( void ) xTaskNotifyWait( ( uint32_t ) 0, UINT32_MAX, NULL, xTicksToWait );
+			( void ) xTaskNotifyWait( ( uint32_t ) 0, ( uint32_t ) 0, NULL, xTicksToWait );
 			pxStreamBuffer->xTaskWaitingToReceive = NULL;
 
 			/* Recheck the data available after blocking. */
@@ -789,6 +792,50 @@ size_t xReceivedLength = 0, xBytesAvailable, xBytesToStoreMessageLength;
 	}
 
 	return xReceivedLength;
+}
+/*-----------------------------------------------------------*/
+
+size_t xStreamBufferNextMessageLengthBytes( StreamBufferHandle_t xStreamBuffer )
+{
+StreamBuffer_t * const pxStreamBuffer = ( StreamBuffer_t * ) xStreamBuffer; /*lint !e9087 !e9079 Safe cast as StreamBufferHandle_t is opaque Streambuffer_t. */
+size_t xReturn, xBytesAvailable, xOriginalTail;
+configMESSAGE_BUFFER_LENGTH_TYPE xTempReturn;
+
+	configASSERT( pxStreamBuffer );
+
+	/* Ensure the stream buffer is being used as a message buffer. */
+	if( ( pxStreamBuffer->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER ) != ( uint8_t ) 0 )
+	{
+		xBytesAvailable = prvBytesInBuffer( pxStreamBuffer );
+		if( xBytesAvailable > sbBYTES_TO_STORE_MESSAGE_LENGTH )
+		{
+			/* The number of bytes available is greater than the number of bytes
+			required to hold the length of the next message, so another message
+			is available.  Return its length without removing the length bytes
+			from the buffer.  A copy of the tail is stored so the buffer can be
+			returned to its prior state as the message is not actually being
+			removed from the buffer. */
+			xOriginalTail = pxStreamBuffer->xTail;
+			( void ) prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) &xTempReturn, sbBYTES_TO_STORE_MESSAGE_LENGTH, xBytesAvailable );
+			xReturn = ( size_t ) xTempReturn;
+			pxStreamBuffer->xTail = xOriginalTail;
+		}
+		else
+		{
+			/* The minimum amount of bytes in a message buffer is
+			( sbBYTES_TO_STORE_MESSAGE_LENGTH + 1 ), so if xBytesAvailable is
+			less than sbBYTES_TO_STORE_MESSAGE_LENGTH the only other valid
+			value is 0. */
+			configASSERT( xBytesAvailable == 0 );
+			xReturn = 0;
+		}
+	}
+	else
+	{
+		xReturn = 0;
+	}
+
+	return xReturn;
 }
 /*-----------------------------------------------------------*/
 
@@ -856,6 +903,7 @@ static size_t prvReadMessageFromBuffer( StreamBuffer_t *pxStreamBuffer,
 										size_t xBytesToStoreMessageLength )
 {
 size_t xOriginalTail, xReceivedLength, xNextMessageLength;
+configMESSAGE_BUFFER_LENGTH_TYPE xTempNextMessageLength;
 
 	if( xBytesToStoreMessageLength != ( size_t ) 0 )
 	{
@@ -864,7 +912,8 @@ size_t xOriginalTail, xReceivedLength, xNextMessageLength;
 		returned to its prior state if the length of the message is too
 		large for the provided buffer. */
 		xOriginalTail = pxStreamBuffer->xTail;
-		( void ) prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) &xNextMessageLength, xBytesToStoreMessageLength, xBytesAvailable );
+		( void ) prvReadBytesFromBuffer( pxStreamBuffer, ( uint8_t * ) &xTempNextMessageLength, xBytesToStoreMessageLength, xBytesAvailable );
+		xNextMessageLength = ( size_t ) xTempNextMessageLength;
 
 		/* Reduce the number of bytes available by the number of bytes just
 		read out. */
@@ -1192,7 +1241,7 @@ static void prvInitialiseNewStreamBuffer( StreamBuffer_t * const pxStreamBuffer,
 
 	uint8_t ucStreamBufferGetStreamBufferType( StreamBufferHandle_t xStreamBuffer )
 	{
-		return ( ( StreamBuffer_t * )xStreamBuffer )->ucFlags | sbFLAGS_IS_MESSAGE_BUFFER;
+		return ( ( StreamBuffer_t * )xStreamBuffer )->ucFlags & sbFLAGS_IS_MESSAGE_BUFFER;
 	}
 
 #endif /* configUSE_TRACE_FACILITY */
