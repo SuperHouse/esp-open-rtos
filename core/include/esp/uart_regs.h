@@ -62,6 +62,13 @@ typedef enum {
     UART_PARITY_ODD = 0b1
 } UART_Parity;
 
+typedef enum {
+    UART_BYTELENGTH_5 = 0b00,
+    UART_BYTELENGTH_6 = 0b01,
+    UART_BYTELENGTH_7 = 0b10,
+    UART_BYTELENGTH_8 = 0b11,
+} UART_ByteLength;
+
 /* Details for FIFO register */
 
 #define UART_FIFO_DATA_M  0x000000ff
