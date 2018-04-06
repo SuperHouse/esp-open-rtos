@@ -1,6 +1,7 @@
 #ifndef _SWC_UART_REPL_
 #define _SWC_UART_REPL_
 #include <stddef.h> /* size_t */
+#include <stdarg.h> /* varargs */
 
 
 #if 0
@@ -15,6 +16,11 @@ enum uart_repl_special_key {
 #endif
 
 typedef void (*uart_repl_handler)(char const *);
+
+/* various helpers to allow us to gracefully show output */
+void error(const char *, ...);
+void debug(const char *, ...);
+void response(const char *, ...);
 
 struct serial_terminal_status {
 	char line[80];

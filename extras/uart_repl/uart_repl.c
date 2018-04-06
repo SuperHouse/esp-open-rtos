@@ -380,8 +380,10 @@ top:
 #undef STATE
 
 
+// local variable that holds the status
+struct serial_terminal_status cc;
+
 void uart_repl_task(void *pvParameters) {
-	struct serial_terminal_status cc;
 	memset(&cc, 0, sizeof(cc));
 	cc.lineCb = pvParameters;
 	MainStateMachine(&cc);
@@ -391,5 +393,44 @@ void uart_repl_task(void *pvParameters) {
 
 void uart_repl_init(uart_repl_handler line_cb) {
 	xTaskCreate(uart_repl_task, "uart_repl", 256, (void *)line_cb, 10, NULL);
+}
+
+void error(const char* format, ...) {
+	va_list argptr;
+	va_start(argptr, format);
+	
+	// TODO preempt the console stuff
+	taskENTER_CRITICAL();
+	printf("\x1b[1;31mERROR:\x1b[1m ");
+	vprintf(format, argptr);
+	printf("\x1b[0m");
+	fflush(stdout);
+	taskEXIT_CRITICAL();
+	va_end(argptr);
+}
+
+// TODO some day replace this with a callback or something, so that it is not
+// named statically
+void response(const char* format, ...) {
+	va_list argptr;
+	va_start(argptr, format);
+	
+	// TODO preempt the console stuff
+	vprintf(format, argptr);
+	fflush(stdout);
+	va_end(argptr);
+
+	// TODO track if the last character was a newline; if not, make sure
+	// prompt() handles it by adding a newline
+}
+
+void debug(const char* format, ...) {
+	va_list argptr;
+	va_start(argptr, format);
+	
+	// TODO preempt the console stuff
+	vprintf(format, argptr);
+	fflush(stdout);
+	va_end(argptr);
 }
 
