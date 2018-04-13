@@ -244,9 +244,9 @@ void sdk_ets_timer_disarm(ets_timer_t *timer)
         prev = curr;
         curr = curr->next;
     }
-    vPortExitCritical();
     timer->next = ETS_TIMER_NOT_ARMED;
     timer->period_ticks = 0;
+    vPortExitCritical();
 }
 
 /**
