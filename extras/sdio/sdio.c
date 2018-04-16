@@ -394,16 +394,10 @@ sdio_error_t sdio_write_sectors(sdio_card_t *card, uint32_t sector, uint8_t *src
     if (card->type != SDIO_TYPE_SDHC)
         sector <<= 9;
 
-    if (count == 1)
-    {
-        // single block
-        if (command(card, CMD24, sector))
-            return set_error(card, SDIO_ERR_IO);
-        return set_error(card, write_data_block(card, TOKEN_SINGLE_TRAN, src));
-    }
+    bool multi = count != 1;
 
     // send pre-erase count
-    if ((card->type == SDIO_TYPE_SD1
+    if (multi && (card->type == SDIO_TYPE_SD1
         || card->type == SDIO_TYPE_SD2
         || card->type == SDIO_TYPE_SDHC)
         && app_command(card, ACMD23, count))
@@ -411,16 +405,19 @@ sdio_error_t sdio_write_sectors(sdio_card_t *card, uint32_t sector, uint8_t *src
         return set_error(card, SDIO_ERR_IO);
     }
 
-    if (command(card, CMD25, sector))
+    if (command(card, multi ? CMD25 : CMD24, sector))
         return set_error(card, SDIO_ERR_IO);
 
     while (count--)
     {
-        if (write_data_block(card, TOKEN_MULTI_TRAN, src) != SDIO_ERR_NONE)
-            return card->error;
+        if (write_data_block(card, multi ? TOKEN_MULTI_TRAN : TOKEN_SINGLE_TRAN, src) != SDIO_ERR_NONE){
+          return card->error;
+        }
         src += SDIO_BLOCK_SIZE;
     }
-    spi_transfer_8(BUS, TOKEN_STOP_TRAN);
+
+    if (multi && command(card, CMD12, 0))
+        return set_error(card, SDIO_ERR_IO);
 
     return set_error(card, SDIO_ERR_NONE);
 }
@@ -449,4 +446,3 @@ sdio_error_t sdio_erase_sectors(sdio_card_t *card, uint32_t first, uint32_t last
 
     return set_error(card, wait() ? SDIO_ERR_NONE : SDIO_ERR_TIMEOUT);
 }
-

@@ -12,6 +12,7 @@
 
 #define CS_GPIO_PIN 2
 #define TEST_FILENAME "/test_loooong_filename.txt"
+#define TEST_DIRECTORYNAME "my_directory"
 #define TEST_CONTENTS "Hello! It's FatFs on esp8266 with ESP Open RTOS!"
 #define READBUF_SIZE 256
 #define DELAY_MS 3000
@@ -68,6 +69,19 @@ void check_fatfs()
     printf("f_chdrive(\"%s\")", vol);
     if (failed(f_chdrive(vol)))
         return;
+
+    // Create a directory if it not exists
+    FILINFO info;
+    if (failed(f_stat(TEST_DIRECTORYNAME, &info)) && info.fattrib & AM_DIR)
+    {
+      printf("f_mkdir (\"%s\")\n", TEST_DIRECTORYNAME);
+      if (failed(f_mkdir(TEST_DIRECTORYNAME)))
+          return;
+    }
+    else
+    {
+      printf("\"%s\" directory already exists\n", TEST_DIRECTORYNAME);
+    }
 
     FIL f;
     // Create test file
