@@ -21,7 +21,7 @@ typedef struct dsmInfoDefinition
 {
     uint8_t running;
     uint8_t preScale;
-    uint8_t dutyCycle;
+    uint8_t target;
     bool output;
 
     /* private */
@@ -36,7 +36,7 @@ void dsm_init(uint8_t npins, const uint8_t* pins)
     /* Assert number of pins is correct */
     if (npins > MAX_DSM_PINS)
     {
-        debug("Incorrect number of PWM pins (%d)\n", npins);
+        debug("Incorrect number of DSM pins (%d)\n", npins);
         return;
     }
 
@@ -70,12 +70,12 @@ void dsm_set_prescale(uint8_t prescale)
 // Freq = (80,000,000/prescale) * ((256 - target) / 256)  HZ  (128 < target < 256)
 void dsm_set_target(uint8_t target)
 {
-    dsmInfo.dutyCycle = target;
+    dsmInfo.target = target;
     if (target == 0 || target == UINT8_MAX)
     {
       dsmInfo.output = (target == UINT8_MAX);
     }
-    debug("Duty set at %u",dsmInfo.dutyCycle);
+    debug("Duty set at %u",dsmInfo.target);
     if (dsmInfo.running)
     {
         dsm_start();
@@ -84,13 +84,13 @@ void dsm_set_target(uint8_t target)
 
 void dsm_start()
 {
-    if (dsmInfo.dutyCycle > 0 && dsmInfo.dutyCycle < UINT8_MAX)
+    if (dsmInfo.target > 0 && dsmInfo.target < UINT8_MAX)
     {
         for (uint8_t i = 0; i < dsmInfo.usedPins; ++i)
         {
-            SET_MASK_BITS(GPIO.CONF[dsmInfo.pins[i]], GPIO_CONF_SOURCE_PWM);
+            SET_MASK_BITS(GPIO.CONF[dsmInfo.pins[i]], GPIO_CONF_SOURCE_DSM);
         }
-        GPIO.PWM = GPIO_PWM_ENABLE | (dsmInfo.preScale << 8) | dsmInfo.dutyCycle;
+        GPIO.DSM = GPIO_DSM_ENABLE | (dsmInfo.preScale << 8) | dsmInfo.target;
     }
     else
     {
@@ -107,7 +107,7 @@ void dsm_stop()
 {
     for (uint8_t i = 0; i < dsmInfo.usedPins; ++i)
     {
-      CLEAR_MASK_BITS(GPIO.CONF[dsmInfo.pins[i]], GPIO_CONF_SOURCE_PWM);
+      CLEAR_MASK_BITS(GPIO.CONF[dsmInfo.pins[i]], GPIO_CONF_SOURCE_DSM);
       gpio_write(dsmInfo.pins[i], false);
     }       
     debug("stop");
