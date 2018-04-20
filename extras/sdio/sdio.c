@@ -182,10 +182,6 @@ static uint8_t command(sdio_card_t *card, uint8_t cmd, uint32_t arg)
     wait();
     spi_transfer(BUS, buf, NULL, 6, SPI_8BIT);
 
-    // R1b response
-    if (cmd == CMD12 || cmd == CMD28 || cmd == CMD29)
-        spi_read_byte();
-
     uint8_t res;
     for (uint8_t i = 0; i < MAX_ERR_COUNT; i ++)
     {
@@ -193,6 +189,25 @@ static uint8_t command(sdio_card_t *card, uint8_t cmd, uint32_t arg)
         if (!(res & BV(R1_BUSY)))
             break;
     }
+
+    /** If the response is a "busy" type (R1B), then there’s some
+     * special handling that needs to be done. The card will
+     * output a continuous stream of zeros, so the end of the BUSY
+     * state is signaled by any nonzero response.
+     */
+    if (cmd == CMD12 || cmd == CMD28 || cmd == CMD29)
+    {
+      for (uint8_t i = 0; i < MAX_ERR_COUNT; i ++)
+      {
+          res = spi_read_byte();
+          if (res != 0)
+          {
+            spi_transfer_8(BUS, 0xFF);
+            return SDIO_ERR_NONE;
+          }
+      }
+    }
+    
     return res;
 }
 
