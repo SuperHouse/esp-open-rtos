@@ -24,6 +24,7 @@
 #include "ws2812_i2s.h"
 #include "i2s_dma/i2s_dma.h"
 
+#include <espressif/esp_common.h>
 #include <string.h>
 #include <malloc.h>
 
@@ -170,9 +171,24 @@ const IRAM_DATA int16_t bitpatterns[16] =
     0b1110111010001000, 0b1110111010001110, 0b1110111011101000, 0b1110111011101110,
 };
 
-void ws2812_i2s_update(ws2812_pixel_t *pixels, pixeltype_t type)
+#define WAIT_SAMPLE (280UL + 3UL * dma_buffer_size)
+
+int ws2812_i2s_update(ws2812_pixel_t *pixels, pixeltype_t type)
 {
     while (i2s_dma_processing) {};
+
+    if (i2s_dma_processing)
+    {
+     return -1; //Busy
+    }
+    //TODO: Found a better way to prevent this.  i2s_dma_processing work like intended ??
+    //This is to set minimum time between two i2s_update when executed following
+    static uint32_t time = 0;
+    if (sdk_system_get_time() < (time + WAIT_SAMPLE))
+    {
+        return -1; //Busy
+    }
+    time = sdk_system_get_time();
 
     uint16_t *p_dma_buf = dma_buffer;
 
@@ -198,4 +214,5 @@ void ws2812_i2s_update(ws2812_pixel_t *pixels, pixeltype_t type)
 
     i2s_dma_processing = true;
     i2s_dma_start(dma_block_list);
+    return 0;
 }
