@@ -563,12 +563,12 @@ bool sdk_wifi_station_dhcpc_stop(void) {
     if (sdk_wifi_get_opmode() == 2) {
         return false;
     }
+    LOCK_TCPIP_CORE();
     if (netif && sdk_dhcpc_flag == DHCP_STARTED) {
-        LOCK_TCPIP_CORE();
         dhcp_stop(netif);
-        sdk_dhcpc_flag = DHCP_STOPPED;
-        UNLOCK_TCPIP_CORE();
     }
+    sdk_dhcpc_flag = DHCP_STOPPED;
+    UNLOCK_TCPIP_CORE();
     return true;
 }
 
