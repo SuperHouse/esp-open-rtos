@@ -1,9 +1,9 @@
-# Component makefile for private/dsm
+# Component makefile for extras/dsm
 
-INC_DIRS += $(ROOT)private/dsm
+INC_DIRS += $(ROOT)extras/dsm
 
 # args for passing into compile rule generation
-private/dsm_INC_DIR =  $(ROOT)private/dsm
-private/dsm_SRC_DIR =  $(ROOT)private/dsm
+extras/dsm_INC_DIR =  $(ROOT)extras/dsm
+extras/dsm_SRC_DIR =  $(ROOT)extras/dsm
 
-$(eval $(call component_compile_rules,private/dsm))
+$(eval $(call component_compile_rules,extras/dsm))

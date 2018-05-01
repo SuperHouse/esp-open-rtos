@@ -8,13 +8,19 @@
 #ifndef EXTRAS_DSM_H_
 #define EXTRAS_DSM_H_
 
-#include <stdint.h>
-
-#define MAX_DSM_PINS    8
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdint.h>
+
+#define MAX_DSM_PINS    (8)
+#define DSM_DEBUG       (0)
+
+/*
+ * Freq = (80,000,000/prescale) * (target / 256) HZ           (0   < target < 128)
+ * Freq = (80,000,000/prescale) * ((256 - target) / 256)  HZ  (128 < target < 256)
+ */
 
 void dsm_init(uint8_t npins, const uint8_t* pins);
 void dsm_set_prescale(uint8_t prescale);

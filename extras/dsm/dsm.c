@@ -11,7 +11,7 @@
 #include <esp8266.h>
 
 
-#ifdef DSM_DEBUG
+#if (DSM_DEBUG)
 #define debug(fmt, ...) printf("%s: " fmt "\n", "DSM", ## __VA_ARGS__)
 #else
 #define debug(fmt, ...)
@@ -57,8 +57,6 @@ void dsm_init(uint8_t npins, const uint8_t* pins)
     dsmInfo.running = 0;
 }
 
-// Freq = (80,000,000/prescale) * (target / 256) HZ           (0   < target < 128)
-// Freq = (80,000,000/prescale) * ((256 - target) / 256)  HZ  (128 < target < 256)
 void dsm_set_prescale(uint8_t prescale)
 {
     //TODO: Add a freq/prescale converter
@@ -66,8 +64,6 @@ void dsm_set_prescale(uint8_t prescale)
     debug("Set Prescale: %u",dsmInfo.preScale);
 }
 
-// Freq = (80,000,000/prescale) * (target / 256) HZ           (0   < target < 128)
-// Freq = (80,000,000/prescale) * ((256 - target) / 256)  HZ  (128 < target < 256)
 void dsm_set_target(uint8_t target)
 {
     dsmInfo.target = target;
