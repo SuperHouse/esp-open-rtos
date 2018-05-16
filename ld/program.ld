@@ -113,7 +113,11 @@ SECTIONS
     *libc.a:*bzero.o(.literal .text .literal.* .text.*)
     *libc.a:*lock.o(.literal .text .literal.* .text.*)
 
-    *libc.a:*printf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-printf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-sprintf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-fprintf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-svfprintf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-vfprintf.o(.literal .text .literal.* .text.*)
     *libc.a:*findfp.o(.literal .text .literal.* .text.*)
     *libc.a:*fputwc.o(.literal .text .literal.* .text.*)
 
