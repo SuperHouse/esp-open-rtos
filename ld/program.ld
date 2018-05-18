@@ -113,7 +113,11 @@ SECTIONS
     *libc.a:*bzero.o(.literal .text .literal.* .text.*)
     *libc.a:*lock.o(.literal .text .literal.* .text.*)
 
-    *libc.a:*printf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-printf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-sprintf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-fprintf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-svfprintf.o(.literal .text .literal.* .text.*)
+    *libc.a:*-vfprintf.o(.literal .text .literal.* .text.*)
     *libc.a:*findfp.o(.literal .text .literal.* .text.*)
     *libc.a:*fputwc.o(.literal .text .literal.* .text.*)
 
@@ -249,10 +253,13 @@ SECTIONS
     *(.gnu.linkonce.r.*)
     __XT_EXCEPTION_TABLE__ = ABSOLUTE(.);
     *(.xt_except_table)
-    *(.gcc_except_table)
+    *(.gcc_except_table .gcc_except_table.*)
     *(.gnu.linkonce.e.*)
     *(.gnu.version_r)
-    *(.eh_frame)
+    . = (. + 3) & ~ 3;
+    __eh_frame = ABSOLUTE(.);
+    KEEP(*(.eh_frame))
+    . = (. + 7) & ~ 3;
     . = ALIGN(4);
     *(.dynamic)
     *(.gnu.version_d)

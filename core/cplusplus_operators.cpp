@@ -4,22 +4,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void *operator new(size_t size)
+void * __attribute__((weak)) operator new(size_t size)
 {
     return malloc(size);
 }
 
-void *operator new[](size_t size)
+void * __attribute__((weak)) operator new[](size_t size)
 {
     return malloc(size);
 }
 
-void operator delete(void * ptr)
+void __attribute__((weak)) operator delete(void * ptr)
 {
     free(ptr);
 }
 
-void operator delete[](void * ptr)
+void __attribute__((weak)) operator delete[](void * ptr)
 {
     free(ptr);
 }
