@@ -43,6 +43,8 @@
 static SemaphoreHandle_t uart0_sem = NULL;
 static bool inited = false;
 static void uart0_rx_init(void);
+static int uart0_nonblock;
+static TickType_t uart0_vtime;
 
 IRAM void uart0_rx_handler(void *arg)
 {
@@ -75,6 +77,20 @@ uint32_t uart0_num_char(void)
     return count;
 }
 
+int uart0_set_nonblock(int nonblock)
+{
+    int current = uart0_nonblock;
+    uart0_nonblock = nonblock;
+    return current;
+}
+
+TickType_t uart0_set_vtime(TickType_t ticks)
+{
+    TickType_t current = uart0_vtime;
+    uart0_vtime = ticks;
+    return current;
+}
+
 // _read_stdin_r in core/newlib_syscalls.c will be skipped by the linker in favour
 // of this function
 long _read_stdin_r(struct _reent *r, int fd, char *ptr, int len)
@@ -83,7 +99,21 @@ long _read_stdin_r(struct _reent *r, int fd, char *ptr, int len)
     for(int i = 0; i < len; i++) {
         if (!(UART(UART0).STATUS & (UART_STATUS_RXFIFO_COUNT_M << UART_STATUS_RXFIFO_COUNT_S))) {
             _xt_isr_unmask(1 << INUM_UART);
-            if (!xSemaphoreTake(uart0_sem, portMAX_DELAY)) {
+            if (uart0_nonblock) {
+                if (i > 0) {
+                    return i;
+                }
+                r->_errno = EAGAIN;
+                return -1;
+            }
+            if (uart0_vtime) {
+                if (!xSemaphoreTake(uart0_sem, uart0_vtime)) {
+                    if (i > 0) {
+                        return i;
+                    }
+                    return 0;
+                }
+            } else if (!xSemaphoreTake(uart0_sem, portMAX_DELAY)) {
                 printf("\nFailed to get sem\n");
             }
         }
