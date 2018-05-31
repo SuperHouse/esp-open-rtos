@@ -64,8 +64,10 @@ typedef enum
  */
 typedef struct
 {
-    ssd1306_protocol_t protocol;
-    ssd1306_screen_t screen;
+    struct {
+        uint8_t protocol : 4;     //!< I/O protocol
+        uint8_t screen : 4;       //!< Screen type
+    };
 #if (SSD1306_I2C_SUPPORT)
     i2c_dev_t i2c_dev;            //!< I2C device descriptor, used by SSD1306_PROTO_I2C
 #endif
