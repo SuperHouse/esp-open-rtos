@@ -64,17 +64,16 @@ typedef enum
  */
 typedef struct
 {
-    ssd1306_protocol_t protocol;
-    ssd1306_screen_t screen;
-    union
-    {
+    struct {
+        uint8_t protocol : 4;     //!< I/O protocol
+        uint8_t screen : 4;       //!< Screen type
+    };
 #if (SSD1306_I2C_SUPPORT)
-        i2c_dev_t i2c_dev;         //!< I2C devuce descriptor, used by SSD1306_PROTO_I2C
+    i2c_dev_t i2c_dev;            //!< I2C device descriptor, used by SSD1306_PROTO_I2C
 #endif
 #if (SSD1306_SPI4_SUPPORT) || (SSD1306_SPI3_SUPPORT)
-        uint8_t cs_pin;            //!< Chip Select GPIO pin, used by SSD1306_PROTO_SPI3, SSD1306_PROTO_SPI4
+    uint8_t cs_pin;               //!< Chip Select GPIO pin, used by SSD1306_PROTO_SPI3, SSD1306_PROTO_SPI4
 #endif
-    };
 #if (SSD1306_SPI4_SUPPORT)
     uint8_t dc_pin;               //!< Data/Command GPIO pin, used by SSD1306_PROTO_SPI4
 #endif
