@@ -236,7 +236,9 @@ static int sh1106_go_coordinate(const ssd1306_t *dev, uint8_t x, uint8_t y)
 int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
 {
     uint16_t i;
+#if (SSD1306_SPI3_SUPPORT)
     uint8_t j;
+#endif
 #if (SSD1306_I2C_SUPPORT)
     uint8_t tab[16] = { 0 };
 #endif
