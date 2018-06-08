@@ -38,9 +38,11 @@
 #error "LWIP_IGMP needs to be defined in lwipopts.h"
 #endif
 
+#if MDNS_RESPONDER_DEBUGGING
 #define qDebugLog             // Log activity generally
 #define qLogIncoming          // Log all arriving multicast packets
 #define qLogAllTraffic        // Log and decode all mDNS packets
+#endif
 
 //-------------------------------------------------------------------
 
@@ -776,9 +778,13 @@ static void mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_a
 
     // Sanity checks on size
     if (plen > MDNS_RESPONDER_REPLY_SIZE) {
+#ifdef qDebugLog
         printf(">>> mdns_recv: pbuf too big\n");
+#endif
     } else if (plen < (SIZEOF_DNS_HDR + SIZEOF_DNS_QUERY + 1 + SIZEOF_DNS_ANSWER + 1)) {
+#ifdef qDebugLog
         printf(">>> mdns_recv: pbuf too small\n");
+#endif
     } else {
         mdns_payload = malloc(plen);
         if (!mdns_payload) {
