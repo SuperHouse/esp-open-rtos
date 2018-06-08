@@ -32,6 +32,7 @@
 //#define I2C_DEBUG true
 
 #ifdef I2C_DEBUG
+#include <stdio.h>
 #define debug(fmt, ...) printf("%s: " fmt "\n", "I2C", ## __VA_ARGS__)
 #else
 #define debug(fmt, ...)
