@@ -103,7 +103,7 @@ ssize_t wificfg_form_name_value(int s, bool *valp, size_t *rem, char *buf, size_
 void wificfg_form_url_decode(char *string);
 
 /* Support for html-escaping of form values. */
-void wificfg_html_escape(char *string, char *buf, size_t len);
+void wificfg_html_escape(const char *string, char *buf, size_t len);
 
 /* Support for writing a string in a response. */
 ssize_t wificfg_write_string(int s, const char *str);

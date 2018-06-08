@@ -63,7 +63,7 @@
 #define ENTRY_FLAG_ALIVE    0x8000 // Deleted (0) or active (1)
 #define ENTRY_FLAG_INVALID  0x4000 // Valid (0) or invalid (1) entry
 #define ENTRY_FLAG_VALUE    0x2000 // Key (0) or value (1)
-#define ENTRY_FLAG_BINARY   0x1000 // Text (0) or binary (1) data
+#define ENTRY_FLAG_BINARY   0x1000 // Value text (0) or binary (1) data
 
 #define ENTRY_MASK_ID  0xfff
 
@@ -290,6 +290,46 @@ static inline sysparam_status_t _read_payload(struct sysparam_context *ctx, uint
     return SYSPARAM_OK;
 }
 
+static inline sysparam_status_t _compare_key(struct sysparam_context *ctx, const char *ns, size_t ns_len, const char *name, size_t name_len) {
+    debug(3, "compare key (%u %u) @ 0x%08x", ns_len, name_len, ctx->addr);
+    size_t key_len = name_len;
+    if (ns) key_len += ns_len + 1;
+    if (ctx->entry.len != key_len) return SYSPARAM_NOTFOUND;
+    uint32_t bounce[BOUNCE_BUFFER_WORDS];
+    uint32_t addr = ctx->addr + ENTRY_HEADER_SIZE;
+
+    if (ns) {
+        for (int i = 0; i < ns_len; i += BOUNCE_BUFFER_SIZE) {
+            int len = min(ns_len - i, BOUNCE_BUFFER_SIZE);
+            CHECK_FLASH_OP(spiflash_read(addr, (void*)bounce, len));
+            if (memcmp(ns + i, bounce, len)) {
+                // Mismatch.
+                return SYSPARAM_NOTFOUND;
+            }
+            addr += len;
+        }
+
+        CHECK_FLASH_OP(spiflash_read(addr, (void*)bounce, 1));
+        if (((char *)bounce)[0] != ':') {
+            // Mismatch.
+            return SYSPARAM_NOTFOUND;
+        }
+        addr++;
+    }
+
+    for (int i = 0; i < name_len; i += BOUNCE_BUFFER_SIZE) {
+        int len = min(name_len - i, BOUNCE_BUFFER_SIZE);
+        CHECK_FLASH_OP(spiflash_read(addr, (void*)bounce, len));
+        if (memcmp(name + i, bounce, len)) {
+            // Mismatch.
+            return SYSPARAM_NOTFOUND;
+        }
+        addr += len;
+    }
+
+    return SYSPARAM_OK;
+}
+
 static inline sysparam_status_t _compare_payload(struct sysparam_context *ctx, uint8_t *value, size_t size) {
     debug(3, "compare payload (%d) @ 0x%08x", size, ctx->addr);
     if (ctx->entry.len != size) return SYSPARAM_NOTFOUND;
@@ -307,31 +347,42 @@ static inline sysparam_status_t _compare_payload(struct sysparam_context *ctx, u
     return SYSPARAM_OK;
 }
 
-/** Find the entry corresponding to the specified key name */
-static sysparam_status_t _find_key(struct sysparam_context *ctx, const char *key, uint16_t key_len) {
+/** Find the entry corresponding to the specified key namespace and name.
+ *
+ *  If the name is NULL then find the next key.
+ *
+ * The namespace and name length are passed as arguments as the caller can often
+ * hoist the search for their length.
+ */
+static sysparam_status_t _find_key(struct sysparam_context *ctx,
+                                   const char *ns, uint16_t ns_len,
+                                   const char *name, uint16_t name_len) {
     sysparam_status_t status;
+    size_t key_len = name_len;
+    if (ns) key_len += ns_len + 1;
 
-    debug(3, "find key len %d: %s", key_len, key ? key : "(null)");
+    debug(3, "find key, ns '%s' len %u, name '%s' len %u", ns ? ns : "(null)", ns_len, name ? name : "(null)", name_len);
     while (true) {
         // Find the next key entry
         status = _find_entry(ctx, ENTRY_ID_ANY, false);
         if (status != SYSPARAM_OK) return status;
         debug(3, "found a key entry @ 0x%08x", ctx->addr);
-        if (!key) {
+        if (!name) {
             // We're looking for the next (any) key, so we're done.
             break;
         }
         if (ctx->entry.len == key_len) {
-            status = _compare_payload(ctx, (uint8_t *)key, key_len);
+            status = _compare_key(ctx, ns, ns_len, name, name_len);
             if (status == SYSPARAM_OK) {
                 // We have a match
                 break;
             }
             if (status != SYSPARAM_NOTFOUND) return status;
             debug(3, "entry payload does not match");
-        } else {
-            debug(3, "key length (%d) does not match (%d)", ctx->entry.len, key_len);
+            continue;
         }
+
+        debug(3, "key length (%d) does not match (%d)", ctx->entry.len, key_len);
     }
     debug(3, "key match @ 0x%08x (idflags = 0x%04x)", ctx->addr, ctx->entry.idflags);
 
@@ -342,6 +393,71 @@ static sysparam_status_t _find_key(struct sysparam_context *ctx, const char *key
 static inline sysparam_status_t _find_value(struct sysparam_context *ctx, uint16_t id_field) {
     debug(3, "find value: 0x%04x", id_field);
     return _find_entry(ctx, id_field & ENTRY_MASK_ID, true);
+}
+
+/** Write a key entry at the specified address */
+static inline sysparam_status_t _write_key_entry(uint32_t addr, uint16_t id, const char *ns, const char *name) {
+    struct entry_header entry;
+    sysparam_status_t status;
+    size_t ns_len = ns ? strlen(ns) : 0;
+    size_t name_len = strlen(name);
+    size_t key_len = name_len;
+    if (ns) key_len += ns_len + 1;
+
+    debug(2, "Writing key entry 0x%02x @ 0x%08x len 0x%x", id, addr, key_len);
+    entry.idflags = id | ENTRY_FLAG_ALIVE | ENTRY_FLAG_INVALID;
+    entry.len = key_len;
+    debug(3, "write initial entry header @ 0x%08x", addr);
+    status = _write_and_verify(addr, &entry, ENTRY_HEADER_SIZE);
+    if (status == SYSPARAM_ERR_IO) {
+        // Uh-oh.. Either the flash call failed in some way or we didn't get
+        // back what we wrote.  This could be a problem because depending on
+        // how it went wrong it could screw up all reads/writes from this point
+        // forward.  Try to salvage the on-flash structure by overwriting the
+        // failed header with all zeros, which (if successful) will be
+        // interpreted on later reads as a deleted empty-payload entry (and it
+        // will just skip to the next spot).
+        memset(&entry, 0, ENTRY_HEADER_SIZE);
+        debug(3, "zeroing entry header @ 0x%08x", addr);
+        status = _write_and_verify(addr, &entry, ENTRY_HEADER_SIZE);
+        if (status != SYSPARAM_OK) return status;
+
+        // Make sure future writes skip past this zeroed bit
+        if (_sysparam_info.end_addr == addr) {
+            _sysparam_info.end_addr += ENTRY_HEADER_SIZE;
+        }
+        // We could just skip to the next space and try again, but
+        // unfortunately now we can't be sure there's enough space remaining to
+        // fit the entry, so we just have to fail this operation.  Hopefully,
+        // at least, future requests will still succeed, though.
+        status = SYSPARAM_ERR_IO;
+    }
+    if (status != SYSPARAM_OK) return status;
+
+    // If we've gotten this far, we've committed to writing the full entry.
+    if (_sysparam_info.end_addr == addr) {
+        _sysparam_info.end_addr += ENTRY_SIZE(key_len);
+    }
+    size_t offset = ENTRY_HEADER_SIZE;
+    if (ns) {
+        debug(3, "write key ns (%d) @ 0x%08x", ns_len, addr + offset);
+        status = _write_and_verify(addr + offset, ns, ns_len);
+        if (status != SYSPARAM_OK) return status;
+        offset += ns_len;
+        char separator = ':';
+        status = _write_and_verify(addr + offset, &separator, 1);
+        if (status != SYSPARAM_OK) return status;
+        offset += 1;
+    }
+    debug(3, "write key name (%d) @ 0x%08x", name_len, addr + offset);
+    status = _write_and_verify(addr + offset, name, name_len);
+    if (status != SYSPARAM_OK) return status;
+
+    debug(3, "set entry valid @ 0x%08x", addr);
+    entry.idflags &= ~ENTRY_FLAG_INVALID;
+    status = _write_and_verify(addr, &entry, ENTRY_HEADER_SIZE);
+
+    return status;
 }
 
 /** Write an entry at the specified address */
@@ -446,9 +562,11 @@ static sysparam_status_t _compact_params(struct sysparam_context *ctx, int *key_
 
         // Write the key to the new region
         debug(2, "writing %d key @ 0x%08x", current_key_id, addr);
-        status = _write_entry(addr, current_key_id, (uint8_t *)iter.key, iter.key_len);
+        status = _write_key_entry(addr, current_key_id, iter.ns, iter.name);
         if (status < 0) break;
-        addr += ENTRY_SIZE(iter.key_len);
+        size_t key_len = strlen(iter.name);
+        if (iter.ns) key_len += strlen(iter.ns) + 1;
+        addr += ENTRY_SIZE(key_len);
 
         if (key_id && (iter.ctx->entry.idflags & ENTRY_MASK_ID) == *key_id) {
             // Update key_id to have the correct id for the compacted result
@@ -658,10 +776,11 @@ sysparam_status_t sysparam_compact() {
     return status;
 }
 
-sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length, bool *is_binary) {
+sysparam_status_t sysparam_get_data(const char *ns, const char *name, uint8_t **destptr, size_t *actual_length, bool *is_binary) {
     struct sysparam_context ctx;
     sysparam_status_t status;
-    size_t key_len = strlen(key);
+    size_t ns_len = ns ? strlen(ns) : 0;
+    size_t name_len = strlen(name);
     uint8_t *buffer;
 
     xSemaphoreTake(_sysparam_info.sem, portMAX_DELAY);
@@ -674,7 +793,7 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
     }
 
     _init_context(&ctx);
-    status = _find_key(&ctx, key, key_len);
+    status = _find_key(&ctx, ns, ns_len, name, name_len);
     if (status != SYSPARAM_OK) goto done;
 
     // Find the associated value
@@ -708,10 +827,11 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
     return status;
 }
 
-sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *dest, size_t dest_size, size_t *actual_length, bool *is_binary) {
+sysparam_status_t sysparam_get_data_static(const char *ns, const char *name, uint8_t *dest, size_t dest_size, size_t *actual_length, bool *is_binary) {
     struct sysparam_context ctx;
     sysparam_status_t status = SYSPARAM_OK;
-    size_t key_len = strlen(key);
+    size_t ns_len = ns ? strlen(ns) : 0;
+    size_t name_len = strlen(name);
 
     xSemaphoreTake(_sysparam_info.sem, portMAX_DELAY);
 
@@ -723,7 +843,7 @@ sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *dest, size_
     }
 
     _init_context(&ctx);
-    status = _find_key(&ctx, key, key_len);
+    status = _find_key(&ctx, ns, ns_len, name, name_len);
     if (status != SYSPARAM_OK) goto done;
     status = _find_value(&ctx, ctx.entry.idflags);
     if (status != SYSPARAM_OK) goto done;
@@ -738,12 +858,12 @@ sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *dest, size_
     return status;
 }
 
-sysparam_status_t sysparam_get_string(const char *key, char **destptr) {
+sysparam_status_t sysparam_get_string(const char *ns, const char *name, char **destptr) {
     bool is_binary;
     sysparam_status_t status;
     uint8_t *buf;
 
-    status = sysparam_get_data(key, &buf, NULL, &is_binary);
+    status = sysparam_get_data(ns, name, &buf, NULL, &is_binary);
     if (status != SYSPARAM_OK) return status;
     if (is_binary) {
         // Value was saved as binary data, which means we shouldn't try to
@@ -757,13 +877,13 @@ sysparam_status_t sysparam_get_string(const char *key, char **destptr) {
     return SYSPARAM_OK;
 }
 
-sysparam_status_t sysparam_get_int32(const char *key, int32_t *result) {
+sysparam_status_t sysparam_get_int32(const char *ns, const char *name, int32_t *result) {
     int32_t value;
     size_t actual_length;
     bool is_binary;
     sysparam_status_t status;
 
-    status = sysparam_get_data_static(key, (uint8_t *)&value, sizeof(int32_t),
+    status = sysparam_get_data_static(ns, name, (uint8_t *)&value, sizeof(int32_t),
                                       &actual_length, &is_binary);
     if (status != SYSPARAM_OK) return status;
     if (!is_binary || actual_length != sizeof(int32_t))
@@ -772,13 +892,13 @@ sysparam_status_t sysparam_get_int32(const char *key, int32_t *result) {
     return status;
 }
 
-sysparam_status_t sysparam_get_int8(const char *key, int8_t *result) {
+sysparam_status_t sysparam_get_int8(const char *ns, const char *name, int8_t *result) {
     int8_t value;
     size_t actual_length;
     bool is_binary;
     sysparam_status_t status;
 
-    status = sysparam_get_data_static(key, (uint8_t *)&value, sizeof(int8_t),
+    status = sysparam_get_data_static(ns, name, (uint8_t *)&value, sizeof(int8_t),
                                       &actual_length, &is_binary);
     if (status != SYSPARAM_OK) return status;
     if (!is_binary || actual_length != sizeof(int8_t))
@@ -787,14 +907,14 @@ sysparam_status_t sysparam_get_int8(const char *key, int8_t *result) {
     return status;
 }
 
-sysparam_status_t sysparam_get_bool(const char *key, bool *result) {
+sysparam_status_t sysparam_get_bool(const char *ns, const char *name, bool *result) {
     const size_t buf_size = 8;
     char buf[buf_size + 1];  // extra byte for zero termination
     size_t data_len = 0;
     bool binary = false;
     sysparam_status_t status;
 
-    status = sysparam_get_data_static(key, (uint8_t*)buf,
+    status = sysparam_get_data_static(ns, name, (uint8_t*)buf,
             buf_size, &data_len, &binary);
 
     if (status != SYSPARAM_OK) return status;
@@ -837,24 +957,27 @@ sysparam_status_t sysparam_get_bool(const char *key, bool *result) {
     return status;
 }
 
-sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_t value_len, bool is_binary) {
+sysparam_status_t sysparam_set_data(const char *ns, const char *name, const uint8_t *value, size_t value_len, bool is_binary) {
     struct sysparam_context ctx;
     struct sysparam_context write_ctx;
     sysparam_status_t status = SYSPARAM_OK;
-    uint16_t key_len = strlen(key);
+    size_t ns_len = ns ? strlen(ns) : 0;
+    size_t name_len = strlen(name);
     size_t free_space;
     size_t needed_space;
     int key_id = -1;
     uint32_t old_value_addr = 0;
     uint16_t binary_flag;
 
-    if (!key_len) return SYSPARAM_ERR_BADVALUE;
+    if (!name_len) return SYSPARAM_ERR_BADVALUE;
+    size_t key_len = name_len;
+    if (ns) key_len += ns_len + 1;
     if (key_len > MAX_KEY_LEN) return SYSPARAM_ERR_BADVALUE;
     if (value_len > MAX_VALUE_LEN) return SYSPARAM_ERR_BADVALUE;
 
     if (!value) value_len = 0;
 
-    debug(1, "updating value for '%s' (%d bytes)", key, value_len);
+    debug(1, "updating value for '%s' : '%s' (%d bytes)", ns ? ns : "(null)", name, value_len);
 
     xSemaphoreTake(_sysparam_info.sem, portMAX_DELAY);
 
@@ -865,7 +988,7 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
 
     do {
         _init_context(&ctx);
-        status = _find_key(&ctx, key, key_len);
+        status = _find_key(&ctx, ns, ns_len, name, name_len);
         if (status == SYSPARAM_OK) {
             // Key already exists, see if there's a current value.
             key_id = ctx.entry.idflags & ENTRY_MASK_ID;
@@ -905,8 +1028,8 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
             needed_space = ENTRY_SIZE(value_len);
             if (key_id < 0) {
                 // We did not find a previous key entry matching this key.  We
-                // will need to add a key entry as well.
-                key_len = strlen(key);
+                // will need to add a key entry as well. Assume a ns might
+                // also need to be added, but could actually check that.
                 needed_space += ENTRY_SIZE(key_len);
             }
             if (needed_space > free_space) {
@@ -971,7 +1094,7 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
             if (key_id < 0) {
                 // Write a new key entry
                 key_id = ctx.max_key_id + 1;
-                status = _write_entry(write_ctx.addr, key_id, (uint8_t *)key, key_len);
+                status = _write_key_entry(write_ctx.addr, key_id, ns, name);
                 if (status < 0) break;
                 write_ctx.addr += ENTRY_SIZE(key_len);
             }
@@ -998,46 +1121,45 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
     return status;
 }
 
-sysparam_status_t sysparam_set_string(const char *key, const char *value) {
-    return sysparam_set_data(key, (const uint8_t *)value, strlen(value), false);
+sysparam_status_t sysparam_set_string(const char *ns, const char *name, const char *value) {
+    return sysparam_set_data(ns, name, (const uint8_t *)value, strlen(value), false);
 }
 
-sysparam_status_t sysparam_set_int32(const char *key, int32_t value) {
-    return sysparam_set_data(key, (const uint8_t *)&value, sizeof(value), true);
+sysparam_status_t sysparam_set_int32(const char *ns, const char *name, int32_t value) {
+    return sysparam_set_data(ns, name, (const uint8_t *)&value, sizeof(value), true);
 }
 
-sysparam_status_t sysparam_set_int8(const char *key, int8_t value) {
-    return sysparam_set_data(key, (const uint8_t *)&value, sizeof(value), true);
+sysparam_status_t sysparam_set_int8(const char *ns, const char *name, int8_t value) {
+    return sysparam_set_data(ns, name, (const uint8_t *)&value, sizeof(value), true);
 }
 
-sysparam_status_t sysparam_set_bool(const char *key, bool value) {
+sysparam_status_t sysparam_set_bool(const char *ns, const char *name, bool value) {
     uint8_t buf[4] = {0xff, 0xff, 0xff, 0xff};
     bool old_value;
 
     // Don't write anything if the current setting already evaluates to the
     // same thing.
-    if (sysparam_get_bool(key, &old_value) == SYSPARAM_OK) {
+    if (sysparam_get_bool(ns, name, &old_value) == SYSPARAM_OK) {
         if (old_value == value) return SYSPARAM_OK;
     }
 
     buf[0] = value ? 'y' : 'n';
-    return sysparam_set_data(key, buf, 1, false);
+    return sysparam_set_data(ns, name, buf, 1, false);
 }
 
 sysparam_status_t sysparam_iter_start(sysparam_iter_t *iter) {
     if (!_sysparam_info.cur_base) return SYSPARAM_ERR_NOINIT;
 
     iter->bufsize = DEFAULT_ITER_BUF_SIZE;
-    iter->key = malloc(iter->bufsize);
-    if (!iter->key) {
+    iter->buffer = malloc(iter->bufsize);
+    if (!iter->buffer) {
         iter->bufsize = 0;
         return SYSPARAM_ERR_NOMEM;
     }
-    iter->key_len = 0;
     iter->value_len = 0;
     iter->ctx = malloc(sizeof(struct sysparam_context));
     if (!iter->ctx) {
-        free(iter->key);
+        free(iter->buffer);
         iter->bufsize = 0;
         return SYSPARAM_ERR_NOMEM;
     }
@@ -1051,11 +1173,11 @@ sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
     size_t required_len;
     struct sysparam_context *ctx = iter->ctx;
     struct sysparam_context value_ctx;
-    size_t key_space;
-    char *newbuf;
+    size_t key_len, value_len;
+    uint8_t *newbuf;
 
     while (true) {
-        status = _find_key(ctx, NULL, 0);
+        status = _find_key(ctx, NULL, 0, NULL, 0);
         if (status != SYSPARAM_OK) return status;
         memcpy(&value_ctx, ctx, sizeof(value_ctx));
 
@@ -1063,35 +1185,47 @@ sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
         if (status < 0) return status;
         if (status == SYSPARAM_NOTFOUND) continue;
 
-        key_space = ctx->entry.len + 1;
-        required_len = key_space + value_ctx.entry.len + 1;
+        key_len = ctx->entry.len;
+        value_len = value_ctx.entry.len;
+        // Add one null byte to the value, in case of a string.
+        required_len = key_len + 1 + value_len + 1;
         if (required_len > iter->bufsize) {
-            newbuf = realloc(iter->key, required_len);
+            newbuf = realloc(iter->buffer, required_len);
             if (!newbuf) {
                 return SYSPARAM_ERR_NOMEM;
             }
-            iter->key = newbuf;
+            iter->buffer = newbuf;
             iter->bufsize = required_len;
         }
 
-        status = _read_payload(ctx, (uint8_t *)iter->key, iter->bufsize);
+        status = _read_payload(ctx, iter->buffer, iter->bufsize);
         if (status < 0) return status;
-        // Null-terminate the key
-        iter->key[ctx->entry.len] = 0;
-        iter->key_len = ctx->entry.len;
-
-        iter->value = (uint8_t *)(iter->key + key_space);
-        status = _read_payload(&value_ctx, iter->value, iter->bufsize - key_space);
+        // Null-terminate the key name
+        iter->buffer[key_len] = 0;
+        // Find the name space separator.
+        char *ns_end = strchr((char *)iter->buffer, ':');
+        if (ns_end) {
+            // Null-terminate the namespace.
+            *ns_end = 0;
+            iter->ns = (char *)iter->buffer;
+            iter->name = ns_end + 1;
+        } else {
+            // No namespace.
+            iter->ns = NULL;
+            iter->name = (char *)iter->buffer;
+        }
+        iter->value = (uint8_t *)(iter->buffer + key_len + 1);
+        status = _read_payload(&value_ctx, iter->value, iter->bufsize - key_len - 1 - 1);
         if (status < 0) return status;
         // Null-terminate the value (just in case)
-        iter->value[value_ctx.entry.len] = 0;
-        iter->value_len = value_ctx.entry.len;
+        iter->value[value_len] = 0;
+        iter->value_len = value_len;
         if (value_ctx.entry.idflags & ENTRY_FLAG_BINARY) {
             iter->binary = true;
-            debug(2, "iter_next: (0x%08x) '%s' = (0x%08x) <binary-data> (%d)", ctx->addr, iter->key, value_ctx.addr, iter->value_len);
+            debug(2, "iter_next: (0x%08x) '%s' : '%s' = (0x%08x) <binary-data> (%d)", ctx->addr, iter->ns ? iter->ns : "(null)", iter->name, value_ctx.addr, value_len);
         } else {
             iter->binary = false;
-            debug(2, "iter_next: (0x%08x) '%s' = (0x%08x) '%s' (%d)", ctx->addr, iter->key, value_ctx.addr, iter->value, iter->value_len);
+            debug(2, "iter_next: (0x%08x) '%s' : '%s' = (0x%08x) '%s' (%d)", ctx->addr, iter->ns ? iter->ns : "(null)", iter->name, value_ctx.addr, iter->value, value_len);
         }
 
         return SYSPARAM_OK;
@@ -1099,7 +1233,7 @@ sysparam_status_t sysparam_iter_next(sysparam_iter_t *iter) {
 }
 
 void sysparam_iter_end(sysparam_iter_t *iter) {
-    if (iter->key) free(iter->key);
+    if (iter->buffer) free(iter->buffer);
     if (iter->ctx) free(iter->ctx);
 }
 

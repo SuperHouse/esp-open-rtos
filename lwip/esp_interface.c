@@ -365,7 +365,7 @@ ethernetif_init(struct netif *netif)
     /* Initialize interface hostname */
     char *hostname = NULL;
     /* Disabled for now as there were reports of crashes here, sysparam issues */
-    /* sysparam_get_string("hostname", &hostname); */
+    /* sysparam_get_string("wificfg", "hostname", &hostname); */
     if (hostname && strlen(hostname) == 0) {
         free(hostname);
         hostname = NULL;
