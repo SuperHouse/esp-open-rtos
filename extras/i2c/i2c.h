@@ -32,6 +32,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <FreeRTOS.h>
+#include <task.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -51,7 +53,8 @@ extern "C" {
     #define I2C_USE_GPIO16 0
 #endif
 
-#define I2C_DEFAULT_CLK_STRETCH (10)
+/* Default clock strech waiting time, 250 msec. */
+#define I2C_DEFAULT_CLK_STRETCH (250 / portTICK_PERIOD_MS)
 
 /* SCL speed settings. 160 MHz sysclk frequency will result in improved
  * timing accuracy. Greater bitrates will have poorer accuracy. 1000K is the
@@ -86,7 +89,6 @@ typedef struct i2c_dev
  * @param scl_pin SCL pin for I2C
  * @param sda_pin SDA pin for I2C
  * @param freq frequency of bus (ex : I2C_FREQ_400K)
- * @param clk_stretch I2C clock stretch. I2C_DEFAULT_CLK_STRETCH would be good in most cases
  * @return Non-zero if error occured
  */
 int i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq);
@@ -97,7 +99,6 @@ int i2c_init(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, i2c_freq_t freq);
  * @param scl_pin SCL pin for I2C
  * @param sda_pin SDA pin for I2C
  * @param freq frequency of bus in hertz
- * @param clk_stretch I2C clock stretch. I2C_DEFAULT_CLK_STRETCH would be good in most cases
  * @return Non-zero if error occured
  */
 int i2c_init_hz(uint8_t bus, uint8_t scl_pin, uint8_t sda_pin, uint32_t freq);
@@ -119,9 +120,9 @@ int i2c_set_frequency_hz(uint8_t bus, uint32_t freq);
 /**
  * Change clock stretch
  * @param bus I2C bus
- * @param clk_stretch I2C clock stretch. I2C_DEFAULT_CLK_STRETCH by default
+ * @param clk_stretch I2C clock stretch, in ticks. I2C_DEFAULT_CLK_STRETCH by default
  */
-void i2c_set_clock_stretch(uint8_t bus, uint32_t clk_stretch);
+void i2c_set_clock_stretch(uint8_t bus, TickType_t clk_stretch);
 
 /**
  * Write a byte to I2C bus.
