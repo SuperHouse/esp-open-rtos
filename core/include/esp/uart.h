@@ -160,4 +160,14 @@ static inline UART_Parity uart_get_parity(int uart_num) {
     return (UART_Parity)((UART(uart_num).CONF0 & UART_CONF0_PARITY) != 0);
 }
 
+/* Set uart data bits length to the desired value */
+static inline void uart_set_byte_length(int uart_num, UART_ByteLength byte_length) {
+    UART(uart_num).CONF0 = SET_FIELD(UART(uart_num).CONF0, UART_CONF0_BYTE_LEN, byte_length);
+}
+
+/* Returns the current data bits length for the UART */
+static inline UART_ByteLength uart_get_byte_length(int uart_num) {
+    return (UART_ByteLength)(FIELD2VAL(UART_CONF0_BYTE_LEN, UART(uart_num).CONF0));
+}
+
 #endif /* _ESP_UART_H */

@@ -301,7 +301,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 	QueueHandle_t xQueueGenericCreateStatic( const UBaseType_t uxQueueLength, const UBaseType_t uxItemSize, uint8_t *pucQueueStorage, StaticQueue_t *pxStaticQueue, const uint8_t ucQueueType )
 	{
-	Queue_t *pxNewQueue;
+	Queue_t *pxNewQueue = NULL;
 
 		configASSERT( uxQueueLength > ( UBaseType_t ) 0 );
 
@@ -345,6 +345,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 		else
 		{
 			traceQUEUE_CREATE_FAILED( ucQueueType );
+			mtCOVERAGE_TEST_MARKER();
 		}
 
 		return pxNewQueue;
@@ -397,6 +398,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 		else
 		{
 			traceQUEUE_CREATE_FAILED( ucQueueType );
+			mtCOVERAGE_TEST_MARKER();
 		}
 
 		return pxNewQueue;
@@ -752,13 +754,23 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 			if( ( pxQueue->uxMessagesWaiting < pxQueue->uxLength ) || ( xCopyPosition == queueOVERWRITE ) )
 			{
 				traceQUEUE_SEND( pxQueue );
-				xYieldRequired = prvCopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
 
 				#if ( configUSE_QUEUE_SETS == 1 )
 				{
+				UBaseType_t uxPreviousMessagesWaiting = pxQueue->uxMessagesWaiting;
+
+					xYieldRequired = prvCopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
+
 					if( pxQueue->pxQueueSetContainer != NULL )
 					{
-						if( prvNotifyQueueSetContainer( pxQueue, xCopyPosition ) != pdFALSE )
+						if( ( xCopyPosition == queueOVERWRITE ) && ( uxPreviousMessagesWaiting != ( UBaseType_t ) 0 ) )
+						{
+							/* Do not notify the queue set as an existing item
+							was overwritten in the queue so the number of items
+							in the queue has not changed. */
+							mtCOVERAGE_TEST_MARKER();
+						}
+						else if( prvNotifyQueueSetContainer( pxQueue, xCopyPosition ) != pdFALSE )
 						{
 							/* The queue is a member of a queue set, and posting
 							to the queue set caused a higher priority task to
@@ -805,6 +817,8 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 				}
 				#else /* configUSE_QUEUE_SETS */
 				{
+					xYieldRequired = prvCopyDataToQueue( pxQueue, pvItemToQueue, xCopyPosition );
+
 					/* If there was a task waiting for data to arrive on the
 					queue then unblock it now. */
 					if( listLIST_IS_EMPTY( &( pxQueue->xTasksWaitingToReceive ) ) == pdFALSE )

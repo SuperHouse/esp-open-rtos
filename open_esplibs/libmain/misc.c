@@ -11,7 +11,7 @@
 #include "esp/gpio_regs.h"
 #include "esp/rtc_regs.h"
 #include "sdk_internal.h"
-#include "xtensa/hal.h"
+#include "xtensa_ops.h"
 
 static int cpu_freq = 80;
 
@@ -28,9 +28,14 @@ void sdk_os_update_cpu_frequency(int freq) {
 void sdk_ets_update_cpu_frequency(int freq) __attribute__ (( alias ("sdk_os_update_cpu_frequency") ));
 
 void sdk_os_delay_us(uint16_t us) {
-    uint32_t start_ccount = xthal_get_ccount();
+    uint32_t start_ccount, ccount;
     uint32_t delay_ccount = cpu_freq * us;
-    while (xthal_get_ccount() - start_ccount < delay_ccount) {}
+
+    RSR(start_ccount, ccount);
+
+    do {
+        RSR(ccount, ccount);
+    } while (ccount - start_ccount < delay_ccount);
 }
 
 void sdk_ets_delay_us(uint16_t us) __attribute__ (( alias ("sdk_os_delay_us") ));

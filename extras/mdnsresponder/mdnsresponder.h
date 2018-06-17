@@ -21,6 +21,11 @@
 #define MDNS_RESPONDER_REPLY_SIZE      320
 #endif
 
+#ifndef MDNS_RESPONDER_DEBUGGING
+#define MDNS_RESPONDER_DEBUGGING      0
+#endif
+
+
 // Starts the mDNS responder task, call first
 void mdns_init();
 

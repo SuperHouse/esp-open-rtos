@@ -303,6 +303,10 @@ void _lock_acquire(_lock_t *lock) {
 
 void _lock_acquire_recursive(_lock_t *lock) {
     if (locks_initialized) {
+        if (sdk_NMIIrqIsOn) {
+            uart_putc(0, ':');
+            return;
+        }
         xSemaphoreTakeRecursive((QueueHandle_t)*lock, portMAX_DELAY);
     }
 }
@@ -321,6 +325,9 @@ void _lock_release(_lock_t *lock) {
 
 void _lock_release_recursive(_lock_t *lock) {
     if (locks_initialized) {
+        if (sdk_NMIIrqIsOn) {
+            return;
+        }
         xSemaphoreGiveRecursive((QueueHandle_t)*lock);
     }
 }

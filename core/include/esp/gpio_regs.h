@@ -70,7 +70,7 @@ struct GPIO_REGS {
     uint32_t volatile STATUS_SET;       // 0x20
     uint32_t volatile STATUS_CLEAR;     // 0x24
     uint32_t volatile CONF[16];         // 0x28 - 0x64
-    uint32_t volatile PWM;              // 0x68
+    uint32_t volatile DSM;              // 0x68
     uint32_t volatile RTC_CALIB;        // 0x6c
     uint32_t volatile RTC_CALIB_RESULT; // 0x70
 };
@@ -117,9 +117,9 @@ _Static_assert(sizeof(struct GPIO_REGS) == 0x74, "GPIO_REGS is the wrong size");
  *     GPIO_CONF_OPEN_DRAIN does not appear to work on all pins.
  *
  *
- * GPIO_CONF_SOURCE_PWM (boolean)
- *     When set, GPIO pin output will be connected to the sigma-delta PWM
- *     generator (controlled by the GPIO.PWM register).  When cleared, pin
+ * GPIO_CONF_SOURCE_DSM (boolean)
+ *     When set, GPIO pin output will be connected to the sigma-delta
+ *     generator (controlled by the GPIO.DSM register).  When cleared, pin
  *     output will function as a normal GPIO output (controlled by the
  *     GPIO.OUT* registers).
  */
@@ -130,7 +130,7 @@ _Static_assert(sizeof(struct GPIO_REGS) == 0x74, "GPIO_REGS is the wrong size");
 #define GPIO_CONF_INTTYPE_M      0x00000007
 #define GPIO_CONF_INTTYPE_S      7
 #define GPIO_CONF_OPEN_DRAIN     BIT(2)
-#define GPIO_CONF_SOURCE_PWM     BIT(0)
+#define GPIO_CONF_SOURCE_DSM     BIT(0)
 
 /* Valid values for the GPIO_CONF_INTTYPE field */
 typedef enum {
@@ -142,13 +142,13 @@ typedef enum {
     GPIO_INTTYPE_LEVEL_HIGH = 5,
 } gpio_inttype_t;
 
-/* Details for PWM register */
+/* Details for DSM register */
 
-#define GPIO_PWM_ENABLE          BIT(16)
-#define GPIO_PWM_PRESCALER_M     0x000000ff
-#define GPIO_PWM_PRESCALER_S     8
-#define GPIO_PWM_TARGET_M        0x000000ff
-#define GPIO_PWM_TARGET_S        0
+#define GPIO_DSM_ENABLE          BIT(16)
+#define GPIO_DSM_PRESCALER_M     0x000000ff
+#define GPIO_DSM_PRESCALER_S     8
+#define GPIO_DSM_TARGET_M        0x000000ff
+#define GPIO_DSM_TARGET_S        0
 
 /* Details for RTC_CALIB register */
 

@@ -826,6 +826,13 @@ extern "C" {
 	#define configSTACK_DEPTH_TYPE uint16_t
 #endif
 
+#ifndef configMESSAGE_BUFFER_LENGTH_TYPE
+	/* Defaults to size_t for backward compatibility, but can be overridden
+	in FreeRTOSConfig.h if lengths will always be less than the number of bytes
+	in a size_t. */
+	#define configMESSAGE_BUFFER_LENGTH_TYPE size_t
+#endif
+
 /* Sanity check the configuration. */
 #if( configUSE_TICKLESS_IDLE != 0 )
 	#if( INCLUDE_vTaskSuspend != 1 )
@@ -1019,7 +1026,7 @@ typedef struct xSTATIC_TCB
 		uint32_t 		ulDummy18;
 		uint8_t 		ucDummy19;
 	#endif
-	#if( ( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) ) || ( portUSING_MPU_WRAPPERS == 1 ) )
+	#if( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
 		uint8_t			uxDummy20;
 	#endif
 
@@ -1122,13 +1129,14 @@ typedef struct xSTATIC_TIMER
 	StaticListItem_t	xDummy2;
 	TickType_t			xDummy3;
 	UBaseType_t			uxDummy4;
-	void 				*pvDummy5[ 2 ];
+	void 				*pvDummy5;
+	TaskFunction_t		pvDummy6;
 	#if( configUSE_TRACE_FACILITY == 1 )
-		UBaseType_t		uxDummy6;
+		UBaseType_t		uxDummy7;
 	#endif
 
 	#if( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
-		uint8_t 		ucDummy7;
+		uint8_t 		ucDummy8;
 	#endif
 
 } StaticTimer_t;

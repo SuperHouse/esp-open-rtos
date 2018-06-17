@@ -83,7 +83,7 @@
 /* Define to move the stdio stream FILE objects out of struct _reent and make
    them global.  The stdio stream pointers of struct _reent are initialized to
    point to the global stdio FILE stream objects. */
-/* #undef _WANT_REENT_GLOBAL_STDIO_STREAMS */
+#define _WANT_REENT_GLOBAL_STDIO_STREAMS 1
 
 /* Define if small footprint nano-formatted-IO implementation used.  */
 #define _NANO_FORMATTED_IO 1

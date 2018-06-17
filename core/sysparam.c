@@ -505,6 +505,8 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
     struct sysparam_context ctx;
     uint16_t num_sectors;
 
+    _sysparam_info.sem = xSemaphoreCreateMutex();
+
     // Make sure we're starting at the beginning of the sector
     base_addr -= (base_addr % sdk_flashchip.sector_size);
 
@@ -583,8 +585,6 @@ sysparam_status_t sysparam_init(uint32_t base_addr, uint32_t top_addr) {
     if (status == SYSPARAM_OK) {
         _sysparam_info.end_addr = ctx.addr;
     }
-
-    _sysparam_info.sem = xSemaphoreCreateMutex();
 
     return SYSPARAM_OK;
 }

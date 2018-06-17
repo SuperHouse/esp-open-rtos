@@ -53,7 +53,7 @@ typedef enum {
  *
  * @param pixels_number Number of pixels in the strip.
  */
-void ws2812_i2s_init(uint32_t pixels_number, pixeltype_t type);
+int ws2812_i2s_init(uint32_t pixels_number, pixeltype_t type);
 
 /**
  * Update ws2812 pixels.

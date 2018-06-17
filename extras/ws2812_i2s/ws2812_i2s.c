@@ -117,7 +117,7 @@ static inline void init_descriptors_list(uint8_t *buf, uint32_t total_dma_data_s
     }
 }
 
-void ws2812_i2s_init(uint32_t pixels_number, pixeltype_t type)
+int ws2812_i2s_init(uint32_t pixels_number, pixeltype_t type)
 {
     dma_buffer_size = pixels_number * type;
     dma_block_list_size = dma_buffer_size / MAX_DMA_BLOCK_SIZE;
@@ -130,11 +130,24 @@ void ws2812_i2s_init(uint32_t pixels_number, pixeltype_t type)
 
     debug("allocating %d dma blocks\n", dma_block_list_size);
 
-    dma_block_list = (dma_descriptor_t*)malloc(
-            dma_block_list_size * sizeof(dma_descriptor_t));
-
+    if(!dma_block_list)
+    {
+        dma_block_list = (dma_descriptor_t*)malloc(
+                dma_block_list_size * sizeof(dma_descriptor_t));
+        if(!dma_block_list)
+        {
+            return -1;
+        }
+    }
     debug("allocating %d bytes for DMA buffer\n", dma_buffer_size);
-    dma_buffer = malloc(dma_buffer_size);
+    if(!dma_buffer)
+    {
+        dma_buffer = malloc(dma_buffer_size);
+        if(!dma_buffer)
+        {
+          return -1;
+        }
+    }
     memset(dma_buffer, 0xFA, dma_buffer_size);
 
     init_descriptors_list(dma_buffer, dma_buffer_size);
@@ -146,6 +159,7 @@ void ws2812_i2s_init(uint32_t pixels_number, pixeltype_t type)
             clock_div.bclk_div, clock_div.clkm_div);
 
     i2s_dma_init(dma_isr_handler, NULL, clock_div, i2s_pins);
+    return 0;
 }
 
 const IRAM_DATA int16_t bitpatterns[16] =
