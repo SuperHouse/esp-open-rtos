@@ -1,7 +1,10 @@
 PROGRAM=sysparam_editor
 
 # Setting this to 1..3 will add extra debugging output to stdout
-EXTRA_CFLAGS=-DSYSPARAM_DEBUG=0
+EXTRA_CFLAGS = -DSYSPARAM_DEBUG=0
+
+# Avoid writing the wifi state to flash when using wificfg.
+EXTRA_CFLAGS += -DWIFI_PARAM_SAVE=0
 
 include ../../common.mk
 
