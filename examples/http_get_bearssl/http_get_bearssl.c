@@ -88,13 +88,26 @@ sock_write(void *ctx, const unsigned char *buf, size_t len)
  * cert-root-ec.pem.
  *
  * C code for hardcoded trust anchors can be generated with the "brssl"
- * command-line tool (with the "ta" command).
+ * command-line tool (with the "ta" command). To build that tool run:
+ *
+ * $ cd /path/to/esp-open-rtos/extras/bearssl/BearSSL
+ * $ make build/brssl
  *
  * Below is the imported "Let's Encrypt" root certificate, as howsmyssl
  * is depending on it:
  *
  * https://letsencrypt.org/certs/letsencryptauthorityx3.pem
  *
+ * The generate the trust anchor code below, run:
+ *
+ * $ /path/to/esp-open-rtos/extras/bearssl/BearSSL/build/brssl \
+ *   ta letsencryptauthorityx3.pem
+ *
+ * To get the server certificate for a given https host:
+ *
+ * $ openssl s_client -showcerts -servername www.howsmyssl.com \
+ *   -connect www.howsmyssl.com:443 < /dev/null | \
+ *   openssl x509 -outform pem > server.pem
  */
 
 static const unsigned char TA0_DN[] = {
