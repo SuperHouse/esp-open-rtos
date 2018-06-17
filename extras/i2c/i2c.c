@@ -67,7 +67,7 @@ typedef struct i2c_bus_description
   bool started;
   bool flag;
   bool force;
-  uint32_t clk_stretch;
+  TickType_t clk_stretch;
 } i2c_bus_description_t;
 
 static i2c_bus_description_t i2c_bus[I2C_MAX_BUS];
@@ -184,7 +184,7 @@ int i2c_set_frequency_hz(uint8_t bus, uint32_t freq)
     return not_ok ? -EINVAL : 0;
 }
 
-void i2c_set_clock_stretch(uint8_t bus, uint32_t clk_stretch)
+void i2c_set_clock_stretch(uint8_t bus, TickType_t clk_stretch)
 {
     i2c_bus[bus].clk_stretch = clk_stretch;
 }
@@ -236,13 +236,46 @@ static inline void clear_sda(uint8_t bus)
 #endif
 }
 
-static inline void set_scl(uint8_t bus)
+#define I2C_CLK_STRETCH_SPIN 1024
+
+static void set_scl(uint8_t bus)
 {
 #if I2C_USE_GPIO16 == 1
     gpio_write(i2c_bus[bus].g_scl_pin, 1);
 #else
     GPIO.OUT_SET = i2c_bus[bus].g_scl_mask;
 #endif
+
+    // Clock stretching.
+
+    // Spin sampling frequently.
+    uint32_t clk_stretch_spin = I2C_CLK_STRETCH_SPIN;
+    do {
+        if (read_scl(bus)) {
+            return;
+        }
+
+        clk_stretch_spin--;
+    } while (clk_stretch_spin);
+
+    // Fall back to a longer wait, sampling less frequently.
+    TickType_t clk_stretch = i2c_bus[bus].clk_stretch;
+    TickType_t start = xTaskGetTickCount();
+
+    do {
+        vTaskDelay(20 / portTICK_PERIOD_MS);
+
+        if (read_scl(bus)) {
+            return;
+        }
+
+        TickType_t elapsed = xTaskGetTickCount() - start;
+        if (elapsed > clk_stretch) {
+            break;
+        }
+    } while (1);
+
+    debug("bus %u clock stretch timeout", bus);
 }
 
 static inline void set_sda(uint8_t bus)
@@ -266,10 +299,7 @@ void i2c_start(uint8_t bus)
         // Set SDA to 1
         set_sda(bus);
         i2c_delay(bus);
-        uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
         set_scl(bus);
-        while (read_scl(bus) == 0 && clk_stretch--)
-            ;
         // Repeated start setup time, minimum 4.7us
         i2c_delay(bus);
     }
@@ -287,14 +317,10 @@ void i2c_start(uint8_t bus)
 // Output stop condition
 bool i2c_stop(uint8_t bus)
 {
-    uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
     // Set SDA to 0
     clear_sda(bus);
     i2c_delay(bus);
-    // Clock stretching
     set_scl(bus);
-    while (read_scl(bus) == 0 && clk_stretch--)
-        ;
     // Stop bit setup time, minimum 4us
     i2c_delay(bus);
     // SCL is high, set SDA from 0 to 1
@@ -316,17 +342,13 @@ bool i2c_stop(uint8_t bus)
 // Write a bit to I2C bus
 static void i2c_write_bit(uint8_t bus, bool bit)
 {
-    uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
     if (bit) {
         set_sda(bus);
     } else {
         clear_sda(bus);
     }
     i2c_delay(bus);
-    // Clock stretching
     set_scl(bus);
-    while (read_scl(bus) == 0 && clk_stretch--)
-        ;
     // SCL is high, now data is valid
     // If SDA is high, check that nobody else is driving SDA
     if (bit && read_sda(bus) == 0) {
@@ -339,15 +361,11 @@ static void i2c_write_bit(uint8_t bus, bool bit)
 // Read a bit from I2C bus
 static bool i2c_read_bit(uint8_t bus)
 {
-    uint32_t clk_stretch = i2c_bus[bus].clk_stretch;
     bool bit;
     // Let the slave drive data
     set_sda(bus);
     i2c_delay(bus);
     set_scl(bus);
-    // Clock stretching
-    while (read_scl(bus) == 0 && clk_stretch--)
-        ;
     // SCL is high, now data is valid
     bit = read_sda(bus);
     i2c_delay(bus);
