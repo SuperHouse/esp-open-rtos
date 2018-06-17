@@ -576,6 +576,56 @@ enum sdk_dhcp_status sdk_wifi_station_dhcpc_status(void) {
     return sdk_dhcpc_flag;
 }
 
+
+#ifndef WIFI_PARAM_SAVE
+#define WIFI_PARAM_SAVE 1
+#endif
+
+#if WIFI_PARAM_SAVE
+static void wifi_save_protect(uint32_t sector, uint32_t sector_size, uint32_t *arg2, size_t size) {
+    uint32_t *buffer = malloc(size);
+    uint32_t offset = sector * sector_size;
+
+    do  {
+        sdk_spi_flash_erase_sector(sector);
+        sdk_spi_flash_write(offset, arg2, size);
+        sdk_spi_flash_read(offset, buffer, size);
+        if (memcmp(buffer, arg2, size) == 0) {
+            break;
+        }
+        printf("[W]sec %d error\n", sector);
+    } while (1);
+
+    free(buffer);
+}
+#endif
+
+void sdk_wifi_param_save_protect(struct sdk_g_ic_saved_st *params) {
+#if WIFI_PARAM_SAVE
+    uint32_t sector_size = sdk_flashchip.sector_size;
+    uint32_t sectors = sdk_flashchip.chip_size / sector_size;
+
+    uint32_t dir_sector = sectors - 1;
+    struct param_dir_st dir;
+    sdk_spi_flash_read(dir_sector * sector_size, (uint32_t *)&dir, sizeof(dir));
+    uint8_t current_sector = dir.current_sector ? 1 : 0;
+    dir.current_sector = current_sector;
+
+    uint32_t param_sector_start = sectors - 3;
+    wifi_save_protect(param_sector_start + current_sector, sector_size,
+                      (uint32_t *)params, sizeof(struct sdk_g_ic_saved_st));
+
+    dir.cksum_magic = 0x55AA55AA;
+    uint32_t save_count = dir.save_count + 1;
+    dir.save_count = (save_count) ? save_count : 1;
+    dir.cksum_len[current_sector] = sizeof(dir);
+    uint32_t checksum = sdk_system_get_checksum((uint8_t *)params, sizeof(dir));
+    dir.cksum_value[current_sector] = checksum;
+    wifi_save_protect(dir_sector, sector_size, (uint32_t *)&dir, sizeof(dir));
+#endif
+}
+
+
 uint8_t sdk_wifi_station_get_connect_status() {
     if (sdk_wifi_get_opmode() == 2) // ESPCONN_AP
         return 0xff;
