@@ -1884,8 +1884,11 @@ static void server_task(void *pvParameters)
                         value = skip_whitespace(value);
                         switch (header) {
                         case HTTP_HEADER_HOST:
-                            if (hostname_local && host_is_name(value) &&
-                                strcmp(value, hostname_local)) {
+                            if (!host_is_name(value)) {
+                                break;
+                            }
+                            if (!hostname_local ||
+                                (hostname_local && strcmp(value, hostname_local))) {
                                 host_redirect = true;
                             }
                             break;
@@ -2049,6 +2052,21 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
         return;
     }
 
+    /* Default a hostname. */
+    char *hostname = NULL;
+    sysparam_get_string("hostname", &hostname);
+    if (!hostname && wificfg_default_hostname) {
+        uint8_t macaddr[6];
+        char name[32];
+        sdk_wifi_get_macaddr(1, macaddr);
+        snprintf(name, sizeof(name), wificfg_default_hostname, macaddr[3],
+                 macaddr[4], macaddr[5]);
+        sysparam_set_string("hostname", name);
+    }
+    if (hostname) {
+        free(hostname);
+    }
+
     sysparam_get_string("wifi_ap_ssid", &wifi_ap_ssid);
     sysparam_get_string("wifi_ap_password", &wifi_ap_password);
     sysparam_get_string("wifi_sta_ssid", &wifi_sta_ssid);
@@ -2120,21 +2138,6 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
     sdk_wifi_set_opmode(wifi_mode);
 
     if (wifi_sta_enable) {
-        /* Default a hostname. */
-        char *hostname = NULL;
-        sysparam_get_string("hostname", &hostname);
-        if (!hostname && wificfg_default_hostname) {
-            uint8_t macaddr[6];
-            char name[32];
-            sdk_wifi_get_macaddr(1, macaddr);
-            snprintf(name, sizeof(name), wificfg_default_hostname, macaddr[3],
-                     macaddr[4], macaddr[5]);
-            sysparam_set_string("hostname", name);
-        }
-        if (hostname) {
-            free(hostname);
-        }
-
         struct sdk_station_config config;
         strcpy((char *)config.ssid, wifi_sta_ssid);
         strcpy((char *)config.password, wifi_sta_password);
