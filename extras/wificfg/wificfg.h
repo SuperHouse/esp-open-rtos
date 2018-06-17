@@ -121,11 +121,11 @@ ssize_t wificfg_write_chunk_end(int s);
 /* Write a html title meta data, using the hostname or AP SSI. */
 int wificfg_write_html_title(int s, char *buf, size_t len, const char *str);
 
-/* Callback to notify the wificfg logic that a station connection has been
- * successfully established. It might use this to disable the AP interface after
- * a restart.
- */
-void wificfg_got_sta_connect(void);
+/* Wait until the station interface has connected to an access point,
+ * and obtained an IP address. */
+void wificfg_wait_until_sta_connected(void);
+
+bool wificfg_add_shutdown_hook(void (*fn)(void *), void *arg);
 
 #ifdef __cplusplus
 }

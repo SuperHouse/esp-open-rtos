@@ -1375,6 +1375,45 @@ void wificfg_got_sta_connect()
     }
 }
 
+void wificfg_wait_until_sta_connected()
+{
+    while (1) {
+        uint8_t connect_status = sdk_wifi_station_get_connect_status();
+        if (connect_status == STATION_GOT_IP)
+            break;
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+
+    /*
+     * Notifty wificfg to disable the AP interface on the next restart
+     * if that option is enabled.
+     */
+    wificfg_got_sta_connect();
+}
+
+struct shutdown_hook {
+  struct shutdown_hook *next;
+  void (*fn)(void *);
+  void *arg;
+};
+
+static struct shutdown_hook *shutdown_hooks;
+
+bool wificfg_add_shutdown_hook(void (*fn)(void *), void *arg)
+{
+  struct shutdown_hook *hook = malloc(sizeof(struct shutdown_hook));
+
+  if (!hook) {
+    return false;
+  }
+
+  hook->next = shutdown_hooks;
+  hook->fn = fn;
+  hook->arg = arg;
+  shutdown_hooks = hook;
+  return true;
+}
+
 static int handle_restart_post(int s, wificfg_method method,
                                uint32_t content_length,
                                wificfg_content_type content_type,
@@ -1382,6 +1421,10 @@ static int handle_restart_post(int s, wificfg_method method,
 {
     wificfg_write_string(s, http_redirect_header);
     close(s);
+    struct shutdown_hook *hook;
+    for (hook = shutdown_hooks; hook; hook = hook->next) {
+      hook->fn(hook->arg);
+    }
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     sdk_system_restart();
     return 0;
