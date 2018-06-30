@@ -25,7 +25,7 @@
 #ifndef __STDIN_UART_INTERRUPT_H__
 #define __STDIN_UART_INTERRUPT_H__
 
-//#include "FreeRTOS.h"
+#include "FreeRTOS.h"
 #include <stdint.h>
 
 /* Return number of characters waiting in UART0. */
