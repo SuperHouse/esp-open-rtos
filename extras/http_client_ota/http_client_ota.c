@@ -76,7 +76,7 @@ static unsigned int ota_firmaware_dowload_callback(char *buf, uint16_t size)
         memcpy(&first_word, buf, 4);
         sdk_spi_flash_write(flash_offset, &first_word, 4);
         memmove(LWIP_MEM_ALIGN(buf),&buf[1],size-4);
-        buf = (uint32_t *)LWIP_MEM_ALIGN(buf);
+        buf = LWIP_MEM_ALIGN(buf);
         offset += 4;
         size -= 4;
     }
