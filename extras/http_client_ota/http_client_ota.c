@@ -68,17 +68,23 @@ static unsigned int ota_firmaware_dowload_callback(char *buf, uint16_t size)
         return -1;
     }
 
-    // Ready for flash device, the erase NANDFLASH Block
-    if (flash_offset % SECTOR_SIZE == 0) {
-        unsigned int sector;
-
-        sector = flash_offset / SECTOR_SIZE;
-        sdk_spi_flash_erase_sector(sector);
+    int offset = 0;
+    if(size && ((uint32_t)buf % 4)) {
+        // sdk_spi_flash_write requires a word aligned
+        // Assuming size is always a multiple of 4 bytes.
+        uint32_t first_word;
+        memcpy(&first_word, buf, 4);
+        sdk_spi_flash_write(flash_offset, &first_word, 4);
+        memmove(LWIP_MEM_ALIGN(buf),&buf[1],size-4);
+        buf = LWIP_MEM_ALIGN(buf);
+        offset += 4;
+        size -= 4;
     }
 
     // Write into Flash
     sdk_spi_flash_write(flash_offset, (uint32_t *) buf, size);
     flash_offset += size;
+
     return 1;
 }
 
