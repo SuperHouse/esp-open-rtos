@@ -80,6 +80,8 @@ static unsigned int ota_firmaware_dowload_callback(char *buf, uint16_t size)
         offset += 4;
         size -= 4;
     }
+
+    // Write into Flash
     sdk_spi_flash_write(flash_offset, (uint32_t *) buf, size);
     flash_offset += size;
 
