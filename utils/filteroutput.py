@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # A thin Python wrapper around addr2line, can monitor esp-open-rtos
 # output and uses gdb to convert any suitable looking hex numbers
@@ -74,17 +74,17 @@ def main():
         print("Reading from stdin...")
         port = sys.stdin
         # disable echo
-	try:
+        try:
             old_attr = termios.tcgetattr(sys.stdin.fileno())
-	    attr = termios.tcgetattr(sys.stdin.fileno())
-	    attr[3] = attr[3] & ~termios.ECHO
-	    termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, attr)
-	except termios.error:
-	     pass
+            attr = termios.tcgetattr(sys.stdin.fileno())
+            attr[3] = attr[3] & ~termios.ECHO
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, attr)
+        except termios.error:
+            pass
 
     try:
         while True:
-            line = port.readline()
+            line = port.readline().decode('ISO-8859-1')
             if line == '':
                 break
             print(line.strip())
@@ -94,7 +94,8 @@ def main():
                     addr = "0x"+addr
                     # keeping addr2line and feeding it addresses on stdin didn't seem to work smoothly
                 addr2line = subprocess.check_output(["xtensa-lx106-elf-addr2line","-pfia","-e","%s" % args.elf, addr], cwd=".").strip()
-                if not addr2line.endswith(": ?? ??:0"):
+                pattern = ": ?? ??:0"
+                if not addr2line.endswith(pattern.encode()):
                     print("\n%s\n" % addr2line.strip())
     finally:
         if args.port is None:
