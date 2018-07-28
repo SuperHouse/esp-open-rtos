@@ -127,7 +127,7 @@ static void telnetTask(void *pvParameters)
                 if(buffer_pos + data_len < sizeof(input_line)) {
                     // copy data into input buffer
                     if(data_len > 0){
-                        memcpy(&input_line[buffer_pos], (char*)data_in, strlen(data_in));
+                        memcpy(&input_line[buffer_pos], (char*)data_in, data_len);
                         buffer_pos += data_len;
                         // check for line ending
                         if((data_len >= 2) &&
