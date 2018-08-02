@@ -49,6 +49,11 @@
 #define WRITE_RES_OK       0x05
 
 
+#ifndef SDIO_CMD25_WORKAROUND
+    #define SDIO_CMD25_WORKAROUND 0
+#endif
+
+
 #define CMD0   0x00 // GO_IDLE_STATE - Resets the SD Memory Card
 #define CMD1   0x01 // SEND_OP_COND - Sends host capacity support information
                     // and activates the card's initialization process.
@@ -420,19 +425,30 @@ sdio_error_t sdio_write_sectors(sdio_card_t *card, uint32_t sector, uint8_t *src
         return set_error(card, SDIO_ERR_IO);
     }
 
+#if SDIO_CMD25_WORKAROUND
+    // Workaround for very old cards that don't support CMD25
+    while (count--)
+    {
+        // single block
+        if (command(card, CMD24, sector))
+            return set_error(card, SDIO_ERR_IO);
+        if (write_data_block(card, TOKEN_SINGLE_TRAN, src) != SDIO_ERR_NONE)
+            return card->error;
+        src += SDIO_BLOCK_SIZE;
+    }
+#else
     if (command(card, multi ? CMD25 : CMD24, sector))
         return set_error(card, SDIO_ERR_IO);
 
     while (count--)
     {
-        if (write_data_block(card, multi ? TOKEN_MULTI_TRAN : TOKEN_SINGLE_TRAN, src) != SDIO_ERR_NONE){
-          return card->error;
-        }
+        if (write_data_block(card, multi ? TOKEN_MULTI_TRAN : TOKEN_SINGLE_TRAN, src) != SDIO_ERR_NONE)
+            return card->error;
         src += SDIO_BLOCK_SIZE;
     }
-
     if (multi && command(card, CMD12, 0))
         return set_error(card, SDIO_ERR_IO);
+#endif
 
     return set_error(card, SDIO_ERR_NONE);
 }
