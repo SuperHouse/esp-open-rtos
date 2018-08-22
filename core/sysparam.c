@@ -606,9 +606,9 @@ sysparam_status_t sysparam_create_area(uint32_t base_addr, uint16_t num_sectors,
     if (!force) {
         // First, scan through the area and make sure it's actually empty and
         // we're not going to be clobbering something else important.
-        for (addr = base_addr; addr < base_addr + region_size * 2; addr += SCAN_BUFFER_SIZE) {
+        for (addr = base_addr; addr < base_addr + region_size * 2; addr += SCAN_BUFFER_SIZE * sizeof(uint32_t)) {
             debug(3, "read %d words @ 0x%08x", SCAN_BUFFER_SIZE, addr);
-            CHECK_FLASH_OP(spiflash_read(addr, (uint8_t*)buffer, SCAN_BUFFER_SIZE * 4));
+            CHECK_FLASH_OP(spiflash_read(addr, (uint8_t*)buffer, SCAN_BUFFER_SIZE * sizeof(uint32_t)));
             for (i = 0; i < SCAN_BUFFER_SIZE; i++) {
                 if (buffer[i] != 0xffffffff) {
                     // Uh oh, not empty.
