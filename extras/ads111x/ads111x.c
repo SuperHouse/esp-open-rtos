@@ -93,6 +93,18 @@ int16_t ads111x_get_value(i2c_dev_t *dev)
     return read_reg(dev, REG_CONVERSION);
 }
 
+int16_t ads101x_get_value(i2c_dev_t *dev)
+{
+	uint16_t res = read_reg(dev, REG_CONVERSION) >> 4;
+	if (res > 0x07FF)
+	{
+		// negative number - extend the sign to 16th bit
+		res |= 0xF000;
+	}
+	return (int16_t)res;
+}
+
+
 ads111x_gain_t ads111x_get_gain(i2c_dev_t *dev)
 {
     return read_conf_bits(dev, PGA_OFFSET, PGA_MASK);
