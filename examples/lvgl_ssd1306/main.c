@@ -118,6 +118,7 @@ void font_timer(TimerHandle_t h)
 }
 
 
+#if (!LV_TICK_CUSTOM)
 #if (TICK_HANDLER)
 void IRAM vApplicationTickHook(void) {
     lv_tick_inc(portTICK_PERIOD_MS);
@@ -127,6 +128,7 @@ void lvgl_timer(TimerHandle_t xTimerHandle)
 {
     lv_tick_inc(TICK_INC_MS);
 }
+#endif
 #endif
 
 void user_init(void)
@@ -194,7 +196,7 @@ void user_init(void)
     font_timer_handle = xTimerCreate("font_timer", 5 * SECOND, pdTRUE, NULL, font_timer);
     xTimerStart(font_timer_handle, 0);
 
-#if (!TICK_HANDLER)
+#if (!TICK_HANDLER && !LV_TICK_CUSTOM)
     lvgl_timer_handle = xTimerCreate("lvgl_timer", TICK_INC_MS/portTICK_PERIOD_MS, pdTRUE, NULL, lvgl_timer);
     xTimerStart(lvgl_timer_handle, 0);
 #endif
