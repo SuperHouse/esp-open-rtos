@@ -63,30 +63,34 @@ static void ssd1306_task(void *pvParameters)
     vTaskDelay(SECOND);
     ssd1306_set_whole_display_lighting(&dev, false);
 
+    //Set a style for the obj
+    lv_style_copy(&style, &lv_style_transp);
+    style.text.font = &lv_font_dejavu_10;   /*Unicode and symbol fonts already assigned by the library*/
+    style.text.color.full = 1;
+    style.body.main_color.full = 0;
+    style.body.grad_color.full = 0;
+    style.body.shadow.color.full = 0;
+    style.body.border.color.full = 0;
+    style.body.empty = 0;
+
     //Create main screen obj
     lv_obj_t * scr = lv_obj_create(NULL, NULL);
     lv_scr_load(scr);
+    lv_obj_set_style(scr, &style);
 
     //Create a simple label
     label = lv_label_create(lv_scr_act(), NULL);
+    lv_obj_set_style(label, &style);
+
     lv_obj_align(label, lv_scr_act(), LV_ALIGN_IN_TOP_LEFT, 0, 0);
     lv_label_set_long_mode(label, LV_LABEL_LONG_BREAK);
     lv_label_set_align(label, LV_LABEL_ALIGN_CENTER);
     lv_label_set_text(label, "lvgl work with esp-open-rtos");
     lv_obj_set_width(label, LV_HOR_RES);
 
-    //Set a style for the obj
-    lv_style_copy(&style, &lv_style_plain);
-    style.text.font = &lv_font_dejavu_10;   /*Unicode and symbol fonts already assigned by the library*/
-    lv_label_set_style(label, &style);
-
     while (1) {
         /*draw system call */
         lv_task_handler();
-        if(ssd1306_need_redraw())
-        {
-            ssd1306_load_frame_buffer(&dev);
-        }
         vTaskDelay(1);
     }
 }
@@ -118,6 +122,7 @@ void font_timer(TimerHandle_t h)
 }
 
 
+#if (!LV_TICK_CUSTOM)
 #if (TICK_HANDLER)
 void IRAM vApplicationTickHook(void) {
     lv_tick_inc(portTICK_PERIOD_MS);
@@ -127,6 +132,7 @@ void lvgl_timer(TimerHandle_t xTimerHandle)
 {
     lv_tick_inc(TICK_INC_MS);
 }
+#endif
 #endif
 
 void user_init(void)
@@ -172,6 +178,7 @@ void user_init(void)
         printf("%s: failed to init SSD1306 lcd\n", __func__);
         vTaskDelay(SECOND);
     }
+
     ssd1306_set_whole_display_lighting(&dev, true);
 
     /*inverse screen (180°) */
@@ -184,17 +191,18 @@ void user_init(void)
     lv_disp_drv_init(&disp_drv);
     /*Set up the functions to access to your display*/
     disp_drv.disp_flush = ssd1306_flush; /*Used in buffered mode (LV_VDB_SIZE != 0  in lv_conf.h)*/
-    disp_drv.disp_fill = ssd1306_fill;//ex_disp_fill;   /*Used in unbuffered mode (LV_VDB_SIZE == 0  in lv_conf.h)*/
-    disp_drv.disp_map = ssd1306_map;//ex_disp_map;    /*Used in unbuffered mode (LV_VDB_SIZE == 0  in lv_conf.h)*/
+    disp_drv.disp_fill = NULL;//ex_disp_fill;   /*Used in unbuffered mode (LV_VDB_SIZE == 0  in lv_conf.h)*/
+    disp_drv.disp_map = NULL;//ex_disp_map;    /*Used in unbuffered mode (LV_VDB_SIZE == 0  in lv_conf.h)*/
+    disp_drv.vdb_wr = ssd1306_vdb_wr;
     lv_disp_drv_register(&disp_drv);
 
     /* Create user interface task */
-    xTaskCreate(ssd1306_task, "ssd1306_task", 256, NULL, 2, NULL);
+    xTaskCreate(ssd1306_task, "ssd1306_task", 512, NULL, 2, NULL);
 
     font_timer_handle = xTimerCreate("font_timer", 5 * SECOND, pdTRUE, NULL, font_timer);
     xTimerStart(font_timer_handle, 0);
 
-#if (!TICK_HANDLER)
+#if (!TICK_HANDLER && !LV_TICK_CUSTOM)
     lvgl_timer_handle = xTimerCreate("lvgl_timer", TICK_INC_MS/portTICK_PERIOD_MS, pdTRUE, NULL, lvgl_timer);
     xTimerStart(lvgl_timer_handle, 0);
 #endif
