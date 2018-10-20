@@ -38,8 +38,8 @@
  * Required for buffered drawing, opacity and anti-aliasing
  * VDB makes the double buffering, you don't need to deal with it!
  * Typical size: ~1/10 screen */
-#define LV_VDB_SIZE         (0 * LV_HOR_RES)  /*Size of VDB in pixel count (1/10 screen size is good for first)*/
-#define LV_VDB_PX_BPP       LV_COLOR_SIZE     /*Bit-per-pixel of VDB. Useful for monochrome or non-standard color format displays. (Set `disp_drv->vdb_wr` and `disp_drv->vdb_rd` too)*/
+#define LV_VDB_SIZE         (LV_VER_RES * LV_HOR_RES / 2)  /*Size of VDB in pixel count (1/10 screen size is good for first)*/
+#define LV_VDB_PX_BPP       1     /*Bit-per-pixel of VDB. Useful for monochrome or non-standard color format displays. (Set `disp_drv->vdb_wr` and `disp_drv->vdb_rd` too)*/
 #define LV_VDB_ADR          0                 /*Place VDB to a specific address (e.g. in external RAM) (0: allocate automatically into RAM; LV_VDB_ADR_INV: to replace it later with `lv_vdb_set_adr()`)*/
 
 /* Use two Virtual Display buffers (VDB) parallelize rendering and flushing (optional)
@@ -67,7 +67,7 @@
 #define LV_INDEV_LONG_PRESS_REP_TIME    100                    /*Repeated trigger period in long press [ms] */
 
 /*Color settings*/
-#define LV_COLOR_DEPTH     16                     /*Color depth: 1/8/16/32*/
+#define LV_COLOR_DEPTH     1                     /*Color depth: 1/8/16/32*/
 #define LV_COLOR_16_SWAP   0                      /*Swap the 2 bytes of RGB565 color. Useful if the display has a 8 bit interface (e.g. SPI)*/
 #define LV_COLOR_SCREEN_TRANSP        0           /*1: Enable screen transparency. Useful for OSD or other overlapping GUIs. Requires ARGB8888 colors*/
 #define LV_COLOR_TRANSP    LV_COLOR_LIME          /*Images pixels with this color will not be drawn (with chroma keying)*/
