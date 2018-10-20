@@ -67,16 +67,12 @@ static void ssd1306_task(void *pvParameters)
     lv_style_copy(&style, &lv_style_transp);
     style.text.font = &lv_font_dejavu_10;   /*Unicode and symbol fonts already assigned by the library*/
     style.text.color.full = 1;
-<<<<<<< HEAD
     style.text.opa = 255;
 
-=======
->>>>>>> 75d149a2dc6dfce19d031f0062431ba150fc0b5d
     style.body.main_color.full = 0;
     style.body.grad_color.full = 0;
     style.body.shadow.color.full = 0;
     style.body.border.color.full = 0;
-<<<<<<< HEAD
     style.body.empty = 1;
 
     style.image.color.full = 1;
@@ -87,9 +83,6 @@ static void ssd1306_task(void *pvParameters)
     style.line.opa = 255;
     style.line.width = 1;
     style.line.rounded = false;
-=======
-    style.body.empty = 0;
->>>>>>> 75d149a2dc6dfce19d031f0062431ba150fc0b5d
 
     //Create main screen obj
     lv_obj_t * scr = lv_obj_create(NULL, NULL);

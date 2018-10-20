@@ -38,11 +38,7 @@
  * Required for buffered drawing, opacity and anti-aliasing
  * VDB makes the double buffering, you don't need to deal with it!
  * Typical size: ~1/10 screen */
-<<<<<<< HEAD
 #define LV_VDB_SIZE         (LV_VER_RES * LV_HOR_RES / 2)  /*Size of VDB in pixel count (1/10 screen size is good for first)*/
-=======
-#define LV_VDB_SIZE         (LV_VER_RES * LV_HOR_RES)  /*Size of VDB in pixel count (1/10 screen size is good for first)*/
->>>>>>> 75d149a2dc6dfce19d031f0062431ba150fc0b5d
 #define LV_VDB_PX_BPP       1     /*Bit-per-pixel of VDB. Useful for monochrome or non-standard color format displays. (Set `disp_drv->vdb_wr` and `disp_drv->vdb_rd` too)*/
 #define LV_VDB_ADR          0                 /*Place VDB to a specific address (e.g. in external RAM) (0: allocate automatically into RAM; LV_VDB_ADR_INV: to replace it later with `lv_vdb_set_adr()`)*/
 
