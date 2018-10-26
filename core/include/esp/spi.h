@@ -293,9 +293,18 @@ static inline void spi_set_command(uint8_t bus, uint8_t bits, uint16_t data)
 {
     if (!bits) return;
 
-    SPI(bus).USER0 |= SPI_USER0_COMMAND;                           //enable COMMAND function in SPI module
-    uint16_t command = data << (16 - bits);                        //align command data to high bits
-    command = ((command >> 8) & 0xff) | ((command << 8) & 0xff00); //swap byte order
+    SPI(bus).USER0 |= SPI_USER0_COMMAND;                                //enable COMMAND function in SPI module
+    uint16_t command;
+    // Commands are always sent using little endian byte order
+    if (!spi_get_msb(bus)) {
+        // "data" are natively little endian, with LSB bit order
+        // this makes all bits of the command ready to be sent as-is
+        command = data;
+    } else {
+        // MSB
+        command = data << (16 - bits);                                 //align command data to high bits
+        command = ((command >> 8) & 0xff) | ((command << 8) & 0xff00); //swap byte order
+    }
     SPI(bus).USER2 = SET_FIELD(SPI(bus).USER2, SPI_USER2_COMMAND_BITLEN, --bits);
     SPI(bus).USER2 = SET_FIELD(SPI(bus).USER2, SPI_USER2_COMMAND_VALUE, command);
 }
@@ -320,7 +329,14 @@ static inline void spi_set_address(uint8_t bus, uint8_t bits, uint32_t data)
     if (!bits) return;
 
     SPI(bus).USER0 |= SPI_USER0_ADDR; //enable ADDRess function in SPI module
-    SPI(bus).ADDR = data << (32 - bits); //align address data to high bits
+    // addresses are always sent using big endian byte order
+    if (spi_get_msb(bus)) {
+        SPI(bus).ADDR = data << (32 - bits); //align address data to high bits
+    } else {
+        // swap bytes from native little to command's big endian order
+        // bits in each byte are already arranged properly for LSB
+        SPI(bus).ADDR = (data & 0xff) << 24 | (data & 0xff00) << 8 | ((data >> 8) & 0xff00) | ((data >> 24) & 0xff);
+    }
     SPI(bus).USER1 = SET_FIELD(SPI(bus).USER1, SPI_USER1_ADDR_BITLEN, --bits);
 }
 
