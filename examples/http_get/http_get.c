@@ -21,9 +21,9 @@
 
 #include "ssid_config.h"
 
-#define WEB_SERVER "ipv6.google.com"
-#define WEB_PORT 80
-#define WEB_PATH "/"
+#define WEB_SERVER "httpbin.org"
+#define WEB_PORT "80"
+#define WEB_PATH "/get"
 
 void http_get_task(void *pvParameters)
 {
@@ -38,7 +38,7 @@ void http_get_task(void *pvParameters)
         struct addrinfo *res;
 
         printf("Running DNS lookup for %s...\r\n", WEB_SERVER);
-        int err = getaddrinfo(WEB_SERVER, "80", &hints, &res);
+        int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
 
         if (err != 0 || res == NULL) {
             printf("DNS lookup failed err=%d res=%p\r\n", err, res);
