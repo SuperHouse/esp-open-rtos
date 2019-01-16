@@ -254,6 +254,9 @@ static void handle_dhcp_discover(struct dhcp_msg *dhcpmsg)
         opt = add_dhcp_option_bytes(opt, DHCP_OPTION_DNS_SERVER, &state->dns, 4);
     }
 
+    uint32_t expiry = htonl(DHCPSERVER_LEASE_TIME);
+    opt = add_dhcp_option_bytes(opt, DHCP_OPTION_LEASE_TIME, &expiry, 4);
+
     opt = add_dhcp_option_bytes(opt, DHCP_OPTION_END, NULL, 0);
 
     struct netbuf *netbuf = netbuf_new();
