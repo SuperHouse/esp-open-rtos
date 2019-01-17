@@ -44,7 +44,7 @@ static void scan_done_cb(void *arg, sdk_scan_status_t status)
         memcpy(ssid, bss->ssid, len);
         ssid[len] = 0;
 
-        printf("%32s (" MACSTR ") RSSI: %02d, security: %s\n", ssid,
+        printf("%32.32s (" MACSTR ") RSSI: %02d, security: %s\n", ssid,
             MAC2STR(bss->bssid), bss->rssi, auth_modes[bss->authmode]);
 
         bss = bss->next.stqe_next;
