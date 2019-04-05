@@ -48,7 +48,7 @@ void user_init(void)
  */
 static void telnetTask(void *pvParameters)
 {
-    ip_addr_t first_client_ip;
+    ip4_addr_t first_client_ip;
     IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
     dhcpserver_start(&first_client_ip, 4);
 
