@@ -81,6 +81,10 @@ low_level_init(struct netif *netif)
     /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
     netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP | NETIF_FLAG_IGMP | NETIF_FLAG_MLD6;
 
+#if LWIP_ACD
+    netif->acd_list = NULL;
+#endif /* LWIP_ACD */
+
     /* Do whatever else is needed to initialize interface. */
 }
 
@@ -384,7 +388,7 @@ ethernetif_init(struct netif *netif)
     netif->name[0] = IFNAME0;
     netif->name[1] = IFNAME1;
     /* We directly use etharp_output() here to save a function call.
-     * You can instead declare your own function an call etharp_output()
+     * You can instead declare your own function and call etharp_output()
      * from it if you have to do some checks before sending (e.g. if link
      * is available...) */
 #if LWIP_IPV4
