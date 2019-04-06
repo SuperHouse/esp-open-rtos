@@ -2,6 +2,7 @@ EXAMPLES = $(shell find $(dir $(lastword $(MAKEFILE_LIST))) -mindepth 2 -name Ma
 # Generate some dummy .dummybuild/.dummyrebuild target files
 EXAMPLES_BUILD = $(patsubst %,%.dummybuild,$(EXAMPLES))
 EXAMPLES_REBUILD = $(patsubst %,%.dummyrebuild,$(EXAMPLES))
+EXAMPLES_CLEAN = $(patsubst %,%.dummyclean,$(EXAMPLES))
 
 warning:
 	@echo "******************************************************"
@@ -21,12 +22,17 @@ build-examples: $(EXAMPLES_BUILD)
 
 rebuild-examples: $(EXAMPLES_REBUILD)
 
+clean-examples: $(EXAMPLES_CLEAN)
+
 %.dummybuild:
 	$(MAKE) -C $(dir $@)
 
 %.dummyrebuild:
 	$(MAKE) -C $(dir $@) rebuild
 
-.PHONY: warning rebuild-examples build-examples
+%.dummyclean:
+	$(MAKE) -C $(dir $@) clean
+
+.PHONY: warning rebuild-examples build-examples clean-examples
 .NOTPARALLEL:
 .ONESHELL:
