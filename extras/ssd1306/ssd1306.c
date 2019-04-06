@@ -1007,7 +1007,7 @@ int ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font
     return d->width;
 }
 
-int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str,
+int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, const char *str,
         ssd1306_color_t foreground, ssd1306_color_t background)
 {
     uint8_t t = x;

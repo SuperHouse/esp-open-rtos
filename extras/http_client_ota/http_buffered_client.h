@@ -15,9 +15,9 @@ typedef enum  {
 } HTTP_Client_State;
 
 typedef struct  {
-    char *        server;
-    char *        port;
-    char *        path;
+    const char *  server;
+    const char *  port;
+    const char *  path;
     char *        buffer;
     uint16_t      buffer_size;
     http_final_cb buffer_full_cb;

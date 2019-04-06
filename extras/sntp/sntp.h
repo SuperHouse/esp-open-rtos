@@ -52,7 +52,7 @@ void sntp_set_timezone(const struct timezone *tz);
  * Returns 0 if OK, less than 0 if error.
  * NOTE: This function must NOT be called before sntp_initialize().
  */
-int sntp_set_servers(char *server_url[], int num_servers);
+int sntp_set_servers(const char *server_url[], int num_servers);
 
 /*
  * Sets the update delay in ms. If requested value is less than 15s,

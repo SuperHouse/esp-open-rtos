@@ -493,7 +493,7 @@ int ssd1306_draw_char(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font
  * @param background Background color
  * @return Width of the string  or negative value if error occured
  */
-int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, char *str, ssd1306_color_t foreground, ssd1306_color_t background);
+int ssd1306_draw_string(const ssd1306_t *dev, uint8_t *fb, const font_info_t *font, uint8_t x, uint8_t y, const char *str, ssd1306_color_t foreground, ssd1306_color_t background);
 
 /**
  * Stop scrolling (the ram data needs to be rewritten)
