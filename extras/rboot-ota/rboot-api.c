@@ -239,7 +239,7 @@ typedef struct __attribute__((packed)) {
 bool rboot_verify_image(uint32_t initial_offset, uint32_t *image_length, const char **error_message)
 {
     uint32_t offset = initial_offset;
-    char *error = NULL;
+    const char *error = NULL;
     RBOOT_DEBUG("rboot_verify_image: verifying image at 0x%08x\n", initial_offset);
     if(offset % 4) {
         error = "Unaligned flash offset";

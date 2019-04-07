@@ -25,7 +25,7 @@ static const char* get_my_ip(void)
   * @param recv the lwip UDP callback
   * @retval udp_pcb* or NULL if joining failed
   */
-static struct udp_pcb* mcast_join_group(char *group_ip, uint16_t group_port, void (* recv)(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port))
+static struct udp_pcb* mcast_join_group(const char *group_ip, uint16_t group_port, void (* recv)(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port))
 {
     bool status = false;
     struct udp_pcb *upcb;

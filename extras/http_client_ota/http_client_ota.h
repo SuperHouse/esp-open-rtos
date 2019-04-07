@@ -38,10 +38,10 @@ typedef enum {
  * Struct that contains all info for start ota.
  */
 typedef struct {
-    char *server;      /**< Server domain */
-    char *port;        /**< Server port   */
-    char *binary_path; /**< Server Path dowload new update binary */
-    char *sha256_path; /**< Server Path of SHA256 sum for check binary, could be NULL, check will be skipped */
+    const char *server;      /**< Server domain */
+    const char *port;        /**< Server port   */
+    const char *binary_path; /**< Server Path dowload new update binary */
+    const char *sha256_path; /**< Server Path of SHA256 sum for check binary, could be NULL, check will be skipped */
 } ota_info;
 
 /**

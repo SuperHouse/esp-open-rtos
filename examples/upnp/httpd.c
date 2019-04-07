@@ -19,7 +19,7 @@ void httpd_task(void *pvParameters)
             if ((err = netconn_recv(client, &nb)) == ERR_OK) {
                 struct sdk_station_config config;
                 sdk_wifi_station_get_config(&config);
-                char * buf =
+                const char * buf =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
                          <root>\
                             <device>\
