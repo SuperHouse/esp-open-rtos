@@ -174,9 +174,9 @@ extern void   __sinit (struct _reent *);
 	__sinit (ptr);				\
     }						\
   while (0)
-#else
+#else /* _REENT_SMALL && !_REENT_GLOBAL_STDIO_STREAMS */
 # define _REENT_SMALL_CHECK_INIT(ptr) /* nothing */
-#endif
+#endif /* _REENT_SMALL && !_REENT_GLOBAL_STDIO_STREAMS */
 
 struct __sFILE {
   unsigned char *_p;	/* current position in (some) buffer */
@@ -416,6 +416,8 @@ struct _reent
   __FILE *__sf;			        /* file descriptors */
   struct _misc_reent *_misc;            /* strtok, multibyte states */
   char *_signal_buf;                    /* strsignal */
+
+  unsigned int malloc_region_mask;
 };
 
 #ifdef _REENT_GLOBAL_STDIO_STREAMS
@@ -453,7 +455,7 @@ extern __FILE __sf[3];
     (var)->_stderr = &__sf[2]; \
   }
 
-#else
+#else /* _REENT_GLOBAL_STDIO_STREAMS */
 
 extern const struct __sFILE_fake __sf_fake_stdin;
 extern const struct __sFILE_fake __sf_fake_stdout;
@@ -482,7 +484,8 @@ extern const struct __sFILE_fake __sf_fake_stderr;
     {_NULL, 0, _NULL}, \
     _NULL, \
     _NULL, \
-    _NULL \
+    _NULL, \
+    0 \
   }
 
 #define _REENT_INIT_PTR_ZEROED(var) \
@@ -491,7 +494,7 @@ extern const struct __sFILE_fake __sf_fake_stderr;
     (var)->_stderr = (__FILE *)&__sf_fake_stderr; \
   }
 
-#endif
+#endif /* _REENT_GLOBAL_STDIO_STREAMS */
 
 /* Only add assert() calls if we are specified to debug.  */
 #ifdef _REENT_CHECK_DEBUG

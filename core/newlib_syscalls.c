@@ -34,39 +34,30 @@
 #error Too many lwip sockets for the FD_SETSIZE.
 #endif
 
-extern void *xPortSupervisorStackPointer;
-
-IRAM void *_sbrk_r (struct _reent *r, ptrdiff_t incr)
+void *_sbrk_r (struct _reent *r, ptrdiff_t incr)
 {
-    extern char   _heap_start; /* linker script defined */
-    static char * heap_end;
-    char *        prev_heap_end;
-
-    if (heap_end == NULL)
-	heap_end = &_heap_start;
-    prev_heap_end = heap_end;
-
-    intptr_t sp = (intptr_t)xPortSupervisorStackPointer;
-    if(sp == 0) /* scheduler not started */
-        SP(sp);
-
-    if ((intptr_t)heap_end + incr >= sp)
-    {
-        r->_errno = ENOMEM;
-        return (caddr_t)-1;
-    }
-
-    heap_end += incr;
-
-    return (caddr_t) prev_heap_end;
+    r->_errno = ENOMEM;
+    return (caddr_t)-1;
 }
 
+/* If there is a restriction on the dram usage then skip this chunk if in dram,
+ * and if there is a restriction on the iram usage then skip this chunk if in
+ * iram */
+IRAM int _malloc_region_masked(void *r, unsigned int mask)
+{
+    if ( ((mask & 1) && (uint32_t)r < 0x40000000) ||
+         ((mask & 2) && (uint32_t)r >= 0x40100000) ) {
+        return 1;
+    }
 
-/* Insert a disjoint region into the nano malloc pool. Create a malloc chunk,
- * filling the size as newlib nano malloc expects, and then free it. */
-void nano_malloc_insert_chunk(void *start, size_t size) {
-    *(uint32_t *)start = size;
-    free(start + sizeof(size_t));
+    return 0;
+}
+
+uint32_t set_malloc_regions(uint32_t mask)
+{
+    uint32_t malloc_mask = _REENT->malloc_region_mask;
+    _REENT->malloc_region_mask = mask;
+    return malloc_mask;
 }
 
 /* syscall implementation for stdio write to UART */

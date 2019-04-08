@@ -22,6 +22,10 @@
 rboot_megabyte:
 	.byte RBOOT_MEGABYTE_DEFAULT
 
+	.global  enable_low_icache
+enable_low_icache:
+	.byte 1
+
 	.section .data
 	.local cache_return_save
 	.align 4
@@ -44,7 +48,8 @@ Cache_Read_Enable:
 	/* map the first megabyte of flash */
 	movi a2, 0
 	movi a3, 0
-	movi a4, 1
+	movi a4, enable_low_icache
+	l8ui a4, a4, 0
 	call0 rom_Cache_Read_Enable
 
 	movi a3, RBOOT_CONFIG_BASE
@@ -67,7 +72,8 @@ Cache_Read_Enable:
 	l32i a4, a4, 0
 	extui a2, a4, 0, 1 /* a2 is now lsb of a4 (odd/even) */
 	srli a3, a4, 1 	   /* a3 is half value of mb */
-	movi a4, 1
+	movi a4, enable_low_icache
+	l8ui a4, a4, 0
 	call0 rom_Cache_Read_Enable
 	movi a0, cache_return_save /* restore a0 return address */
 	l32i a0, a0, 0

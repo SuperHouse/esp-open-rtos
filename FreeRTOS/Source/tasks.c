@@ -754,7 +754,11 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 				/* Allocate space for the stack used by the task being created.
 				The base of the stack memory stored in the TCB so the task can
 				be deleted later if required. */
+
+                                /* Allocate the stack in dram, not iram. */
+                                uint32_t malloc_mask = set_malloc_regions(MALLOC_MASK_DRAM);
 				pxNewTCB->pxStack = ( StackType_t * ) pvPortMalloc( ( ( ( size_t ) usStackDepth ) * sizeof( StackType_t ) ) ); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
+                                set_malloc_regions(malloc_mask);
 
 				if( pxNewTCB->pxStack == NULL )
 				{
@@ -769,7 +773,10 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 		StackType_t *pxStack;
 
 			/* Allocate space for the stack used by the task being created. */
+                        /* Allocate the stack in dram, not iram. */
+                        uint32_t malloc_mask = set_malloc_regions(MALLOC_MASK_DRAM);
 			pxStack = ( StackType_t * ) pvPortMalloc( ( ( ( size_t ) usStackDepth ) * sizeof( StackType_t ) ) ); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
+                        set_malloc_regions(malloc_mask);
 
 			if( pxStack != NULL )
 			{
@@ -990,7 +997,16 @@ UBaseType_t x;
 	{
 		/* Initialise this task's Newlib reent structure. */
 		_REENT_INIT_PTR( ( &( pxNewTCB->xNewLib_reent ) ) );
-	}
+
+                if (strcmp(pcName, "ppTask") == 0 ||
+                    strcmp(pcName, "rtc_timer_task") == 0 ||
+                    strcmp(pcName, "Tmr Svc") == 0) {
+                    pxNewTCB->xNewLib_reent.malloc_region_mask = MALLOC_MASK_DRAM;
+                } else {
+                    pxNewTCB->xNewLib_reent.malloc_region_mask = MALLOC_MASK_PREFER_DRAM;
+                    //pxNewTCB->xNewLib_reent.malloc_region_mask = MALLOC_MASK_PREFER_IRAM;
+                }
+        }
 	#endif
 
 	#if( INCLUDE_xTaskAbortDelay == 1 )

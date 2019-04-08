@@ -137,6 +137,9 @@ static void IRAM default_putc(char c) {
 void init_newlib_locks(void);
 extern uint8_t sdk_wDevCtrl[];
 void nano_malloc_insert_chunk(void *start, size_t size);
+extern uint8_t _heap_start[];
+extern uint8_t _text_end[];
+extern uint8_t enable_low_icache;
 
 // .text+0x258
 void IRAM sdk_user_start(void) {
@@ -209,8 +212,13 @@ void IRAM sdk_user_start(void) {
     cksum_value = buf32[5 + boot_slot];
     ic_flash_addr = (flash_sectors - 3 + boot_slot) * sdk_flashchip.sector_size;
     sdk_SPIRead(ic_flash_addr, buf32, sizeof(struct sdk_g_ic_saved_st));
+
+#ifdef ESP8266_ENABLE_LOW_ICACHE
+    enable_low_icache = ESP8266_ENABLE_LOW_ICACHE;
+#endif
     Cache_Read_Enable(0, 0, 1);
     zero_bss();
+
     sdk_os_install_putc1(default_putc);
 
     /* HACK Reclaim a region of unused bss from wdev.o. This would not be
@@ -218,6 +226,26 @@ void IRAM sdk_user_start(void) {
      * not be a fragmented area, but the extra memory is desparately needed and
      * it is in very useful dram. */
     nano_malloc_insert_chunk((void *)(sdk_wDevCtrl + 0x2190), 8000);
+
+    /* Use all the used DRAM is for the dynamic heap. */
+    nano_malloc_insert_chunk(_heap_start, 0x3FFFC000 - (uintptr_t)_heap_start);
+
+    /* Add unused IRAM to the malloc free list. */
+    if (enable_low_icache) {
+        /* The memory region 0x40108000 to 0x4010C000 is used for icache so can
+         * not be used, but there might still be some unused IRAM */
+        nano_malloc_insert_chunk(_text_end, 0x40108000 - (uintptr_t)_text_end);
+    } else {
+        /* The memory region 0x40108000 to 0x4010C000 is not used as part of the
+         * instruction cache and is usable as extra IRAM. */
+        nano_malloc_insert_chunk(_text_end, 0x4010C000 - (uintptr_t)_text_end);
+    }
+
+    /* The preferred memory region to start allocate the early data. If the app
+     * has ample memory the use the DRAM, other if the app is running low on
+     * DRAM then it might help the allocated to the IRAM when possible. */
+    set_malloc_regions(MALLOC_MASK_PREFER_DRAM);
+    //set_malloc_regions(MALLOC_MASK_PREFER_IRAM);
 
     init_newlib_locks();
 
@@ -368,6 +396,7 @@ void sdk_user_init_task(void *params) {
     /* The start up stack is not used after scheduling has started, so all of
      * the top area of RAM which was stack can be used for the dynamic heap. */
     xPortSupervisorStackPointer = (void *)0x40000000;
+    nano_malloc_insert_chunk((void *)0x3FFFC000, 0x4000);
 
     sdk_ets_timer_init();
     printf("\nESP-Open-SDK ver: %s compiled @ %s %s\n", OS_VERSION_STR, __DATE__, __TIME__);
