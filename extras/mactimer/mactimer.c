@@ -59,7 +59,7 @@ uint64_t IRAM mactime_get_count(void) {
 
 /* Set the Mac timer to trigger at the given absolute count.  This is expected
  * to be called with the NMI disabled, such as from a handler. */
-static void IRAM mactime_set_trigger(uint64_t count) {
+static inline void IRAM mactime_set_trigger(uint64_t count) {
     *(uint32_t volatile *)0x3FF2109C = (uint32_t)count;
     *(uint32_t volatile *)0x3FF210A0 = (uint32_t)(count >> 32UL);
     *(uint32_t volatile *)0x3FF21098 |= 0x80000000;
@@ -120,6 +120,44 @@ void mactimer_arm(mactimer_t *timer, uint64_t count)
     }
 }
 
+/* This is called outside the NMI context, with the NMI enabled, and it
+ * disables the NMI to synchronize access to the data structures.
+ */
+void mactimer_disarm(mactimer_t *timer)
+{
+    /* Guard against being called withing the NMI handler. */
+    if (sdk_NMIIrqIsOn == 0) {
+        /* Disable the maskable interrupts. */
+        vPortEnterCritical();
+        /* Disable the NMI. */
+        do {
+            DPORT.DPORT0 &= 0xFFFFFFE0;
+        } while (DPORT.DPORT0 & 1);
+    }
+
+    /* Remove timer from the timer_list. */
+    mactimer_t *timers = timer_list;
+    if (timers == timer) {
+        timer_list = timers->next;
+    } else {
+        while (timers) {
+            mactimer_t *next = timers->next;
+            if (next == timer) {
+                timers->next = next->next;
+                break;
+            }
+            timers = next;
+        }
+    }
+
+    if (sdk_NMIIrqIsOn == 0) {
+        /* Reenable the NMI. */
+        DPORT.DPORT0 = (DPORT.DPORT0 & 0xFFFFFFE0) | 1;
+        /* Enable the maskable interrupts. */
+        vPortExitCritical();
+    }
+}
+
 /*
  * NMI handler. The callbacks are called in this NMI context. If there are
  * pending timers remaining when done then a new timeout is set.
@@ -140,7 +178,7 @@ void mactimer_arm(mactimer_t *timer, uint64_t count)
 static IRAM void mactimer_handler()
 {
     while (timer_list) {
-        if (((int64_t)timer_list->trigger_usec - (int64_t)mactime_get_count()) > 10) {
+        if (((int64_t)timer_list->trigger_usec - (int64_t)mactime_get_count()) > 0) {
             /* Nothing remaining to handle now. */
             break;
         }

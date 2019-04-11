@@ -32,4 +32,5 @@ void mactimer_setfn(mactimer_t *timer, mactimer_func_t *func, void *parg);
 uint64_t mactime_get_count(void);
 void mactime_add_pending(mactimer_t *timer, uint64_t count);
 void mactimer_arm(mactimer_t *timer, uint64_t count);
+void mactimer_disarm(mactimer_t *timer);
 void mactimer_init(void);
