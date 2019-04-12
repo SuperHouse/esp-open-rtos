@@ -19,7 +19,7 @@
 typedef void (*handle_http_token)(char *);
 
 struct http_token_table {
-    char *            token;
+    const char *      token;
     handle_http_token http_tock_cb;
 };
 

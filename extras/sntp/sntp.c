@@ -690,7 +690,7 @@ sntp_request(void *arg)
 void
 sntp_init(void)
 {
-  char *def_addr[] = {SNTP_SERVER_ADDRESS};
+  const char *def_addr[] = {SNTP_SERVER_ADDRESS};
 
   sntp_num_servers = 0;
   sntp_set_servers(def_addr, sizeof(def_addr) / sizeof(char*));
@@ -715,7 +715,7 @@ sntp_init(void)
 /**
  * Set the NTP servers
  */
-int sntp_set_servers(char *server_url[], int num_servers)
+int sntp_set_servers(const char *server_url[], int num_servers)
 {
   int i;
 

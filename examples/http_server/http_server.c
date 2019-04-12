@@ -43,7 +43,7 @@ int32_t ssi_handler(int32_t iIndex, char *pcInsert, int32_t iInsertLen)
     return (strlen(pcInsert));
 }
 
-char *gpio_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char *gpio_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
 {
     for (int i = 0; i < iNumParams; i++) {
         if (strcmp(pcParam[i], "on") == 0) {
@@ -63,12 +63,12 @@ char *gpio_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValu
     return "/index.ssi";
 }
 
-char *about_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char *about_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
 {
     return "/about.html";
 }
 
-char *websocket_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char *websocket_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
 {
     return "/websockets.html";
 }

@@ -32,7 +32,7 @@
 
 void sntp_tsk(void *pvParameters)
 {
-	char *servers[] = {SNTP_SERVERS};
+	const char *servers[] = {SNTP_SERVERS};
 	UNUSED_ARG(pvParameters);
 
 	/* Wait until we have joined AP and are assigned an IP */

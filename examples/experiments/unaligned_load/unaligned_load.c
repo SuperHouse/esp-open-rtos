@@ -184,7 +184,7 @@ uint32_t IRAM run_test(const char *string, test_with_fn_t testfn, const char *te
     return instructions;
 }
 
-void test_string(const char *string, char *label, bool evict_cache)
+void test_string(const char *string, const char *label, bool evict_cache)
 {
     printf("Testing %s (%p) '%s'\r\n", label, string, string);
     printf("Formats as: '");
