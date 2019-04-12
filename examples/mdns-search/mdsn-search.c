@@ -122,7 +122,7 @@ void result_fn(struct mdns_answer *answer, const char *varpart,
 static void mdns_search_task(void *pvParameters)
 {
     err_t err;
-    s8_t request_id;
+    u8_t request_id;
     struct netif *station_netif = sdk_system_get_netif(STATION_IF);
 
     if (station_netif == NULL) {
