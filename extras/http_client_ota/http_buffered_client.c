@@ -208,8 +208,6 @@ HTTP_Client_State HttpClient_dowload(Http_client_info *info)
             full    = 0;
             vTaskDelayMs(50);
         }
-
-        //printf("Download size read data : %d\n", read_byte);
     } while (read_byte > 0);
 
     info->final_cb(info->buffer, full);
