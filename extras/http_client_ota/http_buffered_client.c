@@ -110,7 +110,8 @@ static inline void parse_http_header(char *header)
 HTTP_Client_State HttpClient_dowload(Http_client_info *info)
 {
     struct addrinfo *res;
-    unsigned int tot_http_pdu_rd, read_byte, full;
+    unsigned int tot_http_pdu_rd, full;
+    ssize_t read_byte;
     int err, sock;
     char *wrt_ptr;
 
@@ -207,6 +208,8 @@ HTTP_Client_State HttpClient_dowload(Http_client_info *info)
             full    = 0;
             vTaskDelayMs(50);
         }
+
+        //printf("Download size read data : %d\n", read_byte);
     } while (read_byte > 0);
 
     info->final_cb(info->buffer, full);
