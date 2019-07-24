@@ -81,14 +81,14 @@ static bool dht_await_pin_state(uint8_t pin, uint32_t timeout,
  * The function call should be protected from task switching.
  * Return false if error occurred.
  */
-static inline bool dht_fetch_data(uint8_t pin, bool bits[DHT_DATA_BITS])
+static inline bool dht_fetch_data(dht_sensor_type_t sensor_type, uint8_t pin, bool bits[DHT_DATA_BITS])
 {
     uint32_t low_duration;
     uint32_t high_duration;
 
     // Phase 'A' pulling signal low to initiate read sequence
     gpio_write(pin, 0);
-    sdk_os_delay_us(20000);
+    sdk_os_delay_us(sensor_type == DHT_TYPE_SI7021 ? 500 : 20000);
     gpio_write(pin, 1);
 
     // Step through Phase 'B', 40us
@@ -155,7 +155,7 @@ bool dht_read_data(dht_sensor_type_t sensor_type, uint8_t pin, int16_t *humidity
     gpio_enable(pin, GPIO_OUT_OPEN_DRAIN);
 
     taskENTER_CRITICAL();
-    result = dht_fetch_data(pin, bits);
+    result = dht_fetch_data(sensor_type, pin, bits);
     taskEXIT_CRITICAL();
 
     if (!result) {
