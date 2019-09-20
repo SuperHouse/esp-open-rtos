@@ -7,6 +7,7 @@ SPIFFS_BASE_ADDR ?= 0x300000
 SPIFFS_SIZE ?= 0x100000
 SPIFFS_LOG_PAGE_SIZE ?= 256
 SPIFFS_LOG_BLOCK_SIZE ?= 8192
+SPIFFS_IMAGE_NAME ?= spiffs.bin
 
 
 spiffs_CFLAGS += -DSPIFFS_SINGLETON=$(SPIFFS_SINGLETON)
@@ -40,7 +41,7 @@ spiffs_SRC_DIR += $(spiffs_ROOT)
 # Example:
 #  $(eval $(call make_spiffs_image,files))
 define make_spiffs_image
-SPIFFS_IMAGE = $(addprefix $(FIRMWARE_DIR),spiffs.bin)
+SPIFFS_IMAGE = $(addprefix $(FIRMWARE_DIR),$(SPIFFS_IMAGE_NAME))
 MKSPIFFS_DIR = $(ROOT)/extras/spiffs/mkspiffs
 MKSPIFFS = $$(MKSPIFFS_DIR)/mkspiffs
 SPIFFS_FILE_LIST = $(shell find $(1))
