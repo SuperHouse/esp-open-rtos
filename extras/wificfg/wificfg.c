@@ -1540,7 +1540,7 @@ static int handle_wificfg_challenge_post(int s, wificfg_method method,
     return wificfg_write_string(s, http_redirect_header);
 }
 
-#ifdef configUSE_TRACE_FACILITY
+#if configUSE_TRACE_FACILITY
 static const char *http_tasks_content[] = {
 #include "content/tasks.html"
 };
@@ -1638,7 +1638,7 @@ static const wificfg_dispatch wificfg_dispatch_list[] = {
     {"/challenge.html", HTTP_METHOD_POST, handle_wificfg_challenge_post, false},
     {"/wificfg/restart.html", HTTP_METHOD_POST, handle_restart_post, true},
     {"/wificfg/erase.html", HTTP_METHOD_POST, handle_erase_post, true},
-#ifdef configUSE_TRACE_FACILITY
+#if configUSE_TRACE_FACILITY
     {"/tasks", HTTP_METHOD_GET, handle_tasks, false},
     {"/tasks.html", HTTP_METHOD_GET, handle_tasks, false},
 #endif /* configUSE_TRACE_FACILITY */
