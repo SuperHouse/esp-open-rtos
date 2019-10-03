@@ -54,9 +54,9 @@
 #endif
 
 
-const char *wificfg_default_ssid = "EOR_%02X%02X%02X";
-const char *wificfg_default_password = "esp-open-rtos";
-const char *wificfg_default_hostname = "eor-%02x%02x%02x";
+const char *wificfg_default_ssid __attribute__ ((weak)) = "EOR_%02X%02X%02X";
+const char *wificfg_default_password __attribute__ ((weak)) = "esp-open-rtos";
+const char *wificfg_default_hostname __attribute__ ((weak)) = "eor-%02x%02x%02x";
 
 /* The http task stack allocates a single buffer to do much of it's work. */
 #define HTTP_BUFFER_SIZE 54
