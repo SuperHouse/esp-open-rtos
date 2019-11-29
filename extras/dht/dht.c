@@ -139,6 +139,9 @@ static inline int16_t dht_convert_data(dht_sensor_type_t sensor_type, uint8_t ms
             data = 0 - data;       // convert it to negative
         }
     }
+    else if (sensor_type == DHT_TYPE_SI7021) {
+        data = msb * 256 + (lsb & ~0x3);
+    }
     else {
         data = msb * 10;
     }
