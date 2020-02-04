@@ -143,6 +143,7 @@ int ssd1306_init(const ssd1306_t *dev)
         case 32:
             pin_cfg = 0x02;
             break;
+        case 48:
         case 64:
             pin_cfg = 0x12;
             break;
@@ -244,7 +245,10 @@ int ssd1306_load_frame_buffer(const ssd1306_t *dev, uint8_t buf[])
 #endif
     size_t len = dev->width * dev->height / 8;
     if (dev->screen == SSD1306_SCREEN) {
-        ssd1306_set_column_addr(dev, 0, dev->width - 1);
+        if (dev->width == 64 && dev->height == 48)
+            ssd1306_set_column_addr(dev, 32, 32 + dev->width -1);
+        else
+            ssd1306_set_column_addr(dev, 0, dev->width - 1);
         ssd1306_set_page_addr(dev, 0, dev->height / 8 - 1);
     }
 
