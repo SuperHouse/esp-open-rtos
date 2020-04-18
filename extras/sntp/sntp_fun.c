@@ -35,11 +35,6 @@
 // Calibration value
 #define cal 		(RTC.SCRATCH[3])
 
-#ifndef SKIP_DIAGNOSTICS
-// Keep the last time SNTP updated the time
-static struct timeval last_update_time = {0, 0};
-#endif
-
 // To protect access to the above.
 static SemaphoreHandle_t sntp_sem = NULL;
 
@@ -70,10 +65,11 @@ void sntp_initialize(const struct timezone *tz) {
     }
     sntp_base = 0;
     // To avoid div by 0 exceptions if requesting time before SNTP config
-    cal = sdk_system_rtc_clock_cali_proc();
+    cal = 1;
     tim_ref = TIMER_COUNT;
     sntp_sem = xSemaphoreCreateMutex();
     assert(sntp_sem == NULL);
+    
     sntp_init();
 }
 
@@ -120,13 +116,15 @@ void sntp_update_rtc(time_t t, uint32_t us) {
 
     xSemaphoreTake(sntp_sem, portMAX_DELAY);
     uint32_t tim = TIMER_COUNT;
+    tim_ref = tim;
+    sntp_base = sntp_correct;
+#ifndef SKIP_DIAGNOSTICS
     // Assume the difference does not overflow in which case
     // wrapping of the RTC timer still yields a good difference.
     uint32_t diff = tim - tim_ref;
-    tim_ref = tim;
     uint64_t diff_us = ((uint64_t)diff * cal) >> 12;
     uint64_t sntp_current = sntp_base + diff_us;
-    sntp_base = sntp_correct;
+#endif
     cal = sdk_system_rtc_clock_cali_proc();
     xSemaphoreGive(sntp_sem);
 
