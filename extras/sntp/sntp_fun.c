@@ -16,6 +16,15 @@
 #include <semphr.h>
 #include "sntp.h"
 
+#ifdef  SNTP_LOGD_WITH_PRINTF
+#define SNTP_LOGD(FMT, ...) printf(FMT "\n", ##__VA_ARGS__)
+#endif
+
+#ifndef SNTP_LOGD
+#define SNTP_LOGD(...)
+#define SKIP_DIAGNOSTICS
+#endif
+
 #define TIMER_COUNT			RTC.COUNTER
 
 // daylight settings
@@ -25,6 +34,11 @@
 #define tim_ref 	(RTC.SCRATCH[2])
 // Calibration value
 #define cal 		(RTC.SCRATCH[3])
+
+#ifndef SKIP_DIAGNOSTICS
+// Keep the last time SNTP updated the time
+static struct timeval last_update_time = {0, 0};
+#endif
 
 // To protect access to the above.
 static SemaphoreHandle_t sntp_sem = NULL;
@@ -91,11 +105,6 @@ int _gettimeofday_r(struct _reent *r, struct timeval *tp, void *tzp) {
 	 	return EINVAL;
 	}
 
-	if (xTaskGetSchedulerState() != taskSCHEDULER_RUNNING) {
-		printf("Scheduler NOT RUNNING RHURHU");
-		return EINVAL;
-	}
-
     uint64_t base = sntp_get_rtc_time();
 
     tp->tv_sec = base / 1000000U;
@@ -121,5 +130,5 @@ void sntp_update_rtc(time_t t, uint32_t us) {
     cal = sdk_system_rtc_clock_cali_proc();
     xSemaphoreGive(sntp_sem);
 
-    printf("\nRTC Adjust: drift = %d usec, cal = %d", (int)(sntp_correct - sntp_current), cal);
+    SNTP_LOGD("SNTP RTC Adjust: drift = %d usec, cal = %d", (int)(sntp_correct - sntp_current), cal);
 }
