@@ -68,7 +68,7 @@ void sntp_initialize(const struct timezone *tz) {
     cal = 1;
     tim_ref = TIMER_COUNT;
     sntp_sem = xSemaphoreCreateMutex();
-    assert(sntp_sem == NULL);
+    assert(sntp_sem != NULL);
     
     sntp_init();
 }
