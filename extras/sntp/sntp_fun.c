@@ -68,7 +68,7 @@ void sntp_initialize(const struct timezone *tz) {
     cal = 1;
     tim_ref = TIMER_COUNT;
     sntp_sem = xSemaphoreCreateMutex();
-    assert(sntp_sem == NULL);
+    assert(sntp_sem != NULL);
     
     sntp_init();
 }
@@ -97,7 +97,7 @@ int _gettimeofday_r(struct _reent *r, struct timeval *tp, void *tzp) {
     if (tzp || !tp) return EINVAL;
 
 	if (sntp_base == 0) {
-	 	printf("Time not valid yet");
+	 	printf("Time not valid yet\n");
 	 	return EINVAL;
 	}
 
