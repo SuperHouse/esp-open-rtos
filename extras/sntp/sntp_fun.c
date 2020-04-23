@@ -97,7 +97,7 @@ int _gettimeofday_r(struct _reent *r, struct timeval *tp, void *tzp) {
     if (tzp || !tp) return EINVAL;
 
 	if (sntp_base == 0) {
-	 	printf("Time not valid yet");
+	 	printf("Time not valid yet\n");
 	 	return EINVAL;
 	}
 
