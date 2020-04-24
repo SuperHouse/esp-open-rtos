@@ -1619,10 +1619,10 @@ const font_char_desc_t _fonts_roboto_10pt_descriptors[] =
 // Font information for Roboto 10pt
 const font_info_t _fonts_roboto_10pt_info =
 {
-    .height           = 14,                              //  Character height
-    .c                = '!',                            //  Start character
-    .char_start       = '~',                            //  End character
-    .char_end         = 2,                              //  Width, in pixels, of space character
+    .height           = 14,                             //  Character height
+    .char_start       = '!',                            //  Start character
+    .char_end         = '~',                            //  End character
+    .c                = 2,                              //  Width, in pixels, of space character
     .char_descriptors = _fonts_roboto_10pt_descriptors, //  Character descriptor array
     .bitmap           = _fonts_roboto_10pt_bitmaps,     //  Character bitmap array
 };
