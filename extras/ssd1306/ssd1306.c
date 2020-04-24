@@ -588,7 +588,7 @@ int ssd1306_draw_hline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
 int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t h, ssd1306_color_t color)
 {
     uint16_t index;
-    uint8_t mask, mod, t;
+    uint8_t fill, mask, mod;
 
     // boundary check
     if ((x >= dev->width) || (x < 0) || (y >= dev->height) || (y < 0))
@@ -598,17 +598,15 @@ int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
     if (y + h > dev->height)
         h = dev->height - y;
 
-    t = h;
-    index = x + (y / 8) * dev->width;
-    mod = y & 7;
-    if (mod) // partial line that does not fit into byte at top
-    {
-        // Magic from Adafruit
-        mod = 8 - mod;
-        static const uint8_t premask[8] = { 0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE };
-        mask = premask[mod];
-        if (t < mod)
-            mask &= (0xFF >> (mod - t));
+    do {
+        mod = y & 7;
+        fill = 8 - mod;
+
+        if (fill > h)
+            fill = h;
+
+        index = x + (y / 8) * dev->width;
+        mask = ((1 << fill) - 1) << mod;
         switch (color) {
             case OLED_COLOR_WHITE:
                 fb[index] |= mask;
@@ -623,58 +621,11 @@ int ssd1306_draw_vline(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, ui
                 break;
         }
 
-        if (t < mod)
-            return 0;
-        t -= mod;
-        index += dev->width;
-    }
-    if (t >= 8) // byte aligned line at middle
-            {
-        switch (color) {
-            case OLED_COLOR_WHITE:
-                do {
-                    fb[index] = 0xff;
-                    index += dev->width;
-                    t -= 8;
-                } while (t >= 8);
-                break;
-            case OLED_COLOR_BLACK:
-                do {
-                    fb[index] = 0x00;
-                    index += dev->width;
-                    t -= 8;
-                } while (t >= 8);
-                break;
-            case OLED_COLOR_INVERT:
-                do {
-                    fb[index] = ~fb[index];
-                    index += dev->width;
-                    t -= 8;
-                } while (t >= 8);
-                break;
-            default:
-                break;
-        }
-    }
-    if (t) // partial line at bottom
-    {
-        mod = t & 7;
-        static const uint8_t postmask[8] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
-        mask = postmask[mod];
-        switch (color) {
-            case OLED_COLOR_WHITE:
-                fb[index] |= mask;
-                break;
-            case OLED_COLOR_BLACK:
-                fb[index] &= ~mask;
-                break;
-            case OLED_COLOR_INVERT:
-                fb[index] ^= mask;
-                break;
-            default:
-                break;
-        }
-    }
+        y += fill;
+        h -= fill;
+
+    } while(h > 0);
+
     return 0;
 }
 
