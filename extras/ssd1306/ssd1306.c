@@ -692,12 +692,58 @@ int ssd1306_draw_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y
 
 int ssd1306_fill_rectangle(const ssd1306_t *dev, uint8_t *fb, int8_t x, int8_t y, uint8_t w, uint8_t h, ssd1306_color_t color)
 {
-    // Can be optimized?
-    uint8_t i;
-    int err = 0;
-    for (i = x; i < x + w; ++i)
-        if ((err = ssd1306_draw_vline(dev, fb, i, y, h, color)))
-            return err;
+    uint16_t index;
+    uint8_t fill, mask, mod, t;
+
+    // boundary check
+    if ((x >= dev->width) || (x < 0) || (y >= dev->height) || (y < 0))
+        return -EINVAL;
+    if (w == 0 || h == 0)
+        return -EINVAL;
+    if (x + w > dev->width)
+        w = dev->width - x;
+    if (y + h > dev->height)
+        h = dev->height - y;
+
+    do {
+        mod = y & 7;
+        fill = 8 - mod;
+
+        if (fill > h)
+            fill = h;
+
+        t = w;
+        index = x + (y / 8) * dev->width;
+        mask = ((1 << fill) - 1) << mod;
+        switch (color) {
+            case OLED_COLOR_WHITE:
+                while (t--) {
+                    fb[index] |= mask;
+                    ++index;
+                }
+                break;
+            case OLED_COLOR_BLACK:
+                mask = ~mask;
+                while (t--) {
+                    fb[index] &= mask;
+                    ++index;
+                }
+                break;
+            case OLED_COLOR_INVERT:
+                while (t--) {
+                    fb[index] ^= mask;
+                    ++index;
+                }
+                break;
+            default:
+                break;
+        }
+
+        y += fill;
+        h -= fill;
+
+    } while(h > 0);
+
     return 0;
 }
 
