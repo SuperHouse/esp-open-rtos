@@ -65,7 +65,7 @@ void sntp_initialize(const struct timezone *tz) {
     }
     sntp_base = 0;
     // To avoid div by 0 exceptions if requesting time before SNTP config
-    cal = 1;
+    cal = sdk_system_rtc_clock_cali_proc();
     tim_ref = TIMER_COUNT;
     sntp_sem = xSemaphoreCreateMutex();
     assert(sntp_sem != NULL);
@@ -96,12 +96,7 @@ int _gettimeofday_r(struct _reent *r, struct timeval *tp, void *tzp) {
     // So it looks like it is not used. Also check tp is not NULL
     if (tzp || !tp) return EINVAL;
 
-	if (sntp_base == 0) {
-	 	printf("Time not valid yet\n");
-	 	return EINVAL;
-	}
-
-    uint64_t base = sntp_get_rtc_time();
+	uint64_t base = sntp_get_rtc_time();
 
     tp->tv_sec = base / 1000000U;
     tp->tv_usec = base % 1000000U;
