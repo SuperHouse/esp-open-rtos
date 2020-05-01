@@ -67,5 +67,7 @@ void sntp_set_update_delay(uint32_t ms);
  */
 void sntp_update_rtc(time_t t, uint32_t us);
 
+time_t sntp_last_update_ts(void);
+
 #endif /* _SNTP_H_ */
 

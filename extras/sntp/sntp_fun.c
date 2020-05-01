@@ -35,6 +35,8 @@
 // Calibration value
 #define cal 		(RTC.SCRATCH[3])
 
+static time_t _sntp_update_ts = 0;
+
 // To protect access to the above.
 static SemaphoreHandle_t sntp_sem = NULL;
 
@@ -113,6 +115,7 @@ void sntp_update_rtc(time_t t, uint32_t us) {
     uint32_t tim = TIMER_COUNT;
     tim_ref = tim;
     sntp_base = sntp_correct;
+    _sntp_update_ts = t;
 #ifndef SKIP_DIAGNOSTICS
     // Assume the difference does not overflow in which case
     // wrapping of the RTC timer still yields a good difference.
@@ -124,4 +127,12 @@ void sntp_update_rtc(time_t t, uint32_t us) {
     xSemaphoreGive(sntp_sem);
 
     SNTP_LOGD("SNTP RTC Adjust: drift = %d usec, cal = %d", (int)(sntp_correct - sntp_current), cal);
+}
+
+time_t sntp_last_update_ts(void) {
+    time_t ts;
+    xSemaphoreTake(sntp_sem, portMAX_DELAY);
+    ts = _sntp_update_ts;
+    xSemaphoreGive(sntp_sem);
+    return ts;
 }
