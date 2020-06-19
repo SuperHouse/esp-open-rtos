@@ -44,9 +44,14 @@ def gen_char(index, c, im):
         
 
 def main(args):
-    fnt = ImageFont.load(args.font)
-    size = fnt.getsize('A')
+    if args.truetype == 0: 
+        fnt = ImageFont.load(args.font)
+    else:
+    # use a truetype font
+        fnt = ImageFont.truetype(args.font, args.size)
     
+    size = fnt.getsize('A')
+
     im = Image.new('RGB', size)
     draw = ImageDraw.Draw(im)
     
@@ -62,6 +67,7 @@ def main(args):
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(os.path.abspath(__file__))), finalize=lambda x: '' if x is None else x)
     print(env.get_template(args.template).render({
         'font': {
+            'path': os.path.basename(args.font),
             'name': args.name,
             'size': size,
             'charset': args.charset,
@@ -82,9 +88,11 @@ if __name__ == "__main__":
     parser=argparse.ArgumentParser(description='Fixed fonts converter')
     parser.add_argument('-f', '--font', type=str, required=True, help='PIL font filename')
     parser.add_argument('-n', '--name', type=clean_str, required=True, help='Font name')
-    parser.add_argument('-c', '--charset', type=clean_str, required=True, help='Charset')
+    parser.add_argument('-c', '--charset', type=clean_str, help='Charset (default=unic)', default="unic")
     parser.add_argument('--first', type=int, help='First character', default=1)
     parser.add_argument('--last', type=int, help='Last character', default=255)
+    parser.add_argument('-s', '--size', type=int, help='Height for glyphs (default=8)', default=8)
+    parser.add_argument('-ttf', '--truetype', type=int, required=True, help='TrueType font (0=no|1=yes)')
     parser.add_argument('-t', '--template', type=str, help='Template filename', default='template.c')
     main(parser.parse_args(sys.argv[1:]))
 

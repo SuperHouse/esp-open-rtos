@@ -8,7 +8,8 @@ _EXTRAS_FONTS_FONT_{{ font.name|upper }}_{{ font.size[0] }}X{{ font.size[1] }}_{
 _fonts_{{ font.name|lower }}_{{ font_size }}_{{ font.charset|lower }}
 {%- endset -%}
 /**
- * This file contains generated binary font data.
+ * This file contains generated binary font data. *
+ * Generated from file: ({{ font.path }})
  *
  * Font:    {{ font.name }}
  * Size:    {{ font_size }}
@@ -21,6 +22,9 @@ _fonts_{{ font.name|lower }}_{{ font_size }}_{{ font.charset|lower }}
  */
 #ifndef {{ header_id }}
 #define {{ header_id }}
+
+#include <stdint.h>
+//#include <fonts/fonts.h> // Uncomment this if you get error 'unknown type 'font_info_t'"..
 
 static const uint8_t {{ font_prefix }}_bitmaps[] = {
     {%- for char in chars %}
