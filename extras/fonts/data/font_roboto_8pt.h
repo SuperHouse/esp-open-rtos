@@ -1338,9 +1338,9 @@ const font_char_desc_t _fonts_roboto_8pt_descriptors[] =
 const font_info_t _fonts_roboto_8pt_info =
 {
     .height           = 11,                            //  Character height
-    .c                = '!',                           //  Start character
-    .char_start       = '~',                           //  End character
-    .char_end         = 2,                             //  Width, in pixels, of space character
+    .char_start       = '!',                           //  Start character
+    .char_end         = '~',                           //  End character
+    .c                = 2,                             //  Width, in pixels, of space character
     .char_descriptors = _fonts_roboto_8pt_descriptors, //  Character descriptor array
     .bitmap           = _fonts_roboto_8pt_bitmaps,     //  Character bitmap array
 };
