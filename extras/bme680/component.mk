@@ -1,4 +1,4 @@
-# Component makefile for extras/bme60
+# Component makefile for extras/bme680
 
 # expected anyone using bme680 driver includes it as 'bme680/bme680.h'
 INC_DIRS += $(bme680_ROOT).. 
