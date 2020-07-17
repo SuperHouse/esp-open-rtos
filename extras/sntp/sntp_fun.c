@@ -49,12 +49,14 @@ void sntp_init(void);
 // Sets time zone.
 // NOTE: Settings do not take effect until SNTP time is updated.
 void sntp_set_timezone(const struct timezone *tz) {
+    xSemaphoreTake(sntp_sem, portMAX_DELAY);
     if (tz) {
         stz = *tz;
     } else {
         stz.tz_minuteswest = 0;
         stz.tz_dsttime = 0;
     }
+    xSemaphoreGive(sntp_sem);
 }
 
 // Initialization
