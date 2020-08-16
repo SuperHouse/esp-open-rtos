@@ -185,6 +185,7 @@ void pca9685_set_pwm_value(i2c_dev_t *dev, uint8_t channel, uint16_t val)
     if (val == 0)
     {
         // Full off
+        // Takes precedence over full on.
         write_reg(dev, reg + OFFS_REG_LED_OFF, LED_FULL_ON_OFF);
     }
     else if (val < 4096)
@@ -195,6 +196,8 @@ void pca9685_set_pwm_value(i2c_dev_t *dev, uint8_t channel, uint16_t val)
     }
     else
     {
+        // Clear full off, as it takes precedence over full on.
+        write_reg(dev, reg + OFFS_REG_LED_OFF, 0);
         // Full on
         write_reg(dev, reg + OFFS_REG_LED_ON, LED_FULL_ON_OFF);
     }
