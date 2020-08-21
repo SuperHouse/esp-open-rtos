@@ -38,7 +38,7 @@ PROGRAM_DIR := $(dir $(firstword $(MAKEFILE_LIST)))
 
 # derive various parts of compiler/linker arguments
 SDK_LIB_ARGS  = $(addprefix -l,$(SDK_LIBS))
-LIB_ARGS      = $(addprefix -l,$(LIBS))
+LIB_ARGS      = $(addprefix -l,$(LIBS) $(USER_LIBS))
 PROGRAM_OUT   = $(BUILD_DIR)$(PROGRAM).out
 LDFLAGS      += $(addprefix -T,$(LINKER_SCRIPTS))
 
