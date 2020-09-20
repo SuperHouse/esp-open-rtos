@@ -23,7 +23,7 @@
 #define CAUSE_LOADSTORE 3
 #define CAUSE_LVL1INT 4
 
-        .section .bss
+        .section .data
 
 /* Stack space for NMI handler
 
@@ -37,13 +37,26 @@ NMIHandlerStack:
         .skip 0x200
 .NMIHandlerStackTop:
 
+/* The Load Store exception handler uses a separate stack to store the
+ * interruptee registers. It does not appear to be practical to use the
+ * interuptee stack, which must in invalid at some points? This exception is
+ * synchronouns and the handler does not call back into itself. However it may
+ * be interrupted by a NMI which in turn may re-enter this exception
+ * handler. The NMI is responsible for switching the stack pointer to be used by
+ * this exception handler. Room is allocated for up to 3 stack frames, a base
+ * and two NMI reentry frames, and each frame is 7 words wide.
+ */
+#define LoadStoreErrorHandlerStackFrameSize (5 * 4)
+
         .balign 16
+        .global LoadStoreErrorHandlerStack
 LoadStoreErrorHandlerStack:
-        .word   0       # a0
-        .word   0       # (unused)
-        .word   0       # a2
-        .word   0       # a3
-        .word   0       # a4
+        .skip LoadStoreErrorHandlerStackFrameSize * 3
+
+        .balign 4
+        .global LoadStoreErrorHandlerStackPointer
+LoadStoreErrorHandlerStackPointer:
+        .word   0
 
         .balign 4
         .global debug_saved_ctx
@@ -131,10 +144,20 @@ DoubleExceptionVector:
 LoadStoreErrorHandler:
         .type   LoadStoreErrorHandler, @function
 
-        /* Registers are saved in the address corresponding to their register
-         * number times 4.  This allows a quick and easy mapping later on when
-         * needing to store the value to a particular register number. */
-        movi    sp, LoadStoreErrorHandlerStack
+        /* Registers are saved in stack frame offsets corresponding to their
+         * register number times 4.  This allows a quick and easy mapping later
+         * on when needing to store the value to a particular register
+         * number.
+         *
+         * This handler may be interrupted asynchronously by the NMI. The NMI
+         * handler is responsible for switching the load/store handler stack
+         * pointer and that avoids that overhead here. This handler is
+         * synchronous so the NMI handler can modify and restore the load/store
+         * stack pointer safely.
+         */
+        movi    sp, LoadStoreErrorHandlerStackPointer
+        l32i    sp, sp, 0
+
         s32i    a0, sp, 0
         s32i    a2, sp, 0x08
         s32i    a3, sp, 0x0c
@@ -407,6 +430,12 @@ call_user_start:
         .global call_user_start
         .type   call_user_start, @function
 
+        /* Initialize the load/store error handler stack pointer. There are no
+         * load/store exceptions before this point. */
+        movi    a2, LoadStoreErrorHandlerStackPointer
+        movi    a3, LoadStoreErrorHandlerStack
+        s32i    a3, a2, 0
+
         movi    a2, VecBase
         wsr     a2, vecbase
         call0   sdk_user_start
@@ -422,7 +451,10 @@ call_user_start:
 NMIExceptionHandler:
         .type   NMIExceptionHandler, @function
 
-        wsr     sp, excsave3	# excsave3 holds user stack
+        wsr     sp, excsave3        # excsave3 holds user stack
+
+        /* Load the NMI handler stack pointer which is already offset by -0x40
+         * to create a frame to store the interruptee state. */
         movi    sp, .NMIHandlerStackTop - 0x40
         s32i    a0, sp, 0x00
         s32i    a2, sp, 0x04
@@ -449,39 +481,51 @@ NMIExceptionHandler:
         wsr     a0, ps
         rsync
 
-        /* mark the stack overflow point before we call the actual NMI handler */
+        /* Mark the stack overflow point before we call the actual NMI handler */
         movi    a0, NMIHandlerStack
         movi    a2, NMI_STACK_CANARY
         s32i    a2, a0, 0x00
 
+        /* Switch the load/store error handler stack. */
+        movi    a2, LoadStoreErrorHandlerStackPointer
+        l32i    a3, a2, 0
+        addi    a3, a3, LoadStoreErrorHandlerStackFrameSize
+        s32i    a3, a2, 0
+
         call0   sdk_wDev_ProcessFiq
 
-        /* verify we didn't overflow */
+        /* Verify we didn't overflow */
         movi    a0, NMIHandlerStack
         l32i    a3, a0, 0
         movi    a2, NMI_STACK_CANARY
-        bne    a3, a2, .NMIFatalStackOverflow
+        bne     a3, a2, .NMIFatalStackOverflow
 
-	l32i 	a0, sp, 0x3c
-	wsr	a0, sar
-	l32i	a0, sp, 0x38
-	wsr	a0, excvaddr
-	l32i	a0, sp, 0x34
-	wsr	a0, excsave1
-	l32i	a0, sp, 0x30
-	wsr	a0, exccause
-	l32i	a0, sp, 0x2c
-	wsr	a0, epc1
-	l32i	a11, sp, 0x28
-	l32i 	a10, sp, 0x24
-	l32i	a9, sp, 0x20
-	l32i	a8, sp, 0x1c
-	l32i	a7, sp, 0x18
-	l32i 	a6, sp, 0x14
-	l32i	a5, sp, 0x10
-	l32i	a4, sp, 0x0c
-	l32i	a3, sp, 0x08
-        movi    a0, 0x33    	  # Reset PS
+        /* Restore the load/store error handler stack. */
+        movi    a2, LoadStoreErrorHandlerStackPointer
+        l32i    a3, a2, 0
+        addi    a3, a3, -LoadStoreErrorHandlerStackFrameSize
+        s32i    a3, a2, 0
+
+        l32i    a0, sp, 0x3c
+        wsr     a0, sar
+        l32i    a0, sp, 0x38
+        wsr     a0, excvaddr
+        l32i    a0, sp, 0x34
+        wsr     a0, excsave1
+        l32i    a0, sp, 0x30
+        wsr     a0, exccause
+        l32i    a0, sp, 0x2c
+        wsr     a0, epc1
+        l32i    a11, sp, 0x28
+        l32i    a10, sp, 0x24
+        l32i    a9, sp, 0x20
+        l32i    a8, sp, 0x1c
+        l32i    a7, sp, 0x18
+        l32i    a6, sp, 0x14
+        l32i    a5, sp, 0x10
+        l32i    a4, sp, 0x0c
+        l32i    a3, sp, 0x08
+        movi    a0, 0x33              # Reset PS
         wsr     a0, ps
         rsync
         /* set dport nmi status to 1 (wDev_ProcessFiq clears bit 0 and verifies it
