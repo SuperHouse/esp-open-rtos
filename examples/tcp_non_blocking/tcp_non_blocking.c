@@ -116,7 +116,7 @@ static void nonBlockingTCP(void *pvParameters)
     struct netbuf *netbuf = NULL; // To store incoming Data
     struct netconn *nc_in = NULL; // To accept incoming netconn
     //
-    char buf[50];
+    char buf[64];
     char* buffer;
     uint16_t len_buf;
 
@@ -138,10 +138,9 @@ static void nonBlockingTCP(void *pvParameters)
             ip_addr_t client_addr; //Address port
             uint16_t client_port; //Client port
             netconn_peer(nc_in, &client_addr, &client_port);
-            snprintf(buf, sizeof(buf), "Your address is %d.%d.%d.%d:%u.\r\n",
-                    ip4_addr1(&client_addr), ip4_addr2(&client_addr),
-                    ip4_addr3(&client_addr), ip4_addr4(&client_addr),
-                    client_port);
+            char ip_addr_buf[48];
+            ipaddr_ntoa_r(&client_addr, ip_addr_buf, sizeof(ip_addr_buf));
+            snprintf(buf, sizeof(buf), "Your address is %s:%u.\r\n", ip_addr_buf, client_port);
             netconn_write(nc_in, buf, strlen(buf), NETCONN_COPY);
         }
         else if(events.nc->state != NETCONN_LISTEN) // If netconn is the client and receive data
@@ -191,7 +190,7 @@ void user_init(void)
     };
     sdk_wifi_softap_set_config(&ap_config);
 
-    ip_addr_t first_client_ip;
+    ip4_addr_t first_client_ip;
     IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
     dhcpserver_start(&first_client_ip, 4);
     printf("DHCP started\n");

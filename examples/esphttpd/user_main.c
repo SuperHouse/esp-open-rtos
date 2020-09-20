@@ -180,7 +180,7 @@ void wifiInit() {
             };
             sdk_wifi_softap_set_config(&ap_config);
 
-            ip_addr_t first_client_ip;
+            ip4_addr_t first_client_ip;
             IP4_ADDR(&first_client_ip, 172, 16, 0, 2);
             dhcpserver_start(&first_client_ip, 4);
             dhcpserver_set_dns(&ap_ip.ip);

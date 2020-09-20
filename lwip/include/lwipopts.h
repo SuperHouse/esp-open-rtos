@@ -258,6 +258,8 @@ void sys_unlock_tcpip_core(void);
  * Since the received pbufs are enqueued, be sure to configure
  * PBUF_POOL_SIZE > IP_REASS_MAX_PBUFS so that the stack is still able to receive
  * packets even if the maximum amount of fragments is enqueued for reassembly!
+ * When IPv4 *and* IPv6 are enabled, this even changes to
+ * (PBUF_POOL_SIZE > 2 * IP_REASS_MAX_PBUFS)!
  */
 #ifndef IP_REASS_MAX_PBUFS
 #define IP_REASS_MAX_PBUFS              2
@@ -290,17 +292,82 @@ void sys_unlock_tcpip_core(void);
 /**
  * DHCP_DOES_ARP_CHECK==1: Do an ARP check on the offered address.
  */
-#ifndef DHCP_DOES_ARP_CHECK
-#define DHCP_DOES_ARP_CHECK             ((LWIP_DHCP) && (LWIP_ARP))
+#ifndef LWIP_DHCP_DOES_ACD_CHECK
+#define LWIP_DHCP_DOES_ACD_CHECK        LWIP_DHCP
 #endif
 
 #define LWIP_DHCP_BOOTP_FILE            0
+
+/**
+ * LWIP_DHCP_GETS_NTP==1: Request NTP servers with discover/select. For each
+ * response packet, an callback is called, which has to be provided by the port:
+ * void dhcp_set_ntp_servers(u8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
+*/
+#ifndef LWIP_DHCP_GET_NTP_SRV
+#define LWIP_DHCP_GET_NTP_SRV           0
+#endif
+
+/**
+ * The maximum of NTP servers requested
+ */
+#ifndef LWIP_DHCP_MAX_NTP_SERVERS
+#define LWIP_DHCP_MAX_NTP_SERVERS       1
+#endif
+
+/**
+ * LWIP_DHCP_MAX_DNS_SERVERS > 0: Request DNS servers with discover/select.
+ * DNS servers received in the response are passed to DNS via @ref dns_setserver()
+ * (up to the maximum limit defined here).
+ */
+#ifndef LWIP_DHCP_MAX_DNS_SERVERS
+#define LWIP_DHCP_MAX_DNS_SERVERS       DNS_MAX_SERVERS
+#endif
 
 /*
    ------------------------------------
    ---------- AUTOIP options ----------
    ------------------------------------
 */
+
+/**
+ * LWIP_AUTOIP==1: Enable AUTOIP module.
+ */
+#ifndef LWIP_AUTOIP
+#define LWIP_AUTOIP                     0
+#endif
+
+/**
+ * LWIP_DHCP_AUTOIP_COOP==1: Allow DHCP and AUTOIP to be both enabled on
+ * the same interface at the same time.
+ */
+#ifndef LWIP_DHCP_AUTOIP_COOP
+#define LWIP_DHCP_AUTOIP_COOP           0
+#endif
+
+/**
+ * LWIP_DHCP_AUTOIP_COOP_TRIES: Set to the number of DHCP DISCOVER probes
+ * that should be sent before falling back on AUTOIP (the DHCP client keeps
+ * running in this case). This can be set as low as 1 to get an AutoIP address
+ * very  quickly, but you should be prepared to handle a changing IP address
+ * when DHCP overrides AutoIP.
+ */
+#ifndef LWIP_DHCP_AUTOIP_COOP_TRIES
+#define LWIP_DHCP_AUTOIP_COOP_TRIES     9
+#endif
+
+/*
+   ------------------------------------
+   ----------- ACD options ------------
+   ------------------------------------
+*/
+
+/**
+ * LWIP_ACD==1: Enable ACD module. ACD module is needed when using AUTOIP.
+ */
+#ifndef LWIP_ACD
+#define LWIP_ACD                     (LWIP_AUTOIP || LWIP_DHCP_DOES_ACD_CHECK)
+#endif
+
 /*
    ----------------------------------
    ----- SNMP MIB2 support      -----
@@ -514,6 +581,12 @@ void sys_unlock_tcpip_core(void);
  */
 #define PBUF_LINK_ENCAPSULATION_HLEN    36
 
+/**
+ * LWIP_PBUF_CUSTOM_DATA: Store private data on pbufs (e.g. timestamps)
+ * This extends struct pbuf so user can store custom data on every pbuf.
+ */
+#define LWIP_PBUF_CUSTOM_DATA void *esf_buf;
+
 /*
    ------------------------------------------------
    ---------- Network Interfaces options ----------
@@ -643,6 +716,26 @@ void sys_unlock_tcpip_core(void);
 #endif
 
 /**
+ * LWIP_SOCKET_EXTERNAL_HEADERS==1: Use external headers instead of sockets.h
+ * and inet.h. In this case, user must provide its own headers by setting the
+ * values for LWIP_SOCKET_EXTERNAL_HEADER_SOCKETS_H and
+ * LWIP_SOCKET_EXTERNAL_HEADER_INET_H to appropriate include file names and the
+ * whole content of the default sockets.h and inet.h is skipped.
+ */
+#ifndef LWIP_SOCKET_EXTERNAL_HEADERS
+#define LWIP_SOCKET_EXTERNAL_HEADERS    0
+#endif
+
+/**
+ * LWIP_TCP_KEEPALIVE==1: Enable TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT
+ * options processing. Note that TCP_KEEPIDLE and TCP_KEEPINTVL have to be set
+ * in seconds. (does not require sockets.c, and will affect tcp.c)
+ */
+#ifndef LWIP_TCP_KEEPALIVE
+#define LWIP_TCP_KEEPALIVE              1
+#endif
+
+/**
  * LWIP_SO_SNDTIMEO==1: Enable send timeout for sockets/netconns and
  * SO_SNDTIMEO processing.
  */
@@ -659,15 +752,6 @@ void sys_unlock_tcpip_core(void);
 #endif
 
 /**
- * LWIP_TCP_KEEPALIVE==1: Enable TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT
- * options processing. Note that TCP_KEEPIDLE and TCP_KEEPINTVL have to be set
- * in seconds. (does not require sockets.c, and will affect tcp.c)
- */
-#ifndef LWIP_TCP_KEEPALIVE
-#define LWIP_TCP_KEEPALIVE              1
-#endif
-
-/**
  * LWIP_SO_RCVBUF==1: Enable SO_RCVBUF processing.
  */
 #ifndef LWIP_SO_RCVBUF
@@ -675,10 +759,70 @@ void sys_unlock_tcpip_core(void);
 #endif
 
 /**
+ * LWIP_SO_LINGER==1: Enable SO_LINGER processing.
+ */
+#ifndef LWIP_SO_LINGER
+#define LWIP_SO_LINGER                  0
+#endif
+
+/**
+ * If LWIP_SO_RCVBUF is used, this is the default value for recv_bufsize.
+ */
+#ifndef RECV_BUFSIZE_DEFAULT
+#define RECV_BUFSIZE_DEFAULT            INT_MAX
+#endif
+
+/**
+ * By default, TCP socket/netconn close waits 20 seconds max to send the FIN
+ */
+#ifndef LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT
+#define LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT 20000
+#endif
+
+/**
  * SO_REUSE==1: Enable SO_REUSEADDR option.
  */
 #ifndef SO_REUSE
 #define SO_REUSE                        1
+#endif
+
+/**
+ * SO_REUSE_RXTOALL==1: Pass a copy of incoming broadcast/multicast packets
+ * to all local matches if SO_REUSEADDR is turned on.
+ * WARNING: Adds a memcpy for every packet if passing to more than one pcb!
+ */
+#ifndef SO_REUSE_RXTOALL
+#define SO_REUSE_RXTOALL                0
+#endif
+
+/**
+ * LWIP_FIONREAD_LINUXMODE==0 (default): ioctl/FIONREAD returns the amount of
+ * pending data in the network buffer. This is the way windows does it. It's
+ * the default for lwIP since it is smaller.
+ * LWIP_FIONREAD_LINUXMODE==1: ioctl/FIONREAD returns the size of the next
+ * pending datagram in bytes. This is the way linux does it. This code is only
+ * here for compatibility.
+ */
+#ifndef LWIP_FIONREAD_LINUXMODE
+#define LWIP_FIONREAD_LINUXMODE         0
+#endif
+
+/**
+ * LWIP_SOCKET_SELECT==1 (default): enable select() for sockets (uses a netconn
+ * callback to keep track of events).
+ * This saves RAM (counters per socket) and code (netconn event callback), which
+ * should improve performance a bit).
+ */
+#ifndef LWIP_SOCKET_SELECT
+#define LWIP_SOCKET_SELECT              1
+#endif
+
+/**
+ * LWIP_SOCKET_POLL==1 (default): enable poll() for sockets (including
+ * struct pollfd, nfds_t, and constants)
+ */
+#ifndef LWIP_SOCKET_POLL
+#define LWIP_SOCKET_POLL                1
 #endif
 
 /*
@@ -725,6 +869,21 @@ void sys_unlock_tcpip_core(void);
 #define LWIP_IPV6                       0
 #endif
 
+/**
+ * LWIP_ND6_QUEUEING==1: queue outgoing IPv6 packets while MAC address
+ * is being resolved.
+ */
+#ifndef LWIP_ND6_QUEUEING
+#define LWIP_ND6_QUEUEING               LWIP_IPV6
+#endif
+
+/**
+ * MEMP_NUM_ND6_QUEUE: Max number of IPv6 packets to queue during MAC resolution.
+ */
+#ifndef MEMP_NUM_ND6_QUEUE
+#define MEMP_NUM_ND6_QUEUE              5
+#endif
+
 /*
    ---------------------------------------
    ---------- Hook options ---------------
@@ -736,14 +895,6 @@ void sys_unlock_tcpip_core(void);
    ---------- mDNS options ---------------
    ---------------------------------------
 */
-
-/**
- * LWIP_MDNS_RESPONDER_QUEUE_ANNOUNCEMENTS==1: Unsolicited announcements are
- * queued and run from a timer callback.
- */
-#ifndef LWIP_MDNS_RESPONDER_QUEUE_ANNOUNCEMENTS
-#define LWIP_MDNS_RESPONDER_QUEUE_ANNOUNCEMENTS     1
-#endif
 
 /*
    ---------------------------------------
@@ -919,6 +1070,11 @@ void sys_unlock_tcpip_core(void);
 #define AUTOIP_DEBUG                    LWIP_DBG_OFF
 
 /**
+ * ACD_DEBUG: Enable debugging in acd.c.
+ */
+#define ACD_DEBUG                       LWIP_DBG_OFF
+
+/**
  * DNS_DEBUG: Enable debugging for DNS.
  */
 #define DNS_DEBUG                       LWIP_DBG_OFF
@@ -927,6 +1083,11 @@ void sys_unlock_tcpip_core(void);
  * IP6_DEBUG: Enable debugging for IPv6.
  */
 #define IP6_DEBUG                       LWIP_DBG_OFF
+
+/**
+ * DHCP6_DEBUG: Enable debugging in dhcp6.c.
+ */
+#define DHCP6_DEBUG                     LWIP_DBG_OFF
 
 /**
  * MDNS_DEBUG: Enable debugging for multicast DNS.

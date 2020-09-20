@@ -78,7 +78,7 @@ Current status is alpha quality, actively developed. AP STATION mode (ie wifi cl
 ## Open Source Components
 
 * [FreeRTOS](http://www.freertos.org/) V10.2.0
-* [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki) v2.0.3, with [some modifications](https://github.com/ourairquality/lwip/).
+* [lwIP](http://lwip.wikia.com/wiki/LwIP_Wiki) v2.2.0, with [some modifications](https://github.com/ourairquality/lwip/).
 * [newlib](https://github.com/ourairquality/newlib) v3.0.0, with patches for xtensa support and locking stubs for thread-safe operation on FreeRTOS.
 
 For details of how third party libraries are integrated, [see the wiki page](https://github.com/SuperHouse/esp-open-rtos/wiki/Third-Party-Libraries).

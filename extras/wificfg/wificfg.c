@@ -1692,6 +1692,14 @@ static bool host_is_name(const char *host)
 }
 
 
+#if LWIP_MDNS_RESPONDER
+static void mdns_srv_txt(struct mdns_service *service, void *txt_userdata)
+{
+    err_t res = mdns_resp_add_service_txtitem(service, "path=/", 6);
+    LWIP_ERROR("mdns add service txt failed\n", (res == ERR_OK), return);
+}
+#endif
+
 /*
  * The http server uses a single thread to service all requests, one request at
  * a time, to keep peak resource usage to a minimum. Keeping connections open
@@ -1745,16 +1753,16 @@ static void server_task(void *pvParameters)
         LOCK_TCPIP_CORE();
         if (wifi_sta_mdns && station_netif) {
             LOCK_TCPIP_CORE();
-            mdns_resp_add_netif(station_netif, hostname, 120);
+            mdns_resp_add_netif(station_netif, hostname);
             mdns_resp_add_service(station_netif, hostname, "_http",
-                                  DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+                                  DNSSD_PROTO_TCP, 80, mdns_srv_txt, NULL);
             UNLOCK_TCPIP_CORE();
         }
         if (wifi_ap_mdns && softap_netif) {
             LOCK_TCPIP_CORE();
-            mdns_resp_add_netif(softap_netif, hostname, 120);
+            mdns_resp_add_netif(softap_netif, hostname);
             mdns_resp_add_service(softap_netif, hostname, "_http",
-                                  DNSSD_PROTO_TCP, 80, 3600, NULL, NULL);
+                                  DNSSD_PROTO_TCP, 80, mdns_srv_txt, NULL);
             UNLOCK_TCPIP_CORE();
         }
         UNLOCK_TCPIP_CORE();
