@@ -26,6 +26,10 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/types.h>
+
 /*
  * Printf format used to initialize a default AP ssid. It is passed the last
  * three bytes of the mac address. This may be NULL to not default the ssid,
