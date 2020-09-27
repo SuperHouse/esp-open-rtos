@@ -29,7 +29,7 @@ and size is the location of SPIFFS region in SPI flash and its size.
 
 In order to use file system in a project the following steps should be made:
  * Add SPIFFS component in a project Makefile `EXTRA_COMPONENTS = extras/spiffs`
- * Specify your flash size in the Makefile `FLASH_SIZE = 32`
+ * Specify your flash size in the Makefile `FLASH_SIZE = 4`
  * Specify the start address of file system region on the flash memory
 `SPIFFS_BASE_ADDR = 0x200000`. It still needed even for `SPIFFS_SINGLETON = 0`
 in order to flash SPIFFS image to the right location during `make flash`.
@@ -42,7 +42,7 @@ In the end the Makefile should look like:
 ```
 PROGRAM=spiffs_example
 EXTRA_COMPONENTS = extras/spiffs
-FLASH_SIZE = 32
+FLASH_SIZE = 4
 
 SPIFFS_BASE_ADDR = 0x200000
 SPIFFS_SIZE = 0x100000

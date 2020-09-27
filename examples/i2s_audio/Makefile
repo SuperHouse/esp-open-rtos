@@ -1,6 +1,6 @@
 PROGRAM=i2s_audio_example
 EXTRA_COMPONENTS = extras/spiffs extras/i2s_dma
-FLASH_SIZE = 32
+FLASH_SIZE = 4
 
 # spiffs configuration
 SPIFFS_BASE_ADDR = 0x200000

@@ -1,1 +1,1 @@
-FLASH_SIZE ?= 32
+FLASH_SIZE ?= 4

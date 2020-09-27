@@ -1,6 +1,6 @@
 PROGRAM=spiffs_example
 EXTRA_COMPONENTS = extras/spiffs
-FLASH_SIZE = 32
+FLASH_SIZE = 4
 
 # spiffs configuration
 SPIFFS_BASE_ADDR = 0x200000
