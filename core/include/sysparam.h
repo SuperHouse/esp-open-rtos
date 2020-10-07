@@ -51,11 +51,12 @@ typedef enum {
  * sysparam_iter_end().
  */
 typedef struct {
-    char *key;
+    char *ns;
+    char *name;
     uint8_t *value;
-    size_t key_len;
     size_t value_len;
     bool binary;
+    uint8_t *buffer;
     size_t bufsize;
     struct sysparam_context *ctx;
 } sysparam_iter_t;
@@ -178,7 +179,7 @@ sysparam_status_t sysparam_compact();
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *actual_length, bool *is_binary);
+sysparam_status_t sysparam_get_data(const char *ns, const char *name, uint8_t **destptr, size_t *actual_length, bool *is_binary);
 
 /** Get the value associated with a key (static value buffer)
  *
@@ -206,7 +207,7 @@ sysparam_status_t sysparam_get_data(const char *key, uint8_t **destptr, size_t *
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *dest, size_t dest_size, size_t *actual_length, bool *is_binary);
+sysparam_status_t sysparam_get_data_static(const char *ns, const char *name, uint8_t *dest, size_t dest_size, size_t *actual_length, bool *is_binary);
 
 /** Get the string value associated with a key
  *
@@ -233,7 +234,7 @@ sysparam_status_t sysparam_get_data_static(const char *key, uint8_t *dest, size_
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_string(const char *key, char **destptr);
+sysparam_status_t sysparam_get_string(const char *ns, const char *name, char **destptr);
 
 /** Get the int32_t value associated with a key
  *
@@ -258,7 +259,7 @@ sysparam_status_t sysparam_get_string(const char *key, char **destptr);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_int32(const char *key, int32_t *result);
+sysparam_status_t sysparam_get_int32(const char *ns, const char *name, int32_t *result);
 
 /** Get the int8_t value associated with a key
  *
@@ -283,7 +284,7 @@ sysparam_status_t sysparam_get_int32(const char *key, int32_t *result);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_int8(const char *key, int8_t *result);
+sysparam_status_t sysparam_get_int8(const char *ns, const char *name, int8_t *result);
 
 /** Get the boolean value associated with a key
  *
@@ -312,7 +313,7 @@ sysparam_status_t sysparam_get_int8(const char *key, int8_t *result);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_get_bool(const char *key, bool *result);
+sysparam_status_t sysparam_get_bool(const char *ns, const char *name, bool *result);
 
 /** Set the value associated with a key
  *
@@ -342,7 +343,7 @@ sysparam_status_t sysparam_get_bool(const char *key, bool *result);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_t value_len, bool binary);
+sysparam_status_t sysparam_set_data(const char *ns, const char *name, const uint8_t *value, size_t value_len, bool binary);
 
 /** Set a key's value from a string
  *
@@ -361,7 +362,7 @@ sysparam_status_t sysparam_set_data(const char *key, const uint8_t *value, size_
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_string(const char *key, const char *value);
+sysparam_status_t sysparam_set_string(const char *ns, const char *name, const char *value);
 
 /** Set a key's value as a number
  *
@@ -380,7 +381,7 @@ sysparam_status_t sysparam_set_string(const char *key, const char *value);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_int32(const char *key, int32_t value);
+sysparam_status_t sysparam_set_int32(const char *ns, const char *name, int32_t value);
 
 /** Set a key's value as a number
  *
@@ -399,7 +400,7 @@ sysparam_status_t sysparam_set_int32(const char *key, int32_t value);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_int8(const char *key, int8_t value);
+sysparam_status_t sysparam_set_int8(const char *ns, const char *name, int8_t value);
 
 /** Set a key's value as a boolean (yes/no) string
  *
@@ -418,7 +419,7 @@ sysparam_status_t sysparam_set_int8(const char *key, int8_t value);
  *  @retval ::SYSPARAM_ERR_CORRUPT  Sysparam region has bad/corrupted data
  *  @retval ::SYSPARAM_ERR_IO       I/O error reading/writing flash
  */
-sysparam_status_t sysparam_set_bool(const char *key, bool value);
+sysparam_status_t sysparam_set_bool(const char *ns, const char *name, bool value);
 
 /** Begin iterating through all key/value pairs
  *

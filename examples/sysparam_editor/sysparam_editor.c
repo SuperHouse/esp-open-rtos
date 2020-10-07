@@ -29,7 +29,7 @@ void usage(void) {
         "Available commands:\n"
         "  <key>?          -- Query the value of <key>\n"
         "  <key>=<value>   -- Set <key> to text <value>\n"
-        "  <key>:<hexdata> -- Set <key> to binary value represented as hex\n"
+        "  <key>%%<hexdata> -- Set <key> to binary value represented as hex\n"
         "  dump            -- Show all currently set keys/values\n"
         "  compact         -- Compact the sysparam area\n"
         "  reformat        -- Reinitialize (clear) the sysparam area\n"
@@ -76,14 +76,39 @@ size_t tty_readline(char *buffer, size_t buf_size, bool echo) {
     return i;
 }
 
-void print_text_value(char *key, char *value) {
-    printf("  '%s' = '%s'\n", key, value);
+static void parse_key(char *buffer, char **ns, char **name) {
+    char *ns_end = strchr(buffer, ':');
+    if (ns_end) {
+        *ns_end = 0;
+        *ns = buffer;
+        *name = ns_end + 1;
+    } else {
+        *ns = NULL;
+        *name = buffer;
+    }
 }
 
-void print_binary_value(char *key, uint8_t *value, size_t len) {
+static void print_key(const char *ns, const char *name) {
+    if (ns) {
+        printf("%s:%s", ns, name);
+    } else {
+        printf("%s", name);
+    }
+}
+
+void print_text_value(const char *ns, const char *name, char *value) {
+    printf("  '");
+    print_key(ns, name);
+    printf("' = '%s'\n", value);
+}
+
+void print_binary_value(const char *ns, const char *name, uint8_t *value, size_t len) {
     size_t i;
 
-    printf("  %s:", key);
+    printf("  '");
+    print_key(ns, name);
+    printf("' = ");
+
     for (i = 0; i < len; i++) {
         if (!(i & 0x0f)) {
             printf("\n   ");
@@ -103,9 +128,9 @@ sysparam_status_t dump_params(void) {
         status = sysparam_iter_next(&iter);
         if (status != SYSPARAM_OK) break;
         if (!iter.binary) {
-            print_text_value(iter.key, (char *)iter.value);
+            print_text_value(iter.ns, iter.name, (char *)iter.value);
         } else {
-            print_binary_value(iter.key, iter.value, iter.value_len);
+            print_binary_value(iter.ns, iter.name, iter.value, iter.value_len);
         }
     }
     sysparam_iter_end(&iter);
@@ -192,29 +217,41 @@ void sysparam_editor_task(void *pvParameters) {
         if (!len) continue;
         if (cmd_buffer[len - 1] == '?') {
             cmd_buffer[len - 1] = 0;
-            printf("Querying '%s'...\n", cmd_buffer);
-            status = sysparam_get_string(cmd_buffer, &value);
+            char *ns, *name;
+            parse_key(cmd_buffer, &ns, &name);
+            printf("Querying '");
+            print_key(ns, name);
+            printf("'...\n");
+            status = sysparam_get_string(ns, name, &value);
             if (status == SYSPARAM_OK) {
-                print_text_value(cmd_buffer, value);
+                print_text_value(ns, name, value);
                 free(value);
             } else if (status == SYSPARAM_PARSEFAILED) {
                 // This means it's actually a binary value
-                status = sysparam_get_data(cmd_buffer, &bin_value, &len, NULL);
+                status = sysparam_get_data(ns, name, &bin_value, &len, NULL);
                 if (status == SYSPARAM_OK) {
-                    print_binary_value(cmd_buffer, bin_value, len);
-                    free(value);
+                    print_binary_value(ns, name, bin_value, len);
+                    free(bin_value);
                 }
             }
         } else if ((value = strchr(cmd_buffer, '='))) {
             *value++ = 0;
-            printf("Setting '%s' to '%s'...\n", cmd_buffer, value);
-            status = sysparam_set_string(cmd_buffer, value);
-        } else if ((value = strchr(cmd_buffer, ':'))) {
+            char *ns, *name;
+            parse_key(cmd_buffer, &ns, &name);
+            printf("Setting '");
+            print_key(ns, name);
+            printf("' to '%s'...\n", value);
+            status = sysparam_set_string(ns, name, value);
+        } else if ((value = strchr(cmd_buffer, '%'))) {
             *value++ = 0;
+            char *ns, *name;
+            parse_key(cmd_buffer, &ns, &name);
             data = parse_hexdata(value, &len);
             if (value) {
-                printf("Setting '%s' to binary data...\n", cmd_buffer);
-                status = sysparam_set_data(cmd_buffer, data, len, true);
+                printf("Setting '");
+                print_key(ns, name);
+                printf("' to binary data...\n");
+                status = sysparam_set_data(ns, name, data, len, true);
                 free(data);
             } else {
                 printf("Error: Unable to parse hex data\n");

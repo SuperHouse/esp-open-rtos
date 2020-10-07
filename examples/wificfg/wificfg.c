@@ -32,8 +32,6 @@
 
 #include "wificfg/wificfg.h"
 
-#include "sysparam.h"
-
 static const char http_success_header[] = "HTTP/1.1 200 \r\n"
     "Content-Type: text/html; charset=utf-8\r\n"
     "Cache-Control: no-store\r\n"
