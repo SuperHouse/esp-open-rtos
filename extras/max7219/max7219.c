@@ -119,7 +119,7 @@ void max7219_set_shutdown_mode(const max7219_display_t *disp, bool shutdown)
 
 bool max7219_set_digit(const max7219_display_t *disp, uint8_t digit, uint8_t val)
 {
-    if (digit >= disp->digits)
+    if (digit >= (disp->digits * disp->cascade_size))
     {
         debug("Invalid digit: %d", digit);
         return false;
@@ -186,4 +186,10 @@ void max7219_draw_text(const max7219_display_t *disp, uint8_t pos, const char *s
         pos++;
         s++;
     }
+}
+
+void max7219_draw_image_8x8(const max7219_display_t *disp, uint8_t pos, const void *image)
+{
+    for (uint8_t i = (pos * disp->digits), offset = 0; i < (disp->digits * disp->cascade_size) && offset < 8; i++, offset++)
+        max7219_set_digit(disp, i, *((uint8_t *)image + offset));
 }
