@@ -88,6 +88,14 @@ void max7219_clear(const max7219_display_t *disp);
  */
 void max7219_draw_text(const max7219_display_t *disp, uint8_t pos, const char *s);
 
+/**
+ * Draw 64-bit image on 8x8 matrix.
+ * @param disp Pointer to display descriptor
+ * @param pos Start digit
+ * @param image 64-bit buffer with image data
+ */
+void max7219_draw_image_8x8(const max7219_display_t *disp, uint8_t pos, const void *image);
+
 #ifdef __cplusplus
 }
 #endif
