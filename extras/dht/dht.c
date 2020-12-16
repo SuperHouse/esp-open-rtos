@@ -35,10 +35,17 @@
  *
  *  Initializing communications with the DHT requires four 'phases' as follows:
  *
- *  Phase A - MCU pulls signal low for at least 18000 us
- *  Phase B - MCU allows signal to float back up and waits 20-40us for DHT to pull it low
+ *  Phase A - MCU pulls signal low for a period (see below)
+ *  Phase B - MCU allows signal to float back up and waits 20-200us for DHT to pull it low
  *  Phase C - DHT pulls signal low for ~80us
  *  Phase D - DHT lets signal float back up for ~80us
+ *
+ *  The length of Phase A is dependent on the sensor type:
+ *    DHT_TYPE_DHT11  : at least 18000 us
+ *    DHT_TYPE_DHT22  : 800 us to 20000 us, typically 1100 us
+ *    DHT_TYPE_SI7021 : 300 us to 500 us
+ *   For a DHT21 use DHT_TYPE_DHT22
+ *   For an AM2301/AM2302 use DHT_TYPE_SI7021
  *
  *  After this, the DHT transmits its first bit by holding the signal low for 50us
  *  and then letting it float back high for a period of time that depends on the data bit.
@@ -91,8 +98,8 @@ static inline bool dht_fetch_data(dht_sensor_type_t sensor_type, uint8_t pin, bo
     sdk_os_delay_us(sensor_type == DHT_TYPE_SI7021 ? 500 : 20000);
     gpio_write(pin, 1);
 
-    // Step through Phase 'B', 40us
-    if (!dht_await_pin_state(pin, 40, false, NULL)) {
+    // Step through Phase 'B', 200us
+    if (!dht_await_pin_state(pin, 200, false, NULL)) {
         debug("Initialization error, problem in phase 'B'\n");
         return false;
     }
@@ -131,7 +138,7 @@ static inline int16_t dht_convert_data(dht_sensor_type_t sensor_type, uint8_t ms
 {
     int16_t data;
 
-    if (sensor_type == DHT_TYPE_DHT22) {
+    if (sensor_type == DHT_TYPE_DHT22 || sensor_type == DHT_TYPE_SI7021) {
         data = msb & 0x7F;
         data <<= 8;
         data |= lsb;
