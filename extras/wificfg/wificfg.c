@@ -2057,7 +2057,7 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
     sysparam_get_string("hostname", &hostname);
     if (!hostname && wificfg_default_hostname) {
         uint8_t macaddr[6];
-        char name[32];
+        char name[33];
         sdk_wifi_get_macaddr(1, macaddr);
         snprintf(name, sizeof(name), wificfg_default_hostname, macaddr[3],
                  macaddr[4], macaddr[5]);
@@ -2108,7 +2108,7 @@ void wificfg_init(uint32_t port, const wificfg_dispatch *dispatch)
         /* Default AP ssid and password. */
         if (!wifi_ap_ssid && wificfg_default_ssid) {
             uint8_t macaddr[6];
-            char ssid[32];
+            char ssid[33];
             sdk_wifi_get_macaddr(1, macaddr);
             snprintf(ssid, sizeof(ssid), wificfg_default_ssid, macaddr[3],
                      macaddr[4], macaddr[5]);
