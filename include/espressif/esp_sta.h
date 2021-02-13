@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 struct sdk_station_config {
-    uint8_t ssid[32];     /* Null terminated string */
+    uint8_t ssid[33];     /* Null terminated string */
     uint8_t password[64]; /* Null terminated string */
     uint8_t bssid_set;    /* One if bssid is used, otherwise zero. */
     uint8_t bssid[6];     /* The BSSID bytes */
@@ -38,7 +38,7 @@ struct sdk_bss_info {
     STAILQ_ENTRY(sdk_bss_info)     next;
 
     uint8_t bssid[6];
-    uint8_t ssid[32];
+    uint8_t ssid[33];
     uint8_t channel;
     int8_t rssi;
     AUTH_MODE authmode;

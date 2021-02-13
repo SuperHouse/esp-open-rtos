@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 struct sdk_softap_config {
-    uint8_t ssid[32];
+    uint8_t ssid[33];
     uint8_t password[64];
     uint8_t ssid_len;
     uint8_t channel;

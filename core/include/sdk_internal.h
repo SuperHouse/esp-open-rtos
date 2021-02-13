@@ -210,7 +210,7 @@ struct sdk_g_ic_volatile_st {
 
 struct sdk_g_ic_ssid_with_length {
     uint32_t ssid_length;  // 0x1e4 sdk_wpa_config_profile
-    uint8_t ssid[32];  // 0x1e8 Station ssid. Null terminated string.
+    uint8_t ssid[33];  // 0x1e8 Station ssid. Null terminated string.
 };
 
 // This is the portion of g_ic which is loaded/saved to the flash ROM, and thus
