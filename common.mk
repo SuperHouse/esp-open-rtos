@@ -275,6 +275,7 @@ clean:
 
 # print some useful help stuff
 help:
+	$(if will_help, $(call will_help))
 	@echo "esp-open-rtos make"
 	@echo ""
 	@echo "Other targets:"
@@ -304,5 +305,6 @@ help:
 	@echo "SAMPLE COMMAND LINE:"
 	@echo "make -j2 test ESPPORT=/dev/ttyUSB0"
 	@echo ""
+	$(if did_help, $(call did_help))
 
 
