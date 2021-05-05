@@ -177,23 +177,33 @@ void ws2812_i2s_update(ws2812_pixel_t *pixels, pixeltype_t type)
     uint16_t *p_dma_buf = dma_buffer;
 
     for (uint32_t i = 0; i < (dma_buffer_size / type); i++) {
-        // green
-        *p_dma_buf++ =  bitpatterns[pixels[i].green & 0x0F];
-        *p_dma_buf++ =  bitpatterns[pixels[i].green >> 4];
-
-        // red
-        *p_dma_buf++ =  bitpatterns[pixels[i].red & 0x0F];
-        *p_dma_buf++ =  bitpatterns[pixels[i].red >> 4];
-
-        // blue
-        *p_dma_buf++ =  bitpatterns[pixels[i].blue & 0x0F];
-        *p_dma_buf++ =  bitpatterns[pixels[i].blue >> 4];
-        
+#ifdef I2S_COLOR_WHITE_FIRST
         if(type == PIXEL_RGBW) {
           // white
           *p_dma_buf++ =  bitpatterns[pixels[i].white & 0x0F];
           *p_dma_buf++ =  bitpatterns[pixels[i].white >> 4];
         }
+#endif
+
+        // I2S_COLOR_FIRST, normally green
+        *p_dma_buf++ =  bitpatterns[pixels[i].I2S_COLOR_FIRST & 0x0F];
+        *p_dma_buf++ =  bitpatterns[pixels[i].I2S_COLOR_FIRST >> 4];
+
+        // I2S_COLOR_SECOND, normally red
+        *p_dma_buf++ =  bitpatterns[pixels[i].I2S_COLOR_SECOND & 0x0F];
+        *p_dma_buf++ =  bitpatterns[pixels[i].I2S_COLOR_SECOND >> 4];
+
+        // I2S_COLOR_THIRD, normally blue
+        *p_dma_buf++ =  bitpatterns[pixels[i].I2S_COLOR_THIRD & 0x0F];
+        *p_dma_buf++ =  bitpatterns[pixels[i].I2S_COLOR_THIRD >> 4];
+        
+#ifndef I2S_COLOR_WHITE_FIRST
+        if(type == PIXEL_RGBW) {
+          // white
+          *p_dma_buf++ =  bitpatterns[pixels[i].white & 0x0F];
+          *p_dma_buf++ =  bitpatterns[pixels[i].white >> 4];
+        }
+#endif
     }
 
     i2s_dma_processing = true;
