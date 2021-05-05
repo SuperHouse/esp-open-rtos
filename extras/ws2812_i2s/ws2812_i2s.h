@@ -46,6 +46,57 @@ typedef enum {
   PIXEL_RGBW = 16
 } pixeltype_t;
 
+#define I2S_COLOR_PROFILE_N_RGB 1
+#define I2S_COLOR_PROFILE_N_RBG 2
+#define I2S_COLOR_PROFILE_N_GBR 3
+#define I2S_COLOR_PROFILE_N_GRB 4
+#define I2S_COLOR_PROFILE_N_BGR 5
+#define I2S_COLOR_PROFILE_N_BRG 6
+
+#ifndef I2S_COLOR_PROFILE
+
+#if defined(I2S_COLOR_PROFILE_BRG)
+#define I2S_COLOR_PROFILE I2S_COLOR_PROFILE_N_BRG
+#elif defined(I2S_COLOR_PROFILE_RBG)
+#define I2S_COLOR_PROFILE I2S_COLOR_PROFILE_N_RBG
+#elif defined(I2S_COLOR_PROFILE_GBR)
+#define I2S_COLOR_PROFILE I2S_COLOR_PROFILE_N_GBR
+#elif defined(I2S_COLOR_PROFILE_RGB)
+#define I2S_COLOR_PROFILE I2S_COLOR_PROFILE_N_RGB
+#elif defined(I2S_COLOR_PROFILE_BGR)
+#define I2S_COLOR_PROFILE I2S_COLOR_PROFILE_N_BGR
+#else
+#define I2S_COLOR_PROFILE I2S_COLOR_PROFILE_N_GRB
+#endif
+
+#endif
+
+#if I2S_COLOR_PROFILE == I2S_COLOR_PROFILE_N_RGB
+#define I2S_COLOR_FIRST red
+#define I2S_COLOR_SECOND green
+#define I2S_COLOR_THIRD blue
+#elif I2S_COLOR_PROFILE == I2S_COLOR_PROFILE_N_RBG
+#define I2S_COLOR_FIRST red
+#define I2S_COLOR_SECOND blue
+#define I2S_COLOR_THIRD green
+#elif I2S_COLOR_PROFILE == I2S_COLOR_PROFILE_N_GBR
+#define I2S_COLOR_FIRST green
+#define I2S_COLOR_SECOND blue
+#define I2S_COLOR_THIRD red
+#elif I2S_COLOR_PROFILE == I2S_COLOR_PROFILE_N_GRB
+#define I2S_COLOR_FIRST green
+#define I2S_COLOR_SECOND red
+#define I2S_COLOR_THIRD blue
+#elif I2S_COLOR_PROFILE == I2S_COLOR_PROFILE_N_BGR
+#define I2S_COLOR_FIRST blue
+#define I2S_COLOR_SECOND green
+#define I2S_COLOR_THIRD red
+#else
+#define I2S_COLOR_FIRST blue
+#define I2S_COLOR_SECOND red
+#define I2S_COLOR_THIRD green
+#endif
+
 /**
  * Initialize i2s and dma subsystems to work with ws2812 led strip.
  *
