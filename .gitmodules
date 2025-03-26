@@ -46,3 +46,9 @@
 [submodule "lvgl/lv_examples"]
 	path = lvgl/lv_examples
 	url = https://github.com/littlevgl/lv_examples.git
+[submodule "extras/FreeRTOS-Plus-CLI"]
+	path = extras/FreeRTOS-Plus-CLI
+	url = git@github.com:NylonOS/FreeRTOS-Plus-CLI.git
+[submodule "extras/esp-cjson"]
+	path = extras/esp-cjson
+	url = https://github.com/maximkulkin/esp-cjson.git
